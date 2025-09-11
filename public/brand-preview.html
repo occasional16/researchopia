@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>品牌方案预览工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.2);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+        
+        .header h1 {
+            font-size: 32px;
+            color: #1a365d;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            color: #718096;
+            font-size: 18px;
+        }
+        
+        .brand-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 30px;
+            margin-bottom: 50px;
+        }
+        
+        .brand-card {
+            background: #f8f9fa;
+            border-radius: 16px;
+            padding: 30px;
+            border: 3px solid transparent;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .brand-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        
+        .brand-card.recommended {
+            border-color: #f56500;
+            background: linear-gradient(135deg, #fff5f0 0%, #fef5e7 100%);
+        }
+        
+        .brand-card.recommended::before {
+            content: "🥇 强烈推荐";
+            background: #f56500;
+            color: white;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            position: absolute;
+            top: 15px;
+            right: 15px;
+        }
+        
+        .brand-card {
+            position: relative;
+        }
+        
+        .brand-name {
+            font-size: 28px;
+            font-weight: bold;
+            color: #1a365d;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .brand-name .flag {
+            font-size: 20px;
+        }
+        
+        .brand-slogan {
+            color: #4a5568;
+            font-size: 16px;
+            margin-bottom: 20px;
+            font-style: italic;
+        }
+        
+        .brand-domain {
+            background: #e2e8f0;
+            color: #2d3748;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            margin-bottom: 20px;
+            display: inline-block;
+        }
+        
+        .brand-features {
+            list-style: none;
+        }
+        
+        .brand-features li {
+            padding: 5px 0;
+            color: #4a5568;
+            position: relative;
+            padding-left: 20px;
+        }
+        
+        .brand-features li::before {
+            content: "✓";
+            color: #48bb78;
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+        }
+        
+        .preview-section {
+            background: #f8f9fa;
+            border-radius: 16px;
+            padding: 40px;
+            margin-bottom: 30px;
+        }
+        
+        .preview-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .mock-navbar {
+            background: white;
+            border-radius: 12px;
+            padding: 20px 30px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .mock-logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .mock-logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #1a365d, #2d3748);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 18px;
+        }
+        
+        .mock-logo-text {
+            font-size: 24px;
+            font-weight: bold;
+            color: #1a365d;
+        }
+        
+        .mock-nav {
+            display: flex;
+            gap: 30px;
+        }
+        
+        .mock-nav a {
+            color: #4a5568;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            transition: background 0.2s;
+        }
+        
+        .mock-nav a:hover {
+            background: #e2e8f0;
+        }
+        
+        .mock-hero {
+            text-align: center;
+            padding: 60px 20px;
+            background: linear-gradient(135deg, #1a365d 0%, #2d3748 100%);
+            color: white;
+            border-radius: 12px;
+        }
+        
+        .mock-hero h1 {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+        
+        .mock-hero p {
+            font-size: 20px;
+            opacity: 0.9;
+            margin-bottom: 30px;
+        }
+        
+        .mock-button {
+            background: #f56500;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .mock-button:hover {
+            background: #dd5400;
+        }
+        
+        .brand-selector {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .selector-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .selector-btn {
+            background: white;
+            border: 2px solid #e2e8f0;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .selector-btn.active {
+            border-color: #f56500;
+            background: #f56500;
+            color: white;
+        }
+        
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .comparison-table th,
+        .comparison-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .comparison-table th {
+            background: #1a365d;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .comparison-table tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .rating-stars {
+            color: #f6ad55;
+        }
+        
+        @media (max-width: 768px) {
+            .brand-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .mock-navbar {
+                flex-direction: column;
+                gap: 20px;
+            }
+            
+            .mock-hero h1 {
+                font-size: 36px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎨 品牌方案预览工具</h1>
+            <p>为您的学术评价平台选择最佳品牌方案</p>
+        </div>
+
+        <div class="brand-grid">
+            <div class="brand-card recommended" data-brand="scholarsphere">
+                <div class="brand-name">
+                    <span class="flag">🇨🇳</span>学术港
+                    <span class="flag">🇺🇸</span>ScholarSphere
+                </div>
+                <div class="brand-slogan">"汇聚学术智慧，启航研究之旅"<br>"Where Academic Excellence Converges"</div>
+                <div class="brand-domain">scholarsphere.org</div>
+                <ul class="brand-features">
+                    <li>专业权威，寓意深刻</li>
+                    <li>国际化程度高</li>
+                    <li>易于记忆和传播</li>
+                    <li>域名可获得性好</li>
+                </ul>
+            </div>
+
+            <div class="brand-card" data-brand="researchiq">
+                <div class="brand-name">
+                    <span class="flag">🇨🇳</span>研见
+                    <span class="flag">🇺🇸</span>ResearchIQ
+                </div>
+                <div class="brand-slogan">"研以致用，见解深远"<br>"Smart Academic Discovery"</div>
+                <div class="brand-domain">researchiq.org</div>
+                <ul class="brand-features">
+                    <li>简洁有力，现代感强</li>
+                    <li>突出智能化特色</li>
+                    <li>符合科技趋势</li>
+                    <li>体现洞察力概念</li>
+                </ul>
+            </div>
+
+            <div class="brand-card" data-brand="peerwise">
+                <div class="brand-name">
+                    <span class="flag">🇨🇳</span>学者圈
+                    <span class="flag">🇺🇸</span>PeerWise
+                </div>
+                <div class="brand-slogan">"学者的专业社交圈"<br>"Peer Review, Powered by Community"</div>
+                <div class="brand-domain">peerwise.org</div>
+                <ul class="brand-features">
+                    <li>突出社区属性</li>
+                    <li>体现同行评议文化</li>
+                    <li>亲和力强</li>
+                    <li>容易建立归属感</li>
+                </ul>
+            </div>
+
+            <div class="brand-card" data-brand="academicvault">
+                <div class="brand-name">
+                    <span class="flag">🇨🇳</span>学研汇
+                    <span class="flag">🇺🇸</span>AcademiaVault
+                </div>
+                <div class="brand-slogan">"汇聚学术精英，共筑知识高地"<br>"Secure Academic Knowledge, Shared Wisdom"</div>
+                <div class="brand-domain">academiavault.com</div>
+                <ul class="brand-features">
+                    <li>强调汇聚概念</li>
+                    <li>突出安全可靠</li>
+                    <li>适合机构用户</li>
+                    <li>专业度很高</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="preview-section">
+            <div class="preview-header">
+                <h2>🔍 品牌效果预览</h2>
+                <p>查看不同品牌方案在实际网站中的效果</p>
+            </div>
+
+            <div class="brand-selector">
+                <div class="selector-buttons">
+                    <button class="selector-btn active" onclick="changeBrand('scholarsphere')">学术港</button>
+                    <button class="selector-btn" onclick="changeBrand('researchiq')">研见</button>
+                    <button class="selector-btn" onclick="changeBrand('peerwise')">学者圈</button>
+                    <button class="selector-btn" onclick="changeBrand('academicvault')">学研汇</button>
+                </div>
+            </div>
+
+            <div class="mock-navbar">
+                <div class="mock-logo">
+                    <div class="mock-logo-icon" id="logoIcon">学</div>
+                    <div class="mock-logo-text" id="logoText">学术港</div>
+                </div>
+                <nav class="mock-nav">
+                    <a href="#">浏览论文</a>
+                    <a href="#">智能搜索</a>
+                    <a href="#">社区讨论</a>
+                    <a href="#">个人中心</a>
+                </nav>
+            </div>
+
+            <div class="mock-hero">
+                <h1 id="heroTitle">学术港</h1>
+                <p id="heroSlogan">汇聚学术智慧，启航研究之旅</p>
+                <button class="mock-button">开始探索</button>
+            </div>
+        </div>
+
+        <div style="background: white; border-radius: 16px; padding: 30px;">
+            <h2 style="text-align: center; margin-bottom: 30px;">📊 品牌方案对比分析</h2>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>评估维度</th>
+                        <th>学术港/ScholarSphere</th>
+                        <th>研见/ResearchIQ</th>
+                        <th>学者圈/PeerWise</th>
+                        <th>学研汇/AcademiaVault</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>专业权威性</strong></td>
+                        <td><span class="rating-stars">★★★★★</span></td>
+                        <td><span class="rating-stars">★★★★☆</span></td>
+                        <td><span class="rating-stars">★★★☆☆</span></td>
+                        <td><span class="rating-stars">★★★★★</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>国际化程度</strong></td>
+                        <td><span class="rating-stars">★★★★★</span></td>
+                        <td><span class="rating-stars">★★★★☆</span></td>
+                        <td><span class="rating-stars">★★★★☆</span></td>
+                        <td><span class="rating-stars">★★★☆☆</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>易记忆度</strong></td>
+                        <td><span class="rating-stars">★★★★☆</span></td>
+                        <td><span class="rating-stars">★★★★★</span></td>
+                        <td><span class="rating-stars">★★★★☆</span></td>
+                        <td><span class="rating-stars">★★★☆☆</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>社区亲和力</strong></td>
+                        <td><span class="rating-stars">★★★★☆</span></td>
+                        <td><span class="rating-stars">★★★☆☆</span></td>
+                        <td><span class="rating-stars">★★★★★</span></td>
+                        <td><span class="rating-stars">★★★☆☆</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>现代科技感</strong></td>
+                        <td><span class="rating-stars">★★★☆☆</span></td>
+                        <td><span class="rating-stars">★★★★★</span></td>
+                        <td><span class="rating-stars">★★★☆☆</span></td>
+                        <td><span class="rating-stars">★★★★☆</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>域名可用性</strong></td>
+                        <td><span class="rating-stars">★★★★☆</span></td>
+                        <td><span class="rating-stars">★★★★☆</span></td>
+                        <td><span class="rating-stars">★★★★★</span></td>
+                        <td><span class="rating-stars">★★★☆☆</span></td>
+                    </tr>
+                    <tr style="background: #f8f9fa; font-weight: bold;">
+                        <td><strong>综合推荐度</strong></td>
+                        <td><span class="rating-stars">★★★★★</span></td>
+                        <td><span class="rating-stars">★★★★☆</span></td>
+                        <td><span class="rating-stars">★★★★☆</span></td>
+                        <td><span class="rating-stars">★★★☆☆</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div style="text-align: center; margin-top: 40px; padding: 30px; background: linear-gradient(135deg, #1a365d 0%, #2d3748 100%); border-radius: 16px; color: white;">
+            <h2>💡 最终建议</h2>
+            <p style="font-size: 18px; margin: 20px 0;">基于您的平台特色和目标用户群体，我们强烈推荐选择</p>
+            <div style="font-size: 32px; font-weight: bold; margin: 20px 0; color: #f56500;">"学术港 / ScholarSphere"</div>
+            <p style="opacity: 0.9;">这个品牌方案既体现了学术的专业性，又展现了社区的包容性，最适合您的平台定位！</p>
+        </div>
+    </div>
+
+    <script>
+        const brandData = {
+            scholarsphere: {
+                icon: '学',
+                chineseName: '学术港',
+                englishName: 'ScholarSphere',
+                slogan: '汇聚学术智慧，启航研究之旅'
+            },
+            researchiq: {
+                icon: '研',
+                chineseName: '研见',
+                englishName: 'ResearchIQ',
+                slogan: '研以致用，见解深远'
+            },
+            peerwise: {
+                icon: '学',
+                chineseName: '学者圈',
+                englishName: 'PeerWise',
+                slogan: '学者的专业社交圈'
+            },
+            academicvault: {
+                icon: '学',
+                chineseName: '学研汇',
+                englishName: 'AcademiaVault',
+                slogan: '汇聚学术精英，共筑知识高地'
+            }
+        };
+
+        function changeBrand(brandKey) {
+            const brand = brandData[brandKey];
+            
+            // 更新选择器状态
+            document.querySelectorAll('.selector-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // 更新预览内容
+            document.getElementById('logoIcon').textContent = brand.icon;
+            document.getElementById('logoText').textContent = brand.chineseName;
+            document.getElementById('heroTitle').textContent = brand.chineseName;
+            document.getElementById('heroSlogan').textContent = brand.slogan;
+            
+            // 添加动画效果
+            const elements = ['logoIcon', 'logoText', 'heroTitle', 'heroSlogan'];
+            elements.forEach(id => {
+                const el = document.getElementById(id);
+                el.style.transform = 'scale(1.05)';
+                setTimeout(() => {
+                    el.style.transform = 'scale(1)';
+                }, 200);
+            });
+        }
+
+        // 为卡片添加点击事件
+        document.querySelectorAll('.brand-card').forEach(card => {
+            card.addEventListener('click', () => {
+                const brand = card.dataset.brand;
+                changeBrand(brand);
+                
+                // 更新选择器状态
+                document.querySelectorAll('.selector-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                
+                const brandNames = {
+                    scholarsphere: '学术港',
+                    researchiq: '研见', 
+                    peerwise: '学者圈',
+                    academicvault: '学研汇'
+                };
+                
+                document.querySelectorAll('.selector-btn').forEach(btn => {
+                    if (btn.textContent === brandNames[brand]) {
+                        btn.classList.add('active');
+                    }
+                });
+            });
+        });
+
+        // 初始化动画
+        window.addEventListener('load', () => {
+            document.querySelectorAll('.brand-card').forEach((card, index) => {
+                setTimeout(() => {
+                    card.style.opacity = '0';
+                    card.style.transform = 'translateY(20px)';
+                    card.style.transition = 'all 0.5s ease';
+                    
+                    setTimeout(() => {
+                        card.style.opacity = '1';
+                        card.style.transform = 'translateY(0)';
+                    }, 100);
+                }, index * 200);
+            });
+        });
+    </script>
+</body>
+</html>

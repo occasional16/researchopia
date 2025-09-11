@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { Search, TrendingUp, Users, BookOpen, Star, MessageCircle, Eye } from 'lucide-react'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
+import BrandLogo from '@/components/ui/BrandLogo'
 
 interface SiteStats {
   totalPapers: number
@@ -101,12 +102,22 @@ export default function HomePage() {
   return (
     <div className="space-y-8">
       {/* Hero Section */}
-      <div className="text-center py-12 bg-gradient-to-r from-blue-600 to-purple-700 rounded-lg text-white">
+      <div className="text-center py-12 bg-gradient-to-r from-purple-600 to-blue-700 rounded-lg text-white">
+        {/* Logo展示 */}
+        <div className="mb-6">
+          <BrandLogo 
+            size={130} 
+            variant="icon-only" 
+            theme="gradient" 
+            animated={true}
+            className="mx-auto"
+          />
+        </div>
         <h1 className="text-5xl font-bold mb-4">
-          学术评价平台
+          研学港 ResearchHub
         </h1>
         <p className="text-xl mb-8 opacity-90">
-          发现优质学术论文，分享研究见解，构建学术社区
+          研学并进，智慧共享 | Where Research Meets Community
         </p>
         
         {/* Search Bar */}
@@ -117,12 +128,12 @@ export default function HomePage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="搜索论文标题、作者、DOI或关键词..."
-              className="w-full pl-12 pr-32 py-4 text-gray-900 bg-white rounded-lg text-lg focus:outline-none focus:ring-2 focus:ring-blue-300"
+              className="w-full pl-12 pr-32 py-4 text-gray-900 bg-white rounded-lg text-lg focus:outline-none focus:ring-2 focus:ring-purple-300"
             />
             <Search className="absolute left-4 top-4 h-6 w-6 text-gray-400" />
             <button
               type="submit"
-              className="absolute right-2 top-2 px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+              className="absolute right-2 top-2 px-6 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors"
             >
               搜索
             </button>
@@ -133,13 +144,13 @@ export default function HomePage() {
           <div className="mt-8 space-x-4">
             <button
               onClick={() => window.dispatchEvent(new CustomEvent('showAuthModal', { detail: { mode: 'signup' } }))}
-              className="px-8 py-3 bg-white text-blue-600 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
+              className="px-8 py-3 bg-white text-purple-600 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
             >
               立即注册
             </button>
             <button
               onClick={() => window.dispatchEvent(new CustomEvent('showAuthModal', { detail: { mode: 'login' } }))}
-              className="px-8 py-3 border-2 border-white text-white rounded-lg font-semibold hover:bg-white hover:text-blue-600 transition-colors"
+              className="px-8 py-3 border-2 border-white text-white rounded-lg font-semibold hover:bg-white hover:text-purple-600 transition-colors"
             >
               登录
             </button>
@@ -273,22 +284,22 @@ export default function HomePage() {
       {!isAuthenticated && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
           <h3 className="text-lg font-semibold text-blue-900 mb-2">
-            欢迎来到学术评价平台！
+            欢迎来到研学港！
           </h3>
           <p className="text-blue-700 mb-4">
-            这里是一个专业的学术论文评价和讨论社区。您可以：
+            研学港是新一代学术评价与研学社区平台，研学并进，智慧共享。您可以：
           </p>
           <ul className="text-blue-700 space-y-1 mb-4">
             <li>• 浏览和搜索最新的学术论文</li>
             <li>• 为论文提供专业评分和评论</li>
-            <li>• 与其他研究者交流学术见解</li>
-            <li>• 管理您的个人学术档案</li>
+            <li>• 与全球研究者交流学术见解</li>
+            <li>• 构建您的个人研学档案</li>
           </ul>
           <button
             onClick={() => window.dispatchEvent(new CustomEvent('showAuthModal', { detail: { mode: 'signup' } }))}
             className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
-            立即注册，开始使用
+            立即注册，开始研学之旅
           </button>
         </div>
       )}

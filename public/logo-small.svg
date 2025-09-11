@@ -1,0 +1,35 @@
+<svg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+  <!-- 研学港 Logo - 学术港湾简化版 -->
+  
+  <!-- 港口波浪底部 -->
+  <path d="M 5 45 Q 15 40, 25 45 T 45 45 T 65 45" fill="none" stroke="#a855f7" stroke-width="2" opacity="0.6"/>
+  
+  <!-- 书本主体 -->
+  <g transform="translate(30,30)">
+    <rect x="-15" y="-12" width="30" height="18" fill="#7c3aed" rx="2"/>
+    <rect x="-13" y="-10" width="26" height="14" fill="#8b5cf6" rx="1"/>
+    
+    <!-- 书页线条 -->
+    <line x1="-8" y1="-6" x2="8" y2="-6" stroke="white" stroke-width="1"/>
+    <line x1="-8" y1="-2" x2="8" y2="-2" stroke="white" stroke-width="1"/>
+    <line x1="-8" y1="2" x2="8" y2="2" stroke="white" stroke-width="1"/>
+    
+    <!-- 中心分割线 -->
+    <line x1="0" y1="-10" x2="0" y2="4" stroke="#6d28d9" stroke-width="0.8"/>
+  </g>
+  
+  <!-- 灯塔指引 -->
+  <g transform="translate(45,20)">
+    <rect x="-1" y="-6" width="2" height="12" fill="#f59e0b"/>
+    <circle cx="0" cy="-7" r="2.5" fill="#fbbf24"/>
+    <!-- 光芒 -->
+    <g stroke="#fbbf24" stroke-width="1" opacity="0.7">
+      <line x1="-4" y1="-7" x2="-6" y2="-7"/>
+      <line x1="4" y1="-7" x2="6" y2="-7"/>
+      <line x1="0" y1="-11" x2="0" y2="-13"/>
+    </g>
+  </g>
+  
+  <!-- RH 标识 -->
+  <text x="30" y="52" font-family="Arial, sans-serif" font-size="8" font-weight="bold" fill="#7c3aed" text-anchor="middle">RH</text>
+</svg>

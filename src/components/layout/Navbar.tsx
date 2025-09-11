@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { Search, User, LogOut, Plus, UserCircle, Settings, Shield } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import AuthModal from '@/components/auth/AuthModal'
@@ -74,11 +75,26 @@ export default function Navbar() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
-            <Link href="/" className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">AR</span>
+            <Link href="/" className="flex items-center space-x-3 group">
+              <div className="relative">
+                <Image 
+                  src="/logo-small.svg" 
+                  alt="研学港 ResearchHub Logo" 
+                  width={40} 
+                  height={40}
+                  className="hover:scale-110 transition-all duration-300 filter group-hover:drop-shadow-lg"
+                />
+                {/* 悬停时的光晕效果 */}
+                <div className="absolute inset-0 rounded-full bg-gradient-to-r from-purple-400 to-blue-500 opacity-0 group-hover:opacity-20 transition-all duration-300 blur-sm"></div>
               </div>
-              <span className="text-xl font-bold text-gray-900">学术评价</span>
+              <div className="hidden md:block">
+                <div className="text-xl font-bold text-gray-900 group-hover:text-purple-600 transition-colors duration-200">研学港</div>
+                <div className="text-xs text-gray-500 group-hover:text-purple-400 transition-colors duration-200 -mt-1">ResearchHub</div>
+              </div>
+              {/* 移动端仅显示简化版本 */}
+              <div className="md:hidden">
+                <div className="text-lg font-bold text-gray-900 group-hover:text-purple-600 transition-colors duration-200">研学港</div>
+              </div>
             </Link>
 
             {/* Search Bar */}

@@ -19,29 +19,29 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "研学港 | ResearchHub - 研学并进，智慧共享",
-  description: "研学港(ResearchHub)是新一代学术评价与研学社区平台。研学并进，智慧共享，连接全球学者，促进学术交流与协作创新。Where Research Meets Community.",
-  keywords: ["研学港", "ResearchHub", "学术评价", "研学社区", "论文评分", "学术交流", "智慧共享", "研究协作", "学者社区"],
-  authors: [{ name: "ResearchHub Team" }],
-  creator: "ResearchHub",
-  publisher: "研学港 ResearchHub",
+  title: "研学港 | Researchopia - 研学并进，智慧共享",
+  description: "研学港(Researchopia)是新一代学术评价与研学社区平台。研学并进，智慧共享，连接全球学者，促进学术交流与协作创新。Where Research Meets Community.",
+  keywords: ["研学港", "Researchopia", "学术评价", "研学社区", "论文评分", "学术交流", "智慧共享", "研究协作", "学者社区"],
+  authors: [{ name: "Researchopia Team" }],
+  creator: "Researchopia",
+  publisher: "研学港 Researchopia",
   formatDetection: {
     email: false,
     address: false,
     telephone: false,
   },
   metadataBase: new URL(process.env.NODE_ENV === 'production' 
-    ? 'https://research-hub.cn' 
-    : 'http://localhost:3006'
+    ? 'https://researchopia.com' 
+    : 'http://localhost:3009'
   ),
   alternates: {
     canonical: '/',
   },
   openGraph: {
-    title: "研学港 | ResearchHub - 研学并进，智慧共享",
-    description: "研学港(ResearchHub) - 新一代学术评价与研学社区平台。Where Research Meets Community. 连接全球学者，构建智慧共享的研学生态。",
+    title: "研学港 | Researchopia - 研学并进，智慧共享",
+    description: "研学港(Researchopia) - 新一代学术评价与研学社区平台。Where Research Meets Community. 连接全球学者，构建智慧共享的研学生态。",
     url: '/',
-    siteName: "研学港 ResearchHub",
+    siteName: "研学港 Researchopia",
     locale: 'zh_CN',
     type: 'website',
     images: [
@@ -49,13 +49,13 @@ export const metadata: Metadata = {
         url: '/og-image.png',
         width: 1200,
         height: 630,
-        alt: '研学港 ResearchHub - 研学并进，智慧共享',
+        alt: '研学港 Researchopia - 研学并进，智慧共享',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: "研学港 | ResearchHub - Where Research Meets Community",
+    title: "研学港 | Researchopia - Where Research Meets Community",
     description: "研学并进，智慧共享 | 新一代学术评价与研学社区平台",
     images: ['/twitter-image.png'],
   },

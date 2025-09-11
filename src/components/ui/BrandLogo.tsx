@@ -55,7 +55,7 @@ export default function BrandLogo({
           研学港
         </div>
         <div className={`text-${Math.round(size/12)}xl ${theme === 'light' ? 'text-gray-600' : theme === 'dark' ? 'text-gray-300' : 'text-white opacity-80'} -mt-1`}>
-          ResearchHub
+          Researchopia
         </div>
       </div>
     )
@@ -158,7 +158,7 @@ export default function BrandLogo({
               fill={colors.text} 
               textAnchor="middle"
             >
-              ResearchHub
+              Researchopia
             </text>
           )}
         </svg>

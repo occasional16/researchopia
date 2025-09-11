@@ -79,7 +79,7 @@ export default function Navbar() {
               <div className="relative">
                 <Image 
                   src="/logo-small.svg" 
-                  alt="研学港 ResearchHub Logo" 
+                  alt="研学港 Researchopia Logo" 
                   width={40} 
                   height={40}
                   className="hover:scale-110 transition-all duration-300 filter group-hover:drop-shadow-lg"
@@ -89,7 +89,7 @@ export default function Navbar() {
               </div>
               <div className="hidden md:block">
                 <div className="text-xl font-bold text-gray-900 group-hover:text-purple-600 transition-colors duration-200">研学港</div>
-                <div className="text-xs text-gray-500 group-hover:text-purple-400 transition-colors duration-200 -mt-1">ResearchHub</div>
+                <div className="text-xs text-gray-500 group-hover:text-purple-400 transition-colors duration-200 -mt-1">Researchopia</div>
               </div>
               {/* 移动端仅显示简化版本 */}
               <div className="md:hidden">

@@ -103,7 +103,7 @@ export default function LoadingLogo({
       {showText && (
         <div className="mt-3 text-center">
           <div className="text-sm font-semibold text-purple-600 gradient-text">
-            研学港 ResearchHub
+            研学港 Researchopia
           </div>
           <div className="text-xs text-gray-500 mt-1">
             加载中...

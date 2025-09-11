@@ -35,5 +35,5 @@
   </g>
   
   <!-- RH 字母 -->
-  <text x="60" y="100" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#7c3aed" text-anchor="middle">ResearchHub</text>
+    <text x="60" y="100" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="rgba(255,255,255,0.95)" text-anchor="middle">Researchopia</text>
 </svg>

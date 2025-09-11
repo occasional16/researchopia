@@ -105,7 +105,7 @@
         <div class="instructions">
             <h3>📋 使用说明</h3>
             <ol>
-                <li><strong>启动本地服务</strong>：确保本地已运行 <code>npm run dev</code></li>
+                <li><strong>启动本地服务</strong>：确保本地已运行 <code>npm run dev</code> (当前端口：3006)</li>
                 <li><strong>对比内容</strong>：查看左右两个页面的差异</li>
                 <li><strong>重点检查</strong>：
                     <ul>
@@ -127,9 +127,9 @@
         <div class="comparison">
             <div class="frame-container">
                 <div class="frame-header">
-                    🏠 本地版本 (localhost:3000)
+                    🏠 本地版本 (localhost:3006)
                 </div>
-                <iframe id="localFrame" src="http://localhost:3000"></iframe>
+                <iframe id="localFrame" src="http://localhost:3006"></iframe>
             </div>
             
             <div class="frame-container">
@@ -153,7 +153,7 @@
             
             // 添加时间戳强制刷新
             const timestamp = new Date().getTime();
-            localFrame.src = `http://localhost:3000?t=${timestamp}`;
+            localFrame.src = `http://localhost:3006?t=${timestamp}`;
             productionFrame.src = `https://academic-rating.vercel.app/?t=${timestamp}`;
             
             status.className = 'status info';

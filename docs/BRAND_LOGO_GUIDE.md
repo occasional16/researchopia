@@ -1,11 +1,11 @@
-# 研学港 ResearchHub 品牌标识使用指南
+# 研学港 Researchopia 品牌标识使用指南
 
 ## 📋 概览
 
-**品牌名称**: 研学港 ResearchHub  
+**品牌名称**: 研学港 Researchopia  
 **标语**: 研学并进，智慧共享 | Where Research Meets Community  
 **创建日期**: 2025年9月11日  
-**版本**: 1.0  
+**版本**: 2.0  
 
 ## 🎨 品牌标识设计理念
 
@@ -15,7 +15,7 @@
 - **港口波浪** 🌊 - 代表知识的流动和传播
 - **学术书本** 📚 - 象征学术研究的核心
 - **指引灯塔** 💡 - 寓意为研究者指明方向
-- **ResearchHub字样** - 体现国际化视野
+- **Researchopia字样** - 体现"研究者的理想国"愿景
 
 ### 配色方案
 - **主色**: `#7c3aed` (紫色) - 代表智慧、学术权威
@@ -163,6 +163,6 @@ interface LoadingLogoProps {
 
 ---
 
-**版权所有** © 2025 研学港 ResearchHub  
+**版权所有** © 2025 研学港 Researchopia  
 **设计团队**: GitHub Copilot AI Assistant  
 **技术实现**: Next.js 15 + React 19 + TypeScript

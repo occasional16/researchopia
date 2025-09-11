@@ -114,7 +114,7 @@ export default function HomePage() {
           />
         </div>
         <h1 className="text-5xl font-bold mb-4">
-          研学港 ResearchHub
+          研学港 Researchopia
         </h1>
         <p className="text-xl mb-8 opacity-90">
           研学并进，智慧共享 | Where Research Meets Community

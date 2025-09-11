@@ -1,6 +1,6 @@
-# 研学港 ResearchHub 部署脚本
+# 研学港 Researchopia 部署脚本
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "研学港 ResearchHub 部署脚本" -ForegroundColor Cyan  
+Write-Host "研学港 Researchopia 部署脚本" -ForegroundColor Cyan  
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 

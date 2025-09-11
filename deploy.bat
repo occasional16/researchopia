@@ -1,6 +1,8 @@
 @echo off
 echo ========================================
-echo 研学港 ResearchHub 部署脚本
+@echo off
+echo.
+echo 研学港 Researchopia 部署脚本
 echo ========================================
 echo.
 

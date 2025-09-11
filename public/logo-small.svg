@@ -30,6 +30,6 @@
     </g>
   </g>
   
-  <!-- RH 标识 -->
-  <text x="30" y="52" font-family="Arial, sans-serif" font-size="8" font-weight="bold" fill="#7c3aed" text-anchor="middle">RH</text>
+  <!-- RO 标识 -->
+  <text x="30" y="52" font-family="Arial, sans-serif" font-size="7" font-weight="bold" fill="#7c3aed" text-anchor="middle">RO</text>
 </svg>

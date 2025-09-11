@@ -63,8 +63,8 @@ export default function BrandLogo({
 
   return (
     <div 
-      className={`cursor-pointer ${className} ${animated ? 'animate-float' : ''}`}
-      onClick={onClick}
+      className={`${onClick ? 'cursor-pointer' : ''} ${className} ${animated ? 'animate-float' : ''}`}
+      {...(onClick && { onClick })}
     >
       <div className="relative inline-block">
         <svg 

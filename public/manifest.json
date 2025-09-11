@@ -1,41 +1,27 @@
 {
-  "name": "学术评价平台",
-  "short_name": "学术评价",
-  "description": "专业的学术论文评价和讨论平台",
+  "name": "研学港 Researchopia",
+  "short_name": "研学港",
+  "description": "研学并进，智慧共享 - 新一代学术评价与研学社区平台",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#0070f3",
+  "theme_color": "#7c3aed",
   "orientation": "portrait",
   "scope": "/",
   "icons": [
     {
-      "src": "/icon-192.png",
+      "src": "/logo-main.svg",
       "sizes": "192x192",
-      "type": "image/png",
+      "type": "image/svg+xml",
       "purpose": "any maskable"
     },
     {
-      "src": "/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
+      "src": "/logo-main.svg",
+      "sizes": "512x512", 
+      "type": "image/svg+xml",
       "purpose": "any maskable"
     }
   ],
-  "screenshots": [
-    {
-      "src": "/screenshot-wide.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "form_factor": "wide"
-    },
-    {
-      "src": "/screenshot-narrow.png",
-      "sizes": "640x1136",
-      "type": "image/png",
-      "form_factor": "narrow"
-    }
-  ],
-  "categories": ["education", "productivity", "reference"],
+  "categories": ["education", "research", "academic"],
   "lang": "zh-CN"
 }

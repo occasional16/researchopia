@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vercel 部署助手</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .step {
+            margin: 20px 0;
+            padding: 20px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            background: #fafafa;
+        }
+        .step h3 {
+            color: #333;
+            margin-top: 0;
+        }
+        .step.current {
+            border-color: #0070f3;
+            background: #e8f4fd;
+        }
+        .btn {
+            background: #0070f3;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+            display: inline-block;
+            margin: 10px 10px 10px 0;
+        }
+        .btn:hover {
+            background: #0051cc;
+        }
+        .btn.secondary {
+            background: #666;
+        }
+        .btn.secondary:hover {
+            background: #555;
+        }
+        .info {
+            background: #e3f2fd;
+            border: 1px solid #bbdefb;
+            color: #1976d2;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+        }
+        .warning {
+            background: #fff3e0;
+            border: 1px solid #ffcc02;
+            color: #f57c00;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+        }
+        .success {
+            background: #e8f5e8;
+            border: 1px solid #a5d6a7;
+            color: #2e7d32;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+        }
+        .code {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Consolas', monospace;
+            font-size: 14px;
+            margin: 10px 0;
+        }
+        .highlight {
+            background: #ffeb3b;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Vercel 部署助手</h1>
+        
+        <div class="info">
+            <strong>项目信息：</strong><br>
+            项目名称：academic-rating<br>
+            项目ID：prj_QAnIf9vaj6vfTbZBisI3yr6UB5d3<br>
+            生产URL：https://academic-rating.vercel.app
+        </div>
+
+        <div class="step current">
+            <h3>📍 当前状态</h3>
+            <p>选项1的脚本执行了但Git仍有问题。现在需要直接通过Vercel Dashboard或CLI进行部署。</p>
+        </div>
+
+        <div class="step">
+            <h3>🎯 方法1：Vercel Dashboard（推荐）</h3>
+            <p>按以下步骤操作：</p>
+            <ol>
+                <li>点击下方按钮打开Vercel Dashboard</li>
+                <li>找到 <span class="highlight">academic-rating</span> 项目卡片</li>
+                <li>点击项目名称进入项目详情</li>
+                <li>点击 <span class="highlight">"Deployments"</span> 标签</li>
+                <li>在最新部署记录右侧点击 <span class="highlight">"⋯"</span> 菜单</li>
+                <li>选择 <span class="highlight">"Redeploy"</span></li>
+                <li><strong>重要：</strong>取消勾选 "Use existing Build Cache"</li>
+                <li>点击确认部署</li>
+            </ol>
+            
+            <a href="https://vercel.com/dashboard" target="_blank" class="btn">打开 Vercel Dashboard</a>
+            <a href="https://vercel.com/team_3qZg6D4ijwWXoogKSgIhuLAb/academic-rating" target="_blank" class="btn secondary">直接打开项目页面</a>
+        </div>
+
+        <div class="step">
+            <h3>⚡ 方法2：命令行部署</h3>
+            <p>在PowerShell中执行：</p>
+            <div class="code">
+cd "d:\AI\Rating\academic-rating"<br>
+npm install -g vercel<br>
+vercel login<br>
+vercel --prod
+            </div>
+            <button onclick="copyCommands()" class="btn">复制命令</button>
+        </div>
+
+        <div class="step">
+            <h3>🔍 验证部署</h3>
+            <p>部署完成后（约2-3分钟）：</p>
+            <ol>
+                <li>访问生产环境URL</li>
+                <li>对比本地版本</li>
+                <li>确认页面内容一致</li>
+            </ol>
+            
+            <a href="https://academic-rating.vercel.app" target="_blank" class="btn">访问生产环境</a>
+            <a href="http://localhost:3006" target="_blank" class="btn secondary">访问本地版本</a>
+            <a href="http://localhost:3006/version-compare.html" target="_blank" class="btn secondary">打开对比工具</a>
+        </div>
+
+        <div class="warning">
+            <strong>⚠️ 如果找不到"Redeploy"选项：</strong><br>
+            1. 确保你已登录正确的Vercel账号<br>
+            2. 检查是否在正确的团队/组织下<br>
+            3. 刷新Vercel Dashboard页面<br>
+            4. 尝试使用命令行方法
+        </div>
+
+        <div class="success" id="successMessage" style="display: none;">
+            ✅ 部署成功！页面将在几分钟内更新。
+        </div>
+    </div>
+
+    <script>
+        function copyCommands() {
+            const commands = 'cd "d:\\AI\\Rating\\academic-rating"\nnpm install -g vercel\nvercel login\nvercel --prod';
+            navigator.clipboard.writeText(commands).then(function() {
+                alert('命令已复制到剪贴板！');
+            });
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(function() {
+                alert('命令已复制到剪贴板！');
+            });
+        }
+
+        // 模拟部署状态检查
+        function checkDeployment() {
+            // 这里可以添加实际的状态检查逻辑
+            setTimeout(() => {
+                document.getElementById('successMessage').style.display = 'block';
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

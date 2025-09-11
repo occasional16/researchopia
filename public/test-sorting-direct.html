@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>排序功能测试</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        button { margin: 10px; padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .results { margin: 20px 0; }
+        .paper { margin: 10px 0; padding: 15px; border: 1px solid #ddd; border-radius: 8px; background: #f8f9fa; }
+        .stats { color: #666; margin-top: 5px; }
+        .loading { color: #007bff; }
+        .error { color: #dc3545; }
+    </style>
+</head>
+<body>
+    <h1>论文排序功能测试</h1>
+    
+    <div>
+        <button onclick="testSorting('recent_comments')">🕒 最新评论排序</button>
+        <button onclick="testSorting('rating')">⭐ 评分最高排序</button>
+        <button onclick="testSorting('comments')">💬 评论最多排序</button>
+        <button onclick="clearResults()">🗑️ 清空结果</button>
+    </div>
+    
+    <div id="status"></div>
+    <div id="results" class="results"></div>
+    
+    <script>
+        async function testSorting(sortBy) {
+            const statusDiv = document.getElementById('status');
+            const resultsDiv = document.getElementById('results');
+            
+            statusDiv.innerHTML = `<div class="loading">🔄 正在测试 ${getSortName(sortBy)} 排序...</div>`;
+            
+            try {
+                const startTime = Date.now();
+                const response = await fetch(`/api/papers/paginated?page=1&limit=10&sortBy=${sortBy}`);
+                const duration = Date.now() - startTime;
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                
+                statusDiv.innerHTML = `<div style="color: green;">✅ ${getSortName(sortBy)} 排序成功 (${duration}ms)</div>`;
+                
+                let html = `
+                    <h3>${getSortName(sortBy)} 排序结果</h3>
+                    <p><strong>返回条数:</strong> ${data.data.length} | <strong>总条数:</strong> ${data.pagination.total}</p>
+                `;
+                
+                data.data.forEach((paper, index) => {
+                    const ratings = paper.ratings || [];
+                    let avgRating = 0;
+                    if (ratings.length > 0) {
+                        const totalScore = ratings.reduce((sum, r) => sum + r.overall_score, 0);
+                        avgRating = (totalScore / ratings.length).toFixed(1);
+                    }
+                    
+                    html += `
+                        <div class="paper">
+                            <strong>${index + 1}. ${paper.title}</strong>
+                            <div class="stats">
+                                💬 ${paper.comment_count || 0}评论 | 
+                                ⭐ ${avgRating}分 (${ratings.length}个评分) | 
+                                👁 ${paper.view_count || 0}次查看
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                resultsDiv.innerHTML = html;
+                
+            } catch (error) {
+                statusDiv.innerHTML = `<div class="error">❌ ${getSortName(sortBy)} 排序失败: ${error.message}</div>`;
+                console.error('Sorting test error:', error);
+            }
+        }
+        
+        function getSortName(sortBy) {
+            const names = {
+                'recent_comments': '最新评论',
+                'rating': '评分最高', 
+                'comments': '评论最多'
+            };
+            return names[sortBy] || sortBy;
+        }
+        
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+            document.getElementById('status').innerHTML = '';
+        }
+        
+        // 页面加载后自动测试最新评论排序
+        window.onload = function() {
+            testSorting('recent_comments');
+        };
+    </script>
+</body>
+</html>

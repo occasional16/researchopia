@@ -1,103 +1,297 @@
-import Image from "next/image";
+'use client'
 
-export default function Home() {
+import { useState, useEffect } from 'react'
+import { Search, TrendingUp, Users, BookOpen, Star, MessageCircle, Eye } from 'lucide-react'
+import Link from 'next/link'
+import { useAuth } from '@/contexts/AuthContext'
+
+interface SiteStats {
+  totalPapers: number
+  totalUsers: number
+  totalVisits: number
+  todayVisits: number
+}
+
+interface RecentComment {
+  id: string
+  title: string
+  authors: string
+  doi: string
+  journal: string
+  created_at: string
+  latest_comment: {
+    id: string
+    content: string
+    created_at: string
+    user: {
+      username: string
+    } | null
+  }
+  comment_count: number
+  rating_count: number
+  average_rating: number
+}
+
+export default function HomePage() {
+  const { user, isAuthenticated } = useAuth()
+  const [searchQuery, setSearchQuery] = useState('')
+  const [stats, setStats] = useState<SiteStats>({
+    totalPapers: 0,
+    totalUsers: 0,
+    totalVisits: 0,
+    todayVisits: 0
+  })
+  const [recentComments, setRecentComments] = useState<RecentComment[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const loadData = async () => {
+      setLoading(true)
+      
+      try {
+        // 并行加载统计数据和评论数据
+        const [statsResponse, commentsResponse] = await Promise.all([
+          fetch('/api/site/statistics', { 
+            cache: 'no-store',
+            headers: { 'Cache-Control': 'max-age=30' } // 30秒缓存
+          }),
+          fetch('/api/papers/recent-comments?limit=5', {
+            cache: 'no-store',
+            headers: { 'Cache-Control': 'max-age=60' } // 60秒缓存
+          })
+        ])
+
+        // 处理统计数据
+        if (statsResponse.ok) {
+          const statsResult = await statsResponse.json()
+          if (statsResult.success && statsResult.data) {
+            setStats({
+              totalPapers: statsResult.data.totalPapers || 0,
+              totalUsers: statsResult.data.totalUsers || 0,
+              totalVisits: statsResult.data.totalVisits || 0,
+              todayVisits: statsResult.data.todayVisits || 0
+            })
+          }
+        }
+
+        // 处理评论数据
+        if (commentsResponse.ok) {
+          const commentsData = await commentsResponse.json()
+          setRecentComments(commentsData.data || [])
+        }
+
+      } catch (error) {
+        console.error('Failed to load data:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadData()
+  }, [])
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (searchQuery.trim()) {
+      const encodedQuery = encodeURIComponent(searchQuery.trim())
+      window.location.href = `/search?q=${encodedQuery}`
+    }
+  }
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+    <div className="space-y-8">
+      {/* Hero Section */}
+      <div className="text-center py-12 bg-gradient-to-r from-blue-600 to-purple-700 rounded-lg text-white">
+        <h1 className="text-5xl font-bold mb-4">
+          学术评价平台
+        </h1>
+        <p className="text-xl mb-8 opacity-90">
+          发现优质学术论文，分享研究见解，构建学术社区
+        </p>
+        
+        {/* Search Bar */}
+        <div className="max-w-2xl mx-auto">
+          <form onSubmit={handleSearch} className="relative">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="搜索论文标题、作者、DOI或关键词..."
+              className="w-full pl-12 pr-32 py-4 text-gray-900 bg-white rounded-lg text-lg focus:outline-none focus:ring-2 focus:ring-blue-300"
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+            <Search className="absolute left-4 top-4 h-6 w-6 text-gray-400" />
+            <button
+              type="submit"
+              className="absolute right-2 top-2 px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+            >
+              搜索
+            </button>
+          </form>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+
+        {!isAuthenticated && (
+          <div className="mt-8 space-x-4">
+            <button
+              onClick={() => window.dispatchEvent(new CustomEvent('showAuthModal', { detail: { mode: 'signup' } }))}
+              className="px-8 py-3 bg-white text-blue-600 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
+            >
+              立即注册
+            </button>
+            <button
+              onClick={() => window.dispatchEvent(new CustomEvent('showAuthModal', { detail: { mode: 'login' } }))}
+              className="px-8 py-3 border-2 border-white text-white rounded-lg font-semibold hover:bg-white hover:text-blue-600 transition-colors"
+            >
+              登录
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Stats Section - 响应式紧凑布局 */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6">
+        <div className="bg-white rounded-lg shadow p-4 md:p-6 text-center">
+          <BookOpen className="h-6 w-6 md:h-8 md:w-8 text-blue-600 mx-auto mb-2" />
+          <div className="text-lg md:text-2xl font-bold text-gray-900">{loading ? '...' : stats.totalPapers}</div>
+          <div className="text-xs md:text-sm text-gray-600">学术论文</div>
+        </div>
+        <div className="bg-white rounded-lg shadow p-4 md:p-6 text-center">
+          <Users className="h-6 w-6 md:h-8 md:w-8 text-green-600 mx-auto mb-2" />
+          <div className="text-lg md:text-2xl font-bold text-gray-900">{loading ? '...' : stats.totalUsers}</div>
+          <div className="text-xs md:text-sm text-gray-600">注册用户</div>
+        </div>
+        <div className="bg-white rounded-lg shadow p-4 md:p-6 text-center">
+          <Eye className="h-6 w-6 md:h-8 md:w-8 text-purple-600 mx-auto mb-2" />
+          <div className="text-lg md:text-2xl font-bold text-gray-900">{loading ? '...' : stats.totalVisits}</div>
+          <div className="text-xs md:text-sm text-gray-600">总访问量</div>
+        </div>
+        <div className="bg-white rounded-lg shadow p-4 md:p-6 text-center">
+          <TrendingUp className="h-6 w-6 md:h-8 md:w-8 text-orange-600 mx-auto mb-2" />
+          <div className="text-lg md:text-2xl font-bold text-gray-900">{loading ? '...' : stats.todayVisits}</div>
+          <div className="text-xs md:text-sm text-gray-600">今日访问</div>
+        </div>
+      </div>
+
+      {/* Quick Actions */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Link
+          href="/papers"
+          className="block bg-white rounded-lg shadow hover:shadow-md transition-shadow p-6"
         >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+          <div className="flex items-center space-x-3">
+            <BookOpen className="h-8 w-8 text-blue-600" />
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">浏览论文</h3>
+              <p className="text-gray-600">发现最新的学术研究成果</p>
+            </div>
+          </div>
+        </Link>
+
+        <Link
+          href="/search"
+          className="block bg-white rounded-lg shadow hover:shadow-md transition-shadow p-6"
         >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+          <div className="flex items-center space-x-3">
+            <Search className="h-8 w-8 text-purple-600" />
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">智能搜索</h3>
+              <p className="text-gray-600">搜索论文或输入DOI自动添加</p>
+            </div>
+          </div>
+        </Link>
+      </div>
+
+      {/* Recent Comments */}
+      <div className="bg-white rounded-lg shadow">
+        <div className="px-6 py-4 border-b border-gray-200">
+          <h2 className="text-xl font-semibold text-gray-900 flex items-center">
+            <MessageCircle className="h-5 w-5 mr-2 text-blue-600" />
+            最新评论
+          </h2>
+        </div>
+        <div className="p-6">
+          {loading ? (
+            <div className="text-center py-8 text-gray-500">加载中...</div>
+          ) : recentComments.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">暂无评论</div>
+          ) : (
+            <div className="space-y-4">
+              {recentComments.map((comment) => (
+                <div key={comment.id} className="border-b border-gray-100 pb-4 last:border-b-0">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <Link
+                        href={`/papers/${comment.id}`}
+                        className="text-lg font-semibold text-blue-600 hover:text-blue-800 transition-colors"
+                      >
+                        {comment.title}
+                      </Link>
+                      <p className="text-sm text-gray-600 mt-1">
+                        作者：{comment.authors}
+                      </p>
+                      <div className="mt-2 p-3 bg-gray-50 rounded-lg">
+                        <p className="text-gray-700 text-sm line-clamp-2">
+                          {comment.latest_comment.content}
+                        </p>
+                        <div className="flex items-center justify-between mt-2 text-xs text-gray-500">
+                          <span>评论者：{comment.latest_comment.user?.username || '匿名用户'}</span>
+                          <span>{new Date(comment.latest_comment.created_at).toLocaleDateString('zh-CN')}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="ml-4 text-right">
+                      <div className="flex items-center space-x-3 text-sm text-gray-600">
+                        <div className="flex items-center">
+                          <MessageCircle className="h-4 w-4 mr-1" />
+                          {comment.comment_count}
+                        </div>
+                        {comment.average_rating > 0 && (
+                          <div className="flex items-center">
+                            <Star className="h-4 w-4 mr-1 text-yellow-500" />
+                            {comment.average_rating.toFixed(1)}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          <div className="mt-6 text-center">
+            <Link
+              href="/papers"
+              className="inline-flex items-center px-4 py-2 text-blue-600 hover:text-blue-800 transition-colors"
+            >
+              查看更多评论
+              <Search className="h-4 w-4 ml-1" />
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* Welcome Message for New Users */}
+      {!isAuthenticated && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+          <h3 className="text-lg font-semibold text-blue-900 mb-2">
+            欢迎来到学术评价平台！
+          </h3>
+          <p className="text-blue-700 mb-4">
+            这里是一个专业的学术论文评价和讨论社区。您可以：
+          </p>
+          <ul className="text-blue-700 space-y-1 mb-4">
+            <li>• 浏览和搜索最新的学术论文</li>
+            <li>• 为论文提供专业评分和评论</li>
+            <li>• 与其他研究者交流学术见解</li>
+            <li>• 管理您的个人学术档案</li>
+          </ul>
+          <button
+            onClick={() => window.dispatchEvent(new CustomEvent('showAuthModal', { detail: { mode: 'signup' } }))}
+            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            立即注册，开始使用
+          </button>
+        </div>
+      )}
     </div>
-  );
+  )
 }

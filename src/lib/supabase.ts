@@ -79,4 +79,6 @@ export interface PaperReport {
   created_at: string
   updated_at: string
   created_by?: string
+  contributor_name?: string  // 贡献者昵称
+  contribution_type?: string  // 贡献类型：'智能爬取' | '手动添加'
 }

@@ -183,7 +183,7 @@ export default function HomePage() {
       </div>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Link
           href="/papers"
           className="block bg-white rounded-lg shadow hover:shadow-md transition-shadow p-6"
@@ -206,6 +206,19 @@ export default function HomePage() {
             <div>
               <h3 className="text-lg font-semibold text-gray-900">智能搜索</h3>
               <p className="text-gray-600">搜索论文或输入DOI自动添加</p>
+            </div>
+          </div>
+        </Link>
+
+        <Link
+          href="/demo"
+          className="block bg-white rounded-lg shadow hover:shadow-md transition-shadow p-6 border-2 border-orange-200"
+        >
+          <div className="flex items-center space-x-3">
+            <TrendingUp className="h-8 w-8 text-orange-600" />
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">功能演示</h3>
+              <p className="text-gray-600">体验编辑删除与PlumX集成</p>
             </div>
           </div>
         </Link>

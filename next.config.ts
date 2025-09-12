@@ -11,29 +11,22 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  
+
   // 压缩配置
   compress: true,
-  
+
   // 实验性功能
   experimental: {
     serverActions: {
       allowedOrigins: ['localhost:3000', '127.0.0.1:3000', '183.173.171.124:3000', 'localhost:3006']
     },
-    optimizePackageImports: ['lucide-react'],
-    turbo: {
-      rules: {
-        '*.svg': {
-          loaders: ['@svgr/webpack'],
-          as: '*.js',
-        },
-      },
-    },
+
+    optimizePackageImports: ['lucide-react']
   },
-  
+
   // 输出优化
   output: 'standalone',
-  
+
   // 头部配置
   async headers() {
     return [
@@ -65,6 +58,15 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+
+  turbopack: {
+    rules: {
+      '*.svg': {
+        loaders: ['@svgr/webpack'],
+        as: '*.js',
+      },
+    }
+  }
 };
 
 export default nextConfig;

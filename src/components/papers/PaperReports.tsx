@@ -17,11 +17,12 @@ import {
   Edit,
   Trash2,
   Save,
-  X
+  X,
+  Globe
 } from 'lucide-react'
 import type { PaperReport } from '@/lib/supabase'
 import { useAuthenticatedFetch } from '@/hooks/useAuthenticatedFetch'
-import PlumXWidget from './PlumXWidget'
+import { previewUrl } from '@/lib/simple-browser'
 import ReportsStats from './ReportsStats'
 import ReportsVisibilityInfo from './ReportsVisibilityInfo'
 
@@ -251,6 +252,11 @@ export default function PaperReports({ paperId, paperTitle, paperDOI, isAdminMod
     })
   }
 
+  // 预览链接功能
+  const handlePreviewReport = (url: string, title: string) => {
+    previewUrl(url, `报道预览: ${title}`)
+  }
+
   const crawlNewsReports = async () => {
     setCrawlerLoading(true)
     try {
@@ -358,37 +364,6 @@ export default function PaperReports({ paperId, paperTitle, paperDOI, isAdminMod
           </button>
         </div>
       </div>
-
-      {/* PlumX Impact Metrics */}
-      {paperDOI && (
-        <div className="mb-6 p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-200">
-          <div className="flex items-start justify-between mb-3">
-            <div>
-              <h3 className="text-sm font-medium text-gray-800 mb-1">📊 PlumX 影响力指标</h3>
-              <p className="text-xs text-gray-600">来自PlumX Analytics的学术影响力数据，包括引用、下载、社交媒体提及等</p>
-            </div>
-          </div>
-          <div className="flex flex-wrap gap-4">
-            <div className="flex-1 min-w-[200px]">
-              <PlumXWidget 
-                doi={paperDOI}
-                widgetType="summary"
-                hideWhenEmpty={true}
-              />
-            </div>
-            <div className="text-xs text-gray-500">
-              <a 
-                href="https://plu.mx/about" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="hover:text-purple-600 transition-colors"
-              >
-                了解更多关于PlumX →
-              </a>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Reports Statistics */}
       <ReportsStats paperId={paperId} />
@@ -722,11 +697,21 @@ export default function PaperReports({ paperId, paperTitle, paperDOI, isAdminMod
                         <Trash2 className="w-4 h-4" />
                       </button>
                       
+                      <button
+                        onClick={() => handlePreviewReport(report.url, report.title)}
+                        className="px-2 py-1.5 text-gray-600 hover:text-blue-600 hover:bg-blue-50 border border-gray-300 hover:border-blue-300 rounded transition-colors text-sm flex items-center space-x-1"
+                        title="在简易浏览器中预览"
+                      >
+                        <Globe className="w-3 h-3" />
+                        <span>预览</span>
+                      </button>
+                      
                       <a
                         href={report.url}
                         target="_blank"
                         rel="noopener noreferrer"
                         className={`px-3 py-1.5 ${config.color} hover:opacity-80 transition-opacity text-sm flex items-center space-x-1`}
+                        title="在新标签页打开"
                       >
                         <span>阅读</span>
                         <ExternalLink className="w-3 h-3" />

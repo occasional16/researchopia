@@ -218,7 +218,7 @@ export default function HomePage() {
             <TrendingUp className="h-8 w-8 text-orange-600" />
             <div>
               <h3 className="text-lg font-semibold text-gray-900">功能演示</h3>
-              <p className="text-gray-600">体验编辑删除与PlumX集成</p>
+              <p className="text-gray-600">体验编辑删除功能演示</p>
             </div>
           </div>
         </Link>

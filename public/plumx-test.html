@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlumX Test Page</title>
+</head>
+<body>
+    <h1>PlumX Widget Test</h1>
+    
+    <h2>Test DOI: 10.1038/nature12373</h2>
+    
+    <!-- 官方示例样式 -->
+    <div style="margin: 20px 0;">
+        <h3>Method 1: Basic Link</h3>
+        <a href="https://plu.mx/a/?doi=10.1038/nature12373" 
+           class="plumx-plum-print-popup" 
+           data-popup="right" 
+           data-size="medium">
+           View PlumX Metrics
+        </a>
+    </div>
+    
+    <!-- 测试不同参数 -->
+    <div style="margin: 20px 0;">
+        <h3>Method 2: With Hide Options</h3>
+        <a href="https://plu.mx/a/?doi=10.1038/nature12373" 
+           class="plumx-plum-print-popup" 
+           data-popup="right" 
+           data-size="large"
+           data-hide="print">
+           View PlumX Metrics (Large, No Print)
+        </a>
+    </div>
+    
+    <!-- 直接嵌入样式 -->
+    <div style="margin: 20px 0;">
+        <h3>Method 3: Div Element</h3>
+        <div class="plumx-plum-print-popup" 
+             data-site="plum"
+             data-doi="10.1038/nature12373"
+             data-popup="right" 
+             data-size="medium">
+            Loading PlumX Data...
+        </div>
+    </div>
+
+    <!-- 加载脚本 -->
+    <script>
+        console.log('Loading PlumX script...');
+        
+        // 尝试多个CDN
+        const scriptUrls = [
+            'https://cdn.plu.mx/widget-popup.js',
+            'https://d39af2mgp1pqhg.cloudfront.net/widget-popup.js'
+        ];
+        
+        let currentIndex = 0;
+        
+        function loadScript() {
+            if (currentIndex >= scriptUrls.length) {
+                console.error('All PlumX CDNs failed');
+                return;
+            }
+            
+            const script = document.createElement('script');
+            script.src = scriptUrls[currentIndex];
+            script.async = true;
+            
+            script.onload = function() {
+                console.log('PlumX script loaded from:', script.src);
+                console.log('Available PlumX objects:', {
+                    __plumX: window.__plumX,
+                    PlumXWidget: window.PlumXWidget,
+                    discoverPlumXWidgets: window.discoverPlumXWidgets
+                });
+                
+                // 等待一下再初始化
+                setTimeout(initializePlumX, 500);
+            };
+            
+            script.onerror = function() {
+                console.log('Failed to load:', script.src);
+                currentIndex++;
+                loadScript();
+            };
+            
+            document.head.appendChild(script);
+        }
+        
+        function initializePlumX() {
+            console.log('Initializing PlumX...');
+            
+            try {
+                if (typeof window.discoverPlumXWidgets === 'function') {
+                    console.log('Using discoverPlumXWidgets');
+                    window.discoverPlumXWidgets();
+                } else if (window.__plumX && window.__plumX.widgets && window.__plumX.widgets.discover) {
+                    console.log('Using __plumX.widgets.discover');
+                    window.__plumX.widgets.discover();
+                } else {
+                    console.log('No suitable PlumX initialization method found');
+                    console.log('Triggering events...');
+                    
+                    // 触发各种事件
+                    const events = ['DOMContentLoaded', 'load'];
+                    events.forEach(eventName => {
+                        const event = new Event(eventName);
+                        document.dispatchEvent(event);
+                    });
+                }
+            } catch (error) {
+                console.error('PlumX initialization failed:', error);
+            }
+        }
+        
+        // 开始加载
+        loadScript();
+        
+        // 定期检查
+        setInterval(() => {
+            const elements = document.querySelectorAll('.plumx-plum-print-popup');
+            console.log(`Found ${elements.length} PlumX elements`);
+            elements.forEach((el, i) => {
+                console.log(`Element ${i + 1}:`, el.outerHTML.substring(0, 100) + '...');
+            });
+        }, 5000);
+    </script>
+</body>
+</html>

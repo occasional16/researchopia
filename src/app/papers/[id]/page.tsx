@@ -9,6 +9,8 @@ import RatingForm from '@/components/rating/RatingForm'
 import RatingDisplay from '@/components/rating/RatingDisplay'
 import CommentForm from '@/components/comments/CommentForm'
 import CommentList from '@/components/comments/CommentList'
+import QuickSearch from '@/components/papers/QuickSearch'
+import PaperReports from '@/components/papers/PaperReports'
 import type { Paper, Rating, Comment, User } from '@/lib/supabase'
 
 interface PaperWithDetails extends Paper {
@@ -183,6 +185,21 @@ export default function PaperDetailPage() {
           </div>
         )}
       </div>
+
+      {/* Quick Search Section */}
+      <QuickSearch 
+        paper={{
+          title: paper.title,
+          doi: paper.doi,
+          authors: paper.authors
+        }} 
+      />
+
+      {/* Paper Reports Section */}
+      <PaperReports 
+        paperId={paperId}
+        paperTitle={paper.title}
+      />
 
       {/* Rating Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">

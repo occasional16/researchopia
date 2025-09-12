@@ -64,3 +64,19 @@ export interface Comment {
   updated_at: string
   user?: User
 }
+
+export interface PaperReport {
+  id: string
+  paper_id: string
+  title: string
+  url: string
+  source: 'wechat' | 'news' | 'blog' | 'other'
+  author?: string
+  publish_date?: string
+  description?: string
+  thumbnail_url?: string
+  view_count: number
+  created_at: string
+  updated_at: string
+  created_by?: string
+}

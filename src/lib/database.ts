@@ -732,9 +732,8 @@ export async function searchOrCreatePaperByDOI(doi: string): Promise<Paper[]> {
     doi: crossRefData.doi,
     journal: crossRefData.journal,
     publication_date: crossRefData.publication_date,
-    url: crossRefData.url,
     keywords: crossRefData.keywords || [],
-    created_by: 'system' // Since we don't have userId context here
+    created_by: '00000000-0000-0000-0000-000000000000' // System user UUID
   }
 
   const { data, error } = await supabase!

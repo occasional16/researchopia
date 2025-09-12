@@ -13,14 +13,23 @@ import {
   ChevronDown,
   ChevronUp,
   Search,
-  Loader2
+  Loader2,
+  Edit,
+  Trash2,
+  Save,
+  X
 } from 'lucide-react'
-import { PaperReport } from '@/lib/supabase'
+import type { PaperReport } from '@/lib/supabase'
+import { useAuthenticatedFetch } from '@/hooks/useAuthenticatedFetch'
+import PlumXWidget from './PlumXWidget'
+import ReportsStats from './ReportsStats'
+import ReportsVisibilityInfo from './ReportsVisibilityInfo'
 
 interface PaperReportsProps {
   paperId: string
   paperTitle: string
   paperDOI?: string  // 新增DOI参数
+  isAdminMode?: boolean  // 管理员模式标识
 }
 
 const sourceConfig = {
@@ -50,13 +59,24 @@ const sourceConfig = {
   }
 }
 
-export default function PaperReports({ paperId, paperTitle, paperDOI }: PaperReportsProps) {
+export default function PaperReports({ paperId, paperTitle, paperDOI, isAdminMode = false }: PaperReportsProps) {
+  const authenticatedFetch = useAuthenticatedFetch()
   const [reports, setReports] = useState<PaperReport[]>([])
   const [loading, setLoading] = useState(true)
   const [showAddForm, setShowAddForm] = useState(false)
   const [isExpanded, setIsExpanded] = useState(false)
   const [selectedSource, setSelectedSource] = useState<string>('all')
   const [crawlerLoading, setCrawlerLoading] = useState(false)
+  const [editingReport, setEditingReport] = useState<string | null>(null)
+  // 编辑报道表单状态
+  const [editForm, setEditForm] = useState({
+    title: '',
+    url: '',
+    source: 'wechat' as 'wechat' | 'news' | 'blog' | 'other',
+    author: '',
+    publish_date: '',
+    description: ''
+  })
 
   // 新增报道表单状态
   const [newReport, setNewReport] = useState({
@@ -75,7 +95,7 @@ export default function PaperReports({ paperId, paperTitle, paperDOI }: PaperRep
   const loadReports = async () => {
     try {
       setLoading(true)
-      const response = await fetch(`/api/papers/${paperId}/reports`)
+      const response = await authenticatedFetch(`/api/papers/${paperId}/reports`)
       if (response.ok) {
         const data = await response.json()
         setReports(data.reports || [])
@@ -92,7 +112,7 @@ export default function PaperReports({ paperId, paperTitle, paperDOI }: PaperRep
     if (!newReport.title.trim() || !newReport.url.trim()) return
 
     try {
-      const response = await fetch(`/api/papers/${paperId}/reports`, {
+      const response = await authenticatedFetch(`/api/papers/${paperId}/reports`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -101,7 +121,12 @@ export default function PaperReports({ paperId, paperTitle, paperDOI }: PaperRep
       })
 
       if (response.ok) {
-        await loadReports()
+        const data = await response.json()
+        if (data.success && data.report) {
+          // 立即添加新报道到当前状态，而不是重新加载
+          setReports(prevReports => [data.report, ...prevReports])
+        }
+        
         setNewReport({
           title: '',
           url: '',
@@ -117,10 +142,119 @@ export default function PaperReports({ paperId, paperTitle, paperDOI }: PaperRep
     }
   }
 
+  const handleEditReport = (report: PaperReport) => {
+    setEditingReport(report.id)
+    setEditForm({
+      title: report.title,
+      url: report.url,
+      source: report.source as 'wechat' | 'news' | 'blog' | 'other',
+      author: report.author || '',
+      publish_date: report.publish_date || '',
+      description: report.description || ''
+    })
+  }
+
+  const handleUpdateReport = async (reportId: string) => {
+    if (!editForm.title.trim() || !editForm.url.trim()) {
+      alert('标题和URL不能为空')
+      return
+    }
+
+    try {
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+      }
+
+      const response = await authenticatedFetch(`/api/papers/${paperId}/reports`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          reportId,
+          ...editForm
+        })
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        if (data.success && data.report) {
+          // 立即更新当前状态中的报道，而不是重新加载
+          setReports(prevReports => 
+            prevReports.map(report => 
+              report.id === reportId ? { ...report, ...data.report } : report
+            )
+          )
+          setEditingReport(null) // 退出编辑模式
+        } else {
+          alert(`更新失败: ${data.error || '未知错误'}`)
+        }
+      } else {
+        const error = await response.json()
+        if (response.status === 409) {
+          alert('该URL已存在，请使用其他URL')
+        } else {
+          alert(`更新失败: ${error.error || '服务器错误'}`)
+        }
+      }
+    } catch (error) {
+      console.error('Update failed:', error)
+      alert('网络错误，请重试')
+    }
+  }
+
+  const handleDeleteReport = async (reportId: string, title: string) => {
+    const confirmMessage = isAdminMode 
+      ? `确定要删除报道 "${title.substring(0, 50)}${title.length > 50 ? '...' : ''}" 吗？\n\n⚠️ 管理员模式：此操作不可撤销。`
+      : `确定要删除报道 "${title.substring(0, 50)}${title.length > 50 ? '...' : ''}" 吗？\n\n此操作不可撤销。`
+      
+    if (!confirm(confirmMessage)) {
+      return
+    }
+
+    try {
+      const response = await authenticatedFetch(`/api/papers/${paperId}/reports?reportId=${reportId}`, {
+        method: 'DELETE'
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        if (data.success) {
+          // 立即从当前状态中移除已删除的报道，而不是重新加载
+          setReports(prevReports => prevReports.filter(report => report.id !== reportId))
+          
+          if (isAdminMode) {
+            alert('✅ 管理员已成功删除该报道')
+          }
+        } else {
+          alert(`删除失败: ${data.error || '未知错误'}`)
+        }
+      } else {
+        const error = await response.json()
+        alert(`删除失败: ${error.error || '服务器错误'}`)
+      }
+    } catch (error) {
+      console.error('Delete failed:', error)
+      alert('网络错误，请重试')
+    }
+  }
+
+  const cancelEdit = () => {
+    setEditingReport(null)
+    setEditForm({
+      title: '',
+      url: '',
+      source: 'wechat',
+      author: '',
+      publish_date: '',
+      description: ''
+    })
+  }
+
   const crawlNewsReports = async () => {
     setCrawlerLoading(true)
     try {
-      const response = await fetch(`/api/papers/${paperId}/crawl-news`, {
+      const response = await authenticatedFetch(`/api/papers/${paperId}/crawl-news`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -138,7 +272,7 @@ export default function PaperReports({ paperId, paperTitle, paperDOI }: PaperRep
         if (data.success) {
           if (data.added > 0) {
             alert(`🎉 爬取成功！\n找到 ${data.found} 条相关报道\n新增 ${data.added} 条到数据库`)
-            // 刷新报道列表
+            // 重新加载报道列表以获取最新数据（爬取可能添加多条记录）
             await loadReports()
           } else if (data.found > 0) {
             alert(`📰 找到 ${data.found} 条相关报道，但都已存在于数据库中`)
@@ -193,6 +327,12 @@ export default function PaperReports({ paperId, paperTitle, paperDOI }: PaperRep
               {reports.length}
             </span>
           )}
+          <ReportsVisibilityInfo />
+          {isAdminMode && (
+            <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full border border-yellow-300">
+              👑 管理员模式
+            </span>
+          )}
         </div>
         
         <div className="flex items-center space-x-2">
@@ -218,6 +358,40 @@ export default function PaperReports({ paperId, paperTitle, paperDOI }: PaperRep
           </button>
         </div>
       </div>
+
+      {/* PlumX Impact Metrics */}
+      {paperDOI && (
+        <div className="mb-6 p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-200">
+          <div className="flex items-start justify-between mb-3">
+            <div>
+              <h3 className="text-sm font-medium text-gray-800 mb-1">📊 PlumX 影响力指标</h3>
+              <p className="text-xs text-gray-600">来自PlumX Analytics的学术影响力数据，包括引用、下载、社交媒体提及等</p>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-4">
+            <div className="flex-1 min-w-[200px]">
+              <PlumXWidget 
+                doi={paperDOI}
+                widgetType="summary"
+                hideWhenEmpty={true}
+              />
+            </div>
+            <div className="text-xs text-gray-500">
+              <a 
+                href="https://plu.mx/about" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="hover:text-purple-600 transition-colors"
+              >
+                了解更多关于PlumX →
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reports Statistics */}
+      <ReportsStats paperId={paperId} />
 
       {/* Source Filter */}
       {reports.length > 0 && (
@@ -356,64 +530,210 @@ export default function PaperReports({ paperId, paperTitle, paperDOI }: PaperRep
           {visibleReports.map((report) => {
             const config = sourceConfig[report.source]
             const IconComponent = config.icon
+            const isEditing = editingReport === report.id
             
             return (
               <div
                 key={report.id}
                 className={`border rounded-lg p-4 hover:shadow-md transition-shadow ${config.bgColor}`}
               >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2 mb-2">
-                      <IconComponent className={`w-4 h-4 ${config.color}`} />
-                      <span className={`text-xs font-medium px-2 py-1 rounded ${config.color} bg-white`}>
-                        {config.label}
-                      </span>
-                      {report.view_count > 0 && (
-                        <div className="flex items-center space-x-1 text-xs text-gray-500">
-                          <Eye className="w-3 h-3" />
-                          <span>{report.view_count}</span>
-                        </div>
-                      )}
+                {isEditing ? (
+                  // 编辑模式
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center space-x-2">
+                        <IconComponent className={`w-4 h-4 ${config.color}`} />
+                        <span className={`text-xs font-medium px-2 py-1 rounded ${config.color} bg-white`}>
+                          编辑报道
+                        </span>
+                      </div>
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => handleUpdateReport(report.id)}
+                          className="p-1.5 text-green-600 hover:text-green-800 hover:bg-green-100 rounded transition-colors"
+                          title="保存"
+                        >
+                          <Save className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={cancelEdit}
+                          className="p-1.5 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded transition-colors"
+                          title="取消"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
                     
-                    <h3 className="font-medium text-gray-900 mb-2 line-clamp-2">
-                      {report.title}
-                    </h3>
-                    
-                    {report.description && (
-                      <p className="text-sm text-gray-600 mb-3 line-clamp-2">
-                        {report.description}
-                      </p>
-                    )}
-                    
-                    <div className="flex items-center space-x-4 text-xs text-gray-500">
-                      {report.author && (
-                        <div className="flex items-center space-x-1">
-                          <User className="w-3 h-3" />
-                          <span>{report.author}</span>
-                        </div>
-                      )}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          标题 *
+                        </label>
+                        <input
+                          type="text"
+                          value={editForm.title}
+                          onChange={(e) => setEditForm({...editForm, title: e.target.value})}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="报道标题"
+                        />
+                      </div>
                       
-                      {report.publish_date && (
-                        <div className="flex items-center space-x-1">
-                          <Calendar className="w-3 h-3" />
-                          <span>{new Date(report.publish_date).toLocaleDateString('zh-CN')}</span>
-                        </div>
-                      )}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          链接 *
+                        </label>
+                        <input
+                          type="url"
+                          value={editForm.url}
+                          onChange={(e) => setEditForm({...editForm, url: e.target.value})}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="https://..."
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          来源类型
+                        </label>
+                        <select
+                          value={editForm.source}
+                          onChange={(e) => setEditForm({...editForm, source: e.target.value as 'wechat' | 'news' | 'blog' | 'other'})}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          {Object.entries(sourceConfig).map(([key, config]) => (
+                            <option key={key} value={key}>{config.label}</option>
+                          ))}
+                        </select>
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          作者/来源
+                        </label>
+                        <input
+                          type="text"
+                          value={editForm.author}
+                          onChange={(e) => setEditForm({...editForm, author: e.target.value})}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="作者或公众号名称"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          发布日期
+                        </label>
+                        <input
+                          type="date"
+                          value={editForm.publish_date}
+                          onChange={(e) => setEditForm({...editForm, publish_date: e.target.value})}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        简短描述
+                      </label>
+                      <textarea
+                        value={editForm.description}
+                        onChange={(e) => setEditForm({...editForm, description: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="简短描述这篇报道的内容..."
+                        rows={2}
+                      />
                     </div>
                   </div>
-                  
-                  <a
-                    href={report.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`ml-4 px-3 py-1.5 ${config.color} hover:opacity-80 transition-opacity text-sm flex items-center space-x-1`}
-                  >
-                    <span>阅读</span>
-                    <ExternalLink className="w-3 h-3" />
-                  </a>
-                </div>
+                ) : (
+                  // 显示模式
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2 mb-2">
+                        <IconComponent className={`w-4 h-4 ${config.color}`} />
+                        <span className={`text-xs font-medium px-2 py-1 rounded ${config.color} bg-white`}>
+                          {config.label}
+                        </span>
+                        {report.view_count > 0 && (
+                          <div className="flex items-center space-x-1 text-xs text-gray-500">
+                            <Eye className="w-3 h-3" />
+                            <span>{report.view_count}</span>
+                          </div>
+                        )}
+                      </div>
+                      
+                      <h3 className="font-medium text-gray-900 mb-2 line-clamp-2">
+                        {report.title}
+                      </h3>
+                      
+                      {report.description && (
+                        <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+                          {report.description}
+                        </p>
+                      )}
+                      
+                      <div className="flex items-center space-x-4 text-xs text-gray-500">
+                        {report.author && (
+                          <div className="flex items-center space-x-1">
+                            <User className="w-3 h-3" />
+                            <span>{report.author}</span>
+                          </div>
+                        )}
+                        
+                        {report.publish_date && (
+                          <div className="flex items-center space-x-1">
+                            <Calendar className="w-3 h-3" />
+                            <span>{new Date(report.publish_date).toLocaleDateString('zh-CN')}</span>
+                          </div>
+                        )}
+                        
+                        {/* 贡献者信息 */}
+                        <div className="flex items-center space-x-1 text-xs">
+                          <span className="text-gray-400">•</span>
+                          <span className="text-gray-500">
+                            {report.contribution_type || '手动添加'}
+                            {report.contributor_name && (
+                              <span className="text-blue-600 ml-1">
+                                by {report.contributor_name}
+                              </span>
+                            )}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2 ml-4">
+                      <button
+                        onClick={() => handleEditReport(report)}
+                        className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                        title="编辑"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </button>
+                      
+                      <button
+                        onClick={() => handleDeleteReport(report.id, report.title)}
+                        className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                        title="删除"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                      
+                      <a
+                        href={report.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={`px-3 py-1.5 ${config.color} hover:opacity-80 transition-opacity text-sm flex items-center space-x-1`}
+                      >
+                        <span>阅读</span>
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    </div>
+                  </div>
+                )}
               </div>
             )
           })}

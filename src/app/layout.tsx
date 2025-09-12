@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { AdminProvider } from "@/contexts/AdminContext";
 import Navbar from "@/components/layout/Navbar";
 import { DevPerformanceMonitor } from "@/components/ui/PerformanceMonitor";
 import ErrorBoundary from "@/components/ErrorBoundary";
@@ -92,13 +93,15 @@ export default function RootLayout({
       >
         <ErrorBoundary>
           <AuthProvider>
-            <div className="min-h-screen">
-              <Navbar />
-              <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {children}
-              </main>
-              <DevPerformanceMonitor />
-            </div>
+            <AdminProvider>
+              <div className="min-h-screen">
+                <Navbar />
+                <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                  {children}
+                </main>
+                <DevPerformanceMonitor />
+              </div>
+            </AdminProvider>
           </AuthProvider>
         </ErrorBoundary>
       </body>

@@ -53,10 +53,14 @@ export default function Navbar() {
 
   const handleSignOut = useCallback(async () => {
     try {
+      setShowUserMenu(false) // 立即关闭菜单
       await signOut()
-      setShowUserMenu(false)
     } catch (error) {
       console.error('Error signing out:', error)
+      // 即使出错也要确保UI状态正确
+      setShowUserMenu(false)
+      // 可以在这里添加用户友好的错误提示
+      alert('登出过程中出现问题，但本地状态已清理。请刷新页面。')
     }
   }, [signOut])
 

@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
+import { safeSignOut } from '@/lib/auth-utils'
 import type { User as SupabaseUser, Session } from '@supabase/supabase-js'
 
 // 应用用户类型定义
@@ -231,30 +232,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // 登出
   const signOut = async () => {
-    if (!supabase) return
-
     console.log('🔄 Signing out...')
     
     try {
       setLoading(true)
       
-      const { error } = await supabase.auth.signOut()
-      
-      if (error) {
-        console.error('❌ Sign out error:', error)
-        throw error
-      }
-
-      // 清理状态
+      // 清理本地状态（优先执行）
       if (mountedRef.current) {
         setUser(null)
         setProfile(null)
         setIsAuthenticated(false)
       }
       
-      console.log('✅ Sign out successful')
+      // 尝试服务器端登出
+      const serverSignOutSuccess = await safeSignOut()
+      
+      if (serverSignOutSuccess) {
+        console.log('✅ Sign out completed successfully')
+      } else {
+        console.log('✅ Sign out completed with local cleanup (server cleanup failed)')
+      }
     } catch (error) {
       console.error('❌ Sign out failed:', error)
+      // 即使出错也要确保本地状态被清理
+      if (mountedRef.current) {
+        setUser(null)
+        setProfile(null)
+        setIsAuthenticated(false)
+      }
       throw error
     } finally {
       if (mountedRef.current) {

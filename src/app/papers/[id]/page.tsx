@@ -3,14 +3,17 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import { Calendar, Users, ExternalLink, Tag, ChevronRight, Home } from 'lucide-react'
+import { Calendar, Users, ExternalLink, Tag, ChevronRight, Home, Crown } from 'lucide-react'
 import { getPaper, getPaperRatings, getPaperComments } from '@/lib/database'
+import { useAdmin } from '@/contexts/AdminContext'
 import RatingForm from '@/components/rating/RatingForm'
 import RatingDisplay from '@/components/rating/RatingDisplay'
 import CommentForm from '@/components/comments/CommentForm'
 import CommentList from '@/components/comments/CommentList'
 import QuickSearch from '@/components/papers/QuickSearch'
 import PaperReports from '@/components/papers/PaperReports'
+import ReportsVisibilityInfo from '@/components/papers/ReportsVisibilityInfo'
+import PlumXWidget from '@/components/papers/PlumXWidget'
 import type { Paper, Rating, Comment, User } from '@/lib/supabase'
 
 interface PaperWithDetails extends Paper {
@@ -21,6 +24,7 @@ interface PaperWithDetails extends Paper {
 export default function PaperDetailPage() {
   const params = useParams()
   const paperId = params.id as string
+  const { isAdminMode, loading: adminLoading } = useAdmin()
   
   const [paper, setPaper] = useState<PaperWithDetails | null>(null)
   const [loading, setLoading] = useState(true)
@@ -195,10 +199,60 @@ export default function PaperDetailPage() {
         }} 
       />
 
+      {/* PlumX Analytics Widget */}
+      {paper.doi && (
+        <div className="bg-white rounded-lg shadow-sm border p-6 mb-8">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">
+            📊 学术影响力指标 (PlumX Analytics)
+          </h2>
+          <PlumXWidget 
+            doi={paper.doi}
+            widgetType="summary"
+            hideWhenEmpty={true}
+          />
+        </div>
+      )}
+
+      {/* Admin Status and Visibility Info */}
+      <div className="mb-6 space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-semibold text-gray-900">
+            📰 相关新闻报道
+          </h2>
+          <div className="flex items-center space-x-4">
+            <ReportsVisibilityInfo isAdminMode={isAdminMode} />
+            {isAdminMode && (
+              <div className="flex items-center space-x-2 px-3 py-2 bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-lg">
+                <Crown className="w-4 h-4 text-yellow-600" />
+                <span className="text-sm font-medium text-yellow-800">
+                  管理员账户
+                </span>
+                <span className="px-2 py-1 bg-yellow-200 text-yellow-800 text-xs rounded-full font-medium">
+                  可管理所有报道
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+        
+        {isAdminMode && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <div className="flex items-center space-x-2">
+              <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+              <span className="text-sm text-yellow-800 font-medium">
+                管理员权限已激活 - 您可以编辑和删除所有用户的报道条目
+              </span>
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* Paper Reports Section */}
       <PaperReports 
         paperId={paperId}
         paperTitle={paper.title}
+        paperDOI={paper.doi}
+        isAdminMode={isAdminMode}
       />
 
       {/* Rating Section */}

@@ -13,7 +13,6 @@ import CommentList from '@/components/comments/CommentList'
 import QuickSearch from '@/components/papers/QuickSearch'
 import PaperReports from '@/components/papers/PaperReports'
 import ReportsVisibilityInfo from '@/components/papers/ReportsVisibilityInfo'
-import PlumXWidget from '@/components/papers/PlumXWidget'
 import type { Paper, Rating, Comment, User } from '@/lib/supabase'
 
 interface PaperWithDetails extends Paper {
@@ -198,20 +197,6 @@ export default function PaperDetailPage() {
           authors: paper.authors
         }} 
       />
-
-      {/* PlumX Analytics Widget */}
-      {paper.doi && (
-        <div className="bg-white rounded-lg shadow-sm border p-6 mb-8">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">
-            📊 学术影响力指标 (PlumX Analytics)
-          </h2>
-          <PlumXWidget 
-            doi={paper.doi}
-            widgetType="summary"
-            hideWhenEmpty={true}
-          />
-        </div>
-      )}
 
       {/* Admin Status and Visibility Info */}
       <div className="mb-6 space-y-4">

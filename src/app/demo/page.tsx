@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { initializeSampleData, clearMockData, resetToSampleData } from '@/lib/mockData'
 import PaperReports from '@/components/papers/PaperReports'
-import PlumXWidget from '@/components/papers/PlumXWidget'
 
 export default function DemoPage() {
   const [showReports, setShowReports] = useState(true) // 默认显示报道管理
@@ -35,7 +34,7 @@ export default function DemoPage() {
           🧪 功能演示页面
         </h1>
         <p className="text-gray-600 mb-6">
-          测试编辑删除功能和PlumX集成
+          测试编辑删除功能演示
         </p>
         
         {/* 数据管理按钮 */}
@@ -89,53 +88,6 @@ export default function DemoPage() {
         </div>
       </div>
 
-      {/* PlumX Widget 演示 */}
-      <div className="bg-white rounded-lg shadow-sm border p-6 mb-8">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">
-          📊 PlumX Widget 演示
-        </h2>
-        
-        <div className="space-y-6">
-          <div>
-            <h3 className="text-lg font-medium text-gray-800 mb-2">
-              示例论文 1: 深度学习与气候变化预测
-            </h3>
-            <p className="text-sm text-gray-600 mb-3">
-              DOI: 10.1038/s41586-023-12345-6
-            </p>
-            <PlumXWidget 
-              doi="10.1038/s41586-023-12345-6"
-              widgetType="summary"
-              hideWhenEmpty={true}
-            />
-          </div>
-
-          <div className="border-t pt-4">
-            <h3 className="text-lg font-medium text-gray-800 mb-2">
-              示例论文 2: 量子计算在药物发现中的应用
-            </h3>
-            <p className="text-sm text-gray-600 mb-3">
-              DOI: 10.1126/science.2023.11223
-            </p>
-            <PlumXWidget 
-              doi="10.1126/science.2023.11223"
-              widgetType="details"
-              hideWhenEmpty={true}
-            />
-          </div>
-
-          <div className="border-t pt-4">
-            <h3 className="text-lg font-medium text-gray-800 mb-2">
-              无DOI示例 (显示占位符)
-            </h3>
-            <PlumXWidget 
-              widgetType="summary"
-              hideWhenEmpty={false}
-            />
-          </div>
-        </div>
-      </div>
-
       {/* Paper Reports 演示 */}
       {showReports && (
         <div>
@@ -170,7 +122,6 @@ export default function DemoPage() {
         <ul className="text-sm text-gray-600 space-y-1">
           <li>• <strong>初始化示例数据</strong>: 加载3篇示例论文到本地存储</li>
           <li>• <strong>👑 管理员模式</strong>: 开启后可编辑删除任何用户的报道</li>
-          <li>• <strong>PlumX Widget</strong>: 显示学术影响力指标 (需要真实DOI才能显示数据)</li>
           <li>• <strong>报道管理</strong>: 测试编辑、删除、智能爬取功能</li>
           <li>• <strong>编辑功能</strong>: 点击报道条目右侧的编辑按钮</li>
           <li>• <strong>删除功能</strong>: 点击垃圾桶图标删除报道 (普通用户只能删除自己的)</li>

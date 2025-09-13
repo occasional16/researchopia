@@ -5,6 +5,7 @@ import { Search, TrendingUp, Users, BookOpen, Star, MessageCircle, Eye } from 'l
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 import BrandLogo from '@/components/ui/BrandLogo'
+import { useSmartSearch } from '@/hooks/useSmartSearch'
 
 interface SiteStats {
   totalPapers: number
@@ -36,6 +37,15 @@ interface RecentComment {
 export default function HomePage() {
   const { user, isAuthenticated } = useAuth()
   const [searchQuery, setSearchQuery] = useState('')
+  const { 
+    searchStatus, 
+    processingMessage, 
+    error, 
+    detectInputType, 
+    handleSearch: performSmartSearch,
+    clearError 
+  } = useSmartSearch()
+  
   const [stats, setStats] = useState<SiteStats>({
     totalPapers: 0,
     totalUsers: 0,
@@ -44,27 +54,36 @@ export default function HomePage() {
   })
   const [recentComments, setRecentComments] = useState<RecentComment[]>([])
   const [loading, setLoading] = useState(true)
+  const [dataError, setDataError] = useState<string | null>(null)
 
   useEffect(() => {
     const loadData = async () => {
       setLoading(true)
+      setDataError(null)
       
       try {
-        // 并行加载统计数据和评论数据
-        const [statsResponse, commentsResponse] = await Promise.all([
+        // 添加超时控制和容错处理
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 10000) // 10秒超时
+
+        const [statsResponse, commentsResponse] = await Promise.allSettled([
           fetch('/api/site/statistics', { 
             cache: 'no-store',
-            headers: { 'Cache-Control': 'max-age=30' } // 30秒缓存
+            headers: { 'Cache-Control': 'max-age=30' },
+            signal: controller.signal
           }),
           fetch('/api/papers/recent-comments?limit=5', {
             cache: 'no-store',
-            headers: { 'Cache-Control': 'max-age=60' } // 60秒缓存
+            headers: { 'Cache-Control': 'max-age=60' },
+            signal: controller.signal
           })
         ])
 
+        clearTimeout(timeoutId)
+
         // 处理统计数据
-        if (statsResponse.ok) {
-          const statsResult = await statsResponse.json()
+        if (statsResponse.status === 'fulfilled' && statsResponse.value.ok) {
+          const statsResult = await statsResponse.value.json()
           if (statsResult.success && statsResult.data) {
             setStats({
               totalPapers: statsResult.data.totalPapers || 0,
@@ -73,16 +92,29 @@ export default function HomePage() {
               todayVisits: statsResult.data.todayVisits || 0
             })
           }
+        } else {
+          console.warn('Stats API failed:', statsResponse.status === 'fulfilled' ? statsResponse.value.status : 'rejected')
         }
 
         // 处理评论数据
-        if (commentsResponse.ok) {
-          const commentsData = await commentsResponse.json()
+        if (commentsResponse.status === 'fulfilled' && commentsResponse.value.ok) {
+          const commentsData = await commentsResponse.value.json()
           setRecentComments(commentsData.data || [])
+        } else {
+          console.warn('Comments API failed:', commentsResponse.status === 'fulfilled' ? commentsResponse.value.status : 'rejected')
         }
 
       } catch (error) {
         console.error('Failed to load data:', error)
+        setDataError('数据加载失败，请刷新页面重试')
+        // 设置默认值确保页面能正常显示
+        setStats({
+          totalPapers: 0,
+          totalUsers: 0,
+          totalVisits: 0,
+          todayVisits: 0
+        })
+        setRecentComments([])
       } finally {
         setLoading(false)
       }
@@ -91,16 +123,40 @@ export default function HomePage() {
     loadData()
   }, [])
 
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (searchQuery.trim()) {
-      const encodedQuery = encodeURIComponent(searchQuery.trim())
-      window.location.href = `/search?q=${encodedQuery}`
-    }
+    if (!searchQuery.trim()) return
+    
+    await performSmartSearch(searchQuery.trim())
   }
 
   return (
     <div className="space-y-8">
+      {/* Error Messages */}
+      {dataError && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
+          <p className="font-medium">⚠️ {dataError}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="mt-2 px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-sm"
+          >
+            刷新页面
+          </button>
+        </div>
+      )}
+      
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
+          <p className="font-medium">⚠️ {error}</p>
+          <button 
+            onClick={clearError} 
+            className="mt-2 px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-sm"
+          >
+            重试
+          </button>
+        </div>
+      )}
+
       {/* Hero Section */}
       <div className="text-center py-12 bg-gradient-to-r from-purple-600 to-blue-700 rounded-lg text-white">
         {/* Logo展示 */}
@@ -128,34 +184,63 @@ export default function HomePage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="搜索论文标题、作者、DOI或关键词..."
-              className="w-full pl-12 pr-32 py-4 text-gray-900 bg-white rounded-lg text-lg focus:outline-none focus:ring-2 focus:ring-purple-300"
+              disabled={searchStatus === 'checking' || searchStatus === 'adding' || searchStatus === 'redirecting'}
+              className="w-full pl-12 pr-32 py-4 text-gray-900 bg-white rounded-lg text-lg focus:outline-none focus:ring-2 focus:ring-purple-300 disabled:bg-gray-100"
             />
             <Search className="absolute left-4 top-4 h-6 w-6 text-gray-400" />
             <button
               type="submit"
-              className="absolute right-2 top-2 px-6 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors"
+              disabled={searchStatus !== 'idle' || !searchQuery.trim()}
+              className={`absolute right-2 top-2 px-6 py-2 rounded-md transition-all duration-200 flex items-center gap-2 ${
+                searchStatus !== 'idle'
+                  ? 'bg-gray-400 text-white cursor-not-allowed'
+                  : !searchQuery.trim() 
+                    ? 'bg-[#155DFC] text-white hover:bg-[#1347CC] cursor-not-allowed opacity-75'
+                    : detectInputType(searchQuery) === 'doi'
+                      ? 'bg-green-500 text-white hover:bg-green-600 shadow-md hover:shadow-lg transform hover:scale-105'
+                      : 'bg-purple-600 text-white hover:bg-purple-700 shadow-md hover:shadow-lg transform hover:scale-105'
+              }`}
             >
-              搜索
+              {searchStatus === 'idle' ? (
+                detectInputType(searchQuery) === 'doi' ? (
+                  <>
+                    <BookOpen className="w-4 h-4" />
+                    查找/添加论文
+                  </>
+                ) : (
+                  '智能搜索'
+                )
+              ) : (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  处理中
+                </>
+              )}
             </button>
           </form>
+          
+          {/* 智能提示和处理状态 */}
+          <div className="mt-3 text-center min-h-[1.5rem]">
+            {processingMessage ? (
+              <p className="text-sm text-white/90 font-medium animate-pulse">
+                {processingMessage}
+              </p>
+            ) : searchQuery.trim() ? (
+              <p className="text-sm text-white/80">
+                {detectInputType(searchQuery) === 'doi' 
+                  ? '🎯 检测到DOI格式 - 将自动查找或添加论文' 
+                  : '💡 支持关键词搜索，或直接输入DOI自动添加论文'
+                }
+              </p>
+            ) : (
+              <p className="text-sm text-white/60">
+                💭 输入论文标题、作者、DOI或关键词开始智能搜索
+              </p>
+            )}
+          </div>
         </div>
 
-        {!isAuthenticated && (
-          <div className="mt-8 space-x-4">
-            <button
-              onClick={() => window.dispatchEvent(new CustomEvent('showAuthModal', { detail: { mode: 'signup' } }))}
-              className="px-8 py-3 bg-white text-purple-600 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
-            >
-              立即注册
-            </button>
-            <button
-              onClick={() => window.dispatchEvent(new CustomEvent('showAuthModal', { detail: { mode: 'login' } }))}
-              className="px-8 py-3 border-2 border-white text-white rounded-lg font-semibold hover:bg-white hover:text-purple-600 transition-colors"
-            >
-              登录
-            </button>
-          </div>
-        )}
+        {/* Removed center auth buttons - keep only header auth */}
       </div>
 
       {/* Stats Section - 响应式紧凑布局 */}
@@ -182,55 +267,24 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Link
-          href="/papers"
-          className="block bg-white rounded-lg shadow hover:shadow-md transition-shadow p-6"
-        >
-          <div className="flex items-center space-x-3">
-            <BookOpen className="h-8 w-8 text-blue-600" />
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900">浏览论文</h3>
-              <p className="text-gray-600">发现最新的学术研究成果</p>
-            </div>
-          </div>
-        </Link>
-
-        <Link
-          href="/search"
-          className="block bg-white rounded-lg shadow hover:shadow-md transition-shadow p-6"
-        >
-          <div className="flex items-center space-x-3">
-            <Search className="h-8 w-8 text-purple-600" />
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900">智能搜索</h3>
-              <p className="text-gray-600">搜索论文或输入DOI自动添加</p>
-            </div>
-          </div>
-        </Link>
-
-        <Link
-          href="/demo"
-          className="block bg-white rounded-lg shadow hover:shadow-md transition-shadow p-6 border-2 border-orange-200"
-        >
-          <div className="flex items-center space-x-3">
-            <TrendingUp className="h-8 w-8 text-orange-600" />
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900">功能演示</h3>
-              <p className="text-gray-600">体验编辑删除功能演示</p>
-            </div>
-          </div>
-        </Link>
-      </div>
+      {/* Stats removed Quick Actions section */}
 
       {/* Recent Comments */}
       <div className="bg-white rounded-lg shadow">
         <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-xl font-semibold text-gray-900 flex items-center">
-            <MessageCircle className="h-5 w-5 mr-2 text-blue-600" />
-            最新评论
-          </h2>
+          <div className="flex justify-between items-center">
+            <h2 className="text-xl font-semibold text-gray-900 flex items-center">
+              <MessageCircle className="h-5 w-5 mr-2 text-blue-600" />
+              最新评论
+            </h2>
+            <Link
+              href="/papers"
+              className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white text-sm font-medium rounded-lg hover:from-blue-600 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 shadow-md hover:shadow-lg"
+            >
+              <BookOpen className="h-4 w-4 mr-2" />
+              所有论文
+            </Link>
+          </div>
         </div>
         <div className="p-6">
           {loading ? (
@@ -284,10 +338,11 @@ export default function HomePage() {
           <div className="mt-6 text-center">
             <Link
               href="/papers"
-              className="inline-flex items-center px-4 py-2 text-blue-600 hover:text-blue-800 transition-colors"
+              className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-medium rounded-lg hover:from-blue-600 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 shadow-md hover:shadow-lg"
             >
-              查看更多评论
-              <Search className="h-4 w-4 ml-1" />
+              <BookOpen className="h-5 w-5 mr-2" />
+              查看所有论文
+              <Search className="h-4 w-4 ml-2" />
             </Link>
           </div>
         </div>

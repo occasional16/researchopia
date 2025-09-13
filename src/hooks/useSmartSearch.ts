@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { useAuth } from '@/contexts/AuthContext'
 
 // DOI格式检测
 const DOI_PATTERN = /^10\.\d{4,}\/[^\s]+$/
@@ -23,7 +22,6 @@ export function useSmartSearch(): UseSmartSearchReturn {
   const [searchStatus, setSearchStatus] = useState<SearchStatus>('idle')
   const [processingMessage, setProcessingMessage] = useState('')
   const [error, setError] = useState<string | null>(null)
-  const { user } = useAuth()
 
   const detectInputType = (input: string): SearchInputType => {
     const cleanInput = input.trim()
@@ -60,32 +58,39 @@ export function useSmartSearch(): UseSmartSearchReturn {
   }
 
   const handleDOISearch = async (doi: string): Promise<void> => {
+    console.log('🔎 [智能搜索] 开始处理DOI:', doi)
     setSearchStatus('checking')
     setProcessingMessage('🔍 检查论文是否已存在...')
     setError(null)
 
     try {
       // 首先检查论文是否已存在
+      console.log('📡 [智能搜索] 检查DOI是否存在:', doi)
       const checkResponse = await fetch(`/api/papers/check-doi?doi=${encodeURIComponent(doi)}`)
       
       if (!checkResponse.ok) {
+        console.error('❌ [智能搜索] 检查DOI请求失败:', checkResponse.status)
         throw new Error('检查DOI时发生网络错误')
       }
       
       const checkResult = await checkResponse.json()
+      console.log('📄 [智能搜索] DOI检查结果:', checkResult)
 
       if (checkResult.exists) {
+        console.log('✅ [智能搜索] 论文已存在，准备跳转到:', `/papers/${checkResult.paper.id}`)
         setSearchStatus('redirecting')
         setProcessingMessage('✅ 找到论文，正在跳转...')
         
         // 短暂延迟以显示成功消息
         setTimeout(() => {
+          console.log('🚀 [智能搜索] 执行跳转')
           window.location.href = `/papers/${checkResult.paper.id}`
         }, 800)
         return
       }
 
       // 论文不存在，从CrossRef抓取
+      console.log('📚 [智能搜索] 论文不存在，开始从CrossRef获取')
       setSearchStatus('adding')
       setProcessingMessage('📚 论文不存在，正在从学术数据库获取信息...')
       
@@ -95,27 +100,31 @@ export function useSmartSearch(): UseSmartSearchReturn {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ 
-          doi,
-          userId: user?.id
+          doi
+          // 不传递userId，支持游客模式
         }),
       })
 
       if (!addResponse.ok) {
         const errorData = await addResponse.json()
+        console.error('❌ [智能搜索] 添加论文失败:', errorData)
         throw new Error(errorData.error || '无法获取论文信息')
       }
 
       const result = await addResponse.json()
+      console.log('✅ [智能搜索] 论文添加成功:', result)
       
       setSearchStatus('redirecting')
       setProcessingMessage('✅ 论文添加成功！正在跳转...')
       
       // 跳转到新添加的论文
       setTimeout(() => {
+        console.log('🚀 [智能搜索] 跳转到新论文:', `/papers/${result.paper.id}`)
         window.location.href = `/papers/${result.paper.id}`
       }, 1000)
 
     } catch (err: any) {
+      console.error('❌ [智能搜索] 处理DOI时出错:', err)
       setSearchStatus('error')
       setError(err.message || '处理DOI时出错')
       setProcessingMessage('')
@@ -125,10 +134,13 @@ export function useSmartSearch(): UseSmartSearchReturn {
   const handleSearch = async (query: string): Promise<void> => {
     if (!query.trim()) return
 
+    console.log('🔍 [智能搜索] 开始处理查询:', query)
     const inputType = detectInputType(query)
+    console.log('🏷️ [智能搜索] 检测到输入类型:', inputType)
     
     if (inputType === 'doi') {
       const doi = extractDOI(query)
+      console.log('📄 [智能搜索] 提取到DOI:', doi)
       if (doi) {
         await handleDOISearch(doi)
         return

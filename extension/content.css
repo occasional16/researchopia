@@ -1,0 +1,194 @@
+/* content.css - 内容脚本样式 */
+
+/* 浮动图标样式 */
+.researchopia-floating-icon {
+  position: fixed !important;
+  z-index: 999999 !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+}
+
+.researchopia-floating-icon:hover {
+  transform: scale(1.1) !important;
+}
+
+.researchopia-floating-icon:active {
+  transform: scale(0.95) !important;
+}
+
+.researchopia-floating-icon .icon-content {
+  position: relative !important;
+  width: 100% !important;
+  height: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.researchopia-floating-icon .doi-indicator {
+  animation: pulse 2s infinite !important;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.1);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* 侧边栏样式 */
+.researchopia-sidebar {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif !important;
+}
+
+.researchopia-sidebar * {
+  box-sizing: border-box !important;
+}
+
+.researchopia-sidebar .sidebar-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  color: white !important;
+}
+
+.researchopia-sidebar .sidebar-title {
+  color: white !important;
+}
+
+.researchopia-sidebar .sidebar-close {
+  color: rgba(255, 255, 255, 0.8) !important;
+  transition: all 0.2s ease !important;
+}
+
+.researchopia-sidebar .sidebar-close:hover {
+  color: white !important;
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  transform: scale(1.1) !important;
+}
+
+.researchopia-sidebar .sidebar-close:active {
+  transform: scale(0.9) !important;
+}
+
+/* 确保侧边栏不被其他样式影响 */
+.researchopia-sidebar iframe {
+  border: none !important;
+  outline: none !important;
+  background: white !important;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .researchopia-sidebar {
+    width: 100vw !important;
+    transform: translateX(100vw) !important;
+  }
+  
+  .researchopia-sidebar.show {
+    transform: translateX(0) !important;
+  }
+  
+  .researchopia-floating-icon {
+    width: 48px !important;
+    height: 48px !important;
+    bottom: 80px !important;
+    right: 16px !important;
+  }
+  
+  .researchopia-floating-icon .icon-text {
+    font-size: 18px !important;
+  }
+}
+
+/* 高对比度模式支持 */
+@media (prefers-contrast: high) {
+  .researchopia-floating-icon {
+    border: 2px solid #000 !important;
+    background-color: #000 !important;
+    color: #fff !important;
+  }
+  
+  .researchopia-sidebar {
+    border-left: 3px solid #000 !important;
+  }
+}
+
+/* 深色模式支持 */
+@media (prefers-color-scheme: dark) {
+  .researchopia-sidebar .sidebar-header {
+    background: linear-gradient(135deg, #4c1d95 0%, #581c87 100%) !important;
+  }
+  
+  .researchopia-floating-icon {
+    background-color: #4c1d95 !important;
+  }
+  
+  .researchopia-floating-icon:hover {
+    background-color: #581c87 !important;
+  }
+}
+
+/* 动画效果 */
+.researchopia-floating-icon {
+  animation: fadeInFloat 0.5s ease-out !important;
+}
+
+@keyframes fadeInFloat {
+  0% {
+    opacity: 0;
+    transform: translateY(20px) scale(0.8);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.researchopia-sidebar {
+  animation: slideInRight 0.3s ease-out !important;
+}
+
+@keyframes slideInRight {
+  0% {
+    opacity: 0.8;
+    transform: translateX(100%);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* 防止与网站样式冲突 */
+.researchopia-floating-icon,
+.researchopia-sidebar {
+  all: unset !important;
+}
+
+/* 重新应用我们需要的样式 */
+.researchopia-floating-icon {
+  position: fixed !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: move !important;
+  user-select: none !important;
+}
+
+.researchopia-sidebar {
+  position: fixed !important;
+  top: 0 !important;
+  right: 0 !important;
+  height: 100vh !important;
+  background-color: white !important;
+  display: block !important;
+}

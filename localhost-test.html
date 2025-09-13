@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>研学港扩展测试 - localhost版本</title>
+    <meta name="citation_doi" content="10.1038/s41586-023-06548-1">
+    <meta name="citation_title" content="Test Paper for Extension Development">
+    <meta name="citation_author" content="Research Team">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #155DFC, #1e40af);
+            min-height: 100vh;
+            color: white;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255,255,255,0.95);
+            border-radius: 16px;
+            padding: 30px;
+            color: #333;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .extension-status {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 4px solid #155DFC;
+        }
+        
+        .test-section {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .btn {
+            background: #155DFC;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            margin: 5px;
+            transition: all 0.2s;
+        }
+        
+        .btn:hover {
+            background: #1e40af;
+            transform: translateY(-2px);
+        }
+        
+        .status-good { color: #28a745; }
+        .status-error { color: #dc3545; }
+        .status-warning { color: #ffc107; }
+        
+        #diagnostic-output {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 12px;
+            overflow-x: auto;
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            margin-top: 10px;
+        }
+        
+        .floating-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #155DFC, #1e40af);
+            color: white;
+            border: none;
+            width: 100px;
+            height: 40px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 500;
+            box-shadow: 0 4px 12px rgba(21, 93, 252, 0.4);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            transition: all 0.2s;
+        }
+        
+        .floating-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(21, 93, 252, 0.6);
+        }
+    </style>
+</head>
+<body>
+    <button class="floating-button" id="test-extension-button">
+        🔬 研学港
+    </button>
+    
+    <div class="container">
+        <div class="header">
+            <h1>🧪 研学港扩展功能测试</h1>
+            <p>这是一个用于测试扩展功能的localhost页面</p>
+        </div>
+        
+        <div class="extension-status">
+            <h3 id="extension-status-title">🔄 正在检测扩展状态...</h3>
+            <div id="extension-status-content"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>🔧 手动测试功能</h3>
+            <p>使用以下按钮测试各项功能：</p>
+            <button class="btn" onclick="testExtensionButton()">测试浮动按钮</button>
+            <button class="btn" onclick="testSidePanel()">测试侧边栏打开</button>
+            <button class="btn" onclick="testPopup()">测试弹出窗口</button>
+            <button class="btn" onclick="testNewTab()">测试新标签页</button>
+        </div>
+        
+        <div class="test-section">
+            <h3>📊 DOI信息检测</h3>
+            <p><strong>当前页面DOI：</strong> <span id="current-doi">检测中...</span></p>
+            <p><strong>论文标题：</strong> <span id="paper-title">检测中...</span></p>
+            <button class="btn" onclick="detectDOI()">重新检测DOI</button>
+        </div>
+        
+        <div class="test-section">
+            <h3>🔍 完整诊断</h3>
+            <p>运行完整的扩展诊断检查：</p>
+            <button class="btn" onclick="runFullDiagnostic()">运行完整诊断</button>
+            <button class="btn" onclick="clearOutput()">清除输出</button>
+            <div id="diagnostic-output"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>📋 测试说明</h3>
+            <ul>
+                <li><strong>扩展加载：</strong> 确保扩展已在 edge://extensions/ 中加载</li>
+                <li><strong>权限检查：</strong> 确认扩展有所需权限</li>
+                <li><strong>API支持：</strong> Edge版本需 >= 114 才支持sidePanel</li>
+                <li><strong>网络连接：</strong> 需要连接到本地开发服务器</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        let diagnosticOutput = ''
+        
+        // 页面加载时检测扩展状态
+        document.addEventListener('DOMContentLoaded', async () => {
+            await checkExtensionStatus()
+            detectDOI()
+            console.log('🧪 测试页面已加载，准备测试扩展功能')
+        })
+        
+        // 检测扩展状态
+        async function checkExtensionStatus() {
+            const statusTitle = document.getElementById('extension-status-title')
+            const statusContent = document.getElementById('extension-status-content')
+            
+            let status = '<div>'
+            let hasExtension = false
+            
+            // 检测Chrome扩展API
+            if (typeof chrome !== 'undefined' && chrome.runtime) {
+                status += '<p class="status-good">✅ Chrome扩展API可用</p>'
+                hasExtension = true
+                
+                try {
+                    const manifest = chrome.runtime.getManifest()
+                    status += `<p class="status-good">✅ 扩展已加载: ${manifest.name} v${manifest.version}</p>`
+                    
+                    // 检测sidePanel API
+                    if (chrome.sidePanel) {
+                        status += '<p class="status-good">✅ sidePanel API可用</p>'
+                    } else {
+                        status += '<p class="status-error">❌ sidePanel API不可用</p>'
+                    }
+                    
+                    // 检测其他API
+                    if (chrome.tabs) status += '<p class="status-good">✅ tabs API可用</p>'
+                    else status += '<p class="status-error">❌ tabs API不可用</p>'
+                    
+                    if (chrome.scripting) status += '<p class="status-good">✅ scripting API可用</p>'
+                    else status += '<p class="status-error">❌ scripting API不可用</p>'
+                    
+                } catch (e) {
+                    status += `<p class="status-error">❌ 扩展API调用失败: ${e.message}</p>`
+                }
+            } else {
+                status += '<p class="status-error">❌ Chrome扩展API不可用</p>'
+            }
+            
+            // 检测浮动按钮
+            const floatingButton = document.getElementById('test-extension-button')
+            if (floatingButton) {
+                status += '<p class="status-good">✅ 测试浮动按钮已创建</p>'
+            }
+            
+            status += '</div>'
+            
+            statusTitle.textContent = hasExtension ? '✅ 扩展检测结果' : '❌ 扩展未检测到'
+            statusTitle.className = hasExtension ? 'status-good' : 'status-error'
+            statusContent.innerHTML = status
+        }
+        
+        // 检测DOI
+        function detectDOI() {
+            const doiMeta = document.querySelector('meta[name="citation_doi"]')
+            const titleMeta = document.querySelector('meta[name="citation_title"]')
+            
+            const doiElement = document.getElementById('current-doi')
+            const titleElement = document.getElementById('paper-title')
+            
+            if (doiMeta) {
+                doiElement.textContent = doiMeta.content
+                doiElement.className = 'status-good'
+            } else {
+                doiElement.textContent = '未检测到DOI'
+                doiElement.className = 'status-error'
+            }
+            
+            if (titleMeta) {
+                titleElement.textContent = titleMeta.content
+                titleElement.className = 'status-good'
+            } else {
+                titleElement.textContent = '未检测到标题'
+                titleElement.className = 'status-error'
+            }
+        }
+        
+        // 测试扩展按钮
+        function testExtensionButton() {
+            const button = document.getElementById('test-extension-button')
+            if (button) {
+                button.style.animation = 'pulse 0.5s'
+                setTimeout(() => button.style.animation = '', 500)
+                logOutput('✅ 浮动按钮存在并可交互')
+                
+                // 模拟点击
+                button.click()
+            } else {
+                logOutput('❌ 浮动按钮不存在')
+            }
+        }
+        
+        // 测试侧边栏
+        async function testSidePanel() {
+            if (typeof chrome !== 'undefined' && chrome.sidePanel) {
+                try {
+                    await chrome.sidePanel.open({ windowId: (await chrome.windows.getCurrent()).id })
+                    logOutput('✅ 侧边栏打开成功')
+                } catch (e) {
+                    logOutput(`❌ 侧边栏打开失败: ${e.message}`)
+                }
+            } else {
+                logOutput('❌ sidePanel API不可用，尝试其他方法')
+                testPopup()
+            }
+        }
+        
+        // 测试弹出窗口
+        function testPopup() {
+            const popup = window.open('http://localhost:3000', 'researchopia-popup', 'width=400,height=600,scrollbars=yes,resizable=yes')
+            if (popup) {
+                logOutput('✅ 弹出窗口打开成功')
+            } else {
+                logOutput('❌ 弹出窗口被阻止')
+            }
+        }
+        
+        // 测试新标签页
+        function testNewTab() {
+            window.open('http://localhost:3000', '_blank')
+            logOutput('✅ 新标签页打开')
+        }
+        
+        // 运行完整诊断
+        async function runFullDiagnostic() {
+            logOutput('🔍 开始运行完整诊断...\n' + '='.repeat(50))
+            
+            // 浏览器检测
+            logOutput('\n1. 浏览器环境检测')
+            logOutput('─'.repeat(30))
+            
+            const userAgent = navigator.userAgent
+            if (userAgent.includes('Edg/')) {
+                const edgeMatch = userAgent.match(/Edg\/([0-9.]+)/)
+                const edgeVersion = edgeMatch ? edgeMatch[1] : 'Unknown'
+                logOutput(`✅ Edge浏览器检测: Edge版本 ${edgeVersion}`)
+                
+                const majorVersion = parseInt(edgeVersion.split('.')[0])
+                if (majorVersion >= 114) {
+                    logOutput('✅ sidePanel API版本支持: Edge版本支持sidePanel API')
+                } else {
+                    logOutput('❌ sidePanel API版本支持: Edge版本过低，需要 >= 114')
+                }
+            } else {
+                logOutput('⚠️ 浏览器检测: 可能不是Edge浏览器')
+            }
+            
+            // 扩展检测
+            logOutput('\n2. 扩展状态检测')
+            logOutput('─'.repeat(30))
+            
+            if (typeof chrome !== 'undefined' && chrome.runtime) {
+                logOutput('✅ 扩展环境检测: Chrome扩展API可用')
+                
+                try {
+                    const manifest = chrome.runtime.getManifest()
+                    logOutput(`✅ 扩展信息: ${manifest.name} v${manifest.version}`)
+                    logOutput(`✅ 扩展ID: ${chrome.runtime.id}`)
+                } catch (e) {
+                    logOutput(`❌ 扩展信息获取失败: ${e.message}`)
+                }
+            } else {
+                logOutput('❌ 扩展环境检测: Chrome扩展API不可用')
+            }
+            
+            // API检测
+            logOutput('\n3. API可用性检测')
+            logOutput('─'.repeat(30))
+            
+            const apis = {
+                'chrome.sidePanel': chrome?.sidePanel,
+                'chrome.tabs': chrome?.tabs,
+                'chrome.runtime': chrome?.runtime,
+                'chrome.scripting': chrome?.scripting
+            }
+            
+            for (const [apiName, api] of Object.entries(apis)) {
+                if (api) {
+                    logOutput(`✅ ${apiName} API: 可用`)
+                } else {
+                    logOutput(`❌ ${apiName} API: 不可用`)
+                }
+            }
+            
+            // 通信测试
+            logOutput('\n4. 消息传递测试')
+            logOutput('─'.repeat(30))
+            
+            if (chrome?.runtime?.sendMessage) {
+                try {
+                    chrome.runtime.sendMessage({ action: 'ping' }, (response) => {
+                        if (chrome.runtime.lastError) {
+                            logOutput(`❌ Background通信测试: ${chrome.runtime.lastError.message}`)
+                        } else {
+                            logOutput(`✅ Background通信测试: ${response ? '通信成功' : '无响应'}`)
+                        }
+                    })
+                } catch (e) {
+                    logOutput(`❌ Background通信测试: ${e.message}`)
+                }
+            } else {
+                logOutput('❌ Background通信测试: sendMessage API不可用')
+            }
+            
+            // DOM检测
+            logOutput('\n5. DOM状态检查')
+            logOutput('─'.repeat(30))
+            
+            const floatingButton = document.getElementById('test-extension-button')
+            if (floatingButton) {
+                logOutput('✅ 浮动按钮存在性: 测试按钮已创建')
+            } else {
+                logOutput('❌ 浮动按钮存在性: 按钮不存在')
+            }
+            
+            const doiMeta = document.querySelector('meta[name="citation_doi"]')
+            if (doiMeta) {
+                logOutput(`✅ DOI元数据检测: ${doiMeta.content}`)
+            } else {
+                logOutput('❌ DOI元数据检测: 未发现DOI')
+            }
+            
+            // 网络检测
+            logOutput('\n6. 网络连接检查')
+            logOutput('─'.repeat(30))
+            
+            try {
+                const response = await fetch('http://localhost:3000')
+                if (response.ok) {
+                    logOutput('✅ 本地服务器端口3000: 连接成功')
+                } else {
+                    logOutput(`⚠️ 本地服务器端口3000: HTTP ${response.status}`)
+                }
+            } catch (e) {
+                logOutput(`❌ 本地服务器端口3000: 连接失败 - ${e.message}`)
+            }
+            
+            logOutput('\n' + '='.repeat(50))
+            logOutput('🔍 完整诊断结束')
+        }
+        
+        // 输出日志
+        function logOutput(message) {
+            diagnosticOutput += message + '\n'
+            document.getElementById('diagnostic-output').textContent = diagnosticOutput
+            document.getElementById('diagnostic-output').scrollTop = document.getElementById('diagnostic-output').scrollHeight
+        }
+        
+        // 清除输出
+        function clearOutput() {
+            diagnosticOutput = ''
+            document.getElementById('diagnostic-output').textContent = ''
+        }
+        
+        // 浮动按钮点击事件
+        document.getElementById('test-extension-button').addEventListener('click', async () => {
+            logOutput('🔬 研学港扩展按钮被点击')
+            
+            // 尝试多种打开方式
+            if (typeof chrome !== 'undefined' && chrome.sidePanel) {
+                try {
+                    await chrome.sidePanel.open({ windowId: (await chrome.windows.getCurrent()).id })
+                    logOutput('✅ 使用侧边栏打开成功')
+                    return
+                } catch (e) {
+                    logOutput(`⚠️ 侧边栏打开失败，尝试其他方式: ${e.message}`)
+                }
+            }
+            
+            // 备用方案：弹出窗口
+            const popup = window.open('http://localhost:3000', 'researchopia-popup', 'width=400,height=600,scrollbars=yes,resizable=yes')
+            if (popup) {
+                logOutput('✅ 使用弹出窗口作为备用方案')
+            } else {
+                logOutput('⚠️ 弹出窗口被阻止，使用新标签页')
+                window.open('http://localhost:3000', '_blank')
+            }
+        })
+        
+        // CSS动画
+        const style = document.createElement('style')
+        style.textContent = `
+            @keyframes pulse {
+                0% { transform: scale(1); }
+                50% { transform: scale(1.1); }
+                100% { transform: scale(1); }
+            }
+        `
+        document.head.appendChild(style)
+        
+        // 全局诊断函数（兼容之前的调用）
+        window.runEdgeDiagnostic = runFullDiagnostic
+        
+        console.log('🧪 localhost测试页面初始化完成')
+        console.log('📋 可用功能：')
+        console.log('   - testExtensionButton(): 测试扩展按钮')
+        console.log('   - testSidePanel(): 测试侧边栏')
+        console.log('   - runFullDiagnostic(): 运行完整诊断')
+        console.log('   - runEdgeDiagnostic(): 别名诊断函数')
+    </script>
+</body>
+</html>

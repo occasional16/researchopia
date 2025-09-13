@@ -123,6 +123,39 @@ export default function HomePage() {
     loadData()
   }, [])
 
+  // 检测URL参数中的DOI并自动填入搜索框
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search)
+      const doiParam = urlParams.get('doi')
+      const autoSearchParam = urlParams.get('autoSearch')
+      
+      console.log('🔍 [主页] URL参数检查:', { doi: doiParam, autoSearch: autoSearchParam })
+      
+      if (doiParam) {
+        console.log('🔍 [主页] 检测到URL中的DOI参数:', doiParam)
+        setSearchQuery(doiParam)
+        
+        // 如果有autoSearch参数，自动执行搜索
+        if (autoSearchParam === 'true') {
+          console.log('🚀 [主页] 准备自动执行搜索...')
+          // 延迟执行，确保组件完全加载且避免依赖问题
+          const timer = setTimeout(async () => {
+            try {
+              console.log('⚡ [主页] 开始执行自动搜索:', doiParam)
+              await performSmartSearch(doiParam)
+              console.log('✅ [主页] 自动搜索完成')
+            } catch (error) {
+              console.error('❌ [主页] 自动搜索失败:', error)
+            }
+          }, 1500) // 增加延迟到1.5秒
+          
+          return () => clearTimeout(timer)
+        }
+      }
+    }
+  }, []) // 移除performSmartSearch依赖，避免循环
+
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!searchQuery.trim()) return

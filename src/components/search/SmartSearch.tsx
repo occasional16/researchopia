@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Search, Plus, ExternalLink, BookOpen } from 'lucide-react'
 import { LoadingSpinner, ErrorMessage } from '@/components/ui/LoadingStates'
 import { useAuth } from '@/contexts/AuthContext'
@@ -20,6 +20,108 @@ export function SmartSearch({ onSearch, onPaperAdded, className = '' }: SmartSea
   const [processingMessage, setProcessingMessage] = useState('')
   const [error, setError] = useState<string | null>(null)
   const { user } = useAuth()
+  const searchInputRef = useRef<HTMLInputElement>(null)
+
+  // 扩展自动搜索功能
+  useEffect(() => {
+    // 监听来自浏览器扩展的消息
+    const handleExtensionMessage = (event: MessageEvent) => {
+      if (event.data && event.data.type === 'RESEARCHOPIA_AUTO_SEARCH') {
+        const { doi, url, title } = event.data
+        console.log('📥 收到扩展自动搜索请求:', { doi, url, title })
+        
+        if (doi && searchInputRef.current) {
+          // 模拟用户输入DOI
+          setSearchQuery(doi)
+          searchInputRef.current.value = doi
+          searchInputRef.current.focus()
+          
+          // 发送立即确认消息（表示已收到请求）
+          try {
+            // 向父窗口发送消息
+            window.parent.postMessage({
+              type: 'RESEARCHOPIA_SEARCH_COMPLETE',
+              doi: doi,
+              method: 'auto_fill_and_search',
+              status: 'received'
+            }, '*')
+            console.log('📤 已发送搜索确认消息到父窗口')
+          } catch (error) {
+            console.warn('⚠️ 发送确认消息失败:', error)
+          }
+          
+          // 触发搜索
+          setTimeout(() => {
+            handleExtensionSearch(doi)
+          }, 500)
+        }
+      }
+    }
+
+    // 检查URL参数中的搜索请求
+    const checkUrlParams = () => {
+      const urlParams = new URLSearchParams(window.location.search)
+      const searchQuery = urlParams.get('search')
+      const isFromExtension = urlParams.get('source') === 'extension'
+      const isAuto = urlParams.get('auto') === 'true'
+      
+      if (searchQuery && isFromExtension) {
+        console.log('🔗 检测到扩展URL参数搜索:', { searchQuery, isAuto })
+        setSearchQuery(searchQuery)
+        
+        if (searchInputRef.current) {
+          searchInputRef.current.value = searchQuery
+          searchInputRef.current.focus()
+        }
+        
+        // 发送确认消息到父窗口
+        try {
+          window.parent.postMessage({
+            type: 'RESEARCHOPIA_SEARCH_COMPLETE',
+            doi: searchQuery,
+            method: 'url_parameters',
+            status: 'loaded'
+          }, '*')
+          console.log('📤 已发送URL参数搜索确认')
+        } catch (error) {
+          console.warn('⚠️ 发送URL确认消息失败:', error)
+        }
+        
+        if (isAuto) {
+          setTimeout(() => {
+            handleExtensionSearch(searchQuery)
+          }, 1000)
+        }
+      }
+    }
+
+    window.addEventListener('message', handleExtensionMessage)
+    checkUrlParams()
+
+    return () => {
+      window.removeEventListener('message', handleExtensionMessage)
+    }
+  }, [])
+
+  // 处理扩展搜索
+  const handleExtensionSearch = async (query: string) => {
+    try {
+      setIsProcessing(true)
+      setError(null)
+      setProcessingMessage('正在执行扩展自动搜索...')
+      
+      // 调用搜索函数
+      await onSearch(query)
+      
+      console.log('扩展自动搜索完成:', query)
+    } catch (error) {
+      console.error('扩展自动搜索失败:', error)
+      setError('自动搜索失败，请手动重试')
+    } finally {
+      setIsProcessing(false)
+      setProcessingMessage('')
+    }
+  }
 
   // 检测输入类型
   const detectInputType = (input: string): 'doi' | 'arxiv' | 'general' => {
@@ -204,6 +306,7 @@ export function SmartSearch({ onSearch, onPaperAdded, className = '' }: SmartSea
         <div className="relative">
           <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
           <input
+            ref={searchInputRef}
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}

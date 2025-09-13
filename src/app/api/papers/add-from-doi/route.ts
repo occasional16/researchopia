@@ -10,27 +10,44 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'DOI is required' }, { status: 400 })
     }
 
-    // 如果没有提供userId，使用一个默认的系统用户ID
-    // 这样可以允许未登录用户也能添加论文
-    const effectiveUserId = userId || 'anonymous-user'
-
-    // 直接在API路由中创建 Supabase 客户端
+    // 使用匿名密钥，支持游客模式
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY // 改用 anon key
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
     
-    if (!supabaseUrl || !supabaseKey) {
+    console.log('环境变量检查:')
+    console.log('- SUPABASE_URL:', supabaseUrl ? '存在' : '缺失')
+    console.log('- ANON_KEY:', supabaseAnonKey ? `存在 (长度: ${supabaseAnonKey.length})` : '缺失')
+    
+    if (!supabaseUrl || !supabaseAnonKey) {
       console.error('Missing Supabase environment variables')
       return NextResponse.json({ 
         error: 'Server configuration error' 
       }, { status: 500 })
     }
 
-    const supabase = createClient(supabaseUrl, supabaseKey, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false
+    const supabase = createClient(supabaseUrl, supabaseAnonKey)
+
+    // 支持游客模式添加论文，使用第一个可用用户
+    let effectiveUserId = userId
+    
+    if (!effectiveUserId) {
+      console.log('游客模式：查找第一个可用用户...')
+      const { data: firstUser, error: userError } = await supabase
+        .from('users')
+        .select('id')
+        .limit(1)
+        .single()
+      
+      if (firstUser) {
+        effectiveUserId = firstUser.id
+        console.log('使用现有用户进行匿名添加，用户ID:', effectiveUserId)
+      } else {
+        // 如果没有用户，返回错误，建议注册
+        return NextResponse.json({ 
+          error: '系统需要至少有一个注册用户才能添加论文。请先注册账户或联系管理员。' 
+        }, { status: 400 })
       }
-    })
+    }
 
     // 再次检查是否已存在该DOI的论文
     const { data: existingPapers } = await supabase

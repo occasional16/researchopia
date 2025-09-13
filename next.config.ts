@@ -18,7 +18,7 @@ const nextConfig: NextConfig = {
   // 实验性功能
   experimental: {
     serverActions: {
-      allowedOrigins: ['localhost:3000', '127.0.0.1:3000', '183.173.171.124:3000', 'localhost:3006']
+      allowedOrigins: ['localhost:3001', '127.0.0.1:3001', '183.173.171.124:3001', 'localhost:3006']
     },
 
     optimizePackageImports: ['lucide-react']
@@ -33,10 +33,11 @@ const nextConfig: NextConfig = {
       {
         source: '/(.*)',
         headers: [
-          {
-            key: 'X-Frame-Options',
-            value: 'DENY',
-          },
+          // 开发环境允许iframe嵌入，生产环境可以启用更严格的安全策略
+          // {
+          //   key: 'X-Frame-Options',
+          //   value: 'SAMEORIGIN',
+          // },
           {
             key: 'X-Content-Type-Options',
             value: 'nosniff',

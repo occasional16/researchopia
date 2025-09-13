@@ -12,7 +12,6 @@ export default function Navbar() {
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login')
   const [showUserMenu, setShowUserMenu] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
 
   // 调试日志
   useEffect(() => {
@@ -64,15 +63,6 @@ export default function Navbar() {
     }
   }, [signOut])
 
-  const handleSearch = useCallback((e: React.FormEvent) => {
-    e.preventDefault()
-    if (searchQuery.trim()) {
-      // Navigate to search results page
-      const encodedQuery = encodeURIComponent(searchQuery.trim())
-      window.location.href = `/search?q=${encodedQuery}`
-    }
-  }, [searchQuery])
-
   return (
     <>
       <nav className="bg-white shadow-sm border-b">
@@ -100,20 +90,6 @@ export default function Navbar() {
                 <div className="text-lg font-bold text-gray-900 group-hover:text-purple-600 transition-colors duration-200">研学港</div>
               </div>
             </Link>
-
-            {/* Search Bar */}
-            <div className="flex-1 max-w-lg mx-8">
-              <form onSubmit={handleSearch} className="relative">
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="搜索论文、作者、关键词..."
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-                <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
-              </form>
-            </div>
 
             {/* User Menu */}
             <div className="flex items-center space-x-4">

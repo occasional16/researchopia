@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>欢迎使用研学港扩展</title>
+    <title>欢迎使用研学港 Researchopia 扩展</title>
     <style>
         * {
             margin: 0;
@@ -192,7 +192,7 @@
     <div class="container">
         <div class="welcome-card">
             <div class="logo">研</div>
-            <h1 class="title">欢迎使用研学港扩展</h1>
+            <h1 class="title">欢迎使用研学港 Researchopia 扩展</h1>
             <p class="subtitle">研学并进，智慧共享 | 您的学术研究智能助手</p>
             
             <div class="features">
@@ -240,7 +240,7 @@
             <div class="actions">
                 <a href="http://localhost:3000" target="_blank" class="btn btn-primary">
                     <span>🌐</span>
-                    <span>访问研学港</span>
+                    <span>访问研学港 Researchopia</span>
                 </a>
                 <a href="#" class="btn btn-secondary" id="testExtension">
                     <span>🧪</span>
@@ -254,52 +254,11 @@
         </div>
         
         <div class="footer">
-            <p>研学港浏览器扩展 v0.1.0 | 基于 Manifest V3</p>
+            <p>研学港 Researchopia 浏览器扩展 v0.1.0 | 基于 Manifest V3</p>
             <p>如有问题，请访问研学港网站获取技术支持</p>
         </div>
     </div>
     
-    <script>
-        // 检查服务器连接状态
-        async function checkServerStatus() {
-            const serverStatus = document.getElementById('serverStatus');
-            
-            try {
-                const response = await fetch('http://localhost:3000', { 
-                    method: 'HEAD',
-                    mode: 'no-cors'
-                });
-                
-                serverStatus.textContent = '已连接';
-                serverStatus.className = 'status-indicator status-success';
-            } catch (error) {
-                serverStatus.textContent = '未连接';
-                serverStatus.className = 'status-indicator status-warning';
-            }
-        }
-        
-        // 测试扩展功能
-        document.getElementById('testExtension').addEventListener('click', function(e) {
-            e.preventDefault();
-            
-            // 打开一个测试页面
-            const testUrls = [
-                'https://www.nature.com/articles/s41467-025-62625-w',
-                'https://arxiv.org/abs/2101.00001',
-                'https://doi.org/10.1038/s41467-025-62625-w'
-            ];
-            
-            const randomUrl = testUrls[Math.floor(Math.random() * testUrls.length)];
-            window.open(randomUrl, '_blank');
-            
-            // 显示提示
-            alert('已打开测试页面！\n\n请在新打开的学术网页中：\n1. 查看是否出现悬浮的"研"字图标\n2. 点击图标测试侧边栏功能\n3. 点击浏览器工具栏中的扩展图标查看详情');
-        });
-        
-        // 页面加载完成后检查服务器状态
-        document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(checkServerStatus, 1000);
-        });
-    </script>
+    <script src="welcome.js"></script>
 </body>
 </html>

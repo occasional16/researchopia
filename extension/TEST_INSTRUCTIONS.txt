@@ -1,0 +1,32 @@
+==================================================
+  Researchopia Extension Debug Test - FIXED VERSION
+==================================================
+
+✅ MANIFEST ERROR FIXED! 
+The invalid port wildcard issue has been resolved.
+
+Extension files validated successfully! ✅
+
+INSTALLATION STEPS:
+1. Open Chrome browser
+2. Go to chrome://extensions/
+3. Enable "Developer mode"
+4. Click "Load unpacked"
+5. Select folder: D:\AI\Rating\academic-rating\extension
+6. Open test page: test-page.html
+
+DEBUGGING TIPS:
+- Press F12 to open DevTools Console
+- Look for log messages starting with 🚀 ✅ ❌
+- The floating "研" icon should appear on the right side
+- Click the icon to open the sidebar
+
+TEST PAGE PATH:
+file:///D:/AI/Rating/academic-rating/extension/test-page.html
+
+FIXED ISSUES:
+- ❌ "http://localhost:300*/*" (invalid wildcard)
+- ✅ "http://localhost:3000/*" to "http://localhost:3009/*" (explicit ports)
+
+EXTENSION STATUS: Ready for testing! No errors detected.
+==================================================

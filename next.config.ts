@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import path from 'path';
 
 const nextConfig: NextConfig = {
   // 性能优化配置
@@ -20,11 +21,11 @@ const nextConfig: NextConfig = {
     serverActions: {
       // Use fully-qualified origins to avoid URL parsing errors in production
       allowedOrigins: [
+        // Development origins
+        'http://localhost:3006',
         'http://localhost:3001',
         'http://127.0.0.1:3001',
-        'http://183.173.171.124:3001',
-        'http://localhost:3006',
-        // Production origin
+        // Production origin (keep minimal to avoid parsing variance)
         'https://academic-rating.vercel.app'
       ]
     },
@@ -34,6 +35,8 @@ const nextConfig: NextConfig = {
 
   // 输出优化
   output: 'standalone',
+  // 解决多 lockfile 时的 workspace root 推断警告
+  outputFileTracingRoot: path.join(__dirname, '..'),
 
   // 头部配置
   async headers() {

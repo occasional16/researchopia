@@ -2,7 +2,7 @@ const status = document.getElementById('status');
 const frame = document.getElementById('appFrame');
 
 // Base URL from Zotero prefs if available, else fallback
-let BASE_URL = 'https://researchopia.vercel.app';
+let BASE_URL = 'https://www.researchopia.com';
 try {
   // Available when loaded inside Zotero chrome (xhtml) context; in webextension panel this will fail
   if (window?.Zotero?.Prefs?.get) {

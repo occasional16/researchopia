@@ -59,7 +59,7 @@ class ResearchopiaBackground {
     try {
       await chrome.storage.sync.set({
         floatingEnabled: true,
-        researchopiaUrl: 'http://localhost:3000',
+        researchopiaUrl: 'https://www.researchopia.com',
         autoDetectDOI: true,
         sidebarWidth: 400,
       });

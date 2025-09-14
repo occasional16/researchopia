@@ -28,11 +28,11 @@ class PopupManager {
     try {
       const result = await chrome.storage.sync.get(['floatingEnabled', 'researchopiaUrl']);
       this.isFloating = result.floatingEnabled || false;
-      this.researchopiaUrl = result.researchopiaUrl || this.detectLocalUrl();
+      this.researchopiaUrl = result.researchopiaUrl || 'https://www.researchopia.com';
     } catch (error) {
       console.error('Failed to load settings:', error);
       this.isFloating = false;
-      this.researchopiaUrl = this.detectLocalUrl();
+      this.researchopiaUrl = 'https://www.researchopia.com';
     }
   }
 

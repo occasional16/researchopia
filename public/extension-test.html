@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>插件连接测试</title>
+</head>
+<body>
+    <h1>🔌 浏览器插件连接测试</h1>
+    
+    <div id="testResults" style="font-family: monospace; background: #f5f5f5; padding: 20px; margin: 20px 0; border-radius: 8px;">
+        <p>测试进行中...</p>
+    </div>
+    
+    <script>
+        async function testConnections() {
+            const results = document.getElementById('testResults');
+            const testUrls = [
+                'https://www.researchopia.com/api/health',
+                'https://academic-rating.vercel.app/api/health',
+                'http://localhost:3006/api/health'
+            ];
+            
+            results.innerHTML = '<h3>🧪 连接测试结果：</h3>';
+            
+            for (const url of testUrls) {
+                try {
+                    const response = await fetch(url, {
+                        method: 'GET',
+                        mode: 'cors',
+                        headers: {
+                            'Accept': 'application/json',
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        results.innerHTML += `<p>✅ <strong>${url}</strong><br>状态: ${data.status}, 版本: ${data.version}</p>`;
+                    } else {
+                        results.innerHTML += `<p>⚠️ <strong>${url}</strong><br>HTTP ${response.status}: ${response.statusText}</p>`;
+                    }
+                } catch (error) {
+                    results.innerHTML += `<p>❌ <strong>${url}</strong><br>错误: ${error.message}</p>`;
+                }
+            }
+            
+            results.innerHTML += '<br><h3>🎯 插件配置建议：</h3>';
+            results.innerHTML += '<p>如果 www.researchopia.com 可以正常访问，插件应该能正常工作。</p>';
+            results.innerHTML += '<p>如果只有 localhost 能访问，请在插件设置中更改服务器地址。</p>';
+        }
+        
+        // 页面加载后开始测试
+        testConnections();
+    </script>
+</body>
+</html>

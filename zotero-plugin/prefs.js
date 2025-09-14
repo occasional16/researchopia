@@ -1,1 +1,1 @@
-pref("extensions.academic-rating.baseURL", "https://researchopia.vercel.app");
+pref("extensions.academic-rating.baseURL", "https://www.researchopia.com");

@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 import BrandLogo from '@/components/ui/BrandLogo'
 import { useSmartSearch } from '@/hooks/useSmartSearch'
+import NetworkOptimizer from '@/components/NetworkOptimizer'
 
 interface SiteStats {
   totalPapers: number
@@ -416,6 +417,9 @@ export default function HomePage() {
           </button>
         </div>
       )}
+
+      {/* 网络优化组件 */}
+      <NetworkOptimizer />
     </div>
   )
 }

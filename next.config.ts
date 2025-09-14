@@ -26,7 +26,7 @@ const nextConfig: NextConfig = {
         'http://localhost:3001',
         'http://127.0.0.1:3001',
         // Production origin (keep minimal to avoid parsing variance)
-        'https://researchopia.vercel.app'
+        'https://academic-rating.vercel.app'
       ]
     },
 

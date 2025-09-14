@@ -53,6 +53,11 @@ const nextConfig: NextConfig = {
             key: 'Referrer-Policy',
             value: 'strict-origin-when-cross-origin',
           },
+          // 启用更好的缓存策略
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
         ],
       },
       {
@@ -60,7 +65,22 @@ const nextConfig: NextConfig = {
         headers: [
           {
             key: 'Cache-Control',
-            value: 'public, max-age=60, s-maxage=60',
+            value: 'public, max-age=300, s-maxage=300, stale-while-revalidate=600',
+          },
+          // 启用压缩
+          {
+            key: 'Content-Encoding',
+            value: 'gzip',
+          },
+        ],
+      },
+      // 静态资源长期缓存
+      {
+        source: '/(.*)\\.(ico|png|jpg|jpeg|gif|webp|svg|css|js)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
           },
         ],
       },

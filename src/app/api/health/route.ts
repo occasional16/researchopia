@@ -4,8 +4,18 @@ export async function GET() {
   try {
     const uptime = process.uptime();
     const now = new Date().toISOString();
+    const version = process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) || 'local';
+    const region = process.env.VERCEL_REGION || 'unknown';
+    
     return new Response(
-      JSON.stringify({ status: 'ok', uptime, timestamp: now }),
+      JSON.stringify({ 
+        status: 'ok', 
+        uptime, 
+        timestamp: now,
+        version,
+        region,
+        nodeVersion: process.version
+      }),
       {
         status: 200,
         headers: {

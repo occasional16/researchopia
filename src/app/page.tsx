@@ -62,9 +62,9 @@ export default function HomePage() {
       setDataError(null)
       
       try {
-        // 添加超时控制和容错处理
+        // 减少超时时间，添加更快的失败策略
         const controller = new AbortController()
-        const timeoutId = setTimeout(() => controller.abort(), 10000) // 10秒超时
+        const timeoutId = setTimeout(() => controller.abort(), 5000) // 5秒超时
 
         const [statsResponse, commentsResponse] = await Promise.allSettled([
           fetch('/api/site/statistics', { 
@@ -73,7 +73,7 @@ export default function HomePage() {
             signal: controller.signal
           }),
           fetch('/api/papers/recent-comments?limit=5', {
-            cache: 'no-store',
+            cache: 'no-store', 
             headers: { 'Cache-Control': 'max-age=60' },
             signal: controller.signal
           })

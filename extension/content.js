@@ -7,7 +7,7 @@ class ResearchopiaContentScript {
     this.floatingIcon = null;
     this.isDragging = false;
     this.dragOffset = { x: 0, y: 0 };
-    this.researchopiaUrl = 'http://localhost:3000';
+    this.researchopiaUrl = 'https://www.researchopia.com';
     
     this.init();
   }

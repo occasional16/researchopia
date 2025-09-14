@@ -1,6 +1,6 @@
 # Researchopia Academic Rating — Zotero Plugin (Zotero 8 compatible)
 
-This is a Zotero 8-compatible bootstrapped plugin that integrates your researchopia site inside Zotero.
+This is a Zotero 8-compatible bootstrapped plugin that integrates your academic-rating site inside Zotero.
 
 Goals:
 - Add a custom Item Pane section that embeds your site for the selected item
@@ -8,7 +8,7 @@ Goals:
 - Reuse parts of the existing browser extension logic when appropriate
 
 ## Features (MVP)
-- Adds a toolbar button and context menu to open a Page View with researchopia for the selected item
+- Adds a toolbar button and context menu to open a Page View with academic-rating for the selected item
 - A sidebar panel to show quick rating/altmetric summary
 - Message passing between background and content (for future use)
 
@@ -31,5 +31,5 @@ Known limitations (MVP):
 
 ## Next steps
 - Tighten integration with the Item Pane (embedded page tied to selected item)
-- Authentication/session sharing with researchopia if needed
+- Authentication/session sharing with academic-rating if needed
 - Port more UI from your existing browser extension

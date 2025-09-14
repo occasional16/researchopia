@@ -3,7 +3,7 @@ class ResearchopiaSidebar {
   constructor() {
     this.iframe = null;
     this.currentDoi = null;
-    this.researchopiaUrl = 'http://localhost:3000';
+    this.researchopiaUrl = 'https://www.researchopia.com';
     this.isLoaded = false;
     this.connectionAttempts = 0;
     this.maxAttempts = 3;
@@ -49,7 +49,7 @@ class ResearchopiaSidebar {
         'lastClickTime'
       ]);
       
-  this.researchopiaUrl = result.researchopiaUrl || 'http://localhost:3000';
+  this.researchopiaUrl = result.researchopiaUrl || 'https://www.researchopia.com';
   this.lastUrl = result.sidebarLastUrl;
   this.currentDoi = result.doiFromContentScript;
   this.lastClickTime = result.lastClickTime;
@@ -303,7 +303,7 @@ class ResearchopiaSidebar {
       const currentDOIDisplay = document.getElementById('currentDOIDisplay');
       
       if (urlInput) {
-        urlInput.value = result.researchopiaUrl || 'http://localhost:3000';
+        urlInput.value = result.researchopiaUrl || 'https://www.researchopia.com';
       }
       
       if (currentDOIDisplay) {
@@ -317,7 +317,7 @@ class ResearchopiaSidebar {
   async saveSettings() {
     try {
       const urlInput = document.getElementById('serverUrlInput');
-      const newUrl = urlInput?.value || 'http://localhost:3000';
+      const newUrl = urlInput?.value || 'https://www.researchopia.com';
       
       await chrome.storage.sync.set({
         researchopiaUrl: newUrl
@@ -336,13 +336,13 @@ class ResearchopiaSidebar {
   async resetSettings() {
     try {
       await chrome.storage.sync.set({
-        researchopiaUrl: 'http://localhost:3000',
+        researchopiaUrl: 'https://www.researchopia.com',
         floatingEnabled: true,
         autoDetectDOI: true,
         sidebarWidth: 400
       });
       
-      this.researchopiaUrl = 'http://localhost:3000';
+      this.researchopiaUrl = 'https://www.researchopia.com';
       this.loadSettingsUI();
       this.refreshContent();
       

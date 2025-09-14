@@ -28,7 +28,8 @@ export function withSecurity(handler: (req: NextRequest) => Promise<NextResponse
       const allowedOrigins = [
         'http://localhost:3006',
         'http://localhost:3000',
-        'https://academic-rating.vercel.app'
+        'https://academic-rating.vercel.app',
+        'https://www.researchopia.com'
       ]
 
       if (origin && !allowedOrigins.includes(origin)) {

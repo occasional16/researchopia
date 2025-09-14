@@ -26,6 +26,8 @@
     "http://localhost:3007/*",
     "http://localhost:3008/*",
     "http://localhost:3009/*",
+    "https://academic-rating.vercel.app/*",
+    "https://www.researchopia.com/*",
     "https://*.nature.com/*",
     "https://*.science.org/*",
     "https://*.ieee.org/*",

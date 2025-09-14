@@ -63,12 +63,14 @@
 
 5. 扩展安装完成，图标将出现在工具栏中
 
-### 本地研学港服务器
+### 本地和在线服务器
 
-扩展默认连接到本地研学港服务器：
-- 默认地址：`http://localhost:3000`
-- 支持端口范围：3000-3009
-- 确保研学港本地服务正在运行
+扩展支持连接到：
+- **生产服务器**（默认）：`https://www.researchopia.com`
+- **备用服务器**：`https://academic-rating.vercel.app`
+- **本地开发服务器**：`http://localhost:3006` 或其他端口（3000-3009）
+
+可以在扩展设置中切换服务器地址。
 
 ## 使用指南
 
@@ -155,7 +157,7 @@ chrome.storage.sync.get([
 
 // 更新配置
 chrome.storage.sync.set({
-  researchopiaUrl: 'http://localhost:3001'
+  researchopiaUrl: 'https://www.researchopia.com'
 })
 ```
 

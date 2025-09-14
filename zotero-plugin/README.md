@@ -1,4 +1,4 @@
-# Researchopia Academic Rating — Zotero Plugin (Zotero 8 compatible)
+# 研学港学术评分 — Zotero 插件 (Zotero 8 兼容)
 
 This is a Zotero 8-compatible bootstrapped plugin that integrates your academic-rating site inside Zotero.
 

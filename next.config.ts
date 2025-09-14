@@ -18,7 +18,15 @@ const nextConfig: NextConfig = {
   // 实验性功能
   experimental: {
     serverActions: {
-      allowedOrigins: ['localhost:3001', '127.0.0.1:3001', '183.173.171.124:3001', 'localhost:3006']
+      // Use fully-qualified origins to avoid URL parsing errors in production
+      allowedOrigins: [
+        'http://localhost:3001',
+        'http://127.0.0.1:3001',
+        'http://183.173.171.124:3001',
+        'http://localhost:3006',
+        // Production origin
+        'https://academic-rating.vercel.app'
+      ]
     },
 
     optimizePackageImports: ['lucide-react']

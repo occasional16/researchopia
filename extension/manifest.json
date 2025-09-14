@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "研学港",
+  "name": "研学港 Researchopia",
   "version": "0.1.0",
-  "description": "研学港浏览器扩展 - 智能检测学术论文DOI并快速搜索，研学并进，智慧共享",
+  "description": "研学港 Researchopia 浏览器扩展 - 智能检测学术论文DOI并快速搜索，研学并进，智慧共享",
   "icons": {
     "16": "icons/icon16.png",
     "32": "icons/icon32.png",
@@ -12,7 +12,8 @@
   "permissions": [
     "activeTab",
     "storage",
-    "tabs"
+    "tabs",
+    "sidePanel"
   ],
   "host_permissions": [
     "http://localhost:3000/*",
@@ -36,22 +37,23 @@
     "https://*.arxiv.org/*",
     "https://*.pubmed.ncbi.nlm.nih.gov/*",
     "https://*.doi.org/*",
-    "https://*.crossref.org/*"
+    "https://*.crossref.org/*",
+    "https://*.researchgate.net/*",
+    "https://*.jstor.org/*",
+    "https://*.semanticscholar.org/*",
+    "https://*.scholar.google.com/*",
+    "https://*.dblp.org/*",
+    "https://*.nih.gov/*",
+    "https://*.plos.org/*",
+    "https://*.hindawi.com/*",
+    "https://*.mdpi.com/*",
+    "https://*.frontiersin.org/*",
+    "https://*.biorxiv.org/*"
   ],
   "content_scripts": [
     {
       "matches": [
-        "https://*.nature.com/*",
-        "https://*.science.org/*",
-        "https://*.ieee.org/*",
-        "https://*.springer.com/*",
-        "https://*.sciencedirect.com/*",
-        "https://*.wiley.com/*",
-        "https://*.tandfonline.com/*",
-        "https://*.acm.org/*",
-        "https://*.arxiv.org/*",
-        "https://*.pubmed.ncbi.nlm.nih.gov/*",
-        "https://*.doi.org/*"
+        "<all_urls>"
       ],
       "js": ["content.js"],
       "css": ["content.css"],
@@ -62,8 +64,10 @@
     "service_worker": "background.js"
   },
   "action": {
-    "default_popup": "popup.html",
-    "default_title": "研学港 - 智能学术搜索"
+    "default_title": "研学港 Researchopia - 智能学术搜索"
+  },
+  "side_panel": {
+    "default_path": "sidebar.html"
   },
   "web_accessible_resources": [
     {

@@ -142,11 +142,8 @@ class ResearchopiaContentScript {
     this.floatingIcon.id = 'researchopia-floating-icon';
     this.floatingIcon.innerHTML = `
       <div class="icon-main">
-        <img class="icon-logo" src="${chrome.runtime.getURL('icons/logo-main.svg')}" alt="研学港" />
-        <div class="icon-texts">
-          <span class="icon-cn">研学港</span>
-          <span class="icon-en">Researchopia</span>
-        </div>
+        <span class="icon-symbol">🔬</span>
+        <span class="icon-text">研学港</span>
       </div>
       ${this.detectedDOI ? '<div class="doi-indicator">●</div>' : ''}
     `;
@@ -154,8 +151,8 @@ class ResearchopiaContentScript {
     // 应用样式
     this.applyIconStyles();
     
-  // 设置初始位置：右上角（按需可持久化位置）
-  this.setIconPosition('right', 20, 20);
+    // 设置初始位置（左侧）
+    this.setIconPosition('left', 20, '50%');
     
     // 绑定事件
     this.bindIconEvents();
@@ -171,11 +168,11 @@ class ResearchopiaContentScript {
   applyIconStyles() {
     this.floatingIcon.style.cssText = `
       position: fixed !important;
-      width: 85px !important;
+      width: 80px !important;
       height: 36px !important;
       background: ${this.detectedDOI ? 
-        'linear-gradient(135deg, #4f80ff, #6a8cff)' : 
-        'linear-gradient(135deg, #9ca3af, #6b7280)'
+        'linear-gradient(135deg, #155DFC, #1e40af)' : 
+        'linear-gradient(135deg, #6b7280, #4b5563)'
       } !important;
       color: white !important;
       border-radius: 18px !important;
@@ -197,48 +194,9 @@ class ResearchopiaContentScript {
       iconMain.style.cssText = `
         display: flex !important;
         align-items: center !important;
-        gap: 6px !important;
-        transform: translateY(-1px);
-      `;
-    }
-
-    const logoEl = this.floatingIcon.querySelector('.icon-logo');
-    if (logoEl) {
-      logoEl.style.cssText = `
-        display: inline-block !important;
-        width: 16px !important;
-        height: 16px !important;
-        object-fit: contain !important;
-        border-radius: 3px !important;
-        background: rgba(255,255,255,0.9) !important;
-        padding: 1px !important;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.15) !important;
-      `;
-    }
-
-    const texts = this.floatingIcon.querySelector('.icon-texts');
-    if (texts) {
-      texts.style.cssText = `
-        display: flex !important;
-        flex-direction: column !important;
-        line-height: 1 !important;
-      `;
-    }
-
-    const cn = this.floatingIcon.querySelector('.icon-cn');
-    if (cn) {
-      cn.style.cssText = `
+        gap: 4px !important;
         font-size: 11px !important;
-        font-weight: 600 !important;
-        letter-spacing: .5px !important;
-      `;
-    }
-
-    const en = this.floatingIcon.querySelector('.icon-en');
-    if (en) {
-      en.style.cssText = `
-        font-size: 8px !important;
-        opacity: .9 !important;
+        font-weight: 500 !important;
       `;
     }
 
@@ -283,8 +241,6 @@ class ResearchopiaContentScript {
   bindIconEvents() {
     let clickStartTime = 0;
     let hasMoved = false;
-    let startPosition = { x: 0, y: 0 };
-    const DRAG_THRESHOLD = 5; // 拖拽阈值：5像素
 
     // 鼠标按下
     this.floatingIcon.addEventListener('mousedown', (e) => {
@@ -292,9 +248,7 @@ class ResearchopiaContentScript {
       
       clickStartTime = Date.now();
       hasMoved = false;
-      
-      // 记录起始位置，但不立即进入拖拽模式
-      startPosition = { x: e.clientX, y: e.clientY };
+      this.isDragging = true;
       
       this.floatingIcon.style.cursor = 'grabbing';
       this.floatingIcon.style.transform = 'scale(1.1)';
@@ -305,27 +259,16 @@ class ResearchopiaContentScript {
         y: e.clientY - rect.top
       };
       
-      console.log('🖱️ 鼠标按下，起始位置:', startPosition.x, startPosition.y);
+      // 禁用过渡效果，使拖拽更流畅
+      this.floatingIcon.style.transition = 'transform 0.1s';
+      
+      console.log('🖱️ 开始拖拽，初始位置:', rect.left, rect.top);
       e.preventDefault();
       e.stopPropagation();
     });
 
     // 鼠标移动（全局）
     document.addEventListener('mousemove', (e) => {
-      // 如果还没进入拖拽模式，检查是否需要进入
-      if (!this.isDragging && startPosition.x !== 0) {
-        const deltaX = Math.abs(e.clientX - startPosition.x);
-        const deltaY = Math.abs(e.clientY - startPosition.y);
-        const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-        
-        if (distance > DRAG_THRESHOLD) {
-          this.isDragging = true;
-          // 禁用过渡效果，使拖拽更流畅
-          this.floatingIcon.style.transition = 'transform 0.1s';
-          console.log('🖱️ 开始拖拽，移动距离:', distance);
-        }
-      }
-      
       if (!this.isDragging) return;
       
       hasMoved = true;
@@ -345,37 +288,31 @@ class ResearchopiaContentScript {
       this.floatingIcon.style.top = constrainedY + 'px';
       this.floatingIcon.style.transform = 'scale(1.1)';
       
-      // 降噪：移除拖拽过程中的详细日志
+      console.log('🖱️ 拖拽移动到:', constrainedX, constrainedY);
       e.preventDefault();
     });
 
     // 鼠标释放（全局）
     document.addEventListener('mouseup', (e) => {
-      // 重置起始位置
-      const wasMouseDown = startPosition.x !== 0;
-      startPosition = { x: 0, y: 0 };
+      if (!this.isDragging) return;
       
-      if (!wasMouseDown) return;
-      
+      this.isDragging = false;
       this.floatingIcon.style.cursor = 'grab';
       this.floatingIcon.style.transform = 'scale(1)';
       
-      if (this.isDragging) {
-        // 边缘吸附逻辑
-        this.snapToEdge();
-        
-        // 恢复过渡效果
-        this.floatingIcon.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
-        
-  // 降噪：移除拖拽结束日志
-        this.isDragging = false;
-      } else {
-        // 如果没有进入拖拽模式且时间短，认为是点击
-        const clickDuration = Date.now() - clickStartTime;
-        if (clickDuration < 300) {
-          console.log('👆 检测到点击事件');
-          this.handleIconClick();
-        }
+      // 边缘吸附逻辑
+      this.snapToEdge();
+      
+      // 恢复过渡效果
+      this.floatingIcon.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+      
+      console.log('🖱️ 停止拖拽');
+      
+      // 如果没有移动且时间短，认为是点击
+      const clickDuration = Date.now() - clickStartTime;
+      if (!hasMoved && clickDuration < 300) {
+        console.log('👆 检测到点击事件');
+        this.handleIconClick();
       }
     });
 
@@ -388,7 +325,7 @@ class ResearchopiaContentScript {
         } else {
           this.floatingIcon.style.transform = 'scale(1.05)';
         }
-        // 降噪：移除悬停日志
+        console.log('🖱️ 鼠标悬停');
       }
     });
 
@@ -421,36 +358,17 @@ class ResearchopiaContentScript {
       this.setIconPosition('right', margin, rect.top);
     }
     
-    // 降噪：移除吸附日志
+    console.log('🧲 图标吸附到边缘');
   }
 
   // 处理图标点击
   handleIconClick() {
     console.log('👆 浮动图标被点击');
-    // 关键点：无论是否检测到 DOI，都尝试打开侧边栏
-    try {
-      const payload = {
-        action: 'toggleSidePanel',
-        doi: this.detectedDOI || null,
-        url: window.location.href
-      };
-      console.log('📨 发送toggleSidePanel消息到background');
-
-      chrome.runtime.sendMessage(payload, (response) => {
-        if (chrome.runtime.lastError) {
-          console.warn('⚠️ 消息发送失败:', chrome.runtime.lastError.message);
-          return;
-        }
-
-        const success = !!(response && response.success);
-        console.log('📬 Background响应（toggleSidePanel）:', response);
-        if (success && !this.detectedDOI) {
-          // 无 DOI 的轻量提示，不阻断
-          this.showNoDOISoftHint();
-        }
-      });
-    } catch (err) {
-      console.error('❌ 发送打开侧边栏请求失败:', err);
+    if (this.detectedDOI) {
+      this.openSidebar();
+    } else {
+      console.log('⚠️ 未检测到DOI，显示提示');
+      this.showNoDOIMessage();
     }
   }
 
@@ -472,89 +390,30 @@ class ResearchopiaContentScript {
       z-index: 2147483648;
       pointer-events: none;
     `;
+    
     document.body.appendChild(tooltip);
     setTimeout(() => tooltip.remove(), 2000);
   }
 
-  // 无 DOI 的轻量提示（不遮挡屏幕，不阻断操作）
-  showNoDOISoftHint() {
-    const hint = document.createElement('div');
-    hint.textContent = '未检测到DOI，已为您打开侧边栏主页';
-    hint.style.cssText = `
-      position: fixed;
-      top: 16px;
-      right: 16px;
-      background: rgba(17,24,39,.92);
-      color: #fff;
-      padding: 8px 12px;
-      border-radius: 8px;
-      font-size: 12px;
-      z-index: 2147483647;
-      box-shadow: 0 4px 12px rgba(0,0,0,.25);
-      pointer-events: none;
-      opacity: 0;
-      transition: opacity .2s ease;
-    `;
-    document.body.appendChild(hint);
-    requestAnimationFrame(() => { hint.style.opacity = '1'; });
-    setTimeout(() => {
-      hint.style.opacity = '0';
-      setTimeout(() => hint.remove(), 200);
-    }, 2000);
-  }
-
-  // 打开侧边栏 - 使用 background 代理实现
+  // 打开侧边栏
   async openSidebar() {
     console.log('📖 尝试打开侧边栏，DOI:', this.detectedDOI);
-
-    // 可选：预先保存 DOI 信息，供侧边栏读取（不依赖用户手势）
-    if (this.detectedDOI) {
-      try {
-        await chrome.storage.sync.set({
-          doiFromContentScript: this.detectedDOI,
-          currentPageUrl: window.location.href,
-          lastClickTime: Date.now()
-        });
-        console.log('💾 DOI信息已保存:', this.detectedDOI);
-      } catch (storageError) {
-        console.error('存储失败:', storageError);
-      }
-    }
-
-    let success = false;
-
-    // 方法1: 发送 openSidePanel 消息（后台会尝试打开侧边栏）
+    
     try {
-      console.log('🛰️ 尝试方法1: 发送 openSidePanel 消息');
-      const response = await new Promise((resolve, reject) => {
-        chrome.runtime.sendMessage(
-          { action: 'openSidePanel', doi: this.detectedDOI, url: window.location.href },
-          (resp) => {
-            if (chrome.runtime.lastError) {
-              reject(new Error(chrome.runtime.lastError.message));
-            } else {
-              resolve(resp);
-            }
-          }
-        );
+      // 发送消息给background script
+      const response = await chrome.runtime.sendMessage({
+        action: 'openSidePanel',
+        doi: this.detectedDOI,
+        url: window.location.href
       });
-      console.log('✅ 方法1成功，响应:', response);
-      success = !!(response && response.success);
-    } catch (error1) {
-      console.log('⚠️ 方法1失败:', error1.message);
+      
+      console.log('📨 Background响应:', response);
+      return response;
+    } catch (error) {
+      console.error('❌ 打开侧边栏失败:', error);
+      return false;
     }
-
-    // content script 无法直接使用 chrome.sidePanel，跳过方法2
-    if (!success) {
-      console.log('ℹ️ content script 无法直接使用 chrome.sidePanel，跳过方法2');
-    }
-
-    // 保持静默：不再显示“点击工具栏图标”的提示
-
-    return success;
   }
-
-  // （已移除）手动提示函数
 
   // 设置消息监听器
   setupMessageListener() {
@@ -562,15 +421,9 @@ class ResearchopiaContentScript {
       console.log('📨 收到消息:', request);
       
       switch (request.action) {
-        case 'toggleFloating':  // 修复：匹配popup发送的消息
-        case 'toggleFloatingIcon':  // 保持兼容性
+        case 'toggleFloatingIcon':
           this.toggleFloatingIcon();
           sendResponse({ success: true });
-          break;
-        
-        case 'getCurrentDOI':
-          // 提供当前检测到的 DOI 给侧边栏或其他页面
-          sendResponse({ success: true, doi: this.detectedDOI || null });
           break;
           
         case 'detectDOI':
@@ -583,11 +436,6 @@ class ResearchopiaContentScript {
             sendResponse({ success: result });
           });
           return true; // 保持消息通道开启
-        
-        case 'panelClosed':
-          this.showClosedToast();
-          sendResponse?.({ success: true });
-          break;
           
         default:
           sendResponse({ success: false, error: 'Unknown action' });
@@ -610,32 +458,6 @@ class ResearchopiaContentScript {
     
     console.log(isVisible ? '🙈 隐藏浮动图标' : '👁️ 显示浮动图标');
     return !isVisible;
-  }
-
-  showClosedToast() {
-    const hint = document.createElement('div');
-    hint.textContent = '侧边栏已关闭';
-    hint.style.cssText = `
-      position: fixed;
-      top: 16px;
-      right: 16px;
-      background: rgba(17,24,39,.92);
-      color: #fff;
-      padding: 8px 12px;
-      border-radius: 8px;
-      font-size: 12px;
-      z-index: 2147483647;
-      box-shadow: 0 4px 12px rgba(0,0,0,.25);
-      pointer-events: none;
-      opacity: 0;
-      transition: opacity .2s ease;
-    `;
-    document.body.appendChild(hint);
-    requestAnimationFrame(() => { hint.style.opacity = '1'; });
-    setTimeout(() => {
-      hint.style.opacity = '0';
-      setTimeout(() => hint.remove(), 200);
-    }, 1000);
   }
 }
 

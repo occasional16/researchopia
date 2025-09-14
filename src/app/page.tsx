@@ -62,9 +62,9 @@ export default function HomePage() {
       setDataError(null)
       
       try {
-        // 减少超时时间，添加更快的失败策略
+        // 增加超时时间，并改进错误处理
         const controller = new AbortController()
-        const timeoutId = setTimeout(() => controller.abort(), 5000) // 5秒超时
+        const timeoutId = setTimeout(() => controller.abort(), 10000) // 10秒超时
 
         const [statsResponse, commentsResponse] = await Promise.allSettled([
           fetch('/api/site/statistics', { 
@@ -81,7 +81,7 @@ export default function HomePage() {
 
         clearTimeout(timeoutId)
 
-        // 处理统计数据
+        // 处理统计数据，增加详细的错误日志
         if (statsResponse.status === 'fulfilled' && statsResponse.value.ok) {
           const statsResult = await statsResponse.value.json()
           if (statsResult.success && statsResult.data) {
@@ -93,15 +93,27 @@ export default function HomePage() {
             })
           }
         } else {
-          console.warn('Stats API failed:', statsResponse.status === 'fulfilled' ? statsResponse.value.status : 'rejected')
+          console.warn('Stats API failed:', statsResponse.status === 'fulfilled' ? 
+            `HTTP ${statsResponse.value.status}: ${statsResponse.value.statusText}` : 
+            'Network error or abort')
         }
 
-        // 处理评论数据
+        // 处理评论数据，增加详细的错误日志
         if (commentsResponse.status === 'fulfilled' && commentsResponse.value.ok) {
           const commentsData = await commentsResponse.value.json()
           setRecentComments(commentsData.data || [])
         } else {
-          console.warn('Comments API failed:', commentsResponse.status === 'fulfilled' ? commentsResponse.value.status : 'rejected')
+          console.warn('Comments API failed:', commentsResponse.status === 'fulfilled' ? 
+            `HTTP ${commentsResponse.value.status}: ${commentsResponse.value.statusText}` : 
+            'Network error or abort')
+        }
+
+        // 只有在两个API都完全失败时才显示错误
+        const statsOk = statsResponse.status === 'fulfilled' && statsResponse.value.ok
+        const commentsOk = commentsResponse.status === 'fulfilled' && commentsResponse.value.ok
+        
+        if (!statsOk && !commentsOk) {
+          setDataError('数据加载失败，请刷新页面重试')
         }
 
       } catch (error) {

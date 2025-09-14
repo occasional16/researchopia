@@ -33,11 +33,6 @@ const nextConfig: NextConfig = {
     optimizePackageImports: ['lucide-react']
   },
 
-  // 输出优化
-  output: 'standalone',
-  // 解决多 lockfile 时的 workspace root 推断警告
-  outputFileTracingRoot: path.join(__dirname, '..'),
-
   // 头部配置
   async headers() {
     return [

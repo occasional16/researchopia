@@ -1,0 +1,19 @@
+{
+  "manifest_version": 2,
+  "name": "Academic Rating for Zotero",
+  "version": "0.1.0",
+  "description": "Embed Academic Rating into Zotero (Item Pane section).",
+  "author": "Researchopia",
+  "icons": {
+    "16": "icons/icon16.svg",
+    "32": "icons/icon16.svg",
+    "48": "icons/icon16.svg",
+    "128": "icons/logo-main.svg"
+  },
+  "applications": {
+    "zotero": {
+      "id": "academic-rating@researchopia",
+      "strict_min_version": "7.0"
+    }
+  }
+}

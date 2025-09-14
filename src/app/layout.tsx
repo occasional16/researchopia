@@ -31,8 +31,8 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
-  metadataBase: new URL(process.env.NODE_ENV === 'production' 
-    ? 'https://researchopia.com' 
+  metadataBase: new URL(process.env.NODE_ENV === 'production'
+    ? 'https://academic-rating.vercel.app'
     : 'http://localhost:3009'
   ),
   alternates: {

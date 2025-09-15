@@ -3,12 +3,15 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Search, User, LogOut, Plus, UserCircle, Settings, Shield } from 'lucide-react'
+import { Search, User, LogOut, Plus, UserCircle, Settings, Shield, Book } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
+import { useLanguage } from '@/contexts/LanguageContext'
 import AuthModal from '@/components/auth/AuthModal'
+import LanguageSwitcher from '@/components/ui/LanguageSwitcher'
 
 export default function Navbar() {
   const { user, profile, signOut, isAuthenticated, loading } = useAuth()
+  const { t } = useLanguage()
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login')
   const [showUserMenu, setShowUserMenu] = useState(false)
@@ -82,17 +85,29 @@ export default function Navbar() {
                 <div className="absolute inset-0 rounded-full bg-gradient-to-r from-purple-400 to-blue-500 opacity-0 group-hover:opacity-20 transition-all duration-300 blur-sm"></div>
               </div>
               <div className="hidden md:block">
-                <div className="text-xl font-bold text-gray-900 group-hover:text-purple-600 transition-colors duration-200">研学港</div>
-                <div className="text-xs text-gray-500 group-hover:text-purple-400 transition-colors duration-200 -mt-1">Researchopia</div>
+                <div className="text-xl font-bold text-gray-900 group-hover:text-purple-600 transition-colors duration-200">{t('site.title', '研学港')}</div>
+                <div className="text-xs text-gray-500 group-hover:text-purple-400 transition-colors duration-200 -mt-1">{t('site.subtitle', 'Researchopia')}</div>
               </div>
               {/* 移动端仅显示简化版本 */}
               <div className="md:hidden">
-                <div className="text-lg font-bold text-gray-900 group-hover:text-purple-600 transition-colors duration-200">研学港</div>
+                <div className="text-lg font-bold text-gray-900 group-hover:text-purple-600 transition-colors duration-200">{t('site.title', '研学港')}</div>
               </div>
             </Link>
 
             {/* User Menu */}
             <div className="flex items-center space-x-4">
+              {/* 用户指南链接 */}
+              <Link
+                href="/guide"
+                className="hidden md:flex items-center space-x-1 px-3 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <Book className="w-4 h-4" />
+                <span>{t('nav.guide', '用户指南')}</span>
+              </Link>
+              
+              {/* 语言切换器 */}
+              <LanguageSwitcher variant="compact" position="navbar" />
+              
               {userState.isLoggedIn ? (
                 <>
                   <div className="relative">
@@ -116,7 +131,7 @@ export default function Navbar() {
                           onClick={() => setShowUserMenu(false)}
                         >
                           <UserCircle className="w-4 h-4" />
-                          <span>个人中心</span>
+                          <span>{t('nav.profile', '个人中心')}</span>
                         </Link>
                         <div className="border-t border-gray-100 my-1"></div>
                         {userState.isAdmin && (
@@ -127,7 +142,7 @@ export default function Navbar() {
                               onClick={() => setShowUserMenu(false)}
                             >
                               <Shield className="w-4 h-4" />
-                              <span>管理员控制台</span>
+                              <span>{t('nav.admin', '管理员控制台')}</span>
                             </Link>
                             <div className="border-t border-gray-100 my-1"></div>
                           </>
@@ -137,7 +152,7 @@ export default function Navbar() {
                           className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
                         >
                           <LogOut size={16} />
-                          <span>退出登录</span>
+                          <span>{t('nav.logout', '退出登录')}</span>
                         </button>
                       </div>
                     )}
@@ -149,13 +164,13 @@ export default function Navbar() {
                     onClick={() => handleAuthClick('login')}
                     className="px-4 py-2 text-gray-700 hover:text-gray-900 transition-colors"
                   >
-                    登录
+                    {t('nav.login', '登录')}
                   </button>
                   <button
                     onClick={() => handleAuthClick('signup')}
                     className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                   >
-                    注册
+                    {t('nav.register', '注册')}
                   </button>
                 </div>
               )}

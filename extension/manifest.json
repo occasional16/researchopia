@@ -76,7 +76,6 @@
       "resources": [
         "sidebar.html",
         "sidebar.js",
-        "sidebar.css",
         "icons/*"
       ],
       "matches": ["<all_urls>"]

@@ -1,6 +1,6 @@
 /*
-  Academic Rating for Zotero - Bootstrap Plugin
-  Integrates Academic Rating functionality into Zotero 7/8 using Item Pane sections
+  Researchopia for Zotero - Bootstrap Plugin
+  Integrates Researchopia functionality into Zotero 7/8 using Item Pane sections
   Based on official make-it-red plugin structure
 */
 
@@ -16,19 +16,19 @@ try {
 }
 
 function log(msg) {
-  try { Zotero.debug("Academic Rating: " + msg); } catch {}
+  try { Zotero.debug("Researchopia: " + msg); } catch {}
 }
 
 async function startup(data, reason) {
   const { id, version, resourceURI } = data || {};
   const rootURI = resourceURI ? resourceURI.spec : (data?.rootURI || "");
-  log("Starting up Academic Rating plugin v" + (version || ""));
+  log("Starting up Researchopia plugin v" + (version || ""));
 
   try { await Zotero.initializationPromise; } catch {}
 
   // Initialize the main plugin object
   if (!Zotero.AcademicRating) {
-    Services.scriptloader.loadSubScript(rootURI + "academic-rating.js");
+    Services.scriptloader.loadSubScript(rootURI + "researchopia.js");
   }
 
   // Initialize plugin with root URI
@@ -36,13 +36,15 @@ async function startup(data, reason) {
   Zotero.AcademicRating.addToAllWindows();
   try { await Zotero.AcademicRating.main(); } catch {}
 
-  log("Academic Rating plugin started successfully");
+  log("Researchopia plugin started successfully");
 }
 
 function shutdown(data, reason) {
-  log("Shutting down Academic Rating plugin");
+  log("Shutting down Researchopia plugin");
   try {
     if (Zotero.AcademicRating) {
+      // 统一注销注册的 Section 等资源
+      try { Zotero.AcademicRating.unregisterItemPaneSection?.(); } catch {}
       Zotero.AcademicRating.removeFromAllWindows();
     }
   } catch {}
@@ -50,12 +52,12 @@ function shutdown(data, reason) {
 
 function install(data, reason) {
   const version = data?.version || "";
-  log(`Academic Rating plugin ${version} installed`);
+  log(`Researchopia plugin ${version} installed`);
 }
 
 function uninstall(data, reason) {
   const version = data?.version || "";
-  log(`Academic Rating plugin ${version} uninstalled`);
+  log(`Researchopia plugin ${version} uninstalled`);
 }
 
 // For compatibility with some bootstrap loaders expecting exported symbols

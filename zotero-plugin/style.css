@@ -1,81 +1,163 @@
 /* 
-  Academic Rating for Zotero - Stylesheet
+  Researchopia for Zotero - Stylesheet
   Custom styles for the plugin interface
 */
+
+/* Item Pane图标大小控制 */
+.zotero-item-pane-section[data-pane-id*="researchopia"] .zotero-item-pane-section-header img,
+.zotero-item-pane-section[data-pane-id*="researchopia"] .zotero-item-pane-section-header .icon {
+  width: 16px !important;
+  height: 16px !important;
+  max-width: 16px !important;
+  max-height: 16px !important;
+}
+
+/* Sidenav图标大小控制 */
+.zotero-context-pane .zotero-context-pane-sidenav img,
+.zotero-context-pane .zotero-context-pane-sidenav .icon {
+  width: 16px !important;
+  height: 16px !important;
+  max-width: 16px !important;
+  max-height: 16px !important;
+}
+
+/* Item Pane Header 对齐修复 */
+.zotero-item-pane-section[data-pane-id*="researchopia"] .zotero-item-pane-section-header {
+  min-height: 32px !important;
+  height: auto !important;
+  display: flex !important;
+  align-items: center !important;
+  padding: 4px 8px !important;
+  box-sizing: border-box !important;
+}
+
+/* 确保header内容正确对齐 */
+.zotero-item-pane-section[data-pane-id*="researchopia"] .zotero-item-pane-section-header * {
+  vertical-align: middle !important;
+}
 
 .academic-rating-container {
   display: flex;
   flex-direction: column;
   width: 100%;
-  height: 420px;
-  gap: 8px;
-  padding: 8px;
-  background: #f8f9fa;
-  border-radius: 6px;
+  height: 100%;
+  gap: 0;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  border-radius: 0;
+  min-height: 0; /* allow flex to control size and fully stick to edges */
 }
 
 .academic-rating-header {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 12px;
-  font-weight: 600;
-  color: #495057;
-  padding: 4px 0;
-  border-bottom: 1px solid #dee2e6;
+  align-items: center; /* vertically align with caret */
+  justify-content: space-between; /* title at left, actions at right */
+  gap: 6px;
+  height: 32px; /* 增加高度以匹配标准行高 */
+  padding: 0 6px; /* slight horizontal breathing */
+  line-height: 32px; /* ensure title baseline alignment */
+  overflow: visible; /* prevent button focus outline clipping */
+  box-sizing: border-box; /* 确保padding计算正确 */
+  min-height: 32px; /* 确保最小高度 */
+}
+.academic-rating-title { 
+  font-size: 12px; 
+  font-weight: 600; 
+  color: var(--zotero-text-color, #495057); 
+  line-height: 32px; /* 匹配header高度 */
+  margin: 0; /* 移除默认margin */
+  vertical-align: middle; /* 垂直居中 */
 }
 
-.academic-rating-actions { display: flex; gap: 8px; }
+.academic-rating-actions { 
+  display: flex; 
+  align-items: center; 
+  gap: 6px; 
+  height: 32px; /* 匹配header高度 */
+  flex-shrink: 0; /* 防止压缩 */
+}
 .academic-rating-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px; /* 稍微增加按钮高度，但保持在header内 */
   font-size: 11px;
-  padding: 4px 8px;
+  padding: 0 8px; /* horizontal spacing only */
   border: 1px solid #ced4da;
   border-radius: 4px;
   background: #ffffff;
   color: #343a40;
   cursor: pointer;
+  line-height: 1; /* use flex centering instead of line-height */
+  box-sizing: border-box; /* 确保padding计算正确 */
+  flex-shrink: 0; /* 防止按钮被压缩 */
+  margin: 2px 0; /* 给按钮一些垂直边距 */
 }
 .academic-rating-btn:hover { background: #f1f3f5; }
 .academic-rating-btn.secondary { color: #0b7285; border-color: #a5d8ff; }
+.academic-rating-btn.emphasis { outline: 2px solid #74c0fc; box-shadow: 0 0 0 2px rgba(116,192,252,.2); }
+.academic-rating-btn.pulse {
+  animation: ra-pulse 1.6s ease-in-out infinite;
+}
+@keyframes ra-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(116,192,252,.55); }
+  70% { box-shadow: 0 0 0 8px rgba(116,192,252,0); }
+  100% { box-shadow: 0 0 0 0 rgba(116,192,252,0); }
+}
 
 .academic-rating-iframe-container {
-  flex: 1;
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  /* Fixed larger default visible area */
+  min-height: 70vh;
+}
+.academic-rating-alert {
+  display: none;
+  padding: 6px 8px;
+  border: 1px solid #ffe3e3;
+  background: #fff5f5;
+  color: #c92a2a;
+  border-radius: 4px;
+  font-size: 12px;
+  margin: 6px 0; /* subtle spacing from header */
 }
 
 .academic-rating-iframe {
   width: 100%;
   height: 100%;
-  border: 1px solid #ced4da;
-  border-radius: 4px;
-  background: #ffffff;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-sizing: border-box;
 }
 
 /* Dark theme support */
 @media (prefers-color-scheme: dark) {
   .academic-rating-container {
-    background: #212529;
+    background: transparent;
   }
   
-  .academic-rating-header {
-    color: #f8f9fa;
-    border-bottom-color: #495057;
-  }
+  .academic-rating-header { color: #e9ecef; }
+  .academic-rating-title { color: #e9ecef; }
+  .academic-rating-btn { background: #2b2b2b; color: #f1f3f5; border-color: #5c5f66; }
+  .academic-rating-btn:hover { background: #3a3a3a; }
   
   .academic-rating-iframe {
-    border-color: #495057;
-    background: #2d3748;
+    background: transparent;
   }
 }
 
 /* High contrast mode */
 @media (prefers-contrast: high) {
   .academic-rating-container {
-    border: 2px solid currentColor;
+    border: 0;
   }
   
   .academic-rating-iframe {
-    border-width: 2px;
+    border-width: 0;
   }
 }

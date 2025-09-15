@@ -1,19 +1,33 @@
 {
   "manifest_version": 2,
   "name": "Academic Rating for Zotero",
-  "version": "0.1.0",
-  "description": "Embed Academic Rating into Zotero (Item Pane section).",
-  "author": "Researchopia",
+  "version": "1.0.0",
+  "description": "Integrates Academic Rating website functionality into Zotero Item Pane for research paper evaluation and rating.",
+  "homepage_url": "https://www.researchopia.com",
+
+  "applications": {
+    "zotero": {
+      "id": "academic-rating@researchopia.com",
+      "update_url": "https://www.researchopia.com/zotero/updates.json",
+      "strict_min_version": "7.0",
+      "strict_max_version": "*"
+    },
+    "gecko": {
+      "id": "academic-rating@researchopia.com",
+      "strict_min_version": "78.0"
+    }
+  },
+
+  "author": "Researchopia Team",
+
+  "legacy": {
+    "type": "bootstrap"
+  },
+
   "icons": {
     "16": "icons/icon16.svg",
     "32": "icons/icon16.svg",
     "48": "icons/icon16.svg",
-    "128": "icons/logo-main.svg"
-  },
-  "applications": {
-    "zotero": {
-      "id": "academic-rating@researchopia",
-      "strict_min_version": "7.0"
-    }
+    "128": "icons/icon16.svg"
   }
 }

@@ -1,6 +1,0 @@
-<!-- SVG 占位图标 16x16 -->
-<svg width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
-  <rect width="16" height="16" rx="3" fill="#667eea"/>
-  <text x="8" y="11" font-family="Arial, sans-serif" font-size="10" font-weight="bold" 
-        text-anchor="middle" fill="white">研</text>
-</svg>

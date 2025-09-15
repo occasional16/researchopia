@@ -2,6 +2,9 @@ import type { NextConfig } from "next";
 import path from 'path';
 
 const nextConfig: NextConfig = {
+  // 修复工作区根目录警告
+  outputFileTracingRoot: path.join(__dirname),
+  
   // 性能优化配置
   images: {
     formats: ['image/webp', 'image/avif'],
@@ -22,9 +25,8 @@ const nextConfig: NextConfig = {
       // Use fully-qualified origins to avoid URL parsing errors in production
       allowedOrigins: [
         // Development origins
-        'http://localhost:3006',
-        'http://localhost:3001',
-        'http://127.0.0.1:3001',
+        'http://localhost:3000',
+        'http://127.0.0.1:3000',
         // Production origins
         'https://academic-rating.vercel.app',
         'https://www.researchopia.com'
@@ -67,11 +69,8 @@ const nextConfig: NextConfig = {
             key: 'Cache-Control',
             value: 'public, max-age=300, s-maxage=300, stale-while-revalidate=600',
           },
-          // 启用压缩
-          {
-            key: 'Content-Encoding',
-            value: 'gzip',
-          },
+          // 注意：不要强制声明 Content-Encoding，交由框架自动处理压缩
+          // 如果手动设置 gzip 而未实际压缩，会导致浏览器解码失败（TypeError: Failed to fetch）
         ],
       },
       // 静态资源长期缓存

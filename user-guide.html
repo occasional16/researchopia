@@ -1,0 +1,1300 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>研学港 Researchopia 用户指南 | User Guide</title>
+    <link rel="stylesheet" href="#user-guide-styles">
+    <style id="user-guide-styles">
+        /* 基础样式 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: white;
+            margin-top: 40px;
+            margin-bottom: 40px;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+
+        /* 头部样式 */
+        .header {
+            text-align: center;
+            padding: 40px 0;
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            border-radius: 15px;
+            margin-bottom: 40px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: repeating-linear-gradient(
+                45deg,
+                transparent,
+                transparent 10px,
+                rgba(255,255,255,0.05) 10px,
+                rgba(255,255,255,0.05) 20px
+            );
+            animation: move 20s linear infinite;
+        }
+
+        @keyframes move {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+
+        .header-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .logo {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 20px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            font-weight: bold;
+            color: #4f46e5;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header .subtitle {
+            font-size: 1.2em;
+            opacity: 0.9;
+            font-style: italic;
+        }
+
+        /* 导航样式 */
+        .nav {
+            background: #f8fafc;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        .nav h2 {
+            color: #1e293b;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+            display: flex;
+            align-items: center;
+        }
+
+        .nav h2::before {
+            content: '📋';
+            margin-right: 10px;
+        }
+
+        .nav ul {
+            list-style: none;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 10px;
+        }
+
+        .nav a {
+            display: block;
+            padding: 12px 16px;
+            background: white;
+            color: #4f46e5;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .nav a:hover {
+            background: #4f46e5;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+        }
+
+        /* 语言切换器 */
+        .language-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: white;
+            border-radius: 25px;
+            padding: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .toggle-btn {
+            padding: 8px 16px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            border-radius: 20px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .toggle-btn.active {
+            background: #4f46e5;
+            color: white;
+        }
+
+        /* 章节样式 */
+        .section {
+            margin-bottom: 50px;
+            padding: 30px;
+            background: #fafafa;
+            border-radius: 12px;
+            border-left: 5px solid #4f46e5;
+        }
+
+        .section h2 {
+            color: #1e293b;
+            font-size: 2em;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .section h3 {
+            color: #374151;
+            font-size: 1.4em;
+            margin: 25px 0 15px 0;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .section h4 {
+            color: #4b5563;
+            font-size: 1.2em;
+            margin: 20px 0 10px 0;
+        }
+
+        /* 双语内容样式 */
+        .bilingual-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin: 20px 0;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .chinese-content, .english-content {
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .chinese-content {
+            background: linear-gradient(135deg, #fef3c7 0%, #fbbf24 10%, #fef3c7 100%);
+            border-left: 4px solid #f59e0b;
+        }
+
+        .english-content {
+            background: linear-gradient(135deg, #dbeafe 0%, #3b82f6 10%, #dbeafe 100%);
+            border-left: 4px solid #2563eb;
+        }
+
+        .lang-label {
+            font-weight: 600;
+            font-size: 0.9em;
+            color: #6b7280;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* 功能卡片样式 */
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 25px 0;
+        }
+
+        .feature-card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 1px solid #e5e7eb;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .feature-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-bottom: 15px;
+        }
+
+        .feature-title {
+            font-size: 1.3em;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #1e293b;
+        }
+
+        .feature-desc {
+            color: #6b7280;
+            line-height: 1.6;
+        }
+
+        /* 步骤指南样式 */
+        .step-guide {
+            counter-reset: step-counter;
+        }
+
+        .step {
+            counter-increment: step-counter;
+            margin: 20px 0;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            position: relative;
+            padding-left: 80px;
+        }
+
+        .step::before {
+            content: counter(step-counter);
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        .step-title {
+            font-size: 1.2em;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #1e293b;
+        }
+
+        /* 代码样式 */
+        .code-block {
+            background: #1f2937;
+            color: #f9fafb;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+            overflow-x: auto;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            position: relative;
+        }
+
+        .code-block::before {
+            content: 'Code';
+            position: absolute;
+            top: 8px;
+            right: 15px;
+            color: #9ca3af;
+            font-size: 0.8em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* 警告框样式 */
+        .alert {
+            padding: 16px 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .alert.info {
+            background: #dbeafe;
+            border-left: 4px solid #3b82f6;
+            color: #1e40af;
+        }
+
+        .alert.warning {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            color: #92400e;
+        }
+
+        .alert.success {
+            background: #d1fae5;
+            border-left: 4px solid #10b981;
+            color: #065f46;
+        }
+
+        .alert-icon {
+            font-size: 1.2em;
+            margin-top: 2px;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                padding: 15px;
+            }
+
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .bilingual-content {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
+            .nav ul {
+                grid-template-columns: 1fr;
+            }
+
+            .step {
+                padding-left: 60px;
+            }
+
+            .step::before {
+                width: 30px;
+                height: 30px;
+                font-size: 1em;
+                left: 15px;
+            }
+        }
+
+        /* 滚动指示器 */
+        .scroll-indicator {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: rgba(79, 70, 229, 0.1);
+            z-index: 1001;
+        }
+
+        .scroll-progress {
+            height: 100%;
+            background: linear-gradient(90deg, #4f46e5, #7c3aed);
+            width: 0%;
+            transition: width 0.1s ease;
+        }
+
+        /* 返回顶部按钮 */
+        .back-to-top {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 50px;
+            height: 50px;
+            background: #4f46e5;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 20px;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .back-to-top.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .back-to-top:hover {
+            background: #3730a3;
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(79, 70, 229, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <!-- 滚动指示器 -->
+    <div class="scroll-indicator">
+        <div class="scroll-progress" id="scrollProgress"></div>
+    </div>
+
+    <!-- 语言切换器 -->
+    <div class="language-toggle">
+        <button class="toggle-btn active" data-lang="zh">中文</button>
+        <button class="toggle-btn" data-lang="en">English</button>
+    </div>
+
+    <!-- 返回顶部按钮 -->
+    <button class="back-to-top" id="backToTop">↑</button>
+
+    <div class="container">
+        <!-- 头部 -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">研</div>
+                <h1>研学港 Researchopia 用户指南</h1>
+                <p class="subtitle">User Guide | 研学并进，智慧共享</p>
+            </div>
+        </header>
+
+        <!-- 目录导航 -->
+        <nav class="nav">
+            <h2>目录 | Table of Contents</h2>
+            <ul>
+                <li><a href="#overview">项目概述 | Overview</a></li>
+                <li><a href="#website">网站使用 | Website Usage</a></li>
+                <li><a href="#browser-extension">浏览器扩展 | Browser Extension</a></li>
+                <li><a href="#zotero-plugin">Zotero插件 | Zotero Plugin</a></li>
+                <li><a href="#advanced">高级功能 | Advanced Features</a></li>
+                <li><a href="#troubleshooting">故障排除 | Troubleshooting</a></li>
+            </ul>
+        </nav>
+
+        <!-- 项目概述 -->
+        <section id="overview" class="section">
+            <h2>📋 项目概述 | Project Overview</h2>
+            
+            <div class="bilingual-content">
+                <div class="chinese-content">
+                    <div class="lang-label">中文 | Chinese</div>
+                    <p><strong>研学港 Researchopia</strong> 是一个现代化的学术论文评分平台，旨在为研究者提供优质的学术资源评价和交流环境。我们致力于构建一个研究者的理想国，让学术智慧在这里汇聚和传播。</p>
+                    <br>
+                    <p><strong>核心理念：</strong>"研学并进，智慧共享"</p>
+                    <p><strong>官方网站：</strong><a href="https://www.researchopia.com" target="_blank">https://www.researchopia.com</a></p>
+                </div>
+                <div class="english-content">
+                    <div class="lang-label">English</div>
+                    <p><strong>Researchopia</strong> is a modern academic paper rating platform designed to provide researchers with high-quality academic resource evaluation and communication environment. We are committed to building an ideal research community where academic wisdom converges and spreads.</p>
+                    <br>
+                    <p><strong>Core Philosophy:</strong> "Where Research Meets Community"</p>
+                    <p><strong>Official Website:</strong> <a href="https://www.researchopia.com" target="_blank">https://www.researchopia.com</a></p>
+                </div>
+            </div>
+
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🔍</div>
+                    <div class="feature-title">智能搜索 | Smart Search</div>
+                    <div class="feature-desc">Advanced paper search with multi-dimensional evaluation system</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">👥</div>
+                    <div class="feature-title">研究社区 | Research Community</div>
+                    <div class="feature-desc">Professional platform for academic exchange and discussion</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔧</div>
+                    <div class="feature-title">多平台工具 | Multi-platform Tools</div>
+                    <div class="feature-desc">Browser extensions and Zotero integration for seamless workflow</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 网站使用指南 -->
+        <section id="website" class="section">
+            <h2>🌐 网站使用指南 | Website Usage Guide</h2>
+
+            <h3>基本功能 | Basic Features</h3>
+            <div class="bilingual-content">
+                <div class="chinese-content">
+                    <div class="lang-label">功能介绍</div>
+                    <ul>
+                        <li><strong>学术论文搜索：</strong>输入论文标题、DOI、作者或关键词进行智能搜索</li>
+                        <li><strong>多维度评价：</strong>查看论文的引用指数、影响因子、同行评价等</li>
+                        <li><strong>个性化推荐：</strong>基于研究兴趣获得相关论文推荐</li>
+                        <li><strong>学者档案：</strong>查看研究者的学术贡献和研究方向</li>
+                    </ul>
+                </div>
+                <div class="english-content">
+                    <div class="lang-label">Feature Introduction</div>
+                    <ul>
+                        <li><strong>Academic Paper Search:</strong> Search by title, DOI, author, or keywords</li>
+                        <li><strong>Multi-dimensional Evaluation:</strong> View citation metrics, impact factors, peer reviews</li>
+                        <li><strong>Personalized Recommendations:</strong> Get relevant paper suggestions based on research interests</li>
+                        <li><strong>Scholar Profiles:</strong> Explore researchers' academic contributions and research areas</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3>使用步骤 | Usage Steps</h3>
+            <div class="step-guide">
+                <div class="step">
+                    <div class="step-title">访问网站 | Access Website</div>
+                    <div class="bilingual-content">
+                        <div class="chinese-content">
+                            打开浏览器，访问 <code>https://www.researchopia.com</code>
+                        </div>
+                        <div class="english-content">
+                            Open your browser and visit <code>https://www.researchopia.com</code>
+                        </div>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-title">搜索论文 | Search Papers</div>
+                    <div class="bilingual-content">
+                        <div class="chinese-content">
+                            在搜索框中输入论文信息，支持DOI、标题、作者等多种搜索方式
+                        </div>
+                        <div class="english-content">
+                            Enter paper information in the search box, supporting DOI, title, author, and other search methods
+                        </div>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-title">查看结果 | View Results</div>
+                    <div class="bilingual-content">
+                        <div class="chinese-content">
+                            浏览搜索结果，查看论文的详细信息、评分和相关指标
+                        </div>
+                        <div class="english-content">
+                            Browse search results, view detailed paper information, ratings, and related metrics
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="alert info">
+                <span class="alert-icon">💡</span>
+                <div>
+                    <strong>小贴士 | Tips:</strong>
+                    <br>使用DOI搜索能获得最准确的结果 | Using DOI search provides the most accurate results
+                </div>
+            </div>
+        </section>
+
+        <!-- 浏览器扩展 -->
+        <section id="browser-extension" class="section">
+            <h2>🔧 浏览器扩展 | Browser Extension</h2>
+
+            <div class="bilingual-content">
+                <div class="chinese-content">
+                    <div class="lang-label">扩展简介</div>
+                    <p>研学港浏览器扩展基于最新的 Manifest V3 规范开发，为学术研究者提供便捷的论文搜索和管理工具。扩展支持Chrome、Edge等主流浏览器，能够自动检测学术网页中的DOI并提供一键搜索功能。</p>
+                </div>
+                <div class="english-content">
+                    <div class="lang-label">Extension Overview</div>
+                    <p>The Researchopia browser extension is developed based on the latest Manifest V3 specification, providing convenient paper search and management tools for academic researchers. The extension supports mainstream browsers such as Chrome and Edge, and can automatically detect DOIs in academic web pages and provide one-click search functionality.</p>
+                </div>
+            </div>
+
+            <h3>主要功能 | Key Features</h3>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🔍</div>
+                    <div class="feature-title">智能DOI检测 | Smart DOI Detection</div>
+                    <div class="feature-desc">自动识别网页中的DOI号码，支持多种格式和来源</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📌</div>
+                    <div class="feature-title">悬浮拖拽图标 | Floating Draggable Icon</div>
+                    <div class="feature-desc">常驻浮动图标，支持拖拽移动和边缘吸附</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📖</div>
+                    <div class="feature-title">集成侧边栏 | Integrated Sidebar</div>
+                    <div class="feature-desc">点击图标展开侧边栏，直接在页面中使用研学港功能</div>
+                </div>
+            </div>
+
+            <h3>安装步骤 | Installation Steps</h3>
+            <div class="step-guide">
+                <div class="step">
+                    <div class="step-title">下载扩展文件 | Download Extension Files</div>
+                    <div class="bilingual-content">
+                        <div class="chinese-content">
+                            从研学港项目中获取 <code>extension</code> 文件夹
+                        </div>
+                        <div class="english-content">
+                            Get the <code>extension</code> folder from the Researchopia project
+                        </div>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-title">打开扩展管理页面 | Open Extension Management</div>
+                    <div class="code-block">chrome://extensions/</div>
+                    <div class="bilingual-content">
+                        <div class="chinese-content">
+                            在Chrome浏览器地址栏输入上述地址，或通过菜单"更多工具→扩展程序"进入
+                        </div>
+                        <div class="english-content">
+                            Enter the above address in Chrome's address bar, or access via menu "More tools → Extensions"
+                        </div>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-title">启用开发者模式 | Enable Developer Mode</div>
+                    <div class="bilingual-content">
+                        <div class="chinese-content">
+                            打开页面右上角的"开发者模式"开关
+                        </div>
+                        <div class="english-content">
+                            Turn on the "Developer mode" toggle in the top right corner
+                        </div>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-title">加载扩展 | Load Extension</div>
+                    <div class="bilingual-content">
+                        <div class="chinese-content">
+                            点击"加载已解压的扩展程序"，选择 <code>extension</code> 文件夹
+                        </div>
+                        <div class="english-content">
+                            Click "Load unpacked" and select the <code>extension</code> folder
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h3>使用方法 | Usage Instructions</h3>
+            <div class="bilingual-content">
+                <div class="chinese-content">
+                    <div class="lang-label">基本使用流程</div>
+                    <ol>
+                        <li><strong>访问学术网页：</strong>打开包含DOI的学术论文页面（如Nature、Science、IEEE等）</li>
+                        <li><strong>自动检测：</strong>扩展会自动检测页面中的DOI号码</li>
+                        <li><strong>查看悬浮图标：</strong>检测成功时，悬浮图标会显示绿色指示器</li>
+                        <li><strong>打开侧边栏：</strong>点击悬浮图标打开研学港侧边栏</li>
+                        <li><strong>自动搜索：</strong>检测到的DOI会自动填入搜索框并执行搜索</li>
+                    </ol>
+                </div>
+                <div class="english-content">
+                    <div class="lang-label">Basic Usage Flow</div>
+                    <ol>
+                        <li><strong>Visit Academic Pages:</strong> Open academic paper pages containing DOIs (e.g., Nature, Science, IEEE)</li>
+                        <li><strong>Automatic Detection:</strong> The extension automatically detects DOI numbers on the page</li>
+                        <li><strong>Check Floating Icon:</strong> When detection succeeds, the floating icon shows a green indicator</li>
+                        <li><strong>Open Sidebar:</strong> Click the floating icon to open the Researchopia sidebar</li>
+                        <li><strong>Automatic Search:</strong> Detected DOIs are automatically filled in the search box and executed</li>
+                    </ol>
+                </div>
+            </div>
+
+            <h3>支持的网站 | Supported Websites</h3>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🔬</div>
+                    <div class="feature-title">顶级期刊 | Top Journals</div>
+                    <div class="feature-desc">Nature, Science, Cell, The Lancet</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📚</div>
+                    <div class="feature-title">学术出版商 | Publishers</div>
+                    <div class="feature-desc">Springer, Elsevier, Wiley, IEEE</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📖</div>
+                    <div class="feature-title">学术平台 | Academic Platforms</div>
+                    <div class="feature-desc">arXiv, PubMed, ResearchGate, JSTOR</div>
+                </div>
+            </div>
+
+            <div class="alert success">
+                <span class="alert-icon">✅</span>
+                <div>
+                    <strong>扩展优势 | Extension Benefits:</strong>
+                    <br>• 基于Manifest V3，安全可靠 | Based on Manifest V3, secure and reliable
+                    <br>• 支持拖拽定位，用户体验佳 | Supports drag positioning, excellent user experience
+                    <br>• 响应式设计，适配各种屏幕 | Responsive design, adapts to various screens
+                </div>
+            </div>
+        </section>
+
+        <!-- Zotero插件 -->
+        <section id="zotero-plugin" class="section">
+            <h2>📚 Zotero插件 | Zotero Plugin</h2>
+
+            <div class="bilingual-content">
+                <div class="chinese-content">
+                    <div class="lang-label">插件简介</div>
+                    <p>研学港Zotero插件专为Zotero 8设计，采用bootstrap架构，完美集成研学港功能到Zotero文献管理器中。插件在Zotero的条目面板中添加自定义区域，让用户可以直接在Zotero中查看论文的研学港评分和相关信息。</p>
+                </div>
+                <div class="english-content">
+                    <div class="lang-label">Plugin Overview</div>
+                    <p>The Researchopia Zotero plugin is specifically designed for Zotero 8, using a bootstrap architecture to perfectly integrate Researchopia functionality into the Zotero reference manager. The plugin adds a custom section to Zotero's item pane, allowing users to view Researchopia ratings and related information directly within Zotero.</p>
+                </div>
+            </div>
+
+            <h3>核心特性 | Core Features</h3>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🔗</div>
+                    <div class="feature-title">条目面板集成 | Item Pane Integration</div>
+                    <div class="feature-desc">在Zotero条目详情中直接显示研学港信息</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔄</div>
+                    <div class="feature-title">自动同步 | Auto Sync</div>
+                    <div class="feature-desc">选择文献条目时自动加载对应的论文评价数据</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">⚙️</div>
+                    <div class="feature-title">灵活配置 | Flexible Configuration</div>
+                    <div class="feature-desc">支持自定义面板高度、加载超时等参数</div>
+                </div>
+            </div>
+
+            <h3>系统要求 | System Requirements</h3>
+            <div class="bilingual-content">
+                <div class="chinese-content">
+                    <div class="lang-label">兼容性要求</div>
+                    <ul>
+                        <li><strong>Zotero版本：</strong>Zotero 7.0 及以上（推荐Zotero 8 beta）</li>
+                        <li><strong>操作系统：</strong>Windows、macOS、Linux</li>
+                        <li><strong>网络连接：</strong>需要访问研学港服务器</li>
+                        <li><strong>浏览器内核：</strong>基于Firefox Gecko引擎</li>
+                    </ul>
+                </div>
+                <div class="english-content">
+                    <div class="lang-label">Compatibility Requirements</div>
+                    <ul>
+                        <li><strong>Zotero Version:</strong> Zotero 7.0 and above (Zotero 8 beta recommended)</li>
+                        <li><strong>Operating System:</strong> Windows, macOS, Linux</li>
+                        <li><strong>Network Connection:</strong> Requires access to Researchopia servers</li>
+                        <li><strong>Browser Engine:</strong> Based on Firefox Gecko engine</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3>安装方法 | Installation Methods</h3>
+
+            <h4>方法一：自动构建安装（推荐） | Method 1: Auto Build Installation (Recommended)</h4>
+            <div class="step-guide">
+                <div class="step">
+                    <div class="step-title">运行构建脚本 | Run Build Script</div>
+                    <div class="code-block">.\build.ps1</div>
+                    <div class="bilingual-content">
+                        <div class="chinese-content">
+                            在 <code>zotero-plugin</code> 目录下运行PowerShell脚本
+                        </div>
+                        <div class="english-content">
+                            Run PowerShell script in the <code>zotero-plugin</code> directory
+                        </div>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-title">打开Zotero | Open Zotero</div>
+                    <div class="bilingual-content">
+                        <div class="chinese-content">
+                            启动Zotero 8 beta，进入"工具→插件"菜单
+                        </div>
+                        <div class="english-content">
+                            Launch Zotero 8 beta, go to "Tools → Plugins" menu
+                        </div>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-title">安装插件文件 | Install Plugin File</div>
+                    <div class="bilingual-content">
+                        <div class="chinese-content">
+                            点击"从文件安装插件"，选择生成的 <code>researchopia-zotero-&lt;version&gt;.xpi</code> 文件
+                        </div>
+                        <div class="english-content">
+                            Click "Install Plugin From File" and select the generated <code>researchopia-zotero-&lt;version&gt;.xpi</code> file
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h4>方法二：手动构建 | Method 2: Manual Build</h4>
+            <div class="step-guide">
+                <div class="step">
+                    <div class="step-title">创建XPI文件 | Create XPI File</div>
+                    <div class="code-block">
+# Linux/Mac
+zip -r researchopia-zotero.xpi . -x "*.git*" "README.md" "build.ps1" "*.xpi" "*.zip"
+
+# Windows
+Compress-Archive -Path * -DestinationPath researchopia-zotero.zip
+Rename-Item researchopia-zotero.zip researchopia-zotero.xpi
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-title">安装到Zotero | Install to Zotero</div>
+                    <div class="bilingual-content">
+                        <div class="chinese-content">
+                            按照方法一的步骤2-3进行安装
+                        </div>
+                        <div class="english-content">
+                            Follow steps 2-3 from Method 1 for installation
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h3>使用指南 | Usage Guide</h3>
+            <div class="step-guide">
+                <div class="step">
+                    <div class="step-title">验证安装 | Verify Installation</div>
+                    <div class="bilingual-content">
+                        <div class="chinese-content">
+                            安装成功后，重启Zotero，在任意文献条目的详情面板中应能看到"研学港 Researchopia"区域
+                        </div>
+                        <div class="english-content">
+                            After successful installation, restart Zotero. You should see the "研学港 Researchopia" section in any item's detail panel
+                        </div>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-title">选择文献条目 | Select Literature Item</div>
+                    <div class="bilingual-content">
+                        <div class="chinese-content">
+                            在Zotero文库中点击任意含有DOI的文献条目
+                        </div>
+                        <div class="english-content">
+                            Click on any literature item with DOI in your Zotero library
+                        </div>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-title">查看研学港信息 | View Researchopia Info</div>
+                    <div class="bilingual-content">
+                        <div class="chinese-content">
+                            插件会自动提取DOI并在研学港面板中加载对应的论文评价信息
+                        </div>
+                        <div class="english-content">
+                            The plugin automatically extracts DOI and loads corresponding paper evaluation information in the Researchopia panel
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h3>插件配置 | Plugin Configuration</h3>
+            <div class="bilingual-content">
+                <div class="chinese-content">
+                    <div class="lang-label">可配置参数</div>
+                    <ul>
+                        <li><strong>面板高度：</strong>默认70vh，可通过首选项调整</li>
+                        <li><strong>加载超时：</strong>默认3000ms，适合网络环境调整</li>
+                        <li><strong>服务器地址：</strong>支持切换到本地开发服务器</li>
+                        <li><strong>自动刷新：</strong>选择条目时是否自动更新URL</li>
+                    </ul>
+                </div>
+                <div class="english-content">
+                    <div class="lang-label">Configurable Parameters</div>
+                    <ul>
+                        <li><strong>Panel Height:</strong> Default 70vh, adjustable via preferences</li>
+                        <li><strong>Load Timeout:</strong> Default 3000ms, adjustable for network environment</li>
+                        <li><strong>Server Address:</strong> Supports switching to local development server</li>
+                        <li><strong>Auto Refresh:</strong> Whether to automatically update URL when selecting items</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="code-block">
+// 配置示例 | Configuration Example
+extensions.researchopia.paneHeight = "80vh"
+extensions.researchopia.loadTimeoutMs = 5000
+            </div>
+
+            <div class="alert info">
+                <span class="alert-icon">💡</span>
+                <div>
+                    <strong>使用技巧 | Usage Tips:</strong>
+                    <br>• 插件支持DOI、arXiv ID等多种标识符 | Supports DOI, arXiv ID and other identifiers
+                    <br>• 可在Zotero首选项中调整插件行为 | Plugin behavior can be adjusted in Zotero preferences
+                    <br>• 支持离线使用，但需要网络连接加载数据 | Supports offline usage, but requires network to load data
+                </div>
+            </div>
+        </section>
+
+        <!-- 高级功能 -->
+        <section id="advanced" class="section">
+            <h2>🚀 高级功能 | Advanced Features</h2>
+
+            <h3>API集成 | API Integration</h3>
+            <div class="bilingual-content">
+                <div class="chinese-content">
+                    <div class="lang-label">开发者功能</div>
+                    <p>研学港提供完整的API接口，支持第三方应用集成。开发者可以通过API获取论文评分、统计数据等信息，构建自定义的学术工具。</p>
+                </div>
+                <div class="english-content">
+                    <div class="lang-label">Developer Features</div>
+                    <p>Researchopia provides comprehensive API interfaces supporting third-party application integration. Developers can obtain paper ratings, statistical data, and other information through APIs to build custom academic tools.</p>
+                </div>
+            </div>
+
+            <h3>数据同步 | Data Synchronization</h3>
+            <div class="bilingual-content">
+                <div class="chinese-content">
+                    <div class="lang-label">跨平台同步</div>
+                    <p>用户的搜索历史、收藏列表、个人设置等数据可在不同设备和平台间同步，确保一致的使用体验。</p>
+                </div>
+                <div class="english-content">
+                    <div class="lang-label">Cross-platform Sync</div>
+                    <p>User search history, favorites, personal settings and other data can be synchronized across different devices and platforms, ensuring a consistent user experience.</p>
+                </div>
+            </div>
+
+            <h3>批量操作 | Batch Operations</h3>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <div class="feature-title">批量评分 | Batch Rating</div>
+                    <div class="feature-desc">同时处理多篇论文的评分和分析</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📁</div>
+                    <div class="feature-title">文献管理 | Literature Management</div>
+                    <div class="feature-desc">创建和管理个人文献集合</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📈</div>
+                    <div class="feature-title">统计报告 | Statistical Reports</div>
+                    <div class="feature-desc">生成研究领域的趋势分析报告</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 故障排除 -->
+        <section id="troubleshooting" class="section">
+            <h2>🛠️ 故障排除 | Troubleshooting</h2>
+
+            <h3>常见问题 | Common Issues</h3>
+
+            <h4>浏览器扩展问题 | Browser Extension Issues</h4>
+            <div class="step-guide">
+                <div class="step">
+                    <div class="step-title">扩展无法加载 | Extension Won't Load</div>
+                    <div class="bilingual-content">
+                        <div class="chinese-content">
+                            <strong>解决方案：</strong>
+                            <ul>
+                                <li>确保已启用开发者模式</li>
+                                <li>检查扩展文件夹是否完整</li>
+                                <li>重新加载扩展或重启浏览器</li>
+                            </ul>
+                        </div>
+                        <div class="english-content">
+                            <strong>Solutions:</strong>
+                            <ul>
+                                <li>Ensure developer mode is enabled</li>
+                                <li>Check if extension folder is complete</li>
+                                <li>Reload extension or restart browser</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-title">DOI检测失败 | DOI Detection Failed</div>
+                    <div class="bilingual-content">
+                        <div class="chinese-content">
+                            <strong>可能原因：</strong>
+                            <ul>
+                                <li>页面DOI格式不标准</li>
+                                <li>网页加载未完成</li>
+                                <li>扩展权限不足</li>
+                            </ul>
+                        </div>
+                        <div class="english-content">
+                            <strong>Possible Causes:</strong>
+                            <ul>
+                                <li>Non-standard DOI format on page</li>
+                                <li>Page loading incomplete</li>
+                                <li>Insufficient extension permissions</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h4>Zotero插件问题 | Zotero Plugin Issues</h4>
+            <div class="step-guide">
+                <div class="step">
+                    <div class="step-title">插件安装失败 | Plugin Installation Failed</div>
+                    <div class="bilingual-content">
+                        <div class="chinese-content">
+                            <strong>解决步骤：</strong>
+                            <ol>
+                                <li>确认Zotero版本是否为7.0+</li>
+                                <li>检查XPI文件是否损坏</li>
+                                <li>尝试重新下载插件文件</li>
+                                <li>以管理员权限运行Zotero</li>
+                            </ol>
+                        </div>
+                        <div class="english-content">
+                            <strong>Solution Steps:</strong>
+                            <ol>
+                                <li>Confirm Zotero version is 7.0+</li>
+                                <li>Check if XPI file is corrupted</li>
+                                <li>Try re-downloading plugin files</li>
+                                <li>Run Zotero with administrator privileges</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-title">面板无法显示 | Panel Won't Display</div>
+                    <div class="bilingual-content">
+                        <div class="chinese-content">
+                            <strong>检查项目：</strong>
+                            <ul>
+                                <li>网络连接是否正常</li>
+                                <li>文献条目是否包含DOI</li>
+                                <li>插件是否已启用</li>
+                                <li>Zotero是否需要重启</li>
+                            </ul>
+                        </div>
+                        <div class="english-content">
+                            <strong>Check Items:</strong>
+                            <ul>
+                                <li>Network connection is normal</li>
+                                <li>Literature item contains DOI</li>
+                                <li>Plugin is enabled</li>
+                                <li>Zotero needs restart</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h3>性能优化 | Performance Optimization</h3>
+            <div class="bilingual-content">
+                <div class="chinese-content">
+                    <div class="lang-label">优化建议</div>
+                    <ul>
+                        <li><strong>网络环境：</strong>确保稳定的网络连接，避免频繁超时</li>
+                        <li><strong>浏览器性能：</strong>定期清理浏览器缓存，关闭不必要的标签页</li>
+                        <li><strong>系统资源：</strong>监控系统内存使用，避免资源不足影响扩展运行</li>
+                        <li><strong>更新维护：</strong>及时更新扩展和插件版本，获取最新功能和修复</li>
+                    </ul>
+                </div>
+                <div class="english-content">
+                    <div class="lang-label">Optimization Suggestions</div>
+                    <ul>
+                        <li><strong>Network Environment:</strong> Ensure stable network connection, avoid frequent timeouts</li>
+                        <li><strong>Browser Performance:</strong> Regularly clear browser cache, close unnecessary tabs</li>
+                        <li><strong>System Resources:</strong> Monitor system memory usage, avoid resource shortage affecting extension operation</li>
+                        <li><strong>Update Maintenance:</strong> Timely update extension and plugin versions for latest features and fixes</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="alert warning">
+                <span class="alert-icon">⚠️</span>
+                <div>
+                    <strong>注意事项 | Important Notes:</strong>
+                    <br>• 如遇到问题请先查看浏览器控制台错误信息 | Check browser console error messages first when encountering issues
+                    <br>• 建议使用最新版本的浏览器和Zotero | Recommend using latest versions of browser and Zotero
+                    <br>• 定期备份重要的研究数据和设置 | Regularly backup important research data and settings
+                </div>
+            </div>
+
+            <h3>技术支持 | Technical Support</h3>
+            <div class="bilingual-content">
+                <div class="chinese-content">
+                    <div class="lang-label">获取帮助</div>
+                    <p>如果您在使用过程中遇到问题，可以通过以下方式获取支持：</p>
+                    <ul>
+                        <li>访问官方网站的帮助中心</li>
+                        <li>在GitHub项目页面提交Issue</li>
+                        <li>加入用户交流群组</li>
+                        <li>查阅详细的API文档</li>
+                    </ul>
+                </div>
+                <div class="english-content">
+                    <div class="lang-label">Get Help</div>
+                    <p>If you encounter problems during use, you can get support through the following ways:</p>
+                    <ul>
+                        <li>Visit the help center on the official website</li>
+                        <li>Submit issues on the GitHub project page</li>
+                        <li>Join user community groups</li>
+                        <li>Consult detailed API documentation</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- 页脚 -->
+        <footer style="text-align: center; padding: 40px 0; border-top: 1px solid #e5e7eb; margin-top: 50px;">
+            <div class="bilingual-content">
+                <div class="chinese-content">
+                    <p><strong>研学港 Researchopia</strong></p>
+                    <p>研学并进，智慧共享</p>
+                    <p>© 2024 Researchopia Team. All Rights Reserved.</p>
+                </div>
+                <div class="english-content">
+                    <p><strong>Researchopia</strong></p>
+                    <p>Where Research Meets Community</p>
+                    <p>© 2024 Researchopia Team. All Rights Reserved.</p>
+                </div>
+            </div>
+            <p style="margin-top: 20px;">
+                <a href="https://www.researchopia.com" target="_blank" style="color: #4f46e5; text-decoration: none;">🌐 官方网站 | Official Website</a>
+            </p>
+        </footer>
+    </div>
+
+    <script>
+        // 滚动进度指示器
+        function updateScrollProgress() {
+            const scrollProgress = document.getElementById('scrollProgress');
+            const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
+            const currentProgress = window.pageYOffset;
+            const progress = (currentProgress / totalHeight) * 100;
+            scrollProgress.style.width = progress + '%';
+        }
+
+        // 返回顶部按钮
+        function updateBackToTopButton() {
+            const backToTop = document.getElementById('backToTop');
+            if (window.pageYOffset > 300) {
+                backToTop.classList.add('visible');
+            } else {
+                backToTop.classList.remove('visible');
+            }
+        }
+
+        // 平滑滚动到顶部
+        function scrollToTop() {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        }
+
+        // 语言切换功能
+        function setupLanguageToggle() {
+            const toggleButtons = document.querySelectorAll('.toggle-btn');
+            const bilingualContents = document.querySelectorAll('.bilingual-content');
+
+            toggleButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const lang = btn.dataset.lang;
+                    
+                    // 更新按钮状态
+                    toggleButtons.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    
+                    // 显示/隐藏对应语言内容
+                    bilingualContents.forEach(content => {
+                        const chineseContent = content.querySelector('.chinese-content');
+                        const englishContent = content.querySelector('.english-content');
+                        
+                        if (lang === 'zh') {
+                            chineseContent.style.display = 'block';
+                            englishContent.style.display = 'block';
+                            content.style.gridTemplateColumns = '1fr 1fr';
+                        } else if (lang === 'en') {
+                            chineseContent.style.display = 'none';
+                            englishContent.style.display = 'block';
+                            content.style.gridTemplateColumns = '1fr';
+                        }
+                    });
+                });
+            });
+        }
+
+        // 平滑滚动到锚点
+        function setupSmoothScrolling() {
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                });
+            });
+        }
+
+        // 初始化所有功能
+        document.addEventListener('DOMContentLoaded', function() {
+            setupLanguageToggle();
+            setupSmoothScrolling();
+            
+            // 绑定事件监听器
+            window.addEventListener('scroll', () => {
+                updateScrollProgress();
+                updateBackToTopButton();
+            });
+            
+            document.getElementById('backToTop').addEventListener('click', scrollToTop);
+            
+            // 初始化状态
+            updateScrollProgress();
+            updateBackToTopButton();
+        });
+
+        // 添加一些动画效果
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        // 观察所有节的动画
+        document.addEventListener('DOMContentLoaded', () => {
+            const sections = document.querySelectorAll('.section');
+            sections.forEach(section => {
+                section.style.opacity = '0';
+                section.style.transform = 'translateY(30px)';
+                section.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+                observer.observe(section);
+            });
+        });
+    </script>
+</body>
+</html>

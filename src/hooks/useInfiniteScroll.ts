@@ -70,7 +70,10 @@ export function useInfiniteScroll<T>(
         ...(sortBy && { sortBy })
       })
 
-      const response = await fetch(`${endpoint}?${searchParams}`)
+      const response = await fetch(`${endpoint}?${searchParams}` , {
+        headers: { 'Accept': 'application/json' },
+        cache: 'no-store'
+      })
       
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`)
@@ -97,7 +100,10 @@ export function useInfiniteScroll<T>(
       setPage(result.pagination.page)
 
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : '加载数据失败'
+      let errorMessage = err instanceof Error ? err.message : '加载数据失败'
+      if (typeof errorMessage === 'string' && /Failed to fetch|NetworkError/i.test(errorMessage)) {
+        errorMessage = '网络请求失败，请确认开发服务器已启动且端口可访问'
+      }
       console.error('无限滚动加载错误:', err)
       setError(errorMessage)
     } finally {

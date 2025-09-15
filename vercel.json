@@ -44,7 +44,6 @@
       ]
     }
   ],
-  "regions": ["hkg1", "sin1", "icn1"],
   "rewrites": [
     {
       "source": "/sitemap.xml",

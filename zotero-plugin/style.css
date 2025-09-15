@@ -1,0 +1,81 @@
+/* 
+  Academic Rating for Zotero - Stylesheet
+  Custom styles for the plugin interface
+*/
+
+.academic-rating-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 420px;
+  gap: 8px;
+  padding: 8px;
+  background: #f8f9fa;
+  border-radius: 6px;
+}
+
+.academic-rating-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  font-weight: 600;
+  color: #495057;
+  padding: 4px 0;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.academic-rating-actions { display: flex; gap: 8px; }
+.academic-rating-btn {
+  font-size: 11px;
+  padding: 4px 8px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  background: #ffffff;
+  color: #343a40;
+  cursor: pointer;
+}
+.academic-rating-btn:hover { background: #f1f3f5; }
+.academic-rating-btn.secondary { color: #0b7285; border-color: #a5d8ff; }
+
+.academic-rating-iframe-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.academic-rating-iframe {
+  width: 100%;
+  height: 100%;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  background: #ffffff;
+}
+
+/* Dark theme support */
+@media (prefers-color-scheme: dark) {
+  .academic-rating-container {
+    background: #212529;
+  }
+  
+  .academic-rating-header {
+    color: #f8f9fa;
+    border-bottom-color: #495057;
+  }
+  
+  .academic-rating-iframe {
+    border-color: #495057;
+    background: #2d3748;
+  }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .academic-rating-container {
+    border: 2px solid currentColor;
+  }
+  
+  .academic-rating-iframe {
+    border-width: 2px;
+  }
+}

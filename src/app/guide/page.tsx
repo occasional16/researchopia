@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { Book, Globe, Download, Settings } from 'lucide-react'
 
@@ -89,13 +90,13 @@ export default function UserGuidePage() {
                 <Settings className="w-5 h-5 mr-2" />
                 {t('guide.complete.title', '完整用户指南')}
               </h2>
-              <a 
+              <Link 
                 href="/user-guide.html" 
                 target="_blank" 
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
               >
                 {t('guide.complete.openNewTab', '在新窗口中打开')}
-              </a>
+              </Link>
             </div>
           </div>
           
@@ -115,27 +116,27 @@ export default function UserGuidePage() {
             {t('guide.quickLinks.title', '快速链接')}
           </h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <a 
+            <Link 
               href="/" 
               className="text-center p-4 bg-white rounded-lg hover:shadow-md transition-shadow"
             >
               <div className="text-blue-600 text-2xl mb-2">🏠</div>
               <div className="text-sm font-medium">{t('nav.home', '首页')}</div>
-            </a>
-            <a 
+            </Link>
+            <Link 
               href="/papers" 
               className="text-center p-4 bg-white rounded-lg hover:shadow-md transition-shadow"
             >
               <div className="text-green-600 text-2xl mb-2">📚</div>
               <div className="text-sm font-medium">{t('nav.papers', '论文')}</div>
-            </a>
-            <a 
+            </Link>
+            <Link 
               href="/profile" 
               className="text-center p-4 bg-white rounded-lg hover:shadow-md transition-shadow"
             >
               <div className="text-purple-600 text-2xl mb-2">👤</div>
               <div className="text-sm font-medium">{t('nav.profile', '个人中心')}</div>
-            </a>
+            </Link>
             <a 
               href="https://github.com/occasional15/researchopia" 
               target="_blank" 

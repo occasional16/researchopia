@@ -11,10 +11,21 @@ export async function GET(request: NextRequest) {
       database: false,
       environment: {
         nodeVersion: process.version,
-        nextVersion: require('next/package.json').version,
+        // 动态导入以避免 require() 被 ESLint 禁止
+        // 在下方会覆盖为实际版本号
+        nextVersion: 'unknown',
         hasSupabaseUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
         hasSupabaseKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
       }
+    }
+
+    try {
+      const pkg: any = await import('next/package.json')
+      if (pkg && pkg.version) {
+        checks.environment.nextVersion = pkg.version
+      }
+    } catch (e) {
+      // 保持为 'unknown'，并不阻断健康检查
     }
 
     // 测试数据库连接

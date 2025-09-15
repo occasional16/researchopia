@@ -1,7 +1,6 @@
 /*
-  Academic Rating for Zotero - Main Plugin File
-  Based on official make-it-red plugin architecture
-  Provides Item Pane integration for Academic Rating functionality
+  Researchopia for Zotero - Main Plugin File
+  Provides Item Pane integration for Researchopia functionality
 */
 
 Zotero.AcademicRating = {
@@ -12,6 +11,9 @@ Zotero.AcademicRating = {
   addedElementIDs: [],
   registeredSection: null,
   lastURL: null,
+  preferencePaneRegistered: false,
+  paneHeight: '70vh',
+  loadTimeoutMs: 3000,
 
   init({ id, version, rootURI }) {
     if (this.initialized) return;
@@ -19,10 +21,14 @@ Zotero.AcademicRating = {
     this.version = version;
     this.rootURI = rootURI;
     this.initialized = true;
+    try {
+      this.paneHeight = Zotero.Prefs.get('extensions.researchopia.paneHeight', true) || '70vh';
+      this.loadTimeoutMs = Zotero.Prefs.get('extensions.researchopia.loadTimeoutMs', true) || 3000;
+    } catch {}
   },
 
   log(msg) {
-    Zotero.debug("Academic Rating: " + msg);
+    Zotero.debug("Researchopia: " + msg);
   },
 
   addToWindow(window) {
@@ -30,34 +36,29 @@ Zotero.AcademicRating = {
 
     // Add stylesheet for custom styling
     let link1 = doc.createElement('link');
-    link1.id = 'academic-rating-stylesheet';
+    link1.id = 'researchopia-stylesheet';
     link1.type = 'text/css';
     link1.rel = 'stylesheet';
     link1.href = this.rootURI + 'style.css';
     doc.documentElement.appendChild(link1);
     this.storeAddedElement(link1);
 
-    // Use Fluent for localization if available (optional)
-    // Skip manual FTL insertion to avoid noisy missing-locale logs; we rely on plain label fallbacks
-
-    // Register Item Pane section for Academic Rating
-    this.registerItemPaneSection();
+    // Section 注册统一在 main() 中进行
 
     // Listen to item selection changes to refresh URL automatically
     try {
       const pane = window.ZoteroPane;
-      if (pane && pane.onSelectionChange) {
+      if (pane && pane.onSelectionChange && !window.__ResearchopiaSelectionPatched) {
+        window.__ResearchopiaSelectionPatched = true;
         const orig = pane.onSelectionChange.bind(pane);
         pane.onSelectionChange = (...args) => {
-          try {
-            orig(...args);
-          } catch {}
+          try { orig(...args); } catch {}
           try {
             const item = pane.getSelectedItems?.()[0];
             const node = doc.querySelector('.academic-rating-container');
             if (item && node) {
               const url = this.buildExternalURL(item);
-              this.loadURL(doc, url);
+              this.loadURL(node, url);
             }
           } catch (e) {
             this.log('Auto refresh on selection failed: ' + e);
@@ -88,16 +89,9 @@ Zotero.AcademicRating = {
 
   removeFromWindow(window) {
     var doc = window.document;
-    // Remove all elements added to DOM
     for (let id of this.addedElementIDs) {
       doc.getElementById(id)?.remove();
     }
-    // Remove FTL file reference
-    let ftlLink = doc.querySelector('[href="academic-rating.ftl"]');
-    if (ftlLink) ftlLink.remove();
-
-    // Unregister Item Pane section
-    this.unregisterItemPaneSection();
   },
 
   removeFromAllWindows() {
@@ -113,26 +107,27 @@ Zotero.AcademicRating = {
       if (!Zotero.ItemPaneManager) {
         throw new Error("Zotero.ItemPaneManager not available");
       }
-
+      if (this.registeredSection) {
+        this.log('Section already registered');
+        return;
+      }
       this.registeredSection = Zotero.ItemPaneManager.registerSection({
-        paneID: "academic-rating-section",
+        paneID: `${this.id}-section`,
         pluginID: this.id,
         header: {
-          // Prefer l10n, but provide plain label fallback for safety
-          l10nID: "academic-rating-header-label",
-          label: "Academic Rating",
-          icon: this.rootURI + "icons/icon16.svg",
+          l10nID: "researchopia-header-label",
+          label: "研学港 Researchopia",
+          icon: this.rootURI + "icons/icon32.svg",
         },
         sidenav: {
-          l10nID: "academic-rating-sidenav-label",
-          label: "Academic Rating",
-          icon: this.rootURI + "icons/icon16.svg",
+          l10nID: "researchopia-sidenav-label",
+          label: "研学港 Researchopia",
+          icon: this.rootURI + "icons/icon32.svg",
         },
-        onRender: ({ body, item, editable, tabType }) => {
+        onRender: ({ body, item }) => {
           this.renderItemPane(body, item);
         },
       });
-
       this.log("Item Pane section registered successfully");
     } catch (e) {
       this.log("Failed to register Item Pane section: " + e);
@@ -152,35 +147,54 @@ Zotero.AcademicRating = {
   },
 
   renderItemPane(body, item) {
-    // Clear existing content
     body.replaceChildren();
+    try {
+      body.style.display = 'flex';
+      body.style.flex = '1 1 auto';
+      body.style.minHeight = '0';
+      body.style.flexDirection = 'column';
+      body.style.height = '100%';
+    } catch {}
 
     const container = body.ownerDocument.createElement("div");
     container.className = "academic-rating-container";
+    try {
+      container.style.flex = '1 1 auto';
+      container.style.minHeight = '0';
+      container.style.padding = '0';
+      container.style.margin = '0';
+    } catch {}
 
-    // Create header info
+    // Compact header with only actions to avoid duplicate title misalignment
     const header = body.ownerDocument.createElement("div");
     header.className = "academic-rating-header";
-    const title = body.ownerDocument.createElement("span");
-    title.textContent = "Academic Rating";
+  const alert = body.ownerDocument.createElement('div');
+    alert.className = 'academic-rating-alert';
     const actions = body.ownerDocument.createElement("div");
     actions.className = "academic-rating-actions";
+  const titleEl = body.ownerDocument.createElement('span');
+  titleEl.className = 'academic-rating-title';
+  titleEl.textContent = '研学港 Researchopia';
     const refreshBtn = body.ownerDocument.createElement("button");
     refreshBtn.className = "academic-rating-btn";
-    refreshBtn.textContent = "Refresh";
+    refreshBtn.textContent = "刷新";
     const openBtn = body.ownerDocument.createElement("button");
     openBtn.className = "academic-rating-btn secondary";
-    openBtn.textContent = "Open in Browser";
-    actions.appendChild(refreshBtn);
+    openBtn.textContent = "在浏览器打开";
+  // Always keep open button highlighted and pulsing for quick access
+  try { openBtn.classList.add('emphasis', 'pulse'); } catch {}
+  actions.appendChild(refreshBtn);
     actions.appendChild(openBtn);
-    header.appendChild(title);
-    header.appendChild(actions);
+  header.appendChild(titleEl);
+  header.appendChild(actions);
 
-    // Create iframe container
     const iframeContainer = body.ownerDocument.createElement("div");
     iframeContainer.className = "academic-rating-iframe-container";
+    try {
+      iframeContainer.style.flex = '1 1 auto';
+      iframeContainer.style.minHeight = '0';
+    } catch {}
 
-    // Prefer XUL browser to load remote content in Zotero chrome context
     const externalUrl = this.buildExternalURL(item);
     let viewer = null;
     try {
@@ -191,6 +205,9 @@ Zotero.AcademicRating = {
         browser.setAttribute('src', externalUrl);
         browser.style.width = '100%';
         browser.style.height = '100%';
+        browser.style.flex = '1 1 auto';
+        browser.style.margin = '0';
+        browser.style.borderWidth = '0';
         browser.setAttribute('id', 'academic-rating-viewer');
         viewer = browser;
       }
@@ -202,28 +219,39 @@ Zotero.AcademicRating = {
       const iframe = body.ownerDocument.createElement('iframe');
       iframe.className = 'academic-rating-iframe';
       iframe.setAttribute('referrerpolicy', 'no-referrer');
-      // Keep minimal permissions
-      iframe.setAttribute('allow', 'clipboard-write');
-      iframe.src = externalUrl;
       iframe.id = 'academic-rating-viewer';
+      iframe.style.width = '100%';
+      iframe.style.height = '100%';
+      iframe.style.flex = '1 1 auto';
+      iframe.style.padding = '0';
+      iframe.style.margin = '0';
+      iframe.style.borderWidth = '0';
+      iframe.src = externalUrl;
       viewer = iframe;
     }
 
-    // Assemble the elements
-    iframeContainer.appendChild(viewer);
     container.appendChild(header);
+    container.appendChild(alert);
+    iframeContainer.appendChild(viewer);
     container.appendChild(iframeContainer);
     body.appendChild(container);
 
-    this.lastURL = externalUrl;
+    // Apply fixed larger min-height from prefs
+  const prefHeight = (this.paneHeight && this.paneHeight !== '70vh') ? this.paneHeight : '80vh';
+    try { container.style.minHeight = prefHeight; } catch {}
+    try { iframeContainer.style.minHeight = prefHeight; } catch {}
 
-    // Wire actions
+    try { this.loadURL(container, externalUrl); } catch {}
+
+    // Actions
     refreshBtn.addEventListener('click', () => {
       try {
         const url = this.buildExternalURL(item);
         this.loadURL(body, url);
+        this.showAlert(alert, '');
       } catch (e) {
         this.log('Refresh failed: ' + e);
+        this.showAlert(alert, '刷新失败：' + e);
       }
     });
     openBtn.addEventListener('click', () => {
@@ -234,11 +262,11 @@ Zotero.AcademicRating = {
         } else if (Zotero?.openInBrowser) {
           Zotero.openInBrowser(url);
         } else {
-          // last resort: window.open
           body.ownerDocument.defaultView.open(url);
         }
       } catch (e) {
         this.log('Open in browser failed: ' + e);
+        this.showAlert(alert, '打开浏览器失败：' + e);
       }
     });
   },
@@ -247,44 +275,48 @@ Zotero.AcademicRating = {
     // Base URL from prefs with fallback
     let base = 'https://www.researchopia.com';
     try {
-      const pref = Zotero.Prefs.get('extensions.academic-rating.baseURL', true);
+      const pref = Zotero.Prefs.get('extensions.researchopia.baseURL', true);
       if (pref) base = pref;
     } catch {}
     const url = new URL(base);
-    // Ensure pathname root for query display
     if (!url.pathname) url.pathname = '/';
 
+    // Only use DOI as identifier
+    let hasDOI = false;
     try {
       if (item) {
-        const doi = item.getField?.("DOI");
-        const arxiv = item.getField?.("archiveLocation");
-        const link = item.getField?.("url");
-        const extra = item.getField?.("extra");
-        const pmid = /PMID\s*:\s*(\d+)/i.exec(extra || "")?.[1];
-
-        if (doi) url.searchParams.set('doi', doi);
-        if (pmid) url.searchParams.set('pmid', pmid);
-        if (arxiv && /^(arXiv:|\d{4}\.\d{4,5})/i.test(arxiv)) {
-          url.searchParams.set('arxiv', arxiv.replace(/^arXiv:/i, ''));
-        }
-        if (link) url.searchParams.set('url', link);
+        const doi = item.getField?.('DOI');
+        if (doi) { url.searchParams.set('doi', doi); hasDOI = true; }
       }
-    } catch (e) {
-      this.log('Error building external URL: ' + e);
-    }
+    } catch (e) { this.log('Error building external URL: ' + e); }
 
-    return url.toString();
+    url.searchParams.set('_src', 'zotero');
+    return url.toString() + (hasDOI ? '' : '#no-identifiers');
+  },
+
+  openSettings(win) {
+    // disabled by request
   },
 
   loadURL(body, url) {
     try {
-      if (this.lastURL === url) return;
       const viewer = body.ownerDocument.getElementById('academic-rating-viewer');
       if (!viewer) return;
+      const alertNode = body.querySelector('.academic-rating-alert');
+      const openBtn = body.querySelector('.academic-rating-btn.secondary');
+      if (url.includes('#no-identifiers')) {
+        this.showAlert(alertNode, '当前条目未找到 DOI 标识符。您可以点击“在浏览器打开”了解功能，或为条目补充 DOI 后再试。');
+        try { openBtn?.classList.add('emphasis'); } catch {}
+      }
+  const onLoaded = () => { this.showAlert(alertNode, ''); };
       if (viewer.localName === 'browser') {
         viewer.setAttribute('src', url);
-      } else if (viewer.localName === 'iframe') {
+        viewer.addEventListener('DOMFrameContentLoaded', onLoaded, { once: true });
+        viewer.addEventListener('load', onLoaded, { once: true });
+      } else {
         viewer.src = url;
+        viewer.onload = onLoaded;
+        viewer.onerror = () => this.showAlert(alertNode, '页面加载失败，请检查网络或稍后重试。');
       }
       this.lastURL = url;
       this.log('Loaded URL: ' + url);
@@ -293,42 +325,24 @@ Zotero.AcademicRating = {
     }
   },
 
-  buildAcademicRatingURL(item) {
-    const baseURL = new URL("panel/panel.html", this.rootURI);
-    const params = new URLSearchParams();
-
-    try {
-      if (item) {
-        const doi = item.getField?.("DOI");
-        const arxiv = item.getField?.("archiveLocation");
-        const url = item.getField?.("url");
-        const extra = item.getField?.("extra");
-        const pmid = /PMID\s*:\s*(\d+)/i.exec(extra || "")?.[1];
-
-        if (doi) params.set("doi", doi);
-        if (pmid) params.set("pmid", pmid);
-        if (arxiv && /^(arXiv:|\d{4}\.\d{4,5})/i.test(arxiv)) {
-          params.set("arxiv", arxiv.replace(/^arXiv:/i, ""));
-        }
-        if (url) params.set("url", url);
-      }
-    } catch (e) {
-      this.log("Error extracting item parameters: " + e);
+  showAlert(alertNode, msg) {
+    if (!alertNode) return;
+    if (!msg) {
+      alertNode.style.display = 'none';
+      alertNode.textContent = '';
+    } else {
+      alertNode.style.display = 'block';
+      alertNode.textContent = msg;
     }
-
-    baseURL.hash = params.toString();
-    return baseURL.toString();
   },
 
   async main() {
-    // Main plugin initialization
-    this.log("Academic Rating plugin initialized");
-
-    // Test URL parsing
-    var testURL = new URL('https://www.researchopia.com');
-    this.log(`Test URL host: ${testURL.host}`);
-
-    // Log preferences
-    this.log(`Plugin enabled: ${Zotero.Prefs.get('extensions.academic-rating.enabled', true)}`);
+    this.log("Researchopia plugin initialized");
+    this.registerItemPaneSection();
+    try {
+      var testURL = new URL('https://www.researchopia.com');
+      this.log(`Test URL host: ${testURL.host}`);
+      this.log(`Plugin enabled: ${Zotero.Prefs.get('extensions.academic-rating.enabled', true)}`);
+    } catch {}
   },
 };

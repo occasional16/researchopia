@@ -1,5 +1,29 @@
-<!-- SVG copied from browser extension -->
+<!-- 16x16 icon - Researchopia Logo Design -->
 <svg width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
-  <rect width="16" height="16" rx="3" fill="#667eea"/>
-  <text x="8" y="11" font-family="Arial, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" fill="white">研</text>
+  <!-- Wave patterns -->
+  <path d="M1 12 Q4 11 8 12 T15 12" fill="none" stroke="#a855f7" stroke-width="1" opacity="0.6"/>
+  
+  <!-- Main document/book -->
+  <rect x="4" y="4" width="8" height="6" rx="1" fill="#7c3aed"/>
+  <rect x="4.5" y="4.5" width="7" height="5" rx="0.5" fill="#8b5cf6"/>
+  
+  <!-- Document content lines -->
+  <line x1="6" y1="6" x2="10" y2="6" stroke="white" stroke-width="0.5"/>
+  <line x1="6" y1="7.5" x2="10" y2="7.5" stroke="white" stroke-width="0.5"/>
+  <line x1="6" y1="9" x2="9" y2="9" stroke="white" stroke-width="0.5"/>
+  
+  <!-- Vertical divider -->
+  <line x1="8" y1="4.5" x2="8" y2="9.5" stroke="#6d28d9" stroke-width="0.3"/>
+  
+  <!-- Light bulb -->
+  <circle cx="12" cy="3" r="1.5" fill="#fbbf24"/>
+  <rect x="11.5" y="4.2" width="1" height="1.5" fill="#f59e0b"/>
+  <!-- Light rays -->
+  <g stroke="#fbbf24" stroke-width="0.5" opacity="0.7">
+    <line x1="9.5" y1="3" x2="9" y2="3"/>
+    <line x1="14.5" y1="3" x2="15" y2="3"/>
+    <line x1="12" y1="0.5" x2="12" y2="0"/>
+    <line x1="10.5" y1="1.5" x2="10" y2="1"/>
+    <line x1="13.5" y1="1.5" x2="14" y2="1"/>
+  </g>
 </svg>

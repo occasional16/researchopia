@@ -32,22 +32,40 @@ export async function GET(request: NextRequest) {
     )
 
     try {
-      // 并行执行查询，使用超时控制
+      // 并行执行查询，使用超时控制（包含访问统计）
       const statsPromise = Promise.all([
         supabase.from('papers').select('*', { count: 'exact', head: true }),
-        supabase.from('users').select('*', { count: 'exact', head: true })
+        supabase.from('users').select('*', { count: 'exact', head: true }),
+        supabase.from('page_visits').select('visit_count, date, created_at')
       ])
 
-      const [papersResult, usersResult] = await Promise.race([statsPromise, timeout]) as [any, any]
+      const [papersResult, usersResult, visitsResult] = await Promise.race([statsPromise, timeout]) as [any, any, any]
 
       // 处理数据库查询结果
       const paperCount = papersResult.count || 0
       const userCount = usersResult.count || 0
-      
-      // 基于真实数据的合理估算
-      const baseVisits = paperCount * 15 + userCount * 30
-      const totalVisits = Math.max(baseVisits, 800)
-      const todayVisits = Math.floor(totalVisits * 0.015) + Math.floor(Math.random() * 15) + 1
+
+      let totalVisits = 0
+      let todayVisits = 0
+      const todayStr = new Date().toISOString().slice(0, 10)
+
+      if (visitsResult?.data && Array.isArray(visitsResult.data)) {
+        for (const row of visitsResult.data) {
+          const count = typeof row.visit_count === 'number' ? row.visit_count : 1
+          totalVisits += count
+          const rowDate = (row.date || (row.created_at ? String(row.created_at).slice(0, 10) : ''))
+          if (rowDate === todayStr) {
+            todayVisits += count
+          }
+        }
+      }
+
+      // 如果没有日志表数据，退回估算（与原逻辑一致）
+      if (totalVisits === 0) {
+        const baseVisits = paperCount * 15 + userCount * 30
+        totalVisits = Math.max(baseVisits, 800)
+        todayVisits = Math.floor(totalVisits * 0.015) + Math.floor(Math.random() * 15) + 1
+      }
 
       return NextResponse.json({
         success: true,
@@ -59,7 +77,7 @@ export async function GET(request: NextRequest) {
         }
       }, {
         headers: {
-          'Cache-Control': 'public, max-age=300',
+          'Cache-Control': 'public, max-age=60',
         }
       })
       

@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "研学港 Researchopia",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Integrates Researchopia (研学港) website into Zotero Item Pane for paper metrics and discovery.",
   "homepage_url": "https://www.researchopia.com",
 

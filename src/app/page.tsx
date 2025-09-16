@@ -65,82 +65,70 @@ export default function HomePage() {
       setDataError(null)
       
       try {
-        // 立即设置默认值，确保页面能正常显示
-        setStats({
-          totalPapers: 125,
-          totalUsers: 45,
-          todayVisits: 28,
-          totalVisits: 2340
-        })
+        // 并行加载统计数据和评论数据，提高性能
+        const [statsResponse, commentsResponse] = await Promise.allSettled([
+          fetch('/api/site/statistics', {
+            headers: { 'Content-Type': 'application/json' },
+            cache: 'force-cache',
+            next: { revalidate: 300 } // 5分钟缓存
+          }).then(async res => {
+            if (res.ok) {
+              const text = await res.text()
+              if (text) {
+                const data = JSON.parse(text)
+                return data.success ? data.data : null
+              }
+            }
+            return null
+          }).catch(() => null),
 
-        setRecentComments([
-          {
-            id: "1",
-            title: "深度学习在自然语言处理中的应用研究",
-            authors: "张三, 李四, 王五",
-            doi: "10.1000/182",
-            journal: "人工智能学报",
-            created_at: "2025-01-10T10:00:00Z",
-            latest_comment: {
-              id: "101",
-              content: "这篇论文对深度学习模型的理论分析很深入，为后续研究提供了重要参考。",
-              created_at: "2025-01-15T15:30:00Z",
-              user: { username: "研究者A" }
-            },
-            comment_count: 8,
-            rating_count: 12,
-            average_rating: 4.3
-          }
+          fetch('/api/papers/recent-comments?limit=5', {
+            headers: { 'Content-Type': 'application/json' },
+            cache: 'force-cache',
+            next: { revalidate: 180 } // 3分钟缓存
+          }).then(async res => {
+            if (res.ok) {
+              const text = await res.text()
+              if (text) {
+                const data = JSON.parse(text)
+                return data.success ? data.data : null
+              }
+            }
+            return null
+          }).catch(() => null)
         ])
 
-        // 异步尝试加载真实数据
-        setTimeout(async () => {
-          try {
-            const statsResponse = await fetch('/api/site/statistics', {
-              headers: { 'Content-Type': 'application/json' },
-              cache: 'no-store'
-            })
+        // 处理统计数据
+        if (statsResponse.status === 'fulfilled' && statsResponse.value) {
+          setStats({
+            totalPapers: statsResponse.value.totalPapers || 0,
+            totalUsers: statsResponse.value.totalUsers || 0,
+            totalVisits: statsResponse.value.totalVisits || 0,
+            todayVisits: statsResponse.value.todayVisits || 0
+          })
+        } else {
+          // 使用合理的默认值
+          setStats({
+            totalPapers: 125,
+            totalUsers: 45,
+            todayVisits: 28,
+            totalVisits: 2340
+          })
+        }
 
-            if (statsResponse.ok) {
-              const statsText = await statsResponse.text()
-              if (statsText) {
-                const statsData = JSON.parse(statsText)
-                if (statsData.success && statsData.data) {
-                  setStats({
-                    totalPapers: statsData.data.totalPapers || 0,
-                    totalUsers: statsData.data.totalUsers || 0,
-                    totalVisits: statsData.data.totalVisits || 0,
-                    todayVisits: statsData.data.todayVisits || 0
-                  })
-                }
-              }
-            }
-          } catch (error) {
-            console.warn('Failed to load real stats data:', error)
-          }
-
-          try {
-            const commentsResponse = await fetch('/api/papers/recent-comments?limit=5', {
-              headers: { 'Content-Type': 'application/json' },
-              cache: 'no-store'
-            })
-
-            if (commentsResponse.ok) {
-              const commentsText = await commentsResponse.text()
-              if (commentsText) {
-                const commentsData = JSON.parse(commentsText)
-                if (commentsData.success && commentsData.data) {
-                  setRecentComments(commentsData.data)
-                }
-              }
-            }
-          } catch (error) {
-            console.warn('Failed to load real comments data:', error)
-          }
-        }, 500)
+        // 处理评论数据
+        if (commentsResponse.status === 'fulfilled' && commentsResponse.value && commentsResponse.value.length > 0) {
+          setRecentComments(commentsResponse.value)
+        } else {
+          // 如果没有真实评论数据，设置为空数组而不是模拟数据
+          setRecentComments([])
+          console.info('No recent comments available or API not configured')
+        }
 
       } catch (error) {
         console.error('Failed to initialize page:', error)
+        setDataError('数据加载失败，请稍后重试')
+        // 设置默认值
         setStats({
           totalPapers: 50,
           totalUsers: 20,
@@ -154,6 +142,39 @@ export default function HomePage() {
     }
 
     loadData()
+    
+    // 记录一次访问（PV）
+    ;(async () => {
+      try {
+        await fetch('/api/visits/track', { method: 'POST' })
+      } catch (e) {
+        // 忽略打点失败
+      }
+    })()
+
+    // 定时刷新统计数据（每60秒）
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch('/api/site/statistics', { headers: { 'Content-Type': 'application/json' }, cache: 'no-store' })
+        if (res.ok) {
+          const text = await res.text()
+          if (text) {
+            const data = JSON.parse(text)
+            if (data.success && data.data) {
+              setStats((prev) => ({
+                ...prev,
+                totalPapers: data.data.totalPapers ?? prev.totalPapers,
+                totalUsers: data.data.totalUsers ?? prev.totalUsers,
+                totalVisits: data.data.totalVisits ?? prev.totalVisits,
+                todayVisits: data.data.todayVisits ?? prev.todayVisits,
+              }))
+            }
+          }
+        }
+      } catch {}
+    }, 60000)
+
+    return () => clearInterval(interval)
   }, [])
 
   // 检测URL参数中的DOI并自动填入搜索框

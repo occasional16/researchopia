@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>学术评价平台 - 品牌替代方案预览</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .warning-box {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(255, 107, 107, 0.3);
+        }
+        
+        .warning-box h3 {
+            margin-bottom: 10px;
+            font-size: 1.3rem;
+        }
+        
+        .brands-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        
+        .brand-card {
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .brand-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+        }
+        
+        .brand-header {
+            padding: 30px;
+            text-align: center;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .brand-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+            transform: rotate(45deg);
+            transition: all 0.6s ease;
+        }
+        
+        .brand-card:hover .brand-header::before {
+            left: 100%;
+        }
+        
+        .brand-name {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .brand-english {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            margin-bottom: 15px;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .brand-slogan {
+            font-size: 0.95rem;
+            font-style: italic;
+            opacity: 0.8;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .brand-content {
+            padding: 30px;
+        }
+        
+        .brand-description {
+            margin-bottom: 20px;
+            color: #666;
+            line-height: 1.7;
+        }
+        
+        .advantages {
+            margin-bottom: 20px;
+        }
+        
+        .advantages h4 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1rem;
+        }
+        
+        .advantage-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .advantage-tag {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            color: white;
+            font-weight: 500;
+        }
+        
+        .preview-button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+        }
+        
+        .preview-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .comparison-section {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin-top: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        .comparison-table th,
+        .comparison-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .comparison-table th {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            font-weight: 600;
+        }
+        
+        .comparison-table tr:hover {
+            background: #f8f9ff;
+        }
+        
+        .stars {
+            color: #ffd700;
+            font-size: 1.2rem;
+        }
+        
+        .recommendation {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            margin-top: 30px;
+        }
+        
+        .recommendation h3 {
+            margin-bottom: 15px;
+            font-size: 1.4rem;
+        }
+        
+        .mock-website {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 1000;
+            padding: 20px;
+        }
+        
+        .mock-content {
+            background: white;
+            width: 100%;
+            height: 100%;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .mock-header {
+            padding: 20px;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .close-button {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 5px 10px;
+            border-radius: 5px;
+            transition: background 0.3s ease;
+        }
+        
+        .close-button:hover {
+            background: rgba(255,255,255,0.2);
+        }
+        
+        .mock-body {
+            padding: 40px;
+            height: calc(100% - 80px);
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>� 恭喜！品牌确认完成</h1>
+            <div class="subtitle">用户选择：研学港 / ResearchHub</div>
+        </div>
+        
+        <div class="warning-box">
+            <h3>🎉 品牌确认：研学港 / ResearchHub</h3>
+            <p><strong>用户最终选择：</strong>研学港 / ResearchHub<br>
+            <strong>域名：</strong>www.research-hub.cn<br>
+            <strong>标语：</strong>研学并进，智慧共享 | Where Research Meets Community<br><br>
+            这是一个优秀的选择！既避免了商标冲突，又完美体现了平台的研究与学习并重理念，现代感强且易于传播。</p>
+        </div>
+        
+        <div class="brands-grid">
+            <!-- 品牌卡片将由JavaScript动态生成 -->
+        </div>
+        
+        <div class="comparison-section">
+            <h2>📊 方案对比分析</h2>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>评估维度</th>
+                        <th>学术港/AcademicHarbor</th>
+                        <th>研学港/ResearchHub</th>
+                        <th>学智汇/AcademicMind</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>专业权威性</strong></td>
+                        <td><span class="stars">⭐⭐⭐⭐⭐</span></td>
+                        <td><span class="stars">⭐⭐⭐⭐☆</span></td>
+                        <td><span class="stars">⭐⭐⭐⭐⭐</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>国际化程度</strong></td>
+                        <td><span class="stars">⭐⭐⭐⭐⭐</span></td>
+                        <td><span class="stars">⭐⭐⭐⭐☆</span></td>
+                        <td><span class="stars">⭐⭐⭐⭐☆</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>易记忆度</strong></td>
+                        <td><span class="stars">⭐⭐⭐⭐☆</span></td>
+                        <td><span class="stars">⭐⭐⭐⭐⭐</span></td>
+                        <td><span class="stars">⭐⭐⭐⭐☆</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>域名可用性</strong></td>
+                        <td><span class="stars">⭐⭐⭐⭐⭐</span></td>
+                        <td><span class="stars">⭐⭐⭐☆☆</span></td>
+                        <td><span class="stars">⭐⭐⭐⭐☆</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>品牌独特性</strong></td>
+                        <td><span class="stars">⭐⭐⭐⭐⭐</span></td>
+                        <td><span class="stars">⭐⭐⭐☆☆</span></td>
+                        <td><span class="stars">⭐⭐⭐⭐⭐</span></td>
+                    </tr>
+                    <tr style="background: #f0f8ff;">
+                        <td><strong>综合推荐</strong></td>
+                        <td><span class="stars">⭐⭐⭐⭐⭐</span></td>
+                        <td><span class="stars">⭐⭐⭐⭐☆</span></td>
+                        <td><span class="stars">⭐⭐⭐⭐☆</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="recommendation">
+            <h3>🎯 最终推荐：学术港 / AcademicHarbor</h3>
+            <p><strong>选择理由：</strong></p>
+            <ul style="margin-left: 20px; margin-top: 10px;">
+                <li>✅ 保持了原有的"港"概念和寓意</li>
+                <li>✅ Harbor比Sphere更加独特和温暖</li>
+                <li>✅ 完全避免了与现有品牌的冲突</li>
+                <li>✅ 域名academicharbor.org可用性高</li>
+                <li>✅ 中英文搭配和谐，国际化程度高</li>
+                <li>✅ 符合"汇聚学术智慧，启航研究之旅"的品牌理念</li>
+            </ul>
+        </div>
+    </div>
+    
+    <div class="mock-website" id="mockWebsite">
+        <div class="mock-content">
+            <div class="mock-header" id="mockHeader">
+                <div>
+                    <h2 id="mockTitle">品牌预览</h2>
+                    <p id="mockSlogan">品牌标语</p>
+                </div>
+                <button class="close-button" onclick="closeMockWebsite()">✕</button>
+            </div>
+            <div class="mock-body">
+                <h1>欢迎来到学术评价平台</h1>
+                <p>这是一个模拟的平台界面，展示所选品牌的视觉效果。</p>
+                <div style="margin: 30px 0;">
+                    <h3>🏆 平台特色</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-top: 20px;">
+                        <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px;">
+                            <h4>📊 智能评价</h4>
+                            <p>基于多维度的学术论文智能评价系统</p>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px;">
+                            <h4>🤝 学者社区</h4>
+                            <p>连接全球学者，促进学术交流与合作</p>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px;">
+                            <h4>🔍 精准搜索</h4>
+                            <p>高效的论文搜索和学术资源发现</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const brands = [
+            {
+                id: 'academicharbor',
+                chinese: '学术港',
+                english: 'AcademicHarbor',
+                slogan: '汇聚学术智慧，启航研究之旅',
+                englishSlogan: 'Harbor of Academic Excellence',
+                description: '以"港"为核心概念，象征着知识的汇聚地和学者的聚集地。Harbor比Sphere更加温暖和包容，避免商标冲突的同时保持专业性。',
+                advantages: ['避免商标冲突', '寓意深刻', '温暖包容', '国际化程度高'],
+                colors: {
+                    primary: '#1e3a8a',
+                    secondary: '#3b82f6',
+                    accent: '#10b981'
+                },
+                recommended: true
+            },
+            {
+                id: 'researchhub',
+                chinese: '研学港',
+                english: 'ResearchHub',
+                slogan: '研学并进，智慧共享',
+                englishSlogan: 'Where Research Meets Community',
+                description: '"研学"体现研究和学习的结合，Hub概念现代且专业，突出平台的中心化特性和社区属性。用户最终选择，域名：www.research-hub.cn',
+                advantages: ['用户选择 ✅', '现代专业', '简洁有力', '社区感强', '易于理解'],
+                colors: {
+                    primary: '#7c3aed',
+                    secondary: '#a855f7',
+                    accent: '#f59e0b'
+                },
+                selected: true
+            },
+            {
+                id: 'academicmind',
+                chinese: '学智汇',
+                english: 'AcademicMind',
+                slogan: '汇聚学术智慧，启发深度思考',
+                englishSlogan: 'Collective Academic Intelligence',
+                description: '"智汇"体现智慧汇聚，Mind突出思辨和洞察，专业感强，适合深度学术交流的社区定位。',
+                advantages: ['突出智慧', '专业感强', '有深度', '启发思考'],
+                colors: {
+                    primary: '#059669',
+                    secondary: '#10b981',
+                    accent: '#3b82f6'
+                }
+            },
+            {
+                id: 'papercommunity',
+                chinese: '论学社',
+                english: 'PaperCommunity',
+                slogan: '以文会友，以学明道',
+                englishSlogan: 'Community-Driven Academic Excellence',
+                description: '突出论文和社区属性，体现以学术文章为纽带的学者社区理念，适合注重交流讨论的平台定位。',
+                advantages: ['社区属性强', '文化底蕴深', '交流导向', '亲和力强'],
+                colors: {
+                    primary: '#dc2626',
+                    secondary: '#ef4444',
+                    accent: '#f59e0b'
+                }
+            },
+            {
+                id: 'academicbay',
+                chinese: '学术湾',
+                english: 'AcademicBay',
+                slogan: '学术智慧的温暖港湾',
+                englishSlogan: 'A Warm Bay for Academic Minds',
+                description: '类似"港"的概念但更加温和，Bay给人温暖、宁静的感觉，适合营造舒适的学术交流环境。',
+                advantages: ['温暖感强', '易于亲近', '宁静祥和', '包容性强'],
+                colors: {
+                    primary: '#0ea5e9',
+                    secondary: '#38bdf8',
+                    accent: '#10b981'
+                }
+            },
+            {
+                id: 'wiseresearch',
+                chinese: '智研院',
+                english: 'WiseResearch',
+                slogan: '智慧驱动研究，研究启发智慧',
+                englishSlogan: 'Wisdom-Driven Research Excellence',
+                description: '突出智慧研究的概念，"院"字体现学术机构的权威性，适合定位为高端学术研究平台。',
+                advantages: ['权威性强', '智慧导向', '研究专业', '机构感强'],
+                colors: {
+                    primary: '#7c2d12',
+                    secondary: '#ea580c',
+                    accent: '#d97706'
+                }
+            }
+        ];
+
+        function renderBrands() {
+            const grid = document.querySelector('.brands-grid');
+            
+            brands.forEach(brand => {
+                const card = document.createElement('div');
+                card.className = 'brand-card';
+                if (brand.selected) {
+                    card.style.border = '3px solid #10b981';
+                    card.style.boxShadow = '0 10px 40px rgba(16, 185, 129, 0.3)';
+                }
+                
+                card.innerHTML = `
+                    <div class="brand-header" style="background: linear-gradient(135deg, ${brand.colors.primary}, ${brand.colors.secondary})">
+                        <div class="brand-name">${brand.chinese}${brand.selected ? ' 🎯 已选择' : (brand.recommended ? ' 🏆' : '')}</div>
+                        <div class="brand-english">${brand.english}</div>
+                        <div class="brand-slogan">${brand.slogan}</div>
+                        <div style="font-size: 0.8rem; margin-top: 5px; opacity: 0.8">${brand.englishSlogan}</div>
+                    </div>
+                    <div class="brand-content">
+                        <div class="brand-description">${brand.description}</div>
+                        <div class="advantages">
+                            <h4>✨ 优势特点：</h4>
+                            <div class="advantage-tags">
+                                ${brand.advantages.map(advantage => 
+                                    `<span class="advantage-tag" style="background: ${brand.colors.accent}">${advantage}</span>`
+                                ).join('')}
+                            </div>
+                        </div>
+                        <button class="preview-button" 
+                                style="background: linear-gradient(135deg, ${brand.colors.primary}, ${brand.colors.secondary})"
+                                onclick="showMockWebsite('${brand.id}')">
+                            🌐 预览网站效果
+                        </button>
+                    </div>
+                `;
+                
+                grid.appendChild(card);
+            });
+        }
+
+        function showMockWebsite(brandId) {
+            const brand = brands.find(b => b.id === brandId);
+            const mockWebsite = document.getElementById('mockWebsite');
+            const mockHeader = document.getElementById('mockHeader');
+            const mockTitle = document.getElementById('mockTitle');
+            const mockSlogan = document.getElementById('mockSlogan');
+            
+            mockHeader.style.background = `linear-gradient(135deg, ${brand.colors.primary}, ${brand.colors.secondary})`;
+            mockTitle.textContent = `${brand.chinese} / ${brand.english}`;
+            mockSlogan.textContent = brand.slogan;
+            
+            mockWebsite.style.display = 'block';
+        }
+
+        function closeMockWebsite() {
+            document.getElementById('mockWebsite').style.display = 'none';
+        }
+
+        // 渲染品牌卡片
+        renderBrands();
+    </script>
+</body>
+</html>

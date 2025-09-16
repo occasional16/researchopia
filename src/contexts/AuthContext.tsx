@@ -82,17 +82,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   // 创建用户资料记录
-  const createUserProfile = async (userId: string) => {
-    if (!supabase || !user) return
+  const createUserProfile = async (userId: string, authUser?: SupabaseUser | null) => {
+    if (!supabase) return
     
     try {
+      // 如果没有传入authUser，尝试获取当前会话
+      if (!authUser) {
+        const { data: { user: sessionUser } } = await supabase.auth.getUser()
+        authUser = sessionUser
+      }
+      
+      if (!authUser || !authUser.email) {
+        console.error('❌ Cannot create user profile: no user data')
+        return
+      }
+
       const { data, error } = await supabase
         .from('users')
         .insert({
           id: userId,
-          email: user.email,
-          username: user.email.split('@')[0],
-          role: user.email === 'admin@test.edu.cn' ? 'admin' : 'user'
+          email: authUser.email,
+          username: authUser.user_metadata?.username || authUser.email.split('@')[0],
+          role: authUser.email === 'admin@test.edu.cn' ? 'admin' : 'user'
         })
         .select()
         .single()
@@ -173,12 +184,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       if (error) {
         console.error('❌ Sign in error:', error)
-        throw new Error(error.message === 'Invalid login credentials' ? '邮箱或密码错误' : error.message)
+        // 提供更友好的错误信息
+        if (error.message === 'Invalid login credentials') {
+          throw new Error('登录失败：邮箱或密码错误。请检查邮箱和密码是否正确，或联系管理员重置密码。')
+        } else if (error.message.includes('Email not confirmed')) {
+          throw new Error('请先验证您的邮箱，检查邮件并点击验证链接')
+        } else if (error.message.includes('Too many requests')) {
+          throw new Error('登录尝试次数过多，请稍后再试')
+        } else if (error.message.includes('Account not found')) {
+          throw new Error('账户不存在，请先注册或检查邮箱地址')
+        } else {
+          throw new Error(error.message || '登录失败，请重试')
+        }
       }
 
       if (data.user) {
         console.log('✅ Sign in successful:', email)
         await handleAuthUser(data.user)
+      } else {
+        throw new Error('登录异常，请重试')
       }
     } catch (error) {
       console.error('❌ Sign in failed:', error)
@@ -201,24 +225,48 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       setLoading(true)
       
+      // 首先尝试注册
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
-            username
+            username,
+            full_name: username
           }
         }
       })
       
       if (error) {
         console.error('❌ Sign up error:', error)
-        throw new Error(error.message)
+        // 提供更友好的错误信息
+        if (error.message.includes('Database error saving new user')) {
+          throw new Error('用户数据保存失败，请稍后重试或联系管理员')
+        } else if (error.message.includes('User already registered')) {
+          throw new Error('该邮箱已经注册，请直接登录或使用其他邮箱')
+        } else if (error.message.includes('Password should be at least')) {
+          throw new Error('密码长度至少需要6位')
+        } else if (error.message.includes('Invalid email format') || error.message.includes('is invalid')) {
+          throw new Error('该系统目前仅支持教育机构邮箱（如：.edu.cn, .edu）注册，请使用学校邮箱')
+        } else if (error.message.includes('Signup is disabled')) {
+          throw new Error('注册功能暂时关闭，请联系管理员')
+        } else {
+          throw new Error(error.message || '注册失败，请重试')
+        }
       }
 
       if (data.user) {
         console.log('✅ Sign up successful:', email)
+        
+        // 如果需要邮箱验证
+        if (!data.user.email_confirmed_at) {
+          console.log('📧 Email confirmation required for:', email)
+          throw new Error('注册成功！请检查您的邮箱并点击验证链接完成注册。')
+        }
+        
         await handleAuthUser(data.user)
+      } else {
+        throw new Error('注册成功但未能获取用户信息，请尝试登录')
       }
     } catch (error) {
       console.error('❌ Sign up failed:', error)

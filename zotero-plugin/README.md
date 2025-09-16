@@ -1,19 +1,11 @@
 # 研学港 Researchopia — Zotero 插件
 To install the plugin:
 
-### Method 1: Using the build script (Recommended)
-1. Run the build script: `.\build.ps1` (Windows PowerShell)
+### Method: Manual build
+1. Create an XPI file: zip the plugin folder contents and rename to `.xpi`
 2. In Zotero 8 beta, open Tools → Plugins → Install Plugin From File...
 3. Select the generated `researchopia-zotero-<version>.xpi` file
 4. Open the Item Pane for any item — you will see a new section "研学港 Researchopia"
-
-### Method 2: Manual build
-1. Create an XPI file: zip the plugin folder contents and rename to `.xpi`
-   ```bash
-   # From the zotero-plugin directory (Linux/Mac)
-   zip -r researchopia-zotero.xpi . -x "*.git*" "README.md" "build.ps1" "*.xpi" "*.zip"
-   ```
-2. Follow steps 2-4 from Method 1tero 8 兼容)
 
 This is a Zotero 8-compatible bootstrapped plugin that integrates the Researchopia site inside Zotero.
 

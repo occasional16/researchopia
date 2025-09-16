@@ -3,11 +3,14 @@ import type { Paper, Rating, Comment } from './supabase'
 import { supabase } from './supabase'
 
 // Extended type for papers with statistics
-interface PaperWithStats extends Paper {
+export interface PaperWithStats extends Paper {
   average_rating?: number
   rating_count?: number
+  comment_count?: number
+  favorite_count?: number
   ratings?: Rating[]
   comments?: Comment[]
+  latest_comment_time?: number
 }
 
 export async function getPapers(limit: number = 10, offset: number = 0): Promise<PaperWithStats[]> {

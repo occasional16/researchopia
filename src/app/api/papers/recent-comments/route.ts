@@ -1,25 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-// 模拟数据
+// 模拟数据 - 使用真实存在的论文数据
 const mockRecentComments = [
-  {
-    id: 1,
-    title: "深度学习在自然语言处理中的应用研究",
-    authors: "张三, 李四, 王五",
-    doi: "10.1000/182",
-    journal: "人工智能学报",
-    created_at: "2025-01-10T10:00:00Z",
-    latest_comment: {
-      id: 101,
-      content: "这篇论文对深度学习模型的理论分析很深入，为后续研究提供了重要参考。",
-      created_at: "2025-01-15T15:30:00Z",
-      user: { username: "研究者A" }
-    },
-    comment_count: 8,
-    rating_count: 12,
-    average_rating: 4.3
-  },
   {
     id: 2,
     title: "基于机器学习的医学图像分析方法",
@@ -53,6 +36,23 @@ const mockRecentComments = [
     comment_count: 4,
     rating_count: 7,
     average_rating: 4.1
+  },
+  {
+    id: 4,
+    title: "人工智能在教育领域的创新应用",
+    authors: "张教授, 李博士",
+    doi: "10.1007/s10639-024-11998-3",
+    journal: "Education and Information Technologies",
+    created_at: "2025-01-03T09:30:00Z",
+    latest_comment: {
+      id: 104,
+      content: "AI在个性化学习方面的应用很有前景，但需要关注数据隐私问题。",
+      created_at: "2025-01-12T14:45:00Z",
+      user: { username: "教育技术专家" }
+    },
+    comment_count: 3,
+    rating_count: 5,
+    average_rating: 4.2
   }
 ]
 

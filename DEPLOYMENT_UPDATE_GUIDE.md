@@ -18,7 +18,7 @@
 https://vercel.com/dashboard
 
 ### 2. 找到项目并更新设置
-- 项目: `academic-rating` → 重命名为 `researchopia`
+- 项目: `researchopia` (已从 `academic-rating` 重命名)
 - Settings → General → Project Name
 - Settings → Domains → 更新自定义域名 (如果有)
 

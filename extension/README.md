@@ -67,7 +67,7 @@
 
 扩展支持连接到：
 - **生产服务器**（默认）：`https://www.researchopia.com`
-- **备用服务器**：`https://academic-rating.vercel.app`
+- **备用服务器**：`https://researchopia.vercel.app`
 - **本地开发服务器**：`http://localhost:3006` 或其他端口（3000-3009）
 
 可以在扩展设置中切换服务器地址。

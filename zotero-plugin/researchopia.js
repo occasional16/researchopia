@@ -3,7 +3,7 @@
   Provides Item Pane integration for Researchopia functionality
 */
 
-Zotero.AcademicRating = {
+Zotero.Researchopia = {
   id: null,
   version: null,
   rootURI: null,
@@ -55,7 +55,7 @@ Zotero.AcademicRating = {
           try { orig(...args); } catch {}
           try {
             const item = pane.getSelectedItems?.()[0];
-            const node = doc.querySelector('.academic-rating-container');
+            const node = doc.querySelector('.researchopia-container');
             if (item && node) {
               const url = this.buildExternalURL(item);
               this.loadURL(node, url);
@@ -157,7 +157,7 @@ Zotero.AcademicRating = {
     } catch {}
 
     const container = body.ownerDocument.createElement("div");
-    container.className = "academic-rating-container";
+    container.className = "researchopia-container";
     try {
       container.style.flex = '1 1 auto';
       container.style.minHeight = '0';
@@ -167,19 +167,19 @@ Zotero.AcademicRating = {
 
     // Compact header with only actions to avoid duplicate title misalignment
     const header = body.ownerDocument.createElement("div");
-    header.className = "academic-rating-header";
+    header.className = "researchopia-header";
   const alert = body.ownerDocument.createElement('div');
-    alert.className = 'academic-rating-alert';
+    alert.className = 'researchopia-alert';
     const actions = body.ownerDocument.createElement("div");
-    actions.className = "academic-rating-actions";
+    actions.className = "researchopia-actions";
   const titleEl = body.ownerDocument.createElement('span');
-  titleEl.className = 'academic-rating-title';
+  titleEl.className = 'researchopia-title';
   titleEl.textContent = '研学港 Researchopia';
     const refreshBtn = body.ownerDocument.createElement("button");
-    refreshBtn.className = "academic-rating-btn";
+    refreshBtn.className = "researchopia-btn";
     refreshBtn.textContent = "刷新";
     const openBtn = body.ownerDocument.createElement("button");
-    openBtn.className = "academic-rating-btn secondary";
+    openBtn.className = "researchopia-btn secondary";
     openBtn.textContent = "在浏览器打开";
   // Always keep open button highlighted and pulsing for quick access
   try { openBtn.classList.add('emphasis', 'pulse'); } catch {}
@@ -189,7 +189,7 @@ Zotero.AcademicRating = {
   header.appendChild(actions);
 
     const iframeContainer = body.ownerDocument.createElement("div");
-    iframeContainer.className = "academic-rating-iframe-container";
+    iframeContainer.className = "researchopia-iframe-container";
     try {
       iframeContainer.style.flex = '1 1 auto';
       iframeContainer.style.minHeight = '0';
@@ -208,7 +208,7 @@ Zotero.AcademicRating = {
         browser.style.flex = '1 1 auto';
         browser.style.margin = '0';
         browser.style.borderWidth = '0';
-        browser.setAttribute('id', 'academic-rating-viewer');
+        browser.setAttribute('id', 'researchopia-viewer');
         viewer = browser;
       }
     } catch (e) {
@@ -217,9 +217,9 @@ Zotero.AcademicRating = {
 
     if (!viewer) {
       const iframe = body.ownerDocument.createElement('iframe');
-      iframe.className = 'academic-rating-iframe';
+      iframe.className = 'researchopia-iframe';
       iframe.setAttribute('referrerpolicy', 'no-referrer');
-      iframe.id = 'academic-rating-viewer';
+      iframe.id = 'researchopia-viewer';
       iframe.style.width = '100%';
       iframe.style.height = '100%';
       iframe.style.flex = '1 1 auto';
@@ -300,10 +300,10 @@ Zotero.AcademicRating = {
 
   loadURL(body, url) {
     try {
-      const viewer = body.ownerDocument.getElementById('academic-rating-viewer');
+      const viewer = body.ownerDocument.getElementById('researchopia-viewer');
       if (!viewer) return;
-      const alertNode = body.querySelector('.academic-rating-alert');
-      const openBtn = body.querySelector('.academic-rating-btn.secondary');
+      const alertNode = body.querySelector('.researchopia-alert');
+      const openBtn = body.querySelector('.researchopia-btn.secondary');
       if (url.includes('#no-identifiers')) {
         this.showAlert(alertNode, '当前条目未找到 DOI 标识符。您可以点击“在浏览器打开”了解功能，或为条目补充 DOI 后再试。');
         try { openBtn?.classList.add('emphasis'); } catch {}
@@ -342,7 +342,7 @@ Zotero.AcademicRating = {
     try {
       var testURL = new URL('https://www.researchopia.com');
       this.log(`Test URL host: ${testURL.host}`);
-      this.log(`Plugin enabled: ${Zotero.Prefs.get('extensions.academic-rating.enabled', true)}`);
+      this.log(`Plugin enabled: ${Zotero.Prefs.get('extensions.researchopia.enabled', true)}`);
     } catch {}
   },
 };

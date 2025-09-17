@@ -2,7 +2,7 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
-			"label": "Dev server - academic-rating",
+			"label": "Dev server - Researchopia",
 			"type": "shell",
 			"command": "npm run dev",
 			"isBackground": true,

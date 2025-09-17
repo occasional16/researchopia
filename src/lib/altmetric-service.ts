@@ -179,7 +179,7 @@ export class AltmetricService {
    */
   private async makeRequest(url: string): Promise<AltmetricData | null> {
     const headers: HeadersInit = {
-      'User-Agent': 'Academic-Rating-Platform/1.0'
+      'User-Agent': 'Researchopia-Platform/1.0'
     }
 
     // 如果有API密钥，添加到请求头

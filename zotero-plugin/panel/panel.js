@@ -6,7 +6,7 @@ let BASE_URL = 'https://www.researchopia.com';
 try {
   // Available when loaded inside Zotero chrome (xhtml) context; in webextension panel this will fail
   if (window?.Zotero?.Prefs?.get) {
-    BASE_URL = Zotero.Prefs.get('extensions.academic-rating.baseURL') || BASE_URL;
+    BASE_URL = Zotero.Prefs.get('extensions.researchopia.baseURL') || BASE_URL;
   }
 } catch {}
 

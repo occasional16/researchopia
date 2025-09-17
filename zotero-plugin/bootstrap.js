@@ -27,14 +27,14 @@ async function startup(data, reason) {
   try { await Zotero.initializationPromise; } catch {}
 
   // Initialize the main plugin object
-  if (!Zotero.AcademicRating) {
+  if (!Zotero.Researchopia) {
     Services.scriptloader.loadSubScript(rootURI + "researchopia.js");
   }
 
   // Initialize plugin with root URI
-  Zotero.AcademicRating.init({ id, version, rootURI });
-  Zotero.AcademicRating.addToAllWindows();
-  try { await Zotero.AcademicRating.main(); } catch {}
+  Zotero.Researchopia.init({ id, version, rootURI });
+  Zotero.Researchopia.addToAllWindows();
+  try { await Zotero.Researchopia.main(); } catch {}
 
   log("Researchopia plugin started successfully");
 }
@@ -42,10 +42,10 @@ async function startup(data, reason) {
 function shutdown(data, reason) {
   log("Shutting down Researchopia plugin");
   try {
-    if (Zotero.AcademicRating) {
+    if (Zotero.Researchopia) {
       // 统一注销注册的 Section 等资源
-      try { Zotero.AcademicRating.unregisterItemPaneSection?.(); } catch {}
-      Zotero.AcademicRating.removeFromAllWindows();
+      try { Zotero.Researchopia.unregisterItemPaneSection?.(); } catch {}
+      Zotero.Researchopia.removeFromAllWindows();
     }
   } catch {}
 }

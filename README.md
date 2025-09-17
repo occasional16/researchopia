@@ -2,13 +2,41 @@
 
 > **研学并进，智慧共享** | Where Research Meets Community
 
+## 📍 项目声明
+
+**本项目完全由AI工具生成**（除了这段话），没敲过一行代码（因为根本不会😂）。我是一名刚博士毕业的科研狗（化学领域），没有编程基础，也没有报过AI课程，抱着试一试的态度，才发现AI太好用了！
+
+本项目为 **研学港 Researchopia** 的开源项目（项目名称、logo和slogan也是AI给设计的），旨在为学术研究者提供优质的学术资源和交流环境。
+
+本项目主要呈现方式是一个 **[网站](https://www.researchopia.com)** ，以及于此网站关联的 **[浏览器扩展](https://microsoftedge.microsoft.com/addons/detail/%E7%A0%94%E5%AD%A6%E6%B8%AF-researchopia/hjijphegihgkddcmdmfjpflpcdaadbio)** 和 **Zotero插件** （官网或 [Releases](https://github.com/occasional15/researchopia/releases) 下载。具体功能参考下方描述，以及网站上的 [用户指南](https://www.researchopia.com/guide) 。
+
+本项目总共历时1周。其实只要描述清楚，直接给一段话AI就可以搞定！一点也不夸张，一周前我还不懂什么叫网站前后端也不懂VS code（现在也只是大致了解一点），但第一天时间就完成了网站基本的界面设计和数据库搭建。浏览器扩展和zotero插件的第一版真的是各用一句话直接生成。当然，进一步的细节打磨和bug处理是花了更多的时间。这段时间也渐渐学到了一些编程知识，也积累了一些与AI对话的经验和小窍门。目前项目处于初期阶段，后续会持续优化和完善。
+
+想要近距离了解本项目开发意图和计划，有任何开发和使用上的建议和反馈，或者想了解AI开发的细节的小伙伴，欢迎加我的个人微信。
+
+<div align="center">
+<img src="./doc/img/wechat.png" alt="微信二维码" width="35%">
+</div>
+
 ## 📋 项目概述
 
-**研学港 Researchopia** 是一个现代化的学术论文评分平台，旨在为研究者提供优质的学术资源评价和交流环境。我们致力于构建一个研究者的理想国，让学术智慧在这里汇聚和传播。
+**研学港 Researchopia** 是一个现代化的学术论文交流平台，旨在为研究者提供优质的学术资源评价和交流环境。我们致力于构建一个研究者的理想国，让学术智慧在这里汇聚和传播。
 
 ## 🌐 在线访问
 
 - **官方网站**: [https://www.researchopia.com](https://www.researchopia.com)
+
+主页：
+
+![主页](/doc/img/zhuye.png)
+
+论文详情页：
+
+![alt text](/doc/img/image.png)
+
+个人中心页：
+
+![alt text](/doc/img/image-1.png)
 
 ## 🚀 主要功能
 
@@ -83,6 +111,8 @@ ALTMETRIC_API_KEY=your_altmetric_key
 - 侧边栏快速预览
 - 浮动图标便捷访问
 
+![浏览器扩展](/doc/img/1.png)
+
 ### 安装扩展
 
 1. 打开浏览器扩展管理页面
@@ -93,6 +123,8 @@ ALTMETRIC_API_KEY=your_altmetric_key
 ## 📚 Zotero 插件
 
 集成 Zotero 文献管理器，在 Zotero 中直接查看论文评价。
+
+![Zotero插件](/doc/img/zotero.png)
 
 ### 安装 Zotero 插件
 

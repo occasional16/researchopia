@@ -65,7 +65,8 @@
     "service_worker": "background.js"
   },
   "action": {
-    "default_title": "研学港 Researchopia - 智能学术搜索"
+    "default_title": "研学港 Researchopia - 智能学术搜索",
+    "default_popup": "popup.html"
   },
   "side_panel": {
     "default_path": "sidebar.html"

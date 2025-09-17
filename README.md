@@ -21,7 +21,7 @@
 ## � 项目结构
 
 ```
-📁 academic-rating/
+📁 researchopia/
 ├── 📁 src/                    # 源代码目录
 │   ├── 📁 app/               # Next.js 13+ App Router页面
 │   ├── 📁 components/        # React组件

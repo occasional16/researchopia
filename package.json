@@ -1,6 +1,7 @@
 {
-  "name": "academic-rating",
+  "name": "researchopia",
   "version": "0.1.0",
+  "description": "研学港 - 新一代学术评价与研学社区平台 | Researchopia - Next-generation Academic Evaluation & Research Community Platform",
   "private": true,
   "scripts": {
     "dev": "next dev -H 0.0.0.0",

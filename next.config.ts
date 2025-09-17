@@ -26,9 +26,11 @@ const nextConfig: NextConfig = {
       allowedOrigins: [
         // Development origins
         'http://localhost:3000',
+        'http://localhost:3009',
         'http://127.0.0.1:3000',
+        'http://127.0.0.1:3009',
         // Production origins
-        'https://academic-rating.vercel.app',
+        'https://researchopia.vercel.app',
         'https://www.researchopia.com'
       ]
     },

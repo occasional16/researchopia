@@ -41,7 +41,7 @@ export const metadata: Metadata = {
     apple: [{ url: "/logo-main.svg" }],
   },
   metadataBase: new URL(process.env.NODE_ENV === 'production'
-    ? 'https://academic-rating.vercel.app'
+    ? 'https://researchopia.vercel.app'
     : 'http://localhost:3009'
   ),
   alternates: {

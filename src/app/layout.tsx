@@ -32,6 +32,14 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
+  // 明确声明站点图标，避免浏览器回退到 /favicon.ico
+  icons: {
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+    ],
+    shortcut: ["/favicon.svg"],
+    apple: [{ url: "/logo-main.svg" }],
+  },
   metadataBase: new URL(process.env.NODE_ENV === 'production'
     ? 'https://academic-rating.vercel.app'
     : 'http://localhost:3009'
@@ -82,10 +90,11 @@ export default function RootLayout({
   return (
     <html lang="zh-CN">
       <head>
-        <link rel="icon" href="/favicon.ico" sizes="any" />
-        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <link rel="manifest" href="/manifest.json" />
+        {/* 保险起见再加一条显式的 favicon 链接（Next 的 metadata 会自动注入，但部分环境缓存严格时更稳妥）*/}
+        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+        {/* Apple Touch 图标（当前使用 SVG，若需要可后续补充 PNG 版本提高兼容性）*/}
+        <link rel="apple-touch-icon" href="/logo-main.svg" />
         <meta name="theme-color" content="#7c3aed" />
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
       </head>

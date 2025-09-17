@@ -1,4 +1,4 @@
-# 研学港 Researchopia - 学术论文评分平台
+# 研学港 Researchopia - 开放的学术交流平台
 
 > **研学并进，智慧共享** | Where Research Meets Community
 

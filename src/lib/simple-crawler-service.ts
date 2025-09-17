@@ -129,7 +129,7 @@ export class SimpleCrawlerService {
     try {
       const response = await fetch(source.searchUrl, {
         headers: {
-          'User-Agent': 'Mozilla/5.0 (compatible; Academic-Rating-Bot/1.0)',
+          'User-Agent': 'Mozilla/5.0 (compatible; Researchopia-Bot/1.0)',
           ...source.headers
         }
       })

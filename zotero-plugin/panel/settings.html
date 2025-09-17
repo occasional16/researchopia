@@ -22,11 +22,11 @@
     window.addEventListener('DOMContentLoaded', () => {
       const baseUrl = document.querySelector('#baseURL');
       const height = document.querySelector('#paneHeight');
-      baseUrl.value = getPref('extensions.academic-rating.baseURL', 'https://www.researchopia.com');
-      height.value = getPref('extensions.academic-rating.paneHeight', '100%');
+      baseUrl.value = getPref('extensions.researchopia.baseURL', 'https://www.researchopia.com');
+      height.value = getPref('extensions.researchopia.paneHeight', '100%');
       document.querySelector('#save').addEventListener('click', () => {
-        setPref('extensions.academic-rating.baseURL', baseUrl.value.trim());
-        setPref('extensions.academic-rating.paneHeight', height.value.trim());
+        setPref('extensions.researchopia.baseURL', baseUrl.value.trim());
+        setPref('extensions.researchopia.paneHeight', height.value.trim());
         alert('设置已保存');
       });
       document.querySelector('#reset').addEventListener('click', () => {

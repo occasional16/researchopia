@@ -381,40 +381,59 @@ export default function HomePage() {
           ) : (
             <div className="space-y-4">
               {recentComments.map((comment) => (
-                <div key={comment.id} className="border-b border-gray-100 pb-4 last:border-b-0">
+                <div key={comment.id} className="border-b border-gray-100 pb-6 last:border-b-0">
                   <div className="flex items-start justify-between">
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0"> {/* 添加min-w-0防止内容溢出 */}
                       <Link
                         href={`/papers/${comment.id}`}
-                        className="text-lg font-semibold text-blue-600 hover:text-blue-800 transition-colors"
+                        className="text-lg font-semibold text-blue-600 hover:text-blue-800 transition-colors block mb-2"
                       >
                         {comment.title}
                       </Link>
-                      <p className="text-sm text-gray-600 mt-1">
-                        作者：{comment.authors}
-                      </p>
+                      <div className="flex flex-col space-y-1 text-sm text-gray-600 mb-3">
+                        <p>作者：<span className="font-medium">{comment.authors}</span></p>
+                        {comment.journal && (
+                          <p>期刊：<span className="font-medium text-green-600">{comment.journal}</span></p>
+                        )}
+                      </div>
                       <div className="mt-2 p-3 bg-gray-50 rounded-lg">
-                        <p className="text-gray-700 text-sm line-clamp-2">
+                        <p className="text-gray-700 text-sm leading-relaxed">
                           {comment.latest_comment.content}
                         </p>
-                        <div className="flex items-center justify-between mt-2 text-xs text-gray-500">
-                          <span>评论者：{comment.latest_comment.user?.username || '匿名用户'}</span>
-                          <span>{new Date(comment.latest_comment.created_at).toLocaleDateString('zh-CN')}</span>
+                        <div className="flex items-center justify-between mt-3 text-xs text-gray-500">
+                          <span>
+                            评论者：<span className="font-medium">{comment.latest_comment.user?.username || '匿名用户'}</span>
+                          </span>
+                          <span>
+                            {new Date(comment.latest_comment.created_at).toLocaleDateString('zh-CN', {
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </span>
                         </div>
                       </div>
                     </div>
-                    <div className="ml-4 text-right">
-                      <div className="flex items-center space-x-3 text-sm text-gray-600">
-                        <div className="flex items-center">
-                          <MessageCircle className="h-4 w-4 mr-1" />
-                          {comment.comment_count}
-                        </div>
-                        {comment.average_rating > 0 && (
-                          <div className="flex items-center">
-                            <Star className="h-4 w-4 mr-1 text-yellow-500" />
-                            {comment.average_rating.toFixed(1)}
+                    <div className="ml-6 text-right flex-shrink-0">
+                      <div className="flex flex-col space-y-2">
+                        <div className="flex items-center justify-end space-x-4 text-sm text-gray-600">
+                          <div className="flex items-center bg-blue-50 px-2 py-1 rounded-full">
+                            <MessageCircle className="h-4 w-4 mr-1 text-blue-600" />
+                            <span className="font-medium">{comment.comment_count}</span>
                           </div>
-                        )}
+                          {comment.average_rating > 0 && (
+                            <div className="flex items-center bg-yellow-50 px-2 py-1 rounded-full">
+                              <Star className="h-4 w-4 mr-1 text-yellow-500" />
+                              <span className="font-medium">{comment.average_rating.toFixed(1)}</span>
+                              <span className="text-xs text-gray-500 ml-1">({comment.rating_count})</span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="text-xs text-gray-400 text-right">
+                          论文发布：{new Date(comment.created_at).toLocaleDateString('zh-CN')}
+                        </div>
                       </div>
                     </div>
                   </div>

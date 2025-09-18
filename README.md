@@ -2,13 +2,13 @@
 
 > **研学并进，智慧共享** | Where Research Meets Community
 
-## 📍 项目声明
+## 💡 项目声明
 
 **本项目完全由AI工具生成**（除了这段话），没敲过一行代码（因为根本不会😂）。我是一名刚博士毕业的科研狗（化学领域），没有编程基础，也没有报过AI课程，抱着试一试的态度，才发现AI太好用了！
 
 本项目为 **研学港 Researchopia** 的开源项目（项目名称、logo和slogan也是AI给设计的），旨在为学术研究者提供优质的学术资源和交流环境。
 
-本项目主要呈现方式是一个 **[网站](https://www.researchopia.com)** ，以及于此网站关联的 **[浏览器扩展](https://microsoftedge.microsoft.com/addons/detail/%E7%A0%94%E5%AD%A6%E6%B8%AF-researchopia/hjijphegihgkddcmdmfjpflpcdaadbio)** 和 **Zotero插件** （官网或 [Releases](https://github.com/occasional15/researchopia/releases) 下载。具体功能参考下方描述，以及网站上的 [用户指南](https://www.researchopia.com/guide) 。
+本项目主要呈现方式是一个 **[网站](https://www.researchopia.com)** ，以及于此网站关联的 **[浏览器扩展](https://microsoftedge.microsoft.com/addons/detail/%E7%A0%94%E5%AD%A6%E6%B8%AF-researchopia/hjijphegihgkddcmdmfjpflpcdaadbio)** 和 **Zotero插件** （官网或 [Releases](https://github.com/occasional15/researchopia/releases) 下载）。具体功能参考下方描述，以及网站上的 [用户指南](https://www.researchopia.com/guide) 。
 
 本项目总共历时1周。其实只要描述清楚，直接给一段话AI就可以搞定！一点也不夸张，一周前我还不懂什么叫网站前后端也不懂VS code（现在也只是大致了解一点），但第一天时间就完成了网站基本的界面设计和数据库搭建。浏览器扩展和zotero插件的第一版真的是各用一句话直接生成。当然，进一步的细节打磨和bug处理是花了更多的时间。这段时间也渐渐学到了一些编程知识，也积累了一些与AI对话的经验和小窍门。目前项目处于初期阶段，后续会持续优化和完善。
 
@@ -63,19 +63,10 @@
 ├── 📁 extension/             # 浏览器扩展
 ├── 📁 zotero-plugin/         # Zotero插件
 ├── 📁 supabase/              # Supabase配置与迁移
-├── 📁 scripts/               # 项目脚本 【整理后新增】
-│   ├── 📁 deploy/            # 部署脚本 (18个)
-│   ├── 📁 test/              # 测试与诊断脚本 (31个)
-│   ├── 📁 setup/             # 项目设置脚本 (12个)
-│   ├── 📁 maintenance/       # 维护脚本 (17个)
-│   └── 📁 database/          # 数据库脚本 (9个)
-├── 📁 archive/               # 归档文件 【整理后新增】
-│   ├── 📁 old-docs/          # 过时文档 (39个)
-│   └── 📁 old-scripts/       # 过时脚本 (8个)
-└── 📁 docs/                  # 项目文档
+└── 📁 doc/                  # 相关文件
 ```
 
-## �🔧 开发环境
+## 🔧 开发环境
 
 ### 本地运行
 
@@ -97,9 +88,6 @@ npm run dev
 # Supabase 数据库配置
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_key
-
-# Altmetric API 配置（可选）
-ALTMETRIC_API_KEY=your_altmetric_key
 ```
 
 ## 📱 浏览器扩展
@@ -128,9 +116,8 @@ ALTMETRIC_API_KEY=your_altmetric_key
 
 ### 安装 Zotero 插件
 
-1. 将 `zotero-plugin` 文件夹复制到 Zotero 插件目录
-2. 重启 Zotero
-3. 在论文条目中查看评价信息
+1. 将 `zotero-plugin` 文件夹打包压缩为 `.zip` 文件并修改后缀名为 `.xpi`
+2. 在 Zotero > Tools > Plugins 中安装插件
 
 ## 🛠 技术栈
 
@@ -146,8 +133,8 @@ ALTMETRIC_API_KEY=your_altmetric_key
 
 ## 🤝 贡献指南
 
-欢迎提交 Issue 和 Pull Request 来帮助改进项目！
+欢迎添加作者微信，或提交 Issue 和 Pull Request 来帮助改进项目！
 
 ---
 
-**研学港 Researchopia** - 让学术研究更高效，让知识分享更便捷。
+**研学港 Researchopia** - 研学并进，智慧共享 | Where Research Meets Community。

@@ -31,6 +31,28 @@ async function startup(data, reason) {
     Services.scriptloader.loadSubScript(rootURI + "researchopia.js");
   }
 
+  // Load DOI handler and annotation sharing modules
+  try {
+    Services.scriptloader.loadSubScript(rootURI + "doi-handler.js");
+    log("DOI handler loaded");
+  } catch (e) {
+    log("Failed to load DOI handler: " + e);
+  }
+
+  try {
+    Services.scriptloader.loadSubScript(rootURI + "doi-annotation-sharing.js");
+    log("DOI annotation sharing loaded");
+  } catch (e) {
+    log("Failed to load DOI annotation sharing: " + e);
+  }
+  
+  try {
+    Services.scriptloader.loadSubScript(rootURI + "annotation-sharing.js");
+    log("Annotation sharing module loaded");
+  } catch (e) {
+    log("Failed to load annotation sharing module: " + e);
+  }
+
   // Initialize plugin with root URI
   Zotero.Researchopia.init({ id, version, rootURI });
   Zotero.Researchopia.addToAllWindows();

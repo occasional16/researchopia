@@ -8,24 +8,31 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "setup-supabase": "node setup-supabase.js"
+    "setup-supabase": "node setup-supabase.js",
+    "websocket": "node websocket-server.js",
+    "dev:full": "concurrently \"npm run websocket\" \"npm run dev\""
   },
   "dependencies": {
     "@supabase/auth-ui-react": "^0.4.7",
     "@supabase/auth-ui-shared": "^0.1.8",
     "@supabase/supabase-js": "^2.57.2",
+    "@types/ws": "^8.18.1",
     "dotenv": "^17.2.2",
     "lucide-react": "^0.543.0",
     "next": "15.5.2",
+    "pdfjs-dist": "^5.4.149",
     "react": "19.1.0",
-    "react-dom": "19.1.0"
+    "react-dom": "19.1.0",
+    "ws": "^8.18.3"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
+    "@types/pdfjs-dist": "^2.10.377",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "concurrently": "^9.2.1",
     "eslint": "^9",
     "eslint-config-next": "15.5.2",
     "tailwindcss": "^4",

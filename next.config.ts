@@ -88,6 +88,19 @@ const nextConfig: NextConfig = {
     ];
   },
 
+  // Webpack配置
+  webpack: (config, { isServer }) => {
+    // PDF.js worker支持
+    if (!isServer) {
+      config.resolve.alias = {
+        ...config.resolve.alias,
+        'pdfjs-dist/build/pdf.worker.entry': 'pdfjs-dist/build/pdf.worker.min.js',
+      };
+    }
+    
+    return config;
+  },
+
   turbopack: {
     rules: {
       '*.svg': {

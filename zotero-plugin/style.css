@@ -93,9 +93,19 @@
   box-sizing: border-box; /* 确保padding计算正确 */
   flex-shrink: 0; /* 防止按钮被压缩 */
   margin: 2px 0; /* 给按钮一些垂直边距 */
+  transition: all 0.2s ease; /* 添加过渡动画 */
 }
 .researchopia-btn:hover { background: #f1f3f5; }
 .researchopia-btn.secondary { color: #0b7285; border-color: #a5d8ff; }
+.researchopia-btn.annotation-btn { 
+  color: #ffffff; 
+  background: #22c55e; 
+  border-color: #16a34a; 
+}
+.researchopia-btn.annotation-btn:hover { 
+  background: #16a34a; 
+  border-color: #15803d;
+}
 .researchopia-btn.emphasis { outline: 2px solid #74c0fc; box-shadow: 0 0 0 2px rgba(116,192,252,.2); }
 .researchopia-btn.pulse {
   animation: ra-pulse 1.6s ease-in-out infinite;
@@ -145,6 +155,15 @@
   .researchopia-title { color: #e9ecef; }
   .researchopia-btn { background: #2b2b2b; color: #f1f3f5; border-color: #5c5f66; }
   .researchopia-btn:hover { background: #3a3a3a; }
+  .researchopia-btn.annotation-btn { 
+    background: #16a34a; 
+    border-color: #15803d;
+    color: #ffffff;
+  }
+  .researchopia-btn.annotation-btn:hover { 
+    background: #15803d; 
+    border-color: #166534;
+  }
   
   .researchopia-iframe {
     background: transparent;

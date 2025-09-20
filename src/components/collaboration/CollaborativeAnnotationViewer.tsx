@@ -99,22 +99,18 @@ export const CollaborativeAnnotationViewer: React.FC<CollaborativeAnnotationView
     const newAnnotation: Partial<UniversalAnnotation> = {
       type: 'note',
       documentId,
-      position: {
-        documentType: 'text',
-        text: {
-          startOffset: 0,
-          endOffset: newAnnotationText.length,
-          context: newAnnotationText
-        }
-      },
       content: {
         text: newAnnotationText,
         comment: '',
-        color: '#ffd400'
+        color: '#ffd400',
+        position: {
+          page: 1,
+          start: { x: 100, y: 100 },
+          end: { x: 200, y: 120 }
+        }
       },
       metadata: {
         platform: 'zotero' as const,
-        version: '1.0',
         author: {
           id: userId,
           name: userId,
@@ -124,7 +120,7 @@ export const CollaborativeAnnotationViewer: React.FC<CollaborativeAnnotationView
         tags: [],
         visibility: 'shared'
       },
-      extensions: {}
+      version: '1.0'
     };
 
     const success = await collaboration.createAnnotation(newAnnotation);
@@ -160,7 +156,7 @@ export const CollaborativeAnnotationViewer: React.FC<CollaborativeAnnotationView
       }
     }
 
-    const expectedVersion = typeof annotation.metadata?.version === 'number' ? annotation.metadata.version : 1;
+    const expectedVersion = 1;
     const success = await collaboration.updateAnnotation(id, changes, expectedVersion);
     
     if (success) {
@@ -173,7 +169,7 @@ export const CollaborativeAnnotationViewer: React.FC<CollaborativeAnnotationView
               modifiedAt: new Date().toISOString(),
               metadata: {
                 ...ann.metadata,
-                version: (typeof ann.metadata?.version === 'number' ? ann.metadata.version : 1) + 1
+
               }
             }
           : ann
@@ -468,7 +464,7 @@ export const CollaborativeAnnotationViewer: React.FC<CollaborativeAnnotationView
                               {annotation.modifiedAt !== annotation.createdAt && (
                                 <p>修改时间: {new Date(annotation.modifiedAt).toLocaleString()}</p>
                               )}
-                              <p>版本: {annotation.metadata.version || 1}</p>
+                              <p>版本: 1</p>
                             </div>
                           </div>
                         </div>

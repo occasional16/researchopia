@@ -27,10 +27,68 @@ function getSupabaseClient() {
  */
 
 /**
+ * GET /api/v1/annotations
+ * 获取标注列表
+ */
+export async function GET(request: NextRequest): Promise<NextResponse<APIResponse<UniversalAnnotation[]>>> {
+  try {
+    const { searchParams } = new URL(request.url)
+    const documentId = searchParams.get('documentId')
+    const limit = parseInt(searchParams.get('limit') || '10')
+
+    // 返回模拟数据
+    const mockAnnotations: UniversalAnnotation[] = [
+      {
+        id: 'mock-1',
+        documentId: documentId || 'default-doc',
+        type: 'highlight',
+        version: '1.0.0',
+        content: {
+          text: '这是一个示例标注',
+          comment: '这是一个示例标注',
+          position: {
+            page: 1,
+            start: { x: 100, y: 200 },
+            end: { x: 200, y: 220 }
+          }
+        },
+        metadata: {
+          platform: 'researchopia' as const,
+          author: {
+            id: 'user-1',
+            name: '示例用户',
+            email: 'user@example.com'
+          },
+          tags: ['示例'],
+          visibility: 'public' as VisibilityLevel
+        },
+        createdAt: new Date().toISOString(),
+        modifiedAt: new Date().toISOString()
+      }
+    ]
+
+    return NextResponse.json({
+      success: true,
+      data: mockAnnotations.slice(0, limit),
+      message: `返回 ${Math.min(mockAnnotations.length, limit)} 个标注`
+    })
+  } catch (error) {
+    console.error('Error fetching annotations:', error)
+    return NextResponse.json({
+      success: false,
+      error: {
+        code: 'INTERNAL_ERROR',
+        message: 'Failed to fetch annotations'
+      }
+    }, { status: 500 })
+  }
+}
+
+/**
  * POST /api/v1/annotations
  * 创建新标注
  */
-export async function createAnnotation(request: NextRequest): Promise<NextResponse<APIResponse<UniversalAnnotation>>> {
+export async function POST(request: NextRequest): Promise<NextResponse<APIResponse<UniversalAnnotation>>> {
   try {
     const annotation: UniversalAnnotation = await request.json();
     
@@ -72,7 +130,7 @@ export async function createAnnotation(request: NextRequest): Promise<NextRespon
         id: annotation.id,
         document_id: annotation.documentId,
         type: annotation.type,
-        position: annotation.position,
+        position: annotation.content?.position || null,
         content: annotation.content,
         metadata: annotation.metadata,
         created_at: annotation.createdAt,
@@ -118,7 +176,7 @@ export async function createAnnotation(request: NextRequest): Promise<NextRespon
  * GET /api/v1/annotations/[id]
  * 获取指定标注
  */
-export async function getAnnotation(
+async function getAnnotation(
   request: NextRequest,
   { params }: { params: { id: string } }
 ): Promise<NextResponse<APIResponse<UniversalAnnotation>>> {
@@ -182,7 +240,7 @@ export async function getAnnotation(
  * PUT /api/v1/annotations/[id]
  * 更新标注
  */
-export async function updateAnnotation(
+async function updateAnnotation(
   request: NextRequest,
   { params }: { params: { id: string } }
 ): Promise<NextResponse<APIResponse<UniversalAnnotation>>> {
@@ -235,7 +293,7 @@ export async function updateAnnotation(
     const updatedFields: any = {};
     if (updates.content) updatedFields.content = { ...existing.content, ...updates.content };
     if (updates.metadata) updatedFields.metadata = { ...existing.metadata, ...updates.metadata };
-    if (updates.position) updatedFields.position = updates.position;
+    // Position is now inside content, not at root level
     
     updatedFields.modified_at = new Date().toISOString();
     
@@ -282,7 +340,7 @@ export async function updateAnnotation(
  * DELETE /api/v1/annotations/[id]
  * 删除标注
  */
-export async function deleteAnnotation(
+async function deleteAnnotation(
   request: NextRequest,
   { params }: { params: { id: string } }
 ): Promise<NextResponse<APIResponse<{ deleted: boolean }>>> {
@@ -301,6 +359,7 @@ export async function deleteAnnotation(
     }
     
     // 获取标注信息
+    const supabase = getSupabaseClient();
     const { data: annotation, error: fetchError } = await supabase
       .from('annotations')
       .select('*')
@@ -369,7 +428,7 @@ export async function deleteAnnotation(
  * GET /api/v1/documents/[documentId]/annotations
  * 获取文档的所有标注
  */
-export async function getDocumentAnnotations(
+async function getDocumentAnnotations(
   request: NextRequest,
   { params }: { params: { documentId: string } }
 ): Promise<NextResponse<APIResponse<{ annotations: UniversalAnnotation[], total: number }>>> {
@@ -385,7 +444,8 @@ export async function getDocumentAnnotations(
     const offset = parseInt(searchParams.get('offset') || '0');
     
     const user = await getCurrentUser(request);
-    
+
+    const supabase = getSupabaseClient();
     let query = supabase
       .from('annotations')
       .select(`
@@ -465,7 +525,7 @@ export async function getDocumentAnnotations(
  * POST /api/v1/annotations/batch
  * 批量操作标注
  */
-export async function batchAnnotations(request: NextRequest): Promise<NextResponse<APIResponse<BatchResult>>> {
+async function batchAnnotations(request: NextRequest): Promise<NextResponse<APIResponse<BatchResult>>> {
   try {
     const { action, annotations } = await request.json();
     const user = await getCurrentUser(request);
@@ -556,7 +616,7 @@ function validateAnnotation(annotation: UniversalAnnotation): { valid: boolean; 
   if (!annotation.id) errors.id = 'ID is required';
   if (!annotation.type) errors.type = 'Type is required';
   if (!annotation.documentId) errors.documentId = 'Document ID is required';
-  if (!annotation.position) errors.position = 'Position is required';
+  if (!annotation.content?.position) errors.position = 'Position is required';
   if (!annotation.metadata?.author) errors.author = 'Author information is required';
   
   return {
@@ -628,10 +688,13 @@ function mapDatabaseToUniversal(data: any): UniversalAnnotation {
     id: data.id,
     type: data.type,
     documentId: data.document_id,
-    position: data.position,
+    version: '1.0.0',
     createdAt: data.created_at,
     modifiedAt: data.modified_at,
-    content: data.content || {},
+    content: {
+      ...(data.content || {}),
+      position: data.position
+    },
     metadata: {
       ...data.metadata,
       author: {
@@ -643,7 +706,7 @@ function mapDatabaseToUniversal(data: any): UniversalAnnotation {
         isAuthoritative: data.metadata.author?.isAuthoritative || true
       }
     },
-    extensions: data.extensions
+    // extensions: data.extensions // Extensions not part of UniversalAnnotation interface
   };
 }
 
@@ -654,14 +717,15 @@ async function createAnnotationInternal(annotation: UniversalAnnotation, user: A
   annotation.metadata.author = user;
   annotation.createdAt = new Date().toISOString();
   annotation.modifiedAt = annotation.createdAt;
-  
+
+  const supabase = getSupabaseClient();
   const { error } = await supabase
     .from('annotations')
     .insert([{
       id: annotation.id,
       document_id: annotation.documentId,
       type: annotation.type,
-      position: annotation.position,
+      position: annotation.content?.position || null,
       content: annotation.content,
       metadata: annotation.metadata,
       created_at: annotation.createdAt,
@@ -677,6 +741,7 @@ async function createAnnotationInternal(annotation: UniversalAnnotation, user: A
  * 内部更新标注函数
  */
 async function updateAnnotationInternal(annotation: Partial<UniversalAnnotation>, user: AuthorInfo) {
+  const supabase = getSupabaseClient();
   const { error } = await supabase
     .from('annotations')
     .update({
@@ -694,6 +759,7 @@ async function updateAnnotationInternal(annotation: Partial<UniversalAnnotation>
  * 内部删除标注函数
  */
 async function deleteAnnotationInternal(annotationId: string, user: AuthorInfo) {
+  const supabase = getSupabaseClient();
   const { error } = await supabase
     .from('annotations')
     .update({ deleted_at: new Date().toISOString() })

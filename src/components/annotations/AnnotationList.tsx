@@ -185,7 +185,7 @@ export const AnnotationList: React.FC<AnnotationListProps> = ({
   // 全选/取消全选
   const handleSelectAll = () => {
     const allIds = processedAnnotations.map(a => a.id);
-    const newSelectedIds = localSelectedIds.size === allIds.length ? new Set() : new Set(allIds);
+    const newSelectedIds = localSelectedIds.size === allIds.length ? new Set<string>() : new Set<string>(allIds);
     setLocalSelectedIds(newSelectedIds);
     onBulkSelect?.(newSelectedIds);
   };

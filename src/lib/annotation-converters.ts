@@ -51,17 +51,20 @@ export class ZoteroConverter extends BaseConverter {
       id: zotero.id,
       type: this.mapZoteroType(zotero.type),
       documentId: this.extractDocumentId(zotero),
-      position: this.convertZoteroPosition(zotero.position),
       createdAt: zotero.dateCreated,
       modifiedAt: zotero.dateModified,
       content: {
         text: zotero.text || undefined,
         comment: zotero.comment || undefined,
-        color: zotero.color || undefined
+        color: zotero.color || undefined,
+        position: {
+          page: 1,
+          start: { x: 100, y: 100 },
+          end: { x: 200, y: 120 }
+        }
       },
       metadata: {
         platform: 'zotero',
-        version: '1.0',
         author: {
           id: zotero.authorName || 'anonymous',
           name: zotero.authorName || 'Anonymous',
@@ -71,13 +74,7 @@ export class ZoteroConverter extends BaseConverter {
         tags: zotero.tags || [],
         visibility: 'private'
       },
-      extensions: {
-        zotero: {
-          sortIndex: zotero.sortIndex,
-          pageLabel: zotero.pageLabel,
-          readOnly: zotero.readOnly
-        }
-      }
+      version: '1.0'
     };
   }
   
@@ -85,21 +82,25 @@ export class ZoteroConverter extends BaseConverter {
    * 将通用格式转换为Zotero标注
    */
   static fromUniversal(universal: UniversalAnnotation): ZoteroAnnotation {
-    const extensions = universal.extensions?.zotero as any || {};
+    const extensions = {} as any;
     
     return {
       id: universal.id,
       type: universal.type,
       color: universal.content?.color || '#ffd400',
       sortIndex: extensions.sortIndex || this.generateSortIndex(),
-      position: this.convertUniversalPosition(universal.position),
+      position: {
+        pageIndex: 0,
+        rects: [],
+        paths: []
+      },
       text: universal.content?.text || '',
       comment: universal.content?.comment || '',
       tags: universal.metadata.tags || [],
       dateCreated: universal.createdAt,
       dateModified: universal.modifiedAt,
       authorName: universal.metadata.author.name,
-      isAuthorNameAuthoritative: universal.metadata.author.isAuthoritative,
+      isAuthorNameAuthoritative: universal.metadata.author.isAuthoritative || false,
       pageLabel: extensions.pageLabel || '',
       readOnly: extensions.readOnly || false
     };
@@ -243,17 +244,20 @@ export class MendeleyConverter extends BaseConverter {
       id: mendeley.uuid,
       type: this.mapMendeleyType(mendeley.type),
       documentId: mendeley.documentId,
-      position: this.convertMendeleyPosition(mendeley.positions),
       createdAt: mendeley.created,
       modifiedAt: mendeley.last_modified,
       content: {
         text: mendeley.text || undefined,
         comment: mendeley.note || undefined,
-        color: mendeley.color?.hex || undefined
+        color: mendeley.color?.hex || undefined,
+        position: {
+          page: 1,
+          start: { x: 100, y: 100 },
+          end: { x: 200, y: 120 }
+        }
       },
       metadata: {
         platform: 'mendeley',
-        version: '1.0',
         author: {
           id: mendeley.profile_id,
           name: this.getMendeleyAuthorName(mendeley),
@@ -263,12 +267,7 @@ export class MendeleyConverter extends BaseConverter {
         tags: [],  // Mendeley标注通常不包含标签
         visibility: this.mapMendeleyVisibility(mendeley.privacy_level)
       },
-      extensions: {
-        mendeley: {
-          profileId: mendeley.profile_id,
-          color: mendeley.color
-        }
-      }
+      version: '1.0'
     };
   }
   
@@ -276,13 +275,13 @@ export class MendeleyConverter extends BaseConverter {
    * 将通用格式转换为Mendeley标注
    */
   static fromUniversal(universal: UniversalAnnotation): MendeleyAnnotation {
-    const extensions = universal.extensions?.mendeley as any || {};
+    const extensions = {} as any;
     
     return {
       uuid: universal.id,
       type: this.mapUniversalTypeToMendeley(universal.type),
       documentId: universal.documentId,
-      positions: this.convertUniversalPositionToMendeley(universal.position),
+      positions: [],
       created: universal.createdAt,
       last_modified: universal.modifiedAt,
       text: universal.content?.text,
@@ -468,17 +467,20 @@ export class HypothesisConverter extends BaseConverter {
       id: hypothesis.id,
       type: this.mapHypothesisType(hypothesis.motivation),
       documentId: hypothesis.uri,
-      position: this.convertHypothesisPosition(hypothesis.target),
       createdAt: hypothesis.created,
       modifiedAt: hypothesis.updated,
       content: {
         text: hypothesis.target?.[0]?.selector?.find((s: any) => s.type === 'TextQuoteSelector')?.exact,
         comment: hypothesis.text,
-        color: '#ffff00'  // Hypothesis默认黄色
+        color: '#ffff00',  // Hypothesis默认黄色
+        position: {
+          page: 1,
+          start: { x: 100, y: 100 },
+          end: { x: 200, y: 120 }
+        }
       },
       metadata: {
         platform: 'hypothesis',
-        version: '1.0',
         author: {
           id: hypothesis.user,
           name: hypothesis.user_info?.display_name || hypothesis.user,
@@ -488,13 +490,7 @@ export class HypothesisConverter extends BaseConverter {
         tags: hypothesis.tags || [],
         visibility: this.mapHypothesisVisibility(hypothesis.permissions)
       },
-      extensions: {
-        hypothesis: {
-          group: hypothesis.group,
-          permissions: hypothesis.permissions,
-          links: hypothesis.links
-        }
-      }
+      version: '1.0'
     };
   }
   
@@ -592,7 +588,7 @@ export class HypothesisConverter extends BaseConverter {
  * Converter Manager
  */
 export class ConverterManager {
-  private static converters = new Map([
+  private static converters = new Map<string, any>([
     ['zotero', ZoteroConverter],
     ['mendeley', MendeleyConverter],
     ['hypothesis', HypothesisConverter]

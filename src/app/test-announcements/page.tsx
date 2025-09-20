@@ -3,9 +3,9 @@
 import { useState, useEffect } from 'react'
 
 export default function TestAnnouncementsPage() {
-  const [announcements, setAnnouncements] = useState([])
+  const [announcements, setAnnouncements] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     fetchAnnouncements()
@@ -23,7 +23,7 @@ export default function TestAnnouncementsPage() {
         setError(data.message)
       }
     } catch (err) {
-      setError(err.message)
+      setError(err instanceof Error ? err.message : 'Unknown error')
     } finally {
       setLoading(false)
     }
@@ -52,7 +52,7 @@ export default function TestAnnouncementsPage() {
         alert('创建失败: ' + data.message)
       }
     } catch (err) {
-      alert('创建失败: ' + err.message)
+      alert('创建失败: ' + (err instanceof Error ? err.message : 'Unknown error'))
     }
   }
 

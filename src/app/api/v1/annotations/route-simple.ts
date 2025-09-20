@@ -176,7 +176,7 @@ function validateAnnotation(annotation: UniversalAnnotation): { valid: boolean; 
   if (!annotation.id) errors.id = 'ID is required';
   if (!annotation.type) errors.type = 'Type is required';
   if (!annotation.documentId) errors.documentId = 'Document ID is required';
-  if (!annotation.position) errors.position = 'Position is required';
+  if (!annotation.content?.position) errors.position = 'Position is required';
   if (!annotation.metadata?.author) errors.author = 'Author information is required';
   
   return {

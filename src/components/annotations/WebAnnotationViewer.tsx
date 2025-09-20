@@ -9,7 +9,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { UniversalAnnotation } from '@/types/annotation-protocol';
 import { AdvancedSearch } from '@/components/search/AdvancedSearch';
 import { AnnotationList } from '@/components/annotations/AnnotationList';
-import { AnnotationSearchService } from '@/lib/annotation-search';
+import { AnnotationSearchService, SearchFilters } from '@/lib/annotation-search';
 
 interface WebAnnotationViewerProps {
   initialAnnotations?: UniversalAnnotation[];
@@ -30,8 +30,8 @@ interface ViewState {
     authors: string[];
     tags: string[];
     colors: string[];
-    dateRange: [Date | null, Date | null];
-    visibility: string[];
+    dateRange: { start: Date | undefined; end: Date | undefined };
+    visibility: 'public' | 'private' | 'shared' | undefined;
   };
   sortBy: 'newest' | 'oldest' | 'relevance' | 'author';
   groupBy: 'none' | 'document' | 'date' | 'author' | 'platform';
@@ -53,7 +53,7 @@ export const WebAnnotationViewer: React.FC<WebAnnotationViewerProps> = ({
   const [annotations, setAnnotations] = useState<UniversalAnnotation[]>(initialAnnotations);
   const [filteredAnnotations, setFilteredAnnotations] = useState<UniversalAnnotation[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | undefined>(undefined);
   const [isEditing, setIsEditing] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   
@@ -66,8 +66,8 @@ export const WebAnnotationViewer: React.FC<WebAnnotationViewerProps> = ({
       authors: [],
       tags: [],
       colors: [],
-      dateRange: [null, null],
-      visibility: []
+      dateRange: { start: undefined, end: undefined },
+      visibility: undefined
     },
     sortBy: 'newest',
     groupBy: 'none',
@@ -83,15 +83,21 @@ export const WebAnnotationViewer: React.FC<WebAnnotationViewerProps> = ({
     hasMore: true
   });
 
+  // 搜索服务
+  const searchService = new AnnotationSearchService();
+
   // 协作功能 - 暂时禁用
-  // const collaboration = useCollaboration(
-  //   collaborationRoomId || 'default'
-  // );
+  const collaboration = {
+    isConnected: false,
+    users: [] as Array<{ id: string; name: string }>,
+    sendOperation: (_operation: any) => {},
+    onOperation: undefined as ((operation: any) => void) | undefined
+  };
 
   // 搜索和筛选
   const searchAnnotations = useCallback(async () => {
     setLoading(true);
-    setError(null);
+    setError(undefined);
 
     try {
       const searchService = new AnnotationSearchService(annotations);
@@ -100,12 +106,9 @@ export const WebAnnotationViewer: React.FC<WebAnnotationViewerProps> = ({
         query: viewState.searchTerm,
         filters: {
           ...viewState.filters,
-          dateRange: {
-            start: viewState.filters.dateRange[0],
-            end: viewState.filters.dateRange[1]
-          }
+          dateRange: viewState.filters.dateRange
         },
-        sortBy: viewState.sortBy,
+        sortBy: (viewState.sortBy === 'newest' ? 'createdAt' : viewState.sortBy === 'oldest' ? 'modifiedAt' : viewState.sortBy) as 'author' | 'createdAt' | 'modifiedAt' | 'relevance',
         page: pagination.page,
         limit: pagination.limit
       };
@@ -121,7 +124,7 @@ export const WebAnnotationViewer: React.FC<WebAnnotationViewerProps> = ({
       setPagination(prev => ({
         ...prev,
         total: results.total,
-        hasMore: results.hasMore
+        hasMore: results.annotations.length === pagination.limit
       }));
     } catch (err) {
       setError(err instanceof Error ? err.message : '搜索失败');
@@ -136,11 +139,22 @@ export const WebAnnotationViewer: React.FC<WebAnnotationViewerProps> = ({
   }, [searchAnnotations]);
 
   // 处理搜索变化
-  const handleSearchChange = useCallback((term: string, filters: any) => {
+  const handleSearchChange = useCallback((filters: SearchFilters) => {
     setViewState(prev => ({
       ...prev,
-      searchTerm: term,
-      filters: filters
+      searchTerm: filters.query || '',
+      filters: {
+        platforms: Array.isArray(filters.platform) ? filters.platform : filters.platform ? [filters.platform] : [],
+        types: Array.isArray(filters.type) ? filters.type : filters.type ? [filters.type] : [],
+        authors: [],
+        tags: filters.tags || [],
+        colors: filters.colors || [],
+        dateRange: {
+          start: filters.dateRange?.start || undefined,
+          end: filters.dateRange?.end || undefined
+        },
+        visibility: filters.visibility
+      }
     }));
     setPagination(prev => ({
       ...prev,
@@ -193,7 +207,7 @@ export const WebAnnotationViewer: React.FC<WebAnnotationViewerProps> = ({
       );
       
       // 同步到协作系统
-      if (collaboration.isConnected) {
+      if (collaboration?.isConnected) {
         collaboration.sendOperation({
           type: 'update',
           annotationId: annotation.id,
@@ -426,9 +440,9 @@ export const WebAnnotationViewer: React.FC<WebAnnotationViewerProps> = ({
       {viewState.showFilters && (
         <div className="bg-white border-b border-gray-200 p-6">
           <AdvancedSearch
-            onSearch={handleSearchChange}
+            searchService={searchService}
+            onFiltersChange={handleSearchChange}
             initialFilters={viewState.filters}
-            annotations={annotations}
           />
         </div>
       )}

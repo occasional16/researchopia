@@ -40,9 +40,10 @@ const mockAnnotations = [
 // GET - 获取DOI对应的标注
 export async function GET(
   request: NextRequest,
-  { params }: { params: { doi: string } }
+  context: { params: Promise<{ doi: string }> }
 ) {
   try {
+    const params = await context.params
     const doi = decodeURIComponent(params.doi)
     
     // 验证DOI格式
@@ -108,9 +109,10 @@ export async function GET(
 // POST - 添加新标注
 export async function POST(
   request: NextRequest,
-  { params }: { params: { doi: string } }
+  context: { params: Promise<{ doi: string }> }
 ) {
   try {
+    const params = await context.params
     const doi = decodeURIComponent(params.doi)
     const body = await request.json()
     

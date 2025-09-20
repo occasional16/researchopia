@@ -6,7 +6,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { UniversalAnnotation } from '@/types/annotation-protocol';
+import { UniversalAnnotation, PlatformType } from '@/types/annotation-protocol';
 import WebAnnotationViewer from '@/components/annotations/WebAnnotationViewerSimple';
 
 // 示例标注数据
@@ -60,7 +60,7 @@ const generateSampleAnnotations = (): UniversalAnnotation[] => {
 
   return Array.from({ length: 25 }, (_, i) => {
     const author = authors[i % authors.length];
-    const platform = platforms[i % platforms.length];
+    const platform = platforms[i % platforms.length] as PlatformType;
     const type = types[i % types.length];
     const color = colors[i % colors.length];
     const text = sampleTexts[i % sampleTexts.length];

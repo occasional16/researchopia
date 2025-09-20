@@ -1,17 +1,75 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { supabase } from '@/lib/supabase'
 
-// Supabase配置
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+// 检查用户是否为管理员
+async function checkAdminAuth(request: NextRequest) {
+  try {
+    if (!supabase) {
+      return { isAdmin: false, user: null }
+    }
 
-let supabase: any = null
-if (supabaseUrl && supabaseServiceKey) {
-  supabase = createClient(supabaseUrl, supabaseServiceKey)
+    let accessToken = null
+
+    // 方法1: 从Authorization header获取token
+    const authHeader = request.headers.get('authorization')
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      accessToken = authHeader.substring(7)
+    }
+
+    // 方法2: 从cookie中获取Supabase session
+    if (!accessToken) {
+      const cookieHeader = request.headers.get('cookie') || ''
+      const sessionMatch = cookieHeader.match(/sb-[^=]+-auth-token=([^;]+)/)
+
+      if (sessionMatch) {
+        try {
+          const sessionData = JSON.parse(decodeURIComponent(sessionMatch[1]))
+          accessToken = sessionData.access_token
+        } catch (parseError) {
+          console.log('Failed to parse session cookie:', parseError)
+        }
+      }
+    }
+
+    if (!accessToken) {
+      return { isAdmin: false, user: null }
+    }
+
+    // 验证token并获取用户信息
+    const { data: { user }, error } = await supabase.auth.getUser(accessToken)
+    if (error || !user) {
+      console.log('Token validation failed:', error?.message)
+      return { isAdmin: false, user: null }
+    }
+
+    // 从users表获取用户角色
+    const { data: profile, error: profileError } = await supabase
+      .from('users')
+      .select('role, username')
+      .eq('id', user.id)
+      .single()
+
+    if (profileError || !profile) {
+      console.log('Profile fetch failed:', profileError?.message)
+      return { isAdmin: false, user: null }
+    }
+
+    return {
+      isAdmin: profile.role === 'admin',
+      user: {
+        id: user.id,
+        username: profile.username,
+        email: user.email
+      }
+    }
+  } catch (error) {
+    console.error('Admin auth check failed:', error)
+    return { isAdmin: false, user: null }
+  }
 }
 
-// 临时内存存储，用于本地开发
-const announcements = [
+// 默认公告数据（仅在Supabase不可用时使用）
+const defaultAnnouncements = [
   {
     id: '1',
     title: '欢迎使用研学港！',
@@ -29,7 +87,7 @@ const announcements = [
     type: 'warning',
     is_active: true,
     created_by: 'admin',
-    created_at: new Date(Date.now() - 86400000).toISOString(), // 1天前
+    created_at: new Date(Date.now() - 86400000).toISOString(),
     updated_at: new Date(Date.now() - 86400000).toISOString()
   }
 ]
@@ -41,7 +99,7 @@ export async function GET(request: NextRequest) {
     const activeOnly = searchParams.get('active') === 'true'
     const limit = parseInt(searchParams.get('limit') || '10')
 
-    // 尝试使用Supabase，如果失败则使用内存存储
+    // 优先使用Supabase
     if (supabase) {
       try {
         let query = supabase
@@ -62,18 +120,19 @@ export async function GET(request: NextRequest) {
         if (!error && data) {
           return NextResponse.json({
             success: true,
-            data: data
+            data: data,
+            source: 'supabase'
           })
         }
 
-        console.log('Supabase query failed, falling back to memory storage:', error)
+        console.log('Supabase query failed:', error)
       } catch (supabaseError) {
-        console.log('Supabase connection failed, using memory storage:', supabaseError)
+        console.log('Supabase connection failed:', supabaseError)
       }
     }
 
-    // 回退到内存存储
-    let filteredAnnouncements = [...announcements]
+    // 回退到默认公告数据
+    let filteredAnnouncements = [...defaultAnnouncements]
 
     // 过滤激活状态
     if (activeOnly) {
@@ -90,7 +149,8 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      data: filteredAnnouncements
+      data: filteredAnnouncements,
+      source: 'fallback'
     })
   } catch (error) {
     console.error('Error in GET /api/announcements:', error)
@@ -101,9 +161,18 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST - 创建新公告
+// POST - 创建新公告（仅管理员）
 export async function POST(request: NextRequest) {
   try {
+    // 检查管理员权限
+    const { isAdmin, user } = await checkAdminAuth(request)
+    if (!isAdmin) {
+      return NextResponse.json(
+        { success: false, message: 'Unauthorized: Admin access required' },
+        { status: 403 }
+      )
+    }
+
     const body = await request.json()
     const { title, content, type = 'info', is_active = true } = body
 
@@ -124,26 +193,46 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 创建新公告
-    const newAnnouncement = {
-      id: Date.now().toString(), // 简单的ID生成
+    // 创建新公告数据
+    const newAnnouncementData = {
       title: title.trim(),
       content: content.trim(),
       type,
       is_active,
-      created_by: 'admin', // 临时硬编码
+      created_by: user?.username || 'admin',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     }
 
-    // 添加到内存存储
-    announcements.unshift(newAnnouncement) // 添加到开头
+    // 优先使用Supabase
+    if (supabase) {
+      try {
+        const { data, error } = await supabase
+          .from('announcements')
+          .insert([newAnnouncementData])
+          .select()
+          .single()
 
-    return NextResponse.json({
-      success: true,
-      data: newAnnouncement,
-      message: 'Announcement created successfully'
-    })
+        if (!error && data) {
+          return NextResponse.json({
+            success: true,
+            data: data,
+            message: 'Announcement created successfully',
+            source: 'supabase'
+          })
+        }
+
+        console.log('Supabase insert failed:', error)
+      } catch (supabaseError) {
+        console.log('Supabase connection failed:', supabaseError)
+      }
+    }
+
+    // 如果Supabase不可用，返回错误（不允许在内存中创建）
+    return NextResponse.json(
+      { success: false, message: 'Database unavailable. Cannot create announcement.' },
+      { status: 503 }
+    )
   } catch (error) {
     console.error('Error in POST /api/announcements:', error)
     return NextResponse.json(
@@ -153,9 +242,18 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// PUT - 更新公告
+// PUT - 更新公告（仅管理员）
 export async function PUT(request: NextRequest) {
   try {
+    // 检查管理员权限
+    const { isAdmin } = await checkAdminAuth(request)
+    if (!isAdmin) {
+      return NextResponse.json(
+        { success: false, message: 'Unauthorized: Admin access required' },
+        { status: 403 }
+      )
+    }
+
     const body = await request.json()
     const { id, title, content, type, is_active } = body
 
@@ -166,29 +264,52 @@ export async function PUT(request: NextRequest) {
       )
     }
 
-    // 查找并更新公告
-    const announcementIndex = announcements.findIndex(a => a.id === id)
-    if (announcementIndex === -1) {
-      return NextResponse.json(
-        { success: false, message: 'Announcement not found' },
-        { status: 404 }
-      )
+    // 准备更新数据
+    const updates: any = {
+      updated_at: new Date().toISOString()
+    }
+    if (title !== undefined) updates.title = title.trim()
+    if (content !== undefined) updates.content = content.trim()
+    if (type !== undefined) updates.type = type
+    if (is_active !== undefined) updates.is_active = is_active
+
+    // 优先使用Supabase
+    if (supabase) {
+      try {
+        const { data, error } = await supabase
+          .from('announcements')
+          .update(updates)
+          .eq('id', id)
+          .select()
+          .single()
+
+        if (!error && data) {
+          return NextResponse.json({
+            success: true,
+            data: data,
+            message: 'Announcement updated successfully',
+            source: 'supabase'
+          })
+        }
+
+        if (error && error.code === 'PGRST116') {
+          return NextResponse.json(
+            { success: false, message: 'Announcement not found' },
+            { status: 404 }
+          )
+        }
+
+        console.log('Supabase update failed:', error)
+      } catch (supabaseError) {
+        console.log('Supabase connection failed:', supabaseError)
+      }
     }
 
-    const announcement = announcements[announcementIndex]
-
-    // 更新字段
-    if (title !== undefined) announcement.title = title.trim()
-    if (content !== undefined) announcement.content = content.trim()
-    if (type !== undefined) announcement.type = type
-    if (is_active !== undefined) announcement.is_active = is_active
-    announcement.updated_at = new Date().toISOString()
-
-    return NextResponse.json({
-      success: true,
-      data: announcement,
-      message: 'Announcement updated successfully'
-    })
+    // 如果Supabase不可用，返回错误
+    return NextResponse.json(
+      { success: false, message: 'Database unavailable. Cannot update announcement.' },
+      { status: 503 }
+    )
   } catch (error) {
     console.error('Error in PUT /api/announcements:', error)
     return NextResponse.json(
@@ -198,9 +319,18 @@ export async function PUT(request: NextRequest) {
   }
 }
 
-// DELETE - 删除公告
+// DELETE - 删除公告（仅管理员）
 export async function DELETE(request: NextRequest) {
   try {
+    // 检查管理员权限
+    const { isAdmin } = await checkAdminAuth(request)
+    if (!isAdmin) {
+      return NextResponse.json(
+        { success: false, message: 'Unauthorized: Admin access required' },
+        { status: 403 }
+      )
+    }
+
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')
 
@@ -211,21 +341,40 @@ export async function DELETE(request: NextRequest) {
       )
     }
 
-    // 查找并删除公告
-    const announcementIndex = announcements.findIndex(a => a.id === id)
-    if (announcementIndex === -1) {
-      return NextResponse.json(
-        { success: false, message: 'Announcement not found' },
-        { status: 404 }
-      )
+    // 优先使用Supabase
+    if (supabase) {
+      try {
+        const { error } = await supabase
+          .from('announcements')
+          .delete()
+          .eq('id', id)
+
+        if (!error) {
+          return NextResponse.json({
+            success: true,
+            message: 'Announcement deleted successfully',
+            source: 'supabase'
+          })
+        }
+
+        if (error && error.code === 'PGRST116') {
+          return NextResponse.json(
+            { success: false, message: 'Announcement not found' },
+            { status: 404 }
+          )
+        }
+
+        console.log('Supabase delete failed:', error)
+      } catch (supabaseError) {
+        console.log('Supabase connection failed:', supabaseError)
+      }
     }
 
-    announcements.splice(announcementIndex, 1)
-
-    return NextResponse.json({
-      success: true,
-      message: 'Announcement deleted successfully'
-    })
+    // 如果Supabase不可用，返回错误
+    return NextResponse.json(
+      { success: false, message: 'Database unavailable. Cannot delete announcement.' },
+      { status: 503 }
+    )
   } catch (error) {
     console.error('Error in DELETE /api/announcements:', error)
     return NextResponse.json(

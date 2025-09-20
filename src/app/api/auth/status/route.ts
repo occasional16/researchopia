@@ -14,11 +14,31 @@ export const GET = withSecurity(async (req: NextRequest) => {
     const body: any = { authenticated }
 
     if (authenticated) {
-      body.user = {
+      // 尝试从cookie中获取用户信息
+      let user = {
         id: 'local-web-user',
         name: '本地用户',
-        email: 'local@researchopia'
+        email: 'local@researchopia',
+        username: 'user'
       }
+
+      // 检查是否有开发用户信息
+      const userCookieMatch = cookie.match(/rp_dev_user=([^;]+)/)
+      if (userCookieMatch) {
+        try {
+          const userData = JSON.parse(decodeURIComponent(userCookieMatch[1]))
+          user = {
+            id: userData.id || 'local-web-user',
+            name: userData.username === 'admin' ? '管理员' : '本地用户',
+            email: userData.email || 'local@researchopia',
+            username: userData.username || 'user'
+          }
+        } catch (e) {
+          // 解析失败，使用默认值
+        }
+      }
+
+      body.user = user
       // Dev token accepted by some local endpoints (e.g., v1/annotations simple route)
       body.token = 'test-token'
     }

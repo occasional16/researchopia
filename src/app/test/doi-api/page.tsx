@@ -177,7 +177,7 @@ export default function DOIAPITest() {
           <div className="mt-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
             <h3 className="font-semibold text-yellow-800 mb-2">🔧 Zotero Plugin Configuration:</h3>
             <p className="text-sm text-yellow-700">
-              Make sure your Zotero plugin is configured to use: <code>http://localhost:3003/api/v1</code>
+              Make sure your Zotero plugin is configured to use: <code>http://localhost:3000/api/v1</code>
             </p>
             <p className="text-xs text-yellow-600 mt-2">
               The plugin will automatically detect DOI-enabled items and use this endpoint for batch uploads.

@@ -8,6 +8,7 @@ import { useLanguage } from '@/contexts/LanguageContext'
 import BrandLogo from '@/components/ui/BrandLogo'
 import { useSmartSearch } from '@/hooks/useSmartSearch'
 import NetworkOptimizer from '@/components/NetworkOptimizer'
+import AnnouncementForm from '@/components/AnnouncementForm'
 
 interface SiteStats {
   totalPapers: number
@@ -36,6 +37,17 @@ interface RecentComment {
   average_rating: number
 }
 
+interface Announcement {
+  id: string
+  title: string
+  content: string
+  type: 'info' | 'warning' | 'success' | 'error'
+  created_at: string
+  updated_at: string
+  is_active: boolean
+  created_by: string
+}
+
 export default function HomePage() {
   const { user, isAuthenticated } = useAuth()
   const { t } = useLanguage()
@@ -56,8 +68,11 @@ export default function HomePage() {
     todayVisits: 0
   })
   const [recentComments, setRecentComments] = useState<RecentComment[]>([])
+  const [announcements, setAnnouncements] = useState<Announcement[]>([])
   const [loading, setLoading] = useState(true)
   const [dataError, setDataError] = useState<string | null>(null)
+  const [showAnnouncementForm, setShowAnnouncementForm] = useState(false)
+  const [editingAnnouncement, setEditingAnnouncement] = useState<Announcement | null>(null)
 
   useEffect(() => {
     const loadData = async () => {
@@ -65,8 +80,8 @@ export default function HomePage() {
       setDataError(null)
       
       try {
-        // 并行加载统计数据和评论数据，提高性能
-        const [statsResponse, commentsResponse] = await Promise.allSettled([
+        // 并行加载统计数据、评论数据和公告数据，提高性能
+        const [statsResponse, commentsResponse, announcementsResponse] = await Promise.allSettled([
           fetch('/api/site/statistics', {
             headers: { 'Content-Type': 'application/json' },
             cache: 'force-cache',
@@ -86,6 +101,21 @@ export default function HomePage() {
             headers: { 'Content-Type': 'application/json' },
             cache: 'force-cache',
             next: { revalidate: 180 } // 3分钟缓存
+          }).then(async res => {
+            if (res.ok) {
+              const text = await res.text()
+              if (text) {
+                const data = JSON.parse(text)
+                return data.success ? data.data : null
+              }
+            }
+            return null
+          }).catch(() => null),
+
+          fetch('/api/announcements?active=true', {
+            headers: { 'Content-Type': 'application/json' },
+            cache: 'force-cache',
+            next: { revalidate: 300 } // 5分钟缓存
           }).then(async res => {
             if (res.ok) {
               const text = await res.text()
@@ -123,6 +153,13 @@ export default function HomePage() {
           // 如果没有真实评论数据，设置为空数组而不是模拟数据
           setRecentComments([])
           console.info('No recent comments available or API not configured')
+        }
+
+        // 处理公告数据
+        if (announcementsResponse.status === 'fulfilled' && announcementsResponse.value && announcementsResponse.value.length > 0) {
+          setAnnouncements(announcementsResponse.value)
+        } else {
+          setAnnouncements([])
         }
 
       } catch (error) {
@@ -209,6 +246,40 @@ export default function HomePage() {
       }
     }
   }, []) // 移除performSmartSearch依赖，避免循环
+
+  // 处理编辑公告
+  const handleEditAnnouncement = (announcement: Announcement) => {
+    setEditingAnnouncement(announcement)
+    setShowAnnouncementForm(true)
+  }
+
+  // 处理删除公告
+  const handleDeleteAnnouncement = async (id: string) => {
+    if (!confirm('确定要删除这个公告吗？')) {
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/announcements?id=${id}`, {
+        method: 'DELETE',
+      })
+
+      const result = await response.json()
+      if (result.success) {
+        // 重新加载公告数据
+        const announcementsResponse = await fetch('/api/announcements?active=true')
+        const announcementsData = await announcementsResponse.json()
+        if (announcementsData.success) {
+          setAnnouncements(announcementsData.data)
+        }
+      } else {
+        alert('删除失败: ' + result.message)
+      }
+    } catch (error) {
+      console.error('Error deleting announcement:', error)
+      alert('删除失败，请重试')
+    }
+  }
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -355,6 +426,107 @@ export default function HomePage() {
       </div>
 
       {/* Stats removed Quick Actions section */}
+
+      {/* Announcements */}
+      {announcements.length > 0 && (
+        <div className="space-y-4">
+          {announcements.map((announcement) => (
+            <div
+              key={announcement.id}
+              className={`rounded-lg shadow-md border-l-4 p-4 ${
+                announcement.type === 'info' ? 'bg-blue-50 border-blue-400' :
+                announcement.type === 'warning' ? 'bg-yellow-50 border-yellow-400' :
+                announcement.type === 'success' ? 'bg-green-50 border-green-400' :
+                announcement.type === 'error' ? 'bg-red-50 border-red-400' :
+                'bg-gray-50 border-gray-400'
+              }`}
+            >
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center">
+                    <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                      announcement.type === 'info' ? 'bg-blue-100 text-blue-800' :
+                      announcement.type === 'warning' ? 'bg-yellow-100 text-yellow-800' :
+                      announcement.type === 'success' ? 'bg-green-100 text-green-800' :
+                      announcement.type === 'error' ? 'bg-red-100 text-red-800' :
+                      'bg-gray-100 text-gray-800'
+                    }`}>
+                      📢 公告
+                    </div>
+                    <h3 className="ml-3 text-lg font-semibold text-gray-900">
+                      {announcement.title}
+                    </h3>
+                  </div>
+                  <div className="mt-2 text-gray-700 whitespace-pre-wrap">
+                    {announcement.content}
+                  </div>
+                  <div className="mt-3 flex justify-between items-center">
+                    <div className="text-sm text-gray-500">
+                      发布时间: {new Date(announcement.created_at).toLocaleString('zh-CN')}
+                      {announcement.created_by && (
+                        <span className="ml-4">发布者: {announcement.created_by}</span>
+                      )}
+                    </div>
+                    {user && user.username === 'admin' && (
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => handleEditAnnouncement(announcement)}
+                          className="text-blue-600 hover:text-blue-800 text-sm"
+                        >
+                          编辑
+                        </button>
+                        <button
+                          onClick={() => handleDeleteAnnouncement(announcement.id)}
+                          className="text-red-600 hover:text-red-800 text-sm"
+                        >
+                          删除
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Admin Announcement Form */}
+      {user && user.username === 'admin' && (
+        <div className="bg-white rounded-lg shadow">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-semibold text-gray-900">
+                📢 管理员公告
+              </h2>
+              <button
+                onClick={() => setShowAnnouncementForm(!showAnnouncementForm)}
+                className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                {showAnnouncementForm ? '取消' : '发布公告'}
+              </button>
+            </div>
+          </div>
+
+          {showAnnouncementForm && (
+            <div className="px-6 py-4">
+              <AnnouncementForm
+                editingAnnouncement={editingAnnouncement}
+                onSuccess={() => {
+                  setShowAnnouncementForm(false)
+                  setEditingAnnouncement(null)
+                  // 重新加载公告数据
+                  window.location.reload()
+                }}
+                onCancel={() => {
+                  setShowAnnouncementForm(false)
+                  setEditingAnnouncement(null)
+                }}
+              />
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Recent Comments */}
       <div className="bg-white rounded-lg shadow">

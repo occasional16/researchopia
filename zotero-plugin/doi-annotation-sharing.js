@@ -181,7 +181,7 @@ Zotero.Researchopia.DOIAnnotationSharing = {
    */
   async uploadAnnotations(annotations, itemInfo) {
     try {
-      const apiUrl = Zotero.Researchopia.Config.get('apiBase') || 'http://localhost:3003/api/v1';
+      const apiUrl = Zotero.Researchopia.Config.get('apiBase') || 'http://localhost:3000/api/v1';
       
       const payload = {
         documentInfo: {

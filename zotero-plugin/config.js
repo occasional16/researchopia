@@ -10,7 +10,7 @@ Zotero.Researchopia.Config = {
    */
   defaults: {
     // API设置
-    apiBase: 'http://localhost:3003/api/v1',
+    apiBase: 'http://localhost:3000/api/v1',
     apiTimeout: 10000,
     
     // 用户界面设置

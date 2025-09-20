@@ -42,11 +42,82 @@
   width: 100%;
   height: 100%;
   gap: 0;
-  padding: 0;
+  padding: 12px;
   margin: 0;
   background: transparent;
   border-radius: 0;
   min-height: 0; /* allow flex to control size and fully stick to edges */
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* 标题区域样式 */
+.researchopia-header {
+  text-align: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--fill-quinary);
+}
+
+.researchopia-title {
+  margin: 0 0 4px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--fill-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.researchopia-title::before {
+  content: "🌊";
+  font-size: 18px;
+}
+
+.researchopia-subtitle {
+  margin: 0;
+  font-size: 12px;
+  color: var(--fill-secondary);
+  font-weight: 400;
+}
+
+/* 认证区域样式 */
+.researchopia-auth-area {
+  margin-bottom: 16px;
+}
+
+/* 浏览按钮样式 */
+.researchopia-btn.browse-btn {
+  background: linear-gradient(135deg, #28a745, #20c997);
+  color: white;
+  border: none;
+}
+
+.researchopia-btn.browse-btn:hover {
+  background: linear-gradient(135deg, #218838, #1ea085);
+  transform: translateY(-1px);
+}
+
+.researchopia-btn.browse-btn:disabled {
+  background: #6c757d;
+  transform: none;
+}
+
+/* 主网站按钮样式 */
+.researchopia-btn.website-btn {
+  background: linear-gradient(135deg, #6f42c1, #e83e8c);
+  color: white;
+  border: none;
+}
+
+.researchopia-btn.website-btn:hover {
+  background: linear-gradient(135deg, #5a32a3, #d91a72);
+  transform: translateY(-1px);
+}
+
+.researchopia-btn.website-btn:disabled {
+  background: #6c757d;
+  transform: none;
 }
 
 .researchopia-header {
@@ -95,16 +166,37 @@
   margin: 2px 0; /* 给按钮一些垂直边距 */
   transition: all 0.2s ease; /* 添加过渡动画 */
 }
-.researchopia-btn:hover { background: #f1f3f5; }
-.researchopia-btn.secondary { color: #0b7285; border-color: #a5d8ff; }
-.researchopia-btn.annotation-btn { 
-  color: #ffffff; 
-  background: #22c55e; 
-  border-color: #16a34a; 
+.researchopia-btn:hover:not(:disabled) { background: #f1f3f5; }
+.researchopia-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: #f8f9fa;
+  color: #6c757d;
+  border-color: #dee2e6;
 }
-.researchopia-btn.annotation-btn:hover { 
-  background: #16a34a; 
+
+.researchopia-btn.secondary {
+  color: #0b7285;
+  border-color: #a5d8ff;
+  background: #ffffff;
+}
+.researchopia-btn.secondary:hover:not(:disabled) {
+  background: #e7f5ff;
+}
+
+.researchopia-btn.annotation-btn {
+  color: #ffffff;
+  background: #22c55e;
+  border-color: #16a34a;
+}
+.researchopia-btn.annotation-btn:hover:not(:disabled) {
+  background: #16a34a;
   border-color: #15803d;
+}
+.researchopia-btn.annotation-btn:disabled {
+  background: #94a3b8;
+  border-color: #64748b;
+  color: #ffffff;
 }
 .researchopia-btn.emphasis { outline: 2px solid #74c0fc; box-shadow: 0 0 0 2px rgba(116,192,252,.2); }
 .researchopia-btn.pulse {
@@ -125,15 +217,50 @@
   /* Fixed larger default visible area */
   min-height: 70vh;
 }
+/* 状态显示区域 */
+.researchopia-status-area {
+  margin: 8px 0;
+}
+
 .researchopia-alert {
-  display: none;
-  padding: 6px 8px;
-  border: 1px solid #ffe3e3;
-  background: #fff5f5;
-  color: #c92a2a;
-  border-radius: 4px;
+  display: block;
+  padding: 8px 12px;
+  border: 1px solid #e3f2fd;
+  background: #f3f9ff;
+  color: #1565c0;
+  border-radius: 6px;
   font-size: 12px;
-  margin: 6px 0; /* subtle spacing from header */
+  line-height: 1.4;
+  margin: 0;
+  min-height: 20px;
+  box-sizing: border-box;
+}
+
+/* 不同状态的样式 */
+.researchopia-alert.success {
+  border-color: #c8e6c9;
+  background: #f1f8e9;
+  color: #2e7d32;
+}
+
+.researchopia-alert.error {
+  border-color: #ffcdd2;
+  background: #ffebee;
+  color: #c62828;
+}
+
+.researchopia-alert.warning {
+  border-color: #ffe0b2;
+  background: #fff8e1;
+  color: #ef6c00;
+}
+
+/* 按钮区域 */
+.researchopia-button-area {
+  display: flex;
+  gap: 8px;
+  margin: 8px 0;
+  flex-wrap: wrap;
 }
 
 .researchopia-iframe {
@@ -175,8 +302,1384 @@
   .researchopia-container {
     border: 0;
   }
-  
+
   .researchopia-iframe {
     border-width: 0;
   }
+}
+
+/* ===== 用户认证系统样式 ===== */
+
+/* 用户认证区域 */
+.researchopia-section {
+  margin-bottom: 15px;
+  padding: 12px;
+  background: #ffffff;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.researchopia-user-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.researchopia-user-header h3 {
+  margin: 0;
+  color: #495057;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* 认证状态指示器 */
+.auth-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.status-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.status-indicator.online {
+  background-color: #28a745;
+  box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.3);
+}
+
+.status-indicator.offline {
+  background-color: #dc3545;
+  box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.3);
+}
+
+.status-indicator.anonymous {
+  background-color: #ffc107;
+  box-shadow: 0 0 0 2px rgba(255, 193, 7, 0.3);
+}
+
+.status-text {
+  color: #6c757d;
+  font-weight: 500;
+}
+
+/* 认证区域 */
+.auth-section {
+  margin-top: 10px;
+}
+
+/* 登录选项 */
+.login-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.primary-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.primary-button:hover:not(:disabled) {
+  background: #0056b3;
+  transform: translateY(-1px);
+}
+
+.primary-button:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.primary-button.loading {
+  position: relative;
+  color: transparent;
+}
+
+.primary-button .spinner {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.secondary-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: #f8f9fa;
+  color: #495057;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.secondary-button:hover:not(:disabled) {
+  background: #e9ecef;
+  border-color: #adb5bd;
+}
+
+.anonymous-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #6c757d;
+  cursor: pointer;
+}
+
+.anonymous-option input[type="checkbox"] {
+  margin: 0;
+}
+
+/* 登录好处列表 */
+.login-benefits {
+  background: #f8f9fa;
+  padding: 12px;
+  border-radius: 4px;
+  border-left: 3px solid #007bff;
+}
+
+.login-benefits h4 {
+  margin: 0 0 8px 0;
+  font-size: 12px;
+  color: #495057;
+  font-weight: 600;
+}
+
+.login-benefits ul {
+  margin: 0;
+  padding-left: 16px;
+  list-style: none;
+}
+
+.login-benefits li {
+  font-size: 11px;
+  color: #6c757d;
+  margin-bottom: 4px;
+  position: relative;
+}
+
+.login-benefits li:before {
+  content: attr(data-icon);
+  position: absolute;
+  left: -16px;
+  top: 0;
+}
+
+/* 用户信息显示 */
+.user-profile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding: 10px;
+  background: #f8f9fa;
+  border-radius: 6px;
+}
+
+.user-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid #dee2e6;
+  object-fit: cover;
+}
+
+.user-details {
+  flex: 1;
+}
+
+.user-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 4px;
+}
+
+.user-stats {
+  display: flex;
+  gap: 12px;
+  font-size: 11px;
+  color: #6c757d;
+}
+
+.user-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* 匿名模式显示 */
+.anonymous-notice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 6px;
+  margin-bottom: 10px;
+}
+
+.anonymous-notice .icon {
+  font-size: 20px;
+}
+
+.notice-content strong {
+  display: block;
+  font-size: 13px;
+  color: #856404;
+  margin-bottom: 2px;
+}
+
+.notice-content p {
+  margin: 0;
+  font-size: 11px;
+  color: #856404;
+}
+
+/* 通知系统 */
+.researchopia-notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: white;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  z-index: 10000;
+  max-width: 300px;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.researchopia-notification.success {
+  border-color: #28a745;
+  background: #d4edda;
+}
+
+.researchopia-notification.error {
+  border-color: #dc3545;
+  background: #f8d7da;
+}
+
+.researchopia-notification.warning {
+  border-color: #ffc107;
+  background: #fff3cd;
+}
+
+.researchopia-notification.info {
+  border-color: #17a2b8;
+  background: #d1ecf1;
+}
+
+.notification-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.notification-message {
+  flex: 1;
+  font-size: 13px;
+  color: #495057;
+}
+
+.notification-close {
+  background: none;
+  border: none;
+  font-size: 16px;
+  color: #6c757d;
+  cursor: pointer;
+  padding: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.notification-close:hover {
+  color: #495057;
+}
+
+/* 暗色主题支持 */
+@media (prefers-color-scheme: dark) {
+  .researchopia-section {
+    background: #2b2b2b;
+    border-color: #5c5f66;
+  }
+
+  .researchopia-user-header h3 {
+    color: #e9ecef;
+  }
+
+  .researchopia-user-header {
+    border-bottom-color: #5c5f66;
+  }
+
+  .status-text {
+    color: #adb5bd;
+  }
+
+  .primary-button {
+    background: #0d6efd;
+  }
+
+  .primary-button:hover:not(:disabled) {
+    background: #0b5ed7;
+  }
+
+  .secondary-button {
+    background: #3a3a3a;
+    color: #e9ecef;
+    border-color: #5c5f66;
+  }
+
+  .secondary-button:hover:not(:disabled) {
+    background: #4a4a4a;
+    border-color: #6c757d;
+  }
+
+  .user-profile {
+    background: #3a3a3a;
+  }
+
+  .user-name {
+    color: #e9ecef;
+  }
+
+  .user-stats {
+    color: #adb5bd;
+  }
+
+  .login-benefits {
+    background: #3a3a3a;
+    border-left-color: #0d6efd;
+  }
+
+  .login-benefits h4 {
+    color: #e9ecef;
+  }
+
+  .login-benefits li {
+    color: #adb5bd;
+  }
+
+  .anonymous-notice {
+    background: #664d03;
+    border-color: #997404;
+  }
+
+  .notice-content strong,
+  .notice-content p {
+    color: #ffecb5;
+  }
+
+  .researchopia-notification {
+    background: #2b2b2b;
+    border-color: #5c5f66;
+  }
+
+  .notification-message {
+    color: #e9ecef;
+  }
+}
+
+/* ===== 标注选择器样式 ===== */
+
+/* 模态背景 */
+.researchopia-modal-overlay {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  background: rgba(0, 0, 0, 0.5) !important;
+  z-index: 10000 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  backdrop-filter: blur(2px);
+}
+
+/* 选择器容器 */
+.researchopia-annotation-selector {
+  background: white !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15) !important;
+  width: 90% !important;
+  max-width: 800px !important;
+  max-height: 80vh !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+}
+
+/* 工具栏按钮 */
+.toolbar-btn {
+  padding: 6px 12px !important;
+  border: 1px solid #ddd !important;
+  background: #f8f9fa !important;
+  border-radius: 4px !important;
+  cursor: pointer !important;
+  font-size: 12px !important;
+  transition: all 0.2s ease !important;
+}
+
+.toolbar-btn:hover {
+  background: #e9ecef !important;
+  border-color: #adb5bd !important;
+}
+
+.toolbar-btn:active {
+  background: #dee2e6 !important;
+  transform: translateY(1px) !important;
+}
+
+/* 标注项样式 */
+.annotation-item {
+  border: 1px solid #e0e0e0 !important;
+  border-radius: 6px !important;
+  margin-bottom: 10px !important;
+  padding: 15px !important;
+  background: #fff !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+.annotation-item:hover {
+  border-color: #007acc !important;
+  box-shadow: 0 2px 8px rgba(0, 122, 204, 0.1) !important;
+}
+
+.annotation-item.selected {
+  background: #f0f8ff !important;
+  border-color: #007acc !important;
+}
+
+/* 标注类型徽章 */
+.annotation-type-badge {
+  display: inline-block !important;
+  padding: 2px 8px !important;
+  border-radius: 12px !important;
+  font-size: 11px !important;
+  font-weight: bold !important;
+  color: white !important;
+  text-transform: uppercase !important;
+}
+
+/* 标注内容样式 */
+.annotation-text {
+  background: #f8f9fa !important;
+  padding: 8px 12px !important;
+  border-radius: 4px !important;
+  margin-bottom: 8px !important;
+  font-size: 13px !important;
+  line-height: 1.4 !important;
+  border-left: 3px solid #ffd400 !important;
+}
+
+.annotation-comment {
+  font-size: 13px !important;
+  color: #333 !important;
+  line-height: 1.4 !important;
+  padding: 4px 0 !important;
+}
+
+/* 预览按钮 */
+.preview-btn {
+  background: none !important;
+  border: 1px solid #ddd !important;
+  border-radius: 4px !important;
+  padding: 4px 8px !important;
+  font-size: 11px !important;
+  cursor: pointer !important;
+  color: #666 !important;
+  transition: all 0.2s ease !important;
+}
+
+.preview-btn:hover {
+  background: #f8f9fa !important;
+  border-color: #adb5bd !important;
+}
+
+/* 复选框样式 */
+.annotation-checkbox {
+  margin-right: 10px !important;
+  transform: scale(1.2) !important;
+  cursor: pointer !important;
+}
+
+/* 选择统计 */
+.selection-summary {
+  font-size: 12px !important;
+  color: #666 !important;
+  margin-top: 10px !important;
+}
+
+/* 隐私控制 */
+.privacy-controls {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+
+.privacy-controls label {
+  font-size: 14px !important;
+  color: #333 !important;
+  font-weight: 500 !important;
+}
+
+.privacy-controls select {
+  padding: 6px 8px !important;
+  border: 1px solid #ddd !important;
+  border-radius: 4px !important;
+  font-size: 14px !important;
+  background: white !important;
+}
+
+/* 操作按钮 */
+.action-buttons {
+  display: flex !important;
+  gap: 10px !important;
+}
+
+.action-buttons button {
+  padding: 10px 20px !important;
+  border-radius: 4px !important;
+  cursor: pointer !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  transition: all 0.2s ease !important;
+}
+
+.action-buttons button:disabled {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+}
+
+#cancel-btn {
+  border: 1px solid #ddd !important;
+  background: #fff !important;
+  color: #333 !important;
+}
+
+#cancel-btn:hover:not(:disabled) {
+  background: #f8f9fa !important;
+  border-color: #adb5bd !important;
+}
+
+#share-btn {
+  border: none !important;
+  background: #007acc !important;
+  color: white !important;
+}
+
+#share-btn:hover:not(:disabled) {
+  background: #0056b3 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 2px 8px rgba(0, 122, 204, 0.3) !important;
+}
+
+/* 暗色主题适配 - 标注选择器 */
+@media (prefers-color-scheme: dark) {
+  .researchopia-annotation-selector {
+    background: #2d2d2d !important;
+    color: #ffffff !important;
+  }
+
+  .annotation-item {
+    background: #3d3d3d !important;
+    border-color: #555 !important;
+    color: #ffffff !important;
+  }
+
+  .annotation-item:hover {
+    border-color: #007acc !important;
+    background: #404040 !important;
+  }
+
+  .annotation-item.selected {
+    background: #1a3a5c !important;
+    border-color: #007acc !important;
+  }
+
+  .annotation-text {
+    background: #404040 !important;
+    color: #ffffff !important;
+  }
+
+  .toolbar-btn {
+    background: #404040 !important;
+    border-color: #555 !important;
+    color: #ffffff !important;
+  }
+
+  .toolbar-btn:hover {
+    background: #4a4a4a !important;
+    border-color: #666 !important;
+  }
+
+  #cancel-btn {
+    background: #404040 !important;
+    border-color: #555 !important;
+    color: #ffffff !important;
+  }
+
+  .privacy-controls select {
+    background: #404040 !important;
+    border-color: #555 !important;
+    color: #ffffff !important;
+  }
+}
+
+/* ===== 同步状态样式 ===== */
+
+.sync-section {
+  margin-top: 16px;
+  padding: 12px;
+  border: 1px solid var(--stroke-secondary);
+  border-radius: 6px;
+  background: var(--material-background);
+}
+
+.sync-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.sync-header h4 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--fill-primary);
+}
+
+.sync-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sync-toggle input[type="checkbox"] {
+  transform: scale(1.1);
+}
+
+.sync-toggle label {
+  font-size: 12px;
+  color: var(--fill-secondary);
+  cursor: pointer;
+}
+
+.sync-status {
+  margin-bottom: 12px;
+}
+
+.sync-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.sync-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #6c757d;
+  transition: all 0.3s ease;
+}
+
+.sync-dot.enabled {
+  background: #28a745;
+}
+
+.sync-dot.syncing {
+  background: #007acc;
+  animation: pulse 1.5s infinite;
+}
+
+.sync-dot.disabled {
+  background: #dc3545;
+}
+
+@keyframes pulse {
+  0% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.2); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+#sync-status-text {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--fill-primary);
+}
+
+.sync-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sync-details div {
+  font-size: 11px;
+  color: var(--fill-secondary);
+}
+
+.sync-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.sync-actions .secondary-button {
+  padding: 6px 12px;
+  font-size: 11px;
+  border: 1px solid var(--stroke-secondary);
+  background: var(--material-background);
+  color: var(--fill-secondary);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sync-actions .secondary-button:hover {
+  background: var(--material-background-hover);
+  border-color: var(--stroke-primary);
+  color: var(--fill-primary);
+}
+
+.sync-actions .secondary-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.sync-actions .secondary-button .icon {
+  margin-right: 4px;
+}
+
+/* 暗色主题适配 - 同步状态 */
+@media (prefers-color-scheme: dark) {
+  .sync-section {
+    background: #2d2d2d;
+    border-color: #555;
+  }
+
+  .sync-header h4 {
+    color: #ffffff;
+  }
+
+  .sync-toggle label {
+    color: #adb5bd;
+  }
+
+  #sync-status-text {
+    color: #ffffff;
+  }
+
+  .sync-details div {
+    color: #adb5bd;
+  }
+
+  .sync-actions .secondary-button {
+    background: #404040;
+    border-color: #555;
+    color: #adb5bd;
+  }
+
+  .sync-actions .secondary-button:hover {
+    background: #4a4a4a;
+    border-color: #666;
+    color: #ffffff;
+  }
+}
+
+/* ===== 社交功能面板样式 ===== */
+
+.researchopia-social-panel {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+
+.social-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.social-panel-header h4 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.social-panel-count {
+  font-size: 12px;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.social-panel-content {
+  padding: 16px;
+}
+
+.social-stats {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.stat-item {
+  flex: 1;
+  text-align: center;
+  padding: 12px;
+  background: white;
+  border-radius: 6px;
+  border: 1px solid #e9ecef;
+  transition: all 0.2s ease;
+}
+
+.stat-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.stat-icon {
+  font-size: 18px;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.stat-label {
+  font-size: 11px;
+  color: #6c757d;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.stat-value {
+  font-size: 16px;
+  font-weight: bold;
+  color: #495057;
+}
+
+.social-actions {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.social-action-btn {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #dee2e6;
+  background: white;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  color: #495057;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.social-action-btn:hover {
+  background: #e9ecef;
+  border-color: #adb5bd;
+}
+
+.social-action-btn .icon {
+  font-size: 14px;
+}
+
+.social-tips {
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 4px;
+  padding: 12px;
+}
+
+.tip-item {
+  font-size: 11px;
+  color: #856404;
+  margin-bottom: 6px;
+  line-height: 1.4;
+}
+
+.tip-item:last-child {
+  margin-bottom: 0;
+}
+
+.simple-social-preview {
+  background: #f0f8ff !important;
+  border: 1px solid #b3d9ff !important;
+  border-radius: 6px !important;
+  padding: 12px !important;
+  font-size: 12px !important;
+  text-align: center;
+}
+
+.simple-social-preview div:first-child {
+  font-weight: bold;
+  margin-bottom: 8px;
+  color: #0066cc;
+}
+
+/* 暗色主题适配 - 社交功能面板 */
+@media (prefers-color-scheme: dark) {
+  .researchopia-social-panel {
+    background: #2d2d2d;
+    border-color: #555;
+  }
+
+  .social-panel-header {
+    background: linear-gradient(135deg, #4a5568 0%, #553c9a 100%);
+  }
+
+  .stat-item {
+    background: #404040;
+    border-color: #555;
+    color: #ffffff;
+  }
+
+  .stat-label {
+    color: #adb5bd;
+  }
+
+  .stat-value {
+    color: #ffffff;
+  }
+
+  .social-action-btn {
+    background: #404040;
+    border-color: #555;
+    color: #adb5bd;
+  }
+
+  .social-action-btn:hover {
+    background: #4a4a4a;
+    border-color: #666;
+    color: #ffffff;
+  }
+
+  .social-tips {
+    background: #3d3d00;
+    border-color: #666600;
+  }
+
+  .tip-item {
+    color: #ffeb3b;
+  }
+
+  .simple-social-preview {
+    background: #1a2332 !important;
+    border-color: #4a90e2 !important;
+  }
+
+  .simple-social-preview div:first-child {
+    color: #64b5f6;
+  }
+}
+
+/* ===== 通知系统样式 ===== */
+
+.researchopia-notification-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 10000;
+  max-width: 400px;
+  pointer-events: none;
+}
+
+.researchopia-notification {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  margin-bottom: 12px;
+  opacity: 0;
+  transform: translateX(100%);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: auto;
+  border-left: 4px solid #007acc;
+  overflow: hidden;
+}
+
+.researchopia-notification.notification-show {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.researchopia-notification.notification-hide {
+  opacity: 0;
+  transform: translateX(100%);
+}
+
+.notification-content {
+  display: flex;
+  align-items: flex-start;
+  padding: 16px;
+  gap: 12px;
+}
+
+.notification-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.notification-message {
+  flex: 1;
+  font-size: 14px;
+  line-height: 1.4;
+  color: #333;
+  word-wrap: break-word;
+}
+
+.notification-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.notification-action {
+  background: #007acc;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.notification-action:hover {
+  background: #005a9e;
+}
+
+.notification-close {
+  background: none;
+  border: none;
+  color: #666;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.notification-close:hover {
+  background: #f0f0f0;
+  color: #333;
+}
+
+.notification-progress {
+  height: 3px;
+  background: #007acc;
+  width: 0%;
+  transition: width 0.3s ease;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+}
+
+/* 不同类型的通知样式 */
+.notification-success {
+  border-left-color: #28a745;
+}
+
+.notification-success .notification-progress {
+  background: #28a745;
+}
+
+.notification-error {
+  border-left-color: #dc3545;
+}
+
+.notification-error .notification-progress {
+  background: #dc3545;
+}
+
+.notification-warning {
+  border-left-color: #ffc107;
+}
+
+.notification-warning .notification-progress {
+  background: #ffc107;
+}
+
+.notification-info {
+  border-left-color: #17a2b8;
+}
+
+.notification-info .notification-progress {
+  background: #17a2b8;
+}
+
+.notification-loading {
+  border-left-color: #6c757d;
+}
+
+.notification-loading .notification-progress {
+  background: #6c757d;
+  animation: loading-pulse 1.5s infinite;
+}
+
+@keyframes loading-pulse {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
+}
+
+/* 响应式设计 */
+@media (max-width: 480px) {
+  .researchopia-notification-container {
+    left: 10px;
+    right: 10px;
+    top: 10px;
+    max-width: none;
+  }
+
+  .notification-content {
+    padding: 12px;
+    gap: 8px;
+  }
+
+  .notification-message {
+    font-size: 13px;
+  }
+
+  .notification-actions {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .notification-action {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+/* 暗色主题适配 - 通知系统 */
+@media (prefers-color-scheme: dark) {
+  .researchopia-notification {
+    background: #2d2d2d;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  }
+
+  .notification-message {
+    color: #ffffff;
+  }
+
+  .notification-close {
+    color: #adb5bd;
+  }
+
+  .notification-close:hover {
+    background: #404040;
+    color: #ffffff;
+  }
+
+  .notification-action {
+    background: #0d6efd;
+  }
+
+  .notification-action:hover {
+    background: #0b5ed7;
+  }
+}
+
+/* 共享标注样式 */
+#researchopia-shared-annotations {
+  margin-top: 15px;
+  border-top: 1px solid var(--material-panedivider);
+  padding-top: 15px;
+}
+
+.shared-annotations-content {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.annotations-summary {
+  margin-bottom: 10px;
+  padding: 8px;
+  background: var(--material-background);
+  border-radius: 4px;
+  font-size: 12px;
+  color: var(--fill-secondary);
+}
+
+.annotations-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.annotation-item {
+  padding: 10px;
+  background: var(--material-background);
+  border: 1px solid var(--material-panedivider);
+  border-radius: 6px;
+  font-size: 12px;
+  transition: all 0.2s ease;
+}
+
+.annotation-item:hover {
+  background: var(--material-sidepane);
+  border-color: var(--accent-blue);
+}
+
+.annotation-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.user-name {
+  font-weight: 500;
+  color: var(--fill-primary);
+  font-size: 11px;
+}
+
+.annotation-type {
+  font-size: 14px;
+}
+
+.annotation-content {
+  margin: 6px 0;
+}
+
+.annotation-text {
+  margin: 0;
+  line-height: 1.4;
+  color: var(--fill-primary);
+}
+
+.annotation-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 6px;
+  font-size: 10px;
+  color: var(--fill-secondary);
+}
+
+.social-stats {
+  display: flex;
+  gap: 8px;
+}
+
+.timestamp {
+  font-style: italic;
+}
+
+.no-annotations {
+  text-align: center;
+  padding: 20px;
+  color: var(--fill-secondary);
+}
+
+.no-annotations .hint {
+  font-size: 11px;
+  margin-top: 5px;
+  font-style: italic;
+}
+
+.view-more {
+  margin-top: 10px;
+  text-align: center;
+}
+
+.view-all-btn {
+  background: var(--accent-blue);
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.view-all-btn:hover {
+  background: var(--accent-blue-dark, #0066cc);
+}
+
+.loading, .error, .placeholder {
+  text-align: center;
+  padding: 15px;
+  color: var(--fill-secondary);
+  font-style: italic;
+  font-size: 12px;
+}
+
+.error {
+  color: var(--accent-red);
+}
+
+.loading-indicator {
+  font-size: 11px;
+  color: var(--fill-secondary);
+  font-style: italic;
 }

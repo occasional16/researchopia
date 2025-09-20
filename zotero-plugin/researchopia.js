@@ -229,15 +229,26 @@ Zotero.Researchopia = {
             let selectionResult = null;
             if (typeof AnnotationShareDialog !== 'undefined') {
               this.log("使用新的分享对话框");
-              selectionResult = await AnnotationShareDialog.showShareDialog(annotations);
+              const dialogResult = await AnnotationShareDialog.showShareDialog(annotations);
 
               // 转换结果格式以兼容现有代码
-              if (selectionResult && selectionResult.success) {
+              if (dialogResult && dialogResult.success) {
                 selectionResult = {
                   annotations: annotations,
                   privacyLevel: 'public',
                   count: annotations.length
                 };
+              } else {
+                // 用户取消或出错
+                this.log(`分享对话框结果: ${JSON.stringify(dialogResult)}`);
+                if (dialogResult && dialogResult.reason === 'cancelled') {
+                  this.showAlert(alert, '📋 已取消分享', 'auto');
+                } else if (dialogResult && dialogResult.reason === 'no_annotations') {
+                  this.showAlert(alert, '❌ 未找到标注', 'auto');
+                } else {
+                  this.showAlert(alert, '❌ 分享失败', 'auto');
+                }
+                return;
               }
             } else {
               this.log("分享对话框不可用，使用简化流程");
@@ -257,7 +268,7 @@ Zotero.Researchopia = {
               }
             }
 
-            if (selectionResult && selectionResult.annotations.length > 0) {
+            if (selectionResult && selectionResult.annotations && selectionResult.annotations.length > 0) {
               this.log(`用户选择了 ${selectionResult.annotations.length} 个标注进行分享`);
               this.showAlert(alert, `🚀 正在分享 ${selectionResult.annotations.length} 个标注...`, 'info');
 

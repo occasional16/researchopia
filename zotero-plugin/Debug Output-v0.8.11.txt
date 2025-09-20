@@ -1,0 +1,3425 @@
+Submit…
+
+Clear
+
+Submitted with Debug ID 📋
+
+1758352933286	addons.xpi	WARN	Force scan SCOPE_APPLICATION (app-builtin-addons location missing from XPIStates)
+
+[JavaScript Error: "Error: Failed to load resource://services-settings/remote-settings.sys.mjs"]
+
+While creating services from category 'profile-after-change', could not create service for entry 'RemotePermissionService', contract ID '@mozilla.org/remote-permission-service;1'
+
+[JavaScript Error: "Error: Failed to load resource://services-settings/remote-settings.sys.mjs" {file: "resource://gre/modules/EssentialDomainsRemoteSettings.sys.mjs" line: 41}]
+
+[JavaScript Error: "Error: Failed to load resource://services-settings/remote-settings.sys.mjs" {file: "resource://gre/modules/SimpleURIUnknownSchemesRemoteObserver.sys.mjs" line: 45}]
+
+[JavaScript Error: "The connection was refused when attempting to contact wss://stream.zotero.org/." {file: "chrome://zotero/content/xpcom/streamer.js" line: 153}]
+
+[JavaScript Error: "WebSocket connection closed: 1006 "]
+
+1758352956835	addons.webextension.researchopia@researchopia.com	WARN	Loading extension 'researchopia@researchopia.com': Reading manifest: Warning processing legacy: An unexpected property was found in the WebExtension manifest.
+
+1758352956889	addons.webextension.researchopia@researchopia.com	WARN	Loading extension 'researchopia@researchopia.com': Reading manifest: Warning processing legacy: An unexpected property was found in the WebExtension manifest.
+
+[JavaScript Error: "uncaught exception: undefined"]
+
+[JavaScript Error: "chrome://zotero/content/zoteroPane.xhtml : Unable to run script because scripts are blocked internally."]
+
+[JavaScript Error: "chrome://zotero/content/zoteroPane.xhtml : Unable to run script because scripts are blocked internally."]
+
+[JavaScript Error: "XML Parsing Error: not well-formed
+Location: 
+Line Number 4, Column 18:"]
+
+[JavaScript Error: "chrome://zotero/content/zoteroPane.xhtml : Unable to run script because scripts are blocked internally."]
+
+[JavaScript Error: "chrome://zotero/content/zoteroPane.xhtml : Unable to run script because scripts are blocked internally."]
+
+[JavaScript Error: "XML Parsing Error: not well-formed
+Location: 
+Line Number 4, Column 18:"]
+
+[JavaScript Error: "chrome://zotero/content/zoteroPane.xhtml : Unable to run script because scripts are blocked internally."]
+
+[JavaScript Error: "chrome://zotero/content/zoteroPane.xhtml : Unable to run script because scripts are blocked internally."]
+
+[JavaScript Error: "XML Parsing Error: not well-formed
+Location: 
+Line Number 4, Column 18:"]
+
+[JavaScript Error: "chrome://zotero/content/zoteroPane.xhtml : Unable to run script because scripts are blocked internally."]
+
+[JavaScript Error: "chrome://zotero/content/zoteroPane.xhtml : Unable to run script because scripts are blocked internally."]
+
+[JavaScript Error: "XML Parsing Error: not well-formed
+Location: 
+Line Number 4, Column 18:"]
+
+appName => Zotero, version => 8.0-beta.8+4ae1ea1da (x64), os => Windows 11 26100, locale => en-US, extensions => Add-on Market for Zotero (8.0.0-beta.1, extension, disabled), Jasminum (1.1.18, extension, disabled), Better Notes for Zotero (2.5.6, extension, disabled), Actions and Tags for Zotero (2.2.3, extension, disabled), Linter for Zotero (1.26.0, extension, disabled), Translate for Zotero (2.3.10, extension, disabled), Easier Citation (0.5.1, extension, disabled), Ethereal Reference (1.5.6.5, extension, disabled), Awesome GPT (2.2.1.5, extension, disabled), Ethereal Style (5.7.1.5, extension, disabled)
+
+(4)(+0010422): SELECT COUNT(*) FROM settings WHERE setting='mImport' AND
+key='cleanup'
+
+(3)(+0000675): Scheduling next feed update
+
+(4)(+0000000): SELECT ( CASE WHEN lastCheck IS NULL THEN 0 ELSE
+strftime('%s', lastCheck) + refreshInterval * 60 - strftime('%s', 'now')
+END ) AS nextCheck FROM feeds WHERE refreshInterval IS NOT NULL ORDER BY
+nextCheck ASC LIMIT 1
+
+(3)(+0000003): No feeds with auto-update
+
+(4)(+0000000): SELECT libraryID AS id FROM feeds WHERE refreshInterval
+IS NOT NULL AND ( lastCheck IS NULL OR (julianday(lastCheck, 'utc') +
+(refreshInterval/1440.0) - julianday('now', 'utc')) <= 0 )
+
+(3)(+0000001): Running update for feeds:
+
+(3)(+0000000): All feed updates done
+
+(3)(+0000000): Scheduling next feed update
+
+(4)(+0000000): SELECT ( CASE WHEN lastCheck IS NULL THEN 0 ELSE
+strftime('%s', lastCheck) + refreshInterval * 60 - strftime('%s', 'now')
+END ) AS nextCheck FROM feeds WHERE refreshInterval IS NOT NULL ORDER BY
+nextCheck ASC LIMIT 1
+
+(3)(+0000000): No feeds with auto-update
+
+(3)(+0011944): Installing plugin researchopia@researchopia.com
+
+(3)(+0000005): Installed plugin researchopia@researchopia.com
+
+(3)(+0000003): Calling bootstrap method 'install' for plugin
+researchopia@researchopia.com version 0.8.11 with reason ADDON_INSTALL
+
+(3)(+0000000): Researchopia: Researchopia plugin 0.8.11 installed
+
+(3)(+0000000): Calling bootstrap method 'startup' for plugin
+researchopia@researchopia.com version 0.8.11 with reason ADDON_INSTALL
+
+(3)(+0000001): Researchopia: Starting up Researchopia plugin v0.8.11
+
+(3)(+0000001): Researchopia: DOI handler loaded
+
+(3)(+0000001): Researchopia: DOI annotation sharing loaded
+
+(3)(+0000000): Researchopia: Error handler loaded
+
+(3)(+0000001): Researchopia: Feedback system loaded
+
+(3)(+0000001): Researchopia: Diagnostic tool loaded
+
+(3)(+0000000): Researchopia: Annotation share dialog loaded
+
+(3)(+0000001): Researchopia: DOI annotation display loaded
+
+(3)(+0000001): Researchopia: Authentication manager loaded
+
+(3)(+0000001): Researchopia: Annotation sharing module loaded
+
+(3)(+0000002): Researchopia: User interface module loaded
+
+(3)(+0000001): Researchopia: AnnotationSelector attached to
+Zotero.Researchopia
+
+(3)(+0000000): Researchopia: Annotation selector module loaded
+
+(3)(+0000001): Researchopia: Social features module loaded
+
+(3)(+0000001): Researchopia: Annotation browser module loaded
+
+(3)(+0000000): Researchopia: Privacy manager module loaded
+
+(3)(+0000001): Researchopia: Collaboration manager module loaded
+
+(3)(+0000000): Researchopia: addToAllWindows called
+
+(3)(+0000001): Researchopia: Researchopia 插件启动
+
+(4)(+0000000): Beginning DB transaction 755lhtXE
+
+(3)(+0000000): Researchopia: Item Pane section registered successfully
+
+(3)(+0000000): Researchopia-Annotation: Initializing annotation sharing
+module
+
+(3)(+0000000): Researchopia-Annotation: Skipping MenuAPI registration to
+avoid compatibility issues
+
+(3)(+0000001): Researchopia-Annotation: Initializing real-time sync
+mechanism
+
+(4)(+0000000): Registering notifier observer 'researchopia-sync_ni' for
+[item]
+
+(3)(+0000000): Researchopia-Annotation: Zotero event listeners registered
+
+(3)(+0000000): Researchopia-Annotation: Periodic sync started (interval:
+30000ms)
+
+(3)(+0000000): Researchopia-Annotation: Real-time sync initialized
+successfully
+
+(3)(+0000000): Researchopia: Annotation sharing module initialized
+
+(3)(+0000000): [2025-09-20T07:22:36.863Z] Researchopia-ErrorHandler
+[INFO]: Initializing Error Handler
+
+(3)(+0000000): [2025-09-20T07:22:36.863Z] Researchopia-ErrorHandler
+[INFO]: Global error handlers set up
+
+(1)(+0000000): [2025-09-20T07:22:36.863Z] Researchopia-ErrorHandler
+[ERROR]: Error loading error stats: JSON.parse: unexpected character at
+line 1 column 1 of the JSON data
+
+(3)(+0000001): Researchopia: Error handler initialized
+
+(3)(+0000000): [2025-09-20T07:22:36.864Z] Researchopia-Feedback [INFO]:
+Initializing Feedback System
+
+(3)(+0000000): Researchopia: Feedback system initialized
+
+(3)(+0000000): [2025-09-20T07:22:36.864Z] Researchopia-Diagnostic
+[INFO]: Diagnostic Tool initialized
+
+(3)(+0000000): Researchopia: Diagnostic tool initialized
+
+(3)(+0000000): Researchopia: Starting up Researchopia plugin modules
+
+(3)(+0000000): [2025-09-20T07:22:36.864Z] Researchopia-Auth [INFO]:
+Initializing Authentication Manager
+
+(3)(+0000000): [2025-09-20T07:22:36.864Z] Researchopia-Auth [INFO]:
+Website auth check timer setup completed
+
+(3)(+0000000): Researchopia: Authentication manager initialized
+
+(3)(+0000000): Researchopia: Section already registered
+
+(3)(+0000000): Researchopia-Annotation: Initializing annotation sharing
+module
+
+(3)(+0000001): Researchopia-Annotation: Skipping MenuAPI registration to
+avoid compatibility issues
+
+(3)(+0000000): Researchopia-Annotation: Initializing real-time sync
+mechanism
+
+(4)(+0000000): Registering notifier observer 'researchopia-sync_ms' for
+[item]
+
+(3)(+0000000): Researchopia-Annotation: Zotero event listeners registered
+
+(3)(+0000000): Researchopia-Annotation: Periodic sync started (interval:
+30000ms)
+
+(3)(+0000000): Researchopia-Annotation: Real-time sync initialized
+successfully
+
+(3)(+0000000): Researchopia: Annotation sharing module initialized
+
+(3)(+0000000): [2025-09-20T07:22:36.865Z] Researchopia-Selector [INFO]:
+Initializing Annotation Selector
+
+(3)(+0000000): [2025-09-20T07:22:36.865Z] Researchopia-Selector [INFO]:
+Selector UI framework initialized
+
+(3)(+0000000): Researchopia: Annotation selector initialized
+
+(3)(+0000000): [2025-09-20T07:22:36.865Z] Researchopia-Social [INFO]:
+Initializing Social Features
+
+(3)(+0000000): [2025-09-20T07:22:36.865Z] Researchopia-Social [INFO]:
+Event listeners registered with Services.obs
+
+(3)(+0000000): Researchopia: Social features initialized
+
+(3)(+0000001): [2025-09-20T07:22:36.866Z] Researchopia-Browser [INFO]:
+Initializing Annotation Browser
+
+(3)(+0000000): [2025-09-20T07:22:36.866Z] Researchopia-Browser [INFO]:
+Event listeners registered
+
+(3)(+0000000): Researchopia: Annotation browser initialized
+
+(3)(+0000000): [2025-09-20T07:22:36.866Z] Researchopia-Privacy [INFO]:
+Initializing Privacy Manager
+
+(3)(+0000000): [2025-09-20T07:22:36.866Z] Researchopia-Privacy [INFO]:
+Loading user privacy settings
+
+(3)(+0000000): [2025-09-20T07:22:36.866Z] Researchopia-Privacy [INFO]:
+User not authenticated, using default settings
+
+(3)(+0000000): [2025-09-20T07:22:36.866Z] Researchopia-Privacy [INFO]:
+Privacy event listeners registered
+
+(3)(+0000000): Researchopia: Privacy manager initialized
+
+(3)(+0000000): [2025-09-20T07:22:36.866Z] Researchopia-Collaboration
+[INFO]: Initializing Collaboration Manager
+
+(3)(+0000000): [2025-09-20T07:22:36.866Z] Researchopia-Collaboration
+[INFO]: Collaboration event listeners registered
+
+(3)(+0000000): [2025-09-20T07:22:36.866Z] Researchopia-Collaboration
+[INFO]: User not authenticated, skipping WebSocket initialization
+
+(3)(+0000001): Researchopia: Collaboration manager initialized
+
+(3)(+0000000): Researchopia: Event listeners setup completed
+
+(3)(+0000000): Researchopia: Plugin startup completed
+
+(3)(+0000000): Researchopia: Researchopia plugin started successfully
+
+(3)(+0000013): Notifier.trigger('refresh', 'itempane', [], {}) queued
+
+(4)(+0000007): Committed DB transaction 755lhtXE
+
+(3)(+0000000): Committing notifier event queue [refresh-itempane: 0]
+
+(3)(+0000000): Notifier.trigger('refresh', 'itempane', [], {}) called
+[observers: 2]
+
+(3)(+0001997): [2025-09-20T07:22:38.883Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000001): [2025-09-20T07:22:38.885Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:22:38.886Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:22:38.887Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:22:38.887Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:22:38.888Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:22:38.888Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:22:38.889Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0000001): [2025-09-20T07:22:38.890Z] Researchopia-UI [INFO]:
+Initializing User Interface
+
+(3)(+0000001): Researchopia: User interface initialized
+
+(3)(+0005388): Starting full-text content processor
+
+(4)(+0000001): Registering notifier observer 'fulltext_jM' for [sync]
+
+(3)(+0000279): Viewing item
+
+(3)(+0000009): Refreshing item box
+
+(3)(+0000045): Setting mode to 'edit'
+
+(3)(+0000000): Reloading tags box
+
+(3)(+0000001): [2025-09-20T07:22:44.614Z] Researchopia-UI [INFO]:
+Creating user panel
+
+(3)(+0000001): [2025-09-20T07:22:44.615Z] Researchopia-UI [INFO]: User
+section DOM built successfully
+
+(3)(+0000000): [2025-09-20T07:22:44.615Z] Researchopia-UI [INFO]: Event
+listeners setup completed
+
+(3)(+0000000): [2025-09-20T07:22:44.615Z] Researchopia-UI [INFO]:
+Showing auth section: authenticated=false, anonymous=false
+
+(3)(+0000000): [2025-09-20T07:22:44.615Z] Researchopia-UI [INFO]:
+Elements found: login=false, user=false, anonymous=false
+
+(3)(+0000000): [2025-09-20T07:22:44.615Z] Researchopia-UI [WARN]: No
+suitable section to show
+
+(3)(+0000000): [2025-09-20T07:22:44.615Z] Researchopia-UI [INFO]: Auth
+status updated: authenticated=false, anonymous=false
+
+(3)(+0000001): [2025-09-20T07:22:44.616Z] Researchopia-DOIDisplay
+[INFO]: Creating shared annotations section for DOI: 10.1038/
+s41467-025-62625-w
+
+(3)(+0000000): [2025-09-20T07:22:44.616Z] Researchopia-DOIDisplay
+[INFO]: Loading shared annotations for DOI: 10.1038/s41467-025-62625-w
+
+(5)(+0000000): CookieSandbox: Being paranoid about channel for
+localhost:3000
+
+(5)(+0000000): CookieSandbox: Cleared cookies to be sent to localhost:3000
+
+(3)(+0000001): [2025-09-20T07:22:44.617Z] Researchopia-UI [INFO]: User
+panel created successfully
+
+(3)(+0000000): [2025-09-20T07:22:44.617Z] Researchopia-UI [INFO]: Sync
+status updater started
+
+(3)(+0000000): [2025-09-20T07:22:44.617Z] Researchopia-UI [INFO]:
+Creating user panel
+
+(3)(+0000000): [2025-09-20T07:22:44.617Z] Researchopia-UI [INFO]: User
+section DOM built successfully
+
+(3)(+0000000): [2025-09-20T07:22:44.617Z] Researchopia-UI [INFO]: Event
+listeners setup completed
+
+(3)(+0000001): [2025-09-20T07:22:44.618Z] Researchopia-UI [INFO]:
+Showing auth section: authenticated=false, anonymous=false
+
+(3)(+0000000): [2025-09-20T07:22:44.618Z] Researchopia-UI [INFO]:
+Elements found: login=true, user=true, anonymous=true
+
+(3)(+0000000): [2025-09-20T07:22:44.618Z] Researchopia-UI [INFO]: Hidden
+section: researchopia-login-section
+
+(3)(+0000000): [2025-09-20T07:22:44.618Z] Researchopia-UI [INFO]: Hidden
+section: researchopia-user-info
+
+(3)(+0000000): [2025-09-20T07:22:44.618Z] Researchopia-UI [INFO]: Hidden
+section: researchopia-anonymous-info
+
+(3)(+0000000): [2025-09-20T07:22:44.618Z] Researchopia-UI [INFO]:
+Showing login section
+
+(3)(+0000000): [2025-09-20T07:22:44.618Z] Researchopia-UI [INFO]: Auth
+status updated: authenticated=false, anonymous=false
+
+(3)(+0000000): [2025-09-20T07:22:44.618Z] Researchopia-DOIDisplay
+[INFO]: Creating shared annotations section for DOI: 10.1038/
+s41467-025-62625-w
+
+(3)(+0000000): [2025-09-20T07:22:44.618Z] Researchopia-DOIDisplay
+[INFO]: Loading shared annotations for DOI: 10.1038/s41467-025-62625-w
+
+(5)(+0000001): CookieSandbox: Being paranoid about channel for
+localhost:3000
+
+(5)(+0000000): CookieSandbox: Cleared cookies to be sent to localhost:3000
+
+(3)(+0000000): [2025-09-20T07:22:44.619Z] Researchopia-UI [INFO]: User
+panel created successfully
+
+(5)(+0000269): CookieSandbox: Being paranoid about channel for
+localhost:3000
+
+(5)(+0000000): CookieSandbox: No Set-Cookie header received for
+localhost:3000
+
+(3)(+0000001): [2025-09-20T07:22:44.889Z] Researchopia-DOIDisplay
+[INFO]: Found API server at: http://localhost:3000
+
+(5)(+0000000): CookieSandbox: Being paranoid about channel for
+localhost:3000
+
+(5)(+0000000): CookieSandbox: Cleared cookies to be sent to localhost:3000
+
+(5)(+0000001): CookieSandbox: Being paranoid about channel for
+localhost:3000
+
+(5)(+0000001): CookieSandbox: No Set-Cookie header received for
+localhost:3000
+
+(3)(+0000000): [2025-09-20T07:22:44.891Z] Researchopia-DOIDisplay
+[INFO]: Found API server at: http://localhost:3000
+
+(5)(+0000000): CookieSandbox: Being paranoid about channel for
+localhost:3000
+
+(5)(+0000000): CookieSandbox: Cleared cookies to be sent to localhost:3000
+
+(5)(+0000401): CookieSandbox: Being paranoid about channel for
+localhost:3000
+
+(5)(+0000000): CookieSandbox: No Set-Cookie header received for
+localhost:3000
+
+(5)(+0000003): CookieSandbox: Being paranoid about channel for
+localhost:3000
+
+(5)(+0000000): CookieSandbox: No Set-Cookie header received for
+localhost:3000
+
+(1)(+0000004): [2025-09-20T07:22:45.299Z] Researchopia-DOIDisplay
+[ERROR]: Error fetching annotations: HTTP 404
+
+(1)(+0000001): [2025-09-20T07:22:45.300Z] Researchopia-DOIDisplay
+[ERROR]: Error loading shared annotations: HTTP 404
+
+(1)(+0000000): [2025-09-20T07:22:45.300Z] Researchopia-DOIDisplay
+[ERROR]: Error fetching annotations: HTTP 404
+
+(1)(+0000000): [2025-09-20T07:22:45.300Z] Researchopia-DOIDisplay
+[ERROR]: Error loading shared annotations: HTTP 404
+
+(3)(+0000166): itemTree.render(). Displaying Item Tree
+
+(3)(+0004499): [2025-09-20T07:22:49.965Z] Researchopia-UI [INFO]:
+Handling login request
+
+(3)(+0000001): [2025-09-20T07:22:49.966Z] Researchopia-Auth [INFO]:
+Opening login window
+
+(3)(+0000000): [2025-09-20T07:22:49.966Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000001): [2025-09-20T07:22:49.967Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:22:49.967Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:22:49.968Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:22:49.968Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:22:49.968Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:22:49.969Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:22:49.969Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0002057): [2025-09-20T07:22:52.026Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000002): [2025-09-20T07:22:52.028Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:22:52.028Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:22:52.029Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:22:52.029Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:22:52.030Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:22:52.030Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:22:52.030Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0002004): [2025-09-20T07:22:54.034Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000002): [2025-09-20T07:22:54.036Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:22:54.037Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:22:54.038Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:22:54.038Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:22:54.039Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:22:54.039Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:22:54.040Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0002005): [2025-09-20T07:22:56.045Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000000): [2025-09-20T07:22:56.045Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:22:56.045Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:22:56.046Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:22:56.046Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:22:56.046Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:22:56.046Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:22:56.047Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0002000): [2025-09-20T07:22:58.047Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000000): [2025-09-20T07:22:58.047Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:22:58.048Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:22:58.048Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:22:58.048Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:22:58.049Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:22:58.049Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:22:58.049Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0002098): [2025-09-20T07:23:00.147Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000001): [2025-09-20T07:23:00.148Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:00.149Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:00.150Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:00.150Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:00.151Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:00.151Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:00.152Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0002211): [2025-09-20T07:23:02.363Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000000): [2025-09-20T07:23:02.363Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:02.363Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:02.364Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:02.364Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:02.364Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:02.364Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:02.365Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0002025): [2025-09-20T07:23:04.390Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000001): [2025-09-20T07:23:04.391Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:04.392Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:04.393Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:04.394Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:04.394Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:04.395Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:04.395Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0000605): itemTree.render(). Displaying Item Tree
+
+(3)(+0000338): Researchopia: 开始检测附件标注: 31883, 类型: application/pdf
+
+(3)(+0000002): Researchopia: getAnnotations() 原始结果:
+[{"key":"5PWVAEU6","version":229693,"itemType":"annotation","parentItem":"JQZ3APZD","annotationType":"highlight","annotationAuthorName":"","annotationText":"Interfaces govern the structure of angstrom
+
+(3)(+0000001): Researchopia: getAnnotations() 处理后找到 4 个标注ID，0
+个直接对象
+
+(3)(+0000000): Researchopia: 获取到项目: ID=35832, 存在=true
+
+(3)(+0000000): Researchopia: 项目详情: itemType=annotation,
+itemTypeID=1, annotationType=highlight
+
+(3)(+0000001): Researchopia: isAnnotation()方法结果: true
+
+(3)(+0000000): Researchopia: ✅ 添加标注: ID=35832, 类型=highlight
+
+(3)(+0000001): Researchopia: 获取到项目: ID=35859, 存在=true
+
+(3)(+0000000): Researchopia: 项目详情: itemType=annotation,
+itemTypeID=1, annotationType=highlight
+
+(3)(+0000000): Researchopia: isAnnotation()方法结果: true
+
+(3)(+0000001): Researchopia: ✅ 添加标注: ID=35859, 类型=highlight
+
+(3)(+0000000): Researchopia: 获取到项目: ID=35860, 存在=true
+
+(3)(+0000000): Researchopia: 项目详情: itemType=annotation,
+itemTypeID=1, annotationType=highlight
+
+(3)(+0000001): Researchopia: isAnnotation()方法结果: true
+
+(3)(+0000000): Researchopia: ✅ 添加标注: ID=35860, 类型=highlight
+
+(3)(+0000000): Researchopia: 获取到项目: ID=35960, 存在=true
+
+(3)(+0000000): Researchopia: 项目详情: itemType=annotation,
+itemTypeID=1, annotationType=highlight
+
+(3)(+0000000): Researchopia: isAnnotation()方法结果: true
+
+(3)(+0000000): Researchopia: ✅ 添加标注: ID=35960, 类型=highlight
+
+(3)(+0000001): Researchopia: 最终获取到 4 个有效标注
+
+(3)(+0000000): Researchopia: 检测到 4 个标注
+
+(3)(+0000000): Researchopia: 最终检测到 4 个标注
+
+(3)(+0000000): Researchopia: 开始使用标注分享对话框处理 4 个标注
+
+(3)(+0000000): Researchopia: 使用新的分享对话框
+
+(3)(+0000000): [2025-09-20T07:23:05.346Z] Researchopia-ShareDialog
+[INFO]: Showing share dialog for 4 annotations
+
+(3)(+0001076): [2025-09-20T07:23:06.422Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000001): [2025-09-20T07:23:06.423Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:06.423Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:06.424Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:06.424Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:06.424Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:06.425Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:06.425Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0000309): [2025-09-20T07:23:06.734Z] Researchopia-Auth [INFO]:
+Opening login window
+
+(3)(+0000000): [2025-09-20T07:23:06.734Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000000): [2025-09-20T07:23:06.734Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): Researchopia: 标注选择器错误: TypeError: can't access
+property "length", selectionResult.annotations is undefined
+
+(3)(+0000000): Researchopia: 回退到传统分享方式
+
+(3)(+0000000): Researchopia-Annotation: 开始分享 4 个标注
+
+(3)(+0000000): Researchopia-Annotation: 显示标注选择器，包含 4 个标注
+
+(3)(+0000000): [2025-09-20T07:23:06.735Z] Researchopia-Selector [INFO]:
+Showing selector with 4 annotations
+
+(3)(+0000001): [2025-09-20T07:23:06.736Z] Researchopia-Selector [INFO]:
+Updated selector UI with 4 selected annotations
+
+(3)(+0000000): [2025-09-20T07:23:06.736Z] Researchopia-Selector [INFO]:
+Selector events setup completed
+
+(1)(+0000001): [2025-09-20T07:23:06.737Z] Researchopia-Selector [ERROR]:
+Error creating annotation element: An invalid or illegal string was
+specified
+
+(1)(+0000000): [2025-09-20T07:23:06.737Z] Researchopia-Selector [ERROR]:
+Error creating annotation element: An invalid or illegal string was
+specified
+
+(1)(+0000000): [2025-09-20T07:23:06.737Z] Researchopia-Selector [ERROR]:
+Error creating annotation element: An invalid or illegal string was
+specified
+
+(1)(+0000001): [2025-09-20T07:23:06.738Z] Researchopia-Selector [ERROR]:
+Error creating annotation element: An invalid or illegal string was
+specified
+
+(3)(+0000000): [2025-09-20T07:23:06.738Z] Researchopia-Selector [INFO]:
+Rendered 4 annotations
+
+(3)(+0000000): [2025-09-20T07:23:06.738Z] Researchopia-Selector [INFO]:
+Inline selector created successfully
+
+(3)(+0000001): [2025-09-20T07:23:06.739Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:06.739Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:06.739Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:06.739Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:06.739Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:06.740Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0001706): [2025-09-20T07:23:08.446Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000001): [2025-09-20T07:23:08.447Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:08.448Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:08.448Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:08.449Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:08.449Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:08.449Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:08.450Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0000558): [2025-09-20T07:23:09.008Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000001): [2025-09-20T07:23:09.009Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:09.010Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:09.011Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:09.012Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:09.012Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:09.013Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:09.013Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0001457): [2025-09-20T07:23:10.470Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000001): [2025-09-20T07:23:10.471Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:10.472Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:10.473Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:10.473Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:10.474Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:10.475Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:10.475Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0000583): [2025-09-20T07:23:11.058Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000000): [2025-09-20T07:23:11.058Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:11.059Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:11.059Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:11.059Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:11.060Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:11.060Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:11.060Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0001431): [2025-09-20T07:23:12.491Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000001): [2025-09-20T07:23:12.492Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:12.493Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:12.493Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:12.494Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:12.494Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:12.495Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:12.495Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0000616): [2025-09-20T07:23:13.111Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000001): [2025-09-20T07:23:13.112Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:13.112Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:13.112Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:13.113Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:13.113Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:13.113Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:13.113Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0000517): [2025-09-20T07:23:13.630Z] Researchopia-Selector [INFO]:
+Selector closed
+
+(3)(+0000001): Researchopia-Annotation: 显示标注选择器失败: User cancelled
+
+(3)(+0000000): Researchopia-Annotation: 用户取消了标注分享
+
+(3)(+0000862): [2025-09-20T07:23:14.493Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000001): [2025-09-20T07:23:14.494Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:14.494Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:14.495Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:14.495Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:14.495Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:14.496Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:14.496Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0000660): [2025-09-20T07:23:15.156Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000001): [2025-09-20T07:23:15.157Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:15.158Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:15.158Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:15.159Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:15.160Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:15.160Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:15.160Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0000456): Getting contents of C:\Users\Bo
+Feng\AppData\Roaming\Zotero\Zotero\Profiles\wsxwp17k.development\treePrefs.json
+
+(3)(+0000006): Writing column prefs of length 13951 to file C:\Users\Bo
+Feng\AppData\Roaming\Zotero\Zotero\Profiles\wsxwp17k.development\treePrefs.json
+
+(5)(+0000462): CookieSandbox: Being paranoid about channel for
+localhost:3001
+
+(5)(+0000001): CookieSandbox: Cleared cookies to be sent to localhost:3001
+
+(5)(+0000279): CookieSandbox: Being paranoid about channel for
+localhost:3001
+
+(5)(+0000001): CookieSandbox: No Set-Cookie header received for
+localhost:3001
+
+(3)(+0000021): Researchopia: Opened main website: http://localhost:3001
+
+(3)(+0000113): [2025-09-20T07:23:16.499Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000001): [2025-09-20T07:23:16.500Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:16.500Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:16.501Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:16.501Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:16.501Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:16.501Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:16.501Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0000656): [2025-09-20T07:23:17.158Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000001): [2025-09-20T07:23:17.159Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:17.160Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:17.160Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:17.160Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:17.161Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:17.161Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:17.161Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0001497): [2025-09-20T07:23:18.658Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000001): [2025-09-20T07:23:18.659Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:18.660Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:18.661Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:18.662Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:18.663Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:18.664Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:18.664Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0000529): [2025-09-20T07:23:19.193Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000001): [2025-09-20T07:23:19.194Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:19.194Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:19.195Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:19.195Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:19.195Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:19.196Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:19.196Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0001519): [2025-09-20T07:23:20.715Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000001): [2025-09-20T07:23:20.716Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:20.716Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:20.717Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:20.717Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:20.717Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:20.718Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:20.718Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0000663): [2025-09-20T07:23:21.381Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000001): [2025-09-20T07:23:21.382Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:21.383Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:21.384Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:21.384Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:21.385Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:21.386Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:21.386Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0001342): [2025-09-20T07:23:22.728Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000002): [2025-09-20T07:23:22.730Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:22.731Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:22.731Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:22.732Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:22.733Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:22.733Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:22.734Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0000649): [2025-09-20T07:23:23.383Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000001): [2025-09-20T07:23:23.384Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:23.384Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:23.384Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:23.384Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:23.385Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:23.385Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:23.385Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0001444): [2025-09-20T07:23:24.829Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000001): [2025-09-20T07:23:24.830Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:24.831Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:24.831Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:24.831Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:24.832Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:24.832Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:24.833Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0000564): [2025-09-20T07:23:25.397Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000000): [2025-09-20T07:23:25.397Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:25.398Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:25.398Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:25.398Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:25.398Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:25.399Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:25.399Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0001455): [2025-09-20T07:23:26.854Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000001): [2025-09-20T07:23:26.855Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:26.855Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:26.855Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:26.856Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:26.856Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:26.856Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:26.856Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0000542): [2025-09-20T07:23:27.398Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000000): [2025-09-20T07:23:27.398Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:27.399Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:27.399Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:27.400Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:27.400Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:27.400Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:27.401Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0001471): [2025-09-20T07:23:28.872Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000001): [2025-09-20T07:23:28.873Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:28.874Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:28.875Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:28.876Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:28.877Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:28.877Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:28.878Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0000532): [2025-09-20T07:23:29.409Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000001): [2025-09-20T07:23:29.411Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:29.411Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:29.412Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:29.412Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:29.413Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:29.413Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:29.414Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0001461): [2025-09-20T07:23:30.875Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000001): [2025-09-20T07:23:30.876Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:30.876Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:30.877Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:30.877Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:30.878Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:30.878Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:30.878Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0000535): [2025-09-20T07:23:31.412Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000001): [2025-09-20T07:23:31.414Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:31.414Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:31.415Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:31.415Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:31.416Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:31.416Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:31.417Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0001470): [2025-09-20T07:23:32.887Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000001): [2025-09-20T07:23:32.888Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:32.888Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:32.889Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:32.889Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:32.889Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:32.890Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:32.890Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0000536): [2025-09-20T07:23:33.426Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000001): [2025-09-20T07:23:33.427Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:33.428Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:33.429Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:33.430Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:33.430Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:33.431Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:33.431Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0001470): [2025-09-20T07:23:34.901Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000001): [2025-09-20T07:23:34.902Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:34.903Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:34.903Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:34.904Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:34.905Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:34.906Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:34.907Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0000525): [2025-09-20T07:23:35.432Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000001): [2025-09-20T07:23:35.433Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:35.434Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:35.435Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:35.436Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:35.437Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:35.437Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:35.438Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0001487): [2025-09-20T07:23:36.925Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000002): [2025-09-20T07:23:36.927Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:36.928Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:36.928Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:36.929Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:36.930Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:36.931Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:36.931Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0000507): [2025-09-20T07:23:37.438Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000000): [2025-09-20T07:23:37.438Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:37.439Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:37.439Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:37.439Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:37.439Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:37.440Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:37.440Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0001501): [2025-09-20T07:23:38.941Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000001): [2025-09-20T07:23:38.942Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:38.943Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:38.944Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:38.945Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:38.946Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:38.946Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:38.947Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0000501): [2025-09-20T07:23:39.448Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000001): [2025-09-20T07:23:39.449Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:39.450Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:39.451Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:39.452Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:39.453Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:39.454Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:39.454Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0001512): [2025-09-20T07:23:40.966Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000001): [2025-09-20T07:23:40.967Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:40.968Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:40.969Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:40.970Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:40.971Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:40.971Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:40.972Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0000492): [2025-09-20T07:23:41.464Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000001): [2025-09-20T07:23:41.465Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000002): [2025-09-20T07:23:41.466Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:41.468Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:41.469Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:41.470Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:41.470Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:41.471Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0001517): [2025-09-20T07:23:42.988Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000001): [2025-09-20T07:23:42.989Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:42.989Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:42.989Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:42.989Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:42.990Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:42.990Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:42.990Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0000476): [2025-09-20T07:23:43.466Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000002): [2025-09-20T07:23:43.468Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:43.469Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:43.470Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:43.470Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:43.471Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:43.472Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:43.473Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0001655): [2025-09-20T07:23:45.128Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000001): [2025-09-20T07:23:45.129Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:45.129Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:45.130Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:45.130Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:45.130Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:45.130Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:45.130Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0000349): [2025-09-20T07:23:45.479Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000001): [2025-09-20T07:23:45.480Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:45.480Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:45.480Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:45.481Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:45.481Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:45.481Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:45.481Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0001668): [2025-09-20T07:23:47.149Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000002): [2025-09-20T07:23:47.151Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:47.152Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:47.153Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:47.154Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:47.155Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:47.155Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:47.156Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0000336): [2025-09-20T07:23:47.492Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000001): [2025-09-20T07:23:47.493Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000002): [2025-09-20T07:23:47.495Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:47.496Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:47.496Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000002): [2025-09-20T07:23:47.498Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:47.498Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:47.499Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0001733): [2025-09-20T07:23:49.232Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000002): [2025-09-20T07:23:49.234Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:49.235Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:49.235Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:49.236Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:49.237Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:49.237Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:49.238Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0000266): [2025-09-20T07:23:49.504Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000000): [2025-09-20T07:23:49.504Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:49.505Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:49.505Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:49.506Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:49.506Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:49.506Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:49.507Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0001743): [2025-09-20T07:23:51.250Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000002): [2025-09-20T07:23:51.252Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:51.252Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:51.253Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:51.254Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:51.255Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:51.255Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:51.256Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0000253): [2025-09-20T07:23:51.509Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000001): [2025-09-20T07:23:51.510Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:51.511Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:51.512Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:51.513Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:51.513Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:51.514Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:51.514Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0001750): [2025-09-20T07:23:53.264Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000002): [2025-09-20T07:23:53.266Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000002): [2025-09-20T07:23:53.268Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:53.269Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:53.269Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:53.270Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:53.270Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:53.270Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0000263): [2025-09-20T07:23:53.533Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000002): [2025-09-20T07:23:53.535Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:53.536Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:53.537Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:53.538Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:53.539Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:53.540Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:53.541Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0001748): [2025-09-20T07:23:55.289Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000001): [2025-09-20T07:23:55.290Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:55.291Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:55.292Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:55.293Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:55.293Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:55.294Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:55.295Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0000251): [2025-09-20T07:23:55.546Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000001): [2025-09-20T07:23:55.547Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:55.547Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:55.548Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:55.548Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:55.548Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:55.549Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:55.549Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0001743): [2025-09-20T07:23:57.292Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000000): [2025-09-20T07:23:57.292Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:57.293Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:57.293Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:57.294Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:57.294Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:57.294Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:57.294Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0000255): [2025-09-20T07:23:57.549Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000001): [2025-09-20T07:23:57.550Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:57.550Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:57.551Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:57.551Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:57.551Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:57.551Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:57.552Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0001752): [2025-09-20T07:23:59.304Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000001): [2025-09-20T07:23:59.305Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:59.306Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:59.307Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:59.307Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:59.308Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:59.309Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:59.309Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0000252): [2025-09-20T07:23:59.561Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000000): [2025-09-20T07:23:59.561Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:59.562Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:59.562Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:59.562Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:23:59.563Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:59.563Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:23:59.563Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0001756): [2025-09-20T07:24:01.319Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000003): [2025-09-20T07:24:01.322Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000002): [2025-09-20T07:24:01.324Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:24:01.324Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:01.325Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:24:01.325Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:01.326Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:24:01.326Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0000248): [2025-09-20T07:24:01.574Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000001): [2025-09-20T07:24:01.575Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:01.576Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:01.577Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:01.578Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:01.579Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:01.580Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:24:01.580Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0001745): [2025-09-20T07:24:03.325Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000001): [2025-09-20T07:24:03.326Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:03.327Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:24:03.327Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:24:03.327Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:24:03.327Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:03.328Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:24:03.328Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0000258): [2025-09-20T07:24:03.586Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000001): [2025-09-20T07:24:03.587Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:24:03.587Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:24:03.587Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:03.588Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:24:03.588Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:24:03.588Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:03.589Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0001793): [2025-09-20T07:24:05.382Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000002): [2025-09-20T07:24:05.384Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:05.385Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:05.386Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:05.387Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:05.388Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:24:05.388Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:05.389Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0000354): [2025-09-20T07:24:05.743Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000001): [2025-09-20T07:24:05.744Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:24:05.744Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:05.745Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:24:05.745Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:24:05.745Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:05.746Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:24:05.746Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0001650): [2025-09-20T07:24:07.396Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000002): [2025-09-20T07:24:07.398Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:07.399Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:07.400Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:07.401Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:24:07.401Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:07.402Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:07.403Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0000344): [2025-09-20T07:24:07.747Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000001): [2025-09-20T07:24:07.748Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:07.749Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:07.750Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:24:07.750Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:07.751Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:07.752Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:24:07.752Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0001656): [2025-09-20T07:24:09.408Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000002): [2025-09-20T07:24:09.410Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000002): [2025-09-20T07:24:09.412Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:09.413Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:09.414Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:09.415Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:09.416Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:09.417Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0000331): [2025-09-20T07:24:09.748Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000002): [2025-09-20T07:24:09.750Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:09.751Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:09.752Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:09.753Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:24:09.753Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:09.754Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:09.755Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0001694): [2025-09-20T07:24:11.449Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000000): [2025-09-20T07:24:11.449Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:11.450Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:24:11.450Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:11.450Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:24:11.451Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:24:11.451Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:24:11.451Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0000313): [2025-09-20T07:24:11.764Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000002): [2025-09-20T07:24:11.766Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:11.767Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:11.768Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:11.769Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:11.770Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:24:11.770Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:11.771Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0001842): [2025-09-20T07:24:13.613Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000002): [2025-09-20T07:24:13.615Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:13.616Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:24:13.616Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:13.617Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:13.618Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:24:13.618Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:24:13.618Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0000170): [2025-09-20T07:24:13.788Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000001): [2025-09-20T07:24:13.789Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000002): [2025-09-20T07:24:13.791Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:13.792Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:13.793Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:24:13.793Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:13.794Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:13.795Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0001874): [2025-09-20T07:24:15.669Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000000): [2025-09-20T07:24:15.669Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:15.670Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:24:15.670Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:24:15.670Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:15.671Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:24:15.671Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:24:15.671Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0000137): [2025-09-20T07:24:15.808Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000001): [2025-09-20T07:24:15.809Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:15.810Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:15.811Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:15.812Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:15.813Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:15.814Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:24:15.814Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0001868): [2025-09-20T07:24:17.682Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000001): [2025-09-20T07:24:17.683Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:24:17.683Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:24:17.683Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:17.684Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:24:17.684Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:24:17.684Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:24:17.684Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0000147): [2025-09-20T07:24:17.830Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000001): [2025-09-20T07:24:17.832Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:17.833Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:17.834Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:17.835Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:17.836Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:17.837Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:24:17.837Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0001865): [2025-09-20T07:24:19.702Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000002): [2025-09-20T07:24:19.704Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:19.705Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:19.706Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:19.707Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:19.708Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:19.709Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:19.710Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0000132): [2025-09-20T07:24:19.842Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000002): [2025-09-20T07:24:19.844Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:19.845Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:19.846Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:19.847Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:19.848Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:19.849Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:24:19.849Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0001869): [2025-09-20T07:24:21.718Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000002): [2025-09-20T07:24:21.720Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:21.721Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:21.722Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:21.723Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:24:21.723Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:21.724Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:21.725Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0000130): [2025-09-20T07:24:21.855Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000001): [2025-09-20T07:24:21.856Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:21.857Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:21.858Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:21.859Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:21.860Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:24:21.860Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:21.861Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0002009): [2025-09-20T07:24:23.870Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000001): [2025-09-20T07:24:23.871Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000002): [2025-09-20T07:24:23.873Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:23.874Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:24:23.874Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:23.875Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:23.876Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:23.877Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0000003): [2025-09-20T07:24:23.880Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000000): [2025-09-20T07:24:23.880Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:23.881Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:24:23.881Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:23.882Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:24:23.882Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:23.883Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:24:23.883Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0002016): [2025-09-20T07:24:25.899Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000002): [2025-09-20T07:24:25.901Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:25.902Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:25.903Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:24:25.903Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:25.904Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:24:25.904Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:24:25.904Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0000001): [2025-09-20T07:24:25.905Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000001): [2025-09-20T07:24:25.906Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:24:25.906Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:24:25.906Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:25.907Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:24:25.907Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:24:25.907Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:24:25.907Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0002017): [2025-09-20T07:24:27.924Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000001): [2025-09-20T07:24:27.925Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000002): [2025-09-20T07:24:27.927Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:27.928Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:27.929Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:24:27.929Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:27.930Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:27.931Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0000002): [2025-09-20T07:24:27.933Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000001): [2025-09-20T07:24:27.934Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:24:27.934Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:27.935Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:27.936Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:24:27.936Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:27.937Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:24:27.937Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0002009): [2025-09-20T07:24:29.946Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000002): [2025-09-20T07:24:29.948Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:29.949Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:24:29.949Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:29.950Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:29.951Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:29.952Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:29.953Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0000001): [2025-09-20T07:24:29.954Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000001): [2025-09-20T07:24:29.955Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:29.956Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:29.957Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:24:29.957Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:29.958Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:24:29.958Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:29.959Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0001999): [2025-09-20T07:24:31.958Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000001): [2025-09-20T07:24:31.959Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:31.960Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:31.961Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000002): [2025-09-20T07:24:31.963Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:31.964Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:31.965Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:31.966Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+
+(3)(+0000001): [2025-09-20T07:24:31.967Z] Researchopia-Auth [INFO]:
+Checking website authentication status...
+
+(3)(+0000001): [2025-09-20T07:24:31.968Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:31.969Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:31.970Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://localhost:3002:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000000): [2025-09-20T07:24:31.970Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3001:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:31.971Z] Researchopia-Auth [WARN]: Auth
+status probe failed for http://127.0.0.1:3000:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:31.972Z] Researchopia-Auth [WARN]: Auth
+status probe failed for https://researchopia.com:
+XMLHttpRequest.withCredentials setter: XMLHttpRequest must not be sending.
+
+(3)(+0000001): [2025-09-20T07:24:31.973Z] Researchopia-Auth [WARN]: No
+reachable auth host found for status check
+

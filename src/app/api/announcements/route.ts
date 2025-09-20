@@ -11,7 +11,7 @@ if (supabaseUrl && supabaseServiceKey) {
 }
 
 // 临时内存存储，用于本地开发
-let announcements = [
+const announcements = [
   {
     id: '1',
     title: '欢迎使用研学港！',

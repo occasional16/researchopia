@@ -2,7 +2,7 @@
  * 初始化公告表的脚本
  */
 
-const { createClient } = require('@supabase/supabase-js')
+import { createClient } from '@supabase/supabase-js'
 
 // 从环境变量获取配置
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -96,7 +96,7 @@ async function initAnnouncementsTable() {
 }
 
 // 如果直接运行此脚本
-if (require.main === module) {
+if (import.meta.url === `file://${process.argv[1]}`) {
   initAnnouncementsTable()
     .then(() => {
       console.log('✅ Initialization complete')
@@ -108,4 +108,4 @@ if (require.main === module) {
     })
 }
 
-module.exports = { initAnnouncementsTable }
+export { initAnnouncementsTable }

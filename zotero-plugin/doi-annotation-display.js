@@ -201,9 +201,9 @@ const DOIAnnotationDisplay = {
   async getApiBase() {
     try {
       const hosts = [
-        'http://localhost:3000',
-        'http://localhost:3001',
         'http://localhost:3002',
+        'http://localhost:3001',
+        'http://localhost:3000',
         'https://researchopia.com'
       ];
 
@@ -231,12 +231,12 @@ const DOIAnnotationDisplay = {
    */
   async fetchAnnotations(apiBase, doi) {
     try {
-      const url = `${apiBase}/annotations/by-doi/${encodeURIComponent(doi)}`;
+      const url = `${apiBase}/v1/annotations/doi/${encodeURIComponent(doi)}`;
       const response = await this.httpGet(url, { timeout: 10000 });
-      
-      if (response && response.annotations) {
-        this.log(`Fetched ${response.annotations.length} annotations for DOI: ${doi}`);
-        return response.annotations;
+
+      if (response && response.success && response.data && response.data.annotations) {
+        this.log(`Fetched ${response.data.annotations.length} annotations for DOI: ${doi}`);
+        return response.data.annotations;
       } else {
         this.log(`No annotations found for DOI: ${doi}`);
         return [];
@@ -313,7 +313,7 @@ const DOIAnnotationDisplay = {
         viewAllBtn.className = 'view-all-btn';
         viewAllBtn.textContent = `查看全部 ${annotations.length} 个标注`;
         viewAllBtn.addEventListener('click', () => {
-          const url = `http://localhost:3000/paper/${encodeURIComponent(annotations[0].documentId)}`;
+          const url = `http://localhost:3002/paper/${encodeURIComponent(annotations[0].documentId)}`;
           if (typeof Zotero !== 'undefined' && Zotero.launchURL) {
             Zotero.launchURL(url);
           } else {

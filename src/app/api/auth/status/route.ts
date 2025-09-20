@@ -24,7 +24,7 @@ export const GET = withSecurity(async (req: NextRequest) => {
     }
 
     return NextResponse.json(body, { status: 200 })
-  } catch (error) {
+  } catch {
     return NextResponse.json({ authenticated: false }, { status: 200 })
   }
 })

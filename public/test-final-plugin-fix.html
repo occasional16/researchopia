@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>最终插件修复测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        .button:hover {
+            background: #0056b3;
+        }
+        .button.success {
+            background: #28a745;
+        }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 10px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .status.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .status.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .status.info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        .iframe-demo {
+            border: 2px solid #007bff;
+            border-radius: 8px;
+            overflow: hidden;
+            margin: 20px 0;
+            background: #f8f9fa;
+        }
+        .iframe-demo iframe {
+            width: 100%;
+            height: 400px;
+            border: none;
+            display: block;
+        }
+        .fix-summary {
+            background: #e7f3ff;
+            border: 1px solid #b3d9ff;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎉 最终插件修复测试</h1>
+        <p>此页面验证所有插件修复是否正常工作</p>
+        
+        <div>
+            <button class="button success" onclick="runFullTest()">运行完整测试</button>
+            <button class="button" onclick="testPortDetection()">测试端口检测</button>
+            <button class="button" onclick="testIframeAuth()">测试iframe认证</button>
+            <button class="button" onclick="clearLog()">清除日志</button>
+        </div>
+        
+        <div id="status" class="status info">
+            准备就绪，点击按钮开始测试
+        </div>
+        
+        <div class="log" id="log">
+            [等待操作...]
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>🔧 修复总结</h2>
+        <div class="fix-summary">
+            <h3>主要修复内容：</h3>
+            <ul>
+                <li><strong>端口检测优化</strong>：调整端口优先级，3002端口优先</li>
+                <li><strong>异步初始化</strong>：确保端口检测完成后再创建iframe</li>
+                <li><strong>iframe URL动态构建</strong>：根据检测到的端口动态构建认证URL</li>
+                <li><strong>错误处理增强</strong>：添加详细的错误信息和重试机制</li>
+                <li><strong>加载状态显示</strong>：添加加载动画和状态提示</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="container" id="iframe-container" style="display: none;">
+        <h2>📱 iframe认证演示</h2>
+        <p>以下iframe模拟插件中的认证面板：</p>
+        <div class="iframe-demo" id="iframe-area"></div>
+    </div>
+
+    <script>
+        const config = {
+            apiPorts: [3002, 3001, 3000, 3003, 3004, 3005, 3006, 3007, 3008, 3009],
+            currentApiUrl: null,
+            timeout: 10000
+        };
+
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            const logElement = document.getElementById('log');
+            logElement.textContent += `[${timestamp}] ${message}\n`;
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+
+        function setStatus(message, type = 'info') {
+            const statusElement = document.getElementById('status');
+            statusElement.textContent = message;
+            statusElement.className = `status ${type}`;
+        }
+
+        function clearLog() {
+            document.getElementById('log').textContent = '[日志已清除]\n';
+            setStatus('日志已清除', 'info');
+        }
+
+        async function testPortAvailability(port) {
+            return new Promise((resolve) => {
+                const xhr = new XMLHttpRequest();
+                xhr.timeout = 2000;
+                
+                xhr.onload = () => {
+                    resolve(xhr.status === 200 || xhr.status === 404);
+                };
+                
+                xhr.onerror = () => resolve(false);
+                xhr.ontimeout = () => resolve(false);
+                
+                try {
+                    xhr.open('GET', `http://localhost:${port}/api/auth/status`, true);
+                    xhr.send();
+                } catch (error) {
+                    resolve(false);
+                }
+            });
+        }
+
+        async function detectAvailablePorts() {
+            log('🔍 开始检测可用端口...');
+
+            for (const port of config.apiPorts) {
+                try {
+                    log(`🧪 正在测试端口 ${port}...`);
+                    const isAvailable = await testPortAvailability(port);
+                    
+                    if (isAvailable) {
+                        config.currentApiUrl = `http://localhost:${port}`;
+                        log(`✅ 检测到可用端口: ${port}`);
+                        log(`✅ API URL: ${config.currentApiUrl}`);
+                        return true;
+                    }
+                } catch (error) {
+                    log(`❌ 端口 ${port} 检测失败: ${error.message}`);
+                }
+            }
+
+            log('❌ 未找到可用端口');
+            return false;
+        }
+
+        async function testPortDetection() {
+            config.currentApiUrl = null;
+            setStatus('正在检测端口...', 'info');
+            
+            const success = await detectAvailablePorts();
+            
+            if (success) {
+                setStatus(`端口检测成功: ${config.currentApiUrl}`, 'success');
+                log('🎉 端口检测测试完成');
+            } else {
+                setStatus('端口检测失败', 'error');
+            }
+        }
+
+        async function testIframeAuth() {
+            if (!config.currentApiUrl) {
+                log('⚠️ 尚未检测到可用API端口，开始检测...');
+                const success = await detectAvailablePorts();
+                if (!success) {
+                    log('❌ 无法创建iframe，端口检测失败');
+                    setStatus('iframe创建失败：端口检测失败', 'error');
+                    return;
+                }
+            }
+
+            log('🔧 创建认证iframe...');
+            setStatus('正在创建iframe...', 'info');
+            
+            const iframeContainer = document.getElementById('iframe-container');
+            const iframeArea = document.getElementById('iframe-area');
+            
+            // 清空之前的内容
+            iframeArea.innerHTML = '';
+            
+            // 创建加载提示
+            const loadingDiv = document.createElement('div');
+            loadingDiv.style.cssText = 'padding: 20px; text-align: center; color: #6c757d;';
+            loadingDiv.innerHTML = `
+                <div style="display: inline-block; width: 20px; height: 20px; border: 2px solid #f3f3f3; border-top: 2px solid #007bff; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                <p style="margin: 10px 0 0 0;">正在加载认证页面...</p>
+                <style>
+                    @keyframes spin {
+                        0% { transform: rotate(0deg); }
+                        100% { transform: rotate(360deg); }
+                    }
+                </style>
+            `;
+            iframeArea.appendChild(loadingDiv);
+            
+            const iframe = document.createElement('iframe');
+            iframe.style.cssText = `
+                width: 100%;
+                height: 400px;
+                border: none;
+                display: block;
+            `;
+            
+            const authUrl = config.currentApiUrl + '/plugin/auth';
+            iframe.src = authUrl;
+            
+            log(`🌐 iframe URL: ${authUrl}`);
+            
+            iframe.onload = () => {
+                log('✅ iframe加载完成');
+                setStatus('iframe认证页面加载成功', 'success');
+                
+                // 移除加载提示
+                if (loadingDiv.parentNode) {
+                    loadingDiv.parentNode.removeChild(loadingDiv);
+                }
+            };
+            
+            iframe.onerror = (error) => {
+                log('❌ iframe加载失败: ' + JSON.stringify(error));
+                setStatus('iframe加载失败', 'error');
+                
+                // 显示错误信息
+                iframeArea.innerHTML = `
+                    <div style="padding: 20px; text-align: center; color: #dc3545;">
+                        <p>认证页面加载失败</p>
+                        <p style="font-size: 12px; margin-top: 8px;">URL: ${authUrl}</p>
+                        <button onclick="testIframeAuth()" style="margin-top: 10px; padding: 5px 10px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer;">重试</button>
+                    </div>
+                `;
+            };
+            
+            iframeArea.appendChild(iframe);
+            iframeContainer.style.display = 'block';
+            
+            log('✅ iframe已创建并开始加载');
+        }
+
+        async function runFullTest() {
+            log('🚀 开始运行完整测试...');
+            setStatus('正在运行完整测试...', 'info');
+            
+            // 1. 端口检测测试
+            log('📍 步骤1: 端口检测测试');
+            await testPortDetection();
+            
+            // 等待1秒
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // 2. iframe认证测试
+            log('📍 步骤2: iframe认证测试');
+            await testIframeAuth();
+            
+            log('🎉 完整测试完成');
+            setStatus('完整测试完成', 'success');
+        }
+
+        // 页面加载时的初始化
+        window.onload = function() {
+            log('🚀 最终插件修复测试页面已加载');
+            log('当前服务器应该运行在端口3002');
+        };
+    </script>
+</body>
+</html>

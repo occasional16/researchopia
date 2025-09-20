@@ -331,14 +331,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setLoading(false)
           return
         }
-        
+
         const { data: { session }, error } = await supabase.auth.getSession()
-        
+
         if (error) {
           console.error('❌ Session check error:', error)
+          setIsAuthenticated(false)
         } else if (session?.user) {
-          console.log('✅ Existing session found:', session.user.email)
-          await handleAuthUser(session.user)
+          // 验证session是否真的有效
+          const isValid = await validateSession(session)
+          if (isValid) {
+            console.log('✅ Valid existing session found:', session.user.email)
+            await handleAuthUser(session.user)
+          } else {
+            console.log('❌ Invalid session detected, clearing...')
+            // 清除无效session
+            await supabase.auth.signOut()
+            setIsAuthenticated(false)
+          }
         } else {
           console.log('ℹ️ No existing session')
           setIsAuthenticated(false)
@@ -351,6 +361,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           sessionCheckedRef.current = true
           setLoading(false)
         }
+      }
+    }
+
+    // 验证session有效性
+    const validateSession = async (session: any): Promise<boolean> => {
+      try {
+        if (!supabase) {
+          console.log('❌ Supabase client not available')
+          return false
+        }
+
+        // 检查token是否过期
+        if (session.expires_at && session.expires_at * 1000 < Date.now()) {
+          console.log('❌ Session expired')
+          return false
+        }
+
+        // 尝试获取用户信息来验证session
+        const { data: user, error } = await supabase.auth.getUser()
+        if (error || !user.user) {
+          console.log('❌ Session validation failed:', error?.message)
+          return false
+        }
+
+        return true
+      } catch (error) {
+        console.log('❌ Session validation error:', error)
+        return false
       }
     }
 

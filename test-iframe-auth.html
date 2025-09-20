@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iframe认证测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .iframe-container {
+            border: 2px solid #007bff;
+            border-radius: 8px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+        .iframe-container iframe {
+            width: 100%;
+            height: 400px;
+            border: none;
+            display: block;
+        }
+        .button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        .button:hover {
+            background: #0056b3;
+        }
+        .button.success {
+            background: #28a745;
+        }
+        .button.warning {
+            background: #ffc107;
+            color: #212529;
+        }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 10px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .status.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .status.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .status.info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 iframe认证测试</h1>
+        <p>此页面用于测试嵌入式iframe认证方案的效果</p>
+        
+        <div>
+            <button class="button success" onclick="requestAuthStatus()">请求认证状态</button>
+            <button class="button" onclick="testPostMessage()">测试PostMessage</button>
+            <button class="button warning" onclick="clearLog()">清除日志</button>
+        </div>
+        
+        <div id="status" class="status info">
+            准备就绪，iframe加载中...
+        </div>
+        
+        <div class="log" id="log">
+            [等待iframe加载...]
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>📱 嵌入式认证iframe</h2>
+        <p>以下iframe模拟Zotero插件中的认证面板：</p>
+        
+        <div class="iframe-container">
+            <iframe id="auth-iframe" src="/plugin/auth"></iframe>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>📋 测试说明</h2>
+        <ol>
+            <li><strong>iframe加载</strong>：上方iframe会自动加载认证页面</li>
+            <li><strong>PostMessage通信</strong>：点击"请求认证状态"测试通信</li>
+            <li><strong>认证状态同步</strong>：在iframe中登录/登出，观察状态变化</li>
+            <li><strong>实时更新</strong>：认证状态变化会自动通过PostMessage传递</li>
+        </ol>
+        
+        <h3>🔍 预期效果：</h3>
+        <ul>
+            <li>iframe正确加载认证页面</li>
+            <li>PostMessage通信正常工作</li>
+            <li>登录状态实时同步</li>
+            <li>用户信息正确传递</li>
+        </ul>
+    </div>
+
+    <script>
+        let authStatus = {
+            authenticated: false,
+            user: null
+        };
+
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            const logElement = document.getElementById('log');
+            logElement.textContent += `[${timestamp}] ${message}\n`;
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+
+        function setStatus(message, type = 'info') {
+            const statusElement = document.getElementById('status');
+            statusElement.textContent = message;
+            statusElement.className = `status ${type}`;
+        }
+
+        function clearLog() {
+            document.getElementById('log').textContent = '[日志已清除]\n';
+            setStatus('日志已清除', 'info');
+        }
+
+        function requestAuthStatus() {
+            const iframe = document.getElementById('auth-iframe');
+            if (iframe && iframe.contentWindow) {
+                const message = {
+                    type: 'REQUEST_AUTH_STATUS',
+                    source: 'zotero-plugin'
+                };
+                
+                log('📤 向iframe发送认证状态请求...');
+                log('消息内容: ' + JSON.stringify(message, null, 2));
+                
+                iframe.contentWindow.postMessage(message, '*');
+                setStatus('已发送认证状态请求', 'info');
+            } else {
+                log('❌ iframe不可用');
+                setStatus('iframe不可用', 'error');
+            }
+        }
+
+        function testPostMessage() {
+            const iframe = document.getElementById('auth-iframe');
+            if (iframe && iframe.contentWindow) {
+                const testMessage = {
+                    type: 'TEST_MESSAGE',
+                    source: 'test-page',
+                    timestamp: new Date().toISOString()
+                };
+                
+                log('🧪 发送测试消息...');
+                log('消息内容: ' + JSON.stringify(testMessage, null, 2));
+                
+                iframe.contentWindow.postMessage(testMessage, '*');
+                setStatus('已发送测试消息', 'info');
+            } else {
+                log('❌ iframe不可用');
+                setStatus('iframe不可用', 'error');
+            }
+        }
+
+        // 监听来自iframe的消息
+        window.addEventListener('message', (event) => {
+            try {
+                const data = event.data;
+                log('📨 收到iframe消息: ' + JSON.stringify(data, null, 2));
+                
+                if (data && data.type === 'AUTH_STATUS_RESPONSE' && data.source === 'researchopia-auth') {
+                    authStatus = {
+                        authenticated: data.authenticated,
+                        user: data.user
+                    };
+                    
+                    if (data.authenticated && data.user) {
+                        log(`✅ 认证成功: ${data.user.name} (${data.user.email})`);
+                        setStatus(`认证成功: ${data.user.name}`, 'success');
+                    } else {
+                        log('❌ 用户未认证');
+                        setStatus('用户未认证', 'error');
+                    }
+                } else {
+                    log('ℹ️ 收到其他类型消息');
+                }
+            } catch (error) {
+                log('❌ 处理消息失败: ' + error.message);
+                setStatus('消息处理失败', 'error');
+            }
+        });
+
+        // iframe加载完成后自动请求认证状态
+        document.getElementById('auth-iframe').onload = function() {
+            log('✅ iframe加载完成');
+            setStatus('iframe加载完成', 'success');
+            
+            // 延迟1秒后自动请求认证状态
+            setTimeout(() => {
+                log('🔄 自动请求认证状态...');
+                requestAuthStatus();
+            }, 1000);
+        };
+
+        // 页面加载时的初始化
+        window.onload = function() {
+            log('🚀 iframe认证测试页面已加载');
+            log('正在等待iframe加载完成...');
+        };
+    </script>
+</body>
+</html>

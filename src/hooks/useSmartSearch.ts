@@ -84,7 +84,9 @@ export function useSmartSearch(): UseSmartSearchReturn {
         // 短暂延迟以显示成功消息
         setTimeout(() => {
           console.log('🚀 [智能搜索] 执行跳转')
-          window.location.href = `/papers/${checkResult.paper.id}`
+          if (typeof window !== 'undefined') {
+            window.location.href = `/papers/${checkResult.paper.id}`
+          }
         }, 800)
         return
       }
@@ -120,7 +122,9 @@ export function useSmartSearch(): UseSmartSearchReturn {
       // 跳转到新添加的论文
       setTimeout(() => {
         console.log('🚀 [智能搜索] 跳转到新论文:', `/papers/${result.paper.id}`)
-        window.location.href = `/papers/${result.paper.id}`
+        if (typeof window !== 'undefined') {
+          window.location.href = `/papers/${result.paper.id}`
+        }
       }, 1000)
 
     } catch (err: any) {
@@ -154,7 +158,9 @@ export function useSmartSearch(): UseSmartSearchReturn {
     
     // 普通搜索，跳转到搜索页面
     const encodedQuery = encodeURIComponent(query.trim())
-    window.location.href = `/search?q=${encodedQuery}`
+    if (typeof window !== 'undefined') {
+      window.location.href = `/search?q=${encodedQuery}`
+    }
   }
 
   const clearError = () => {

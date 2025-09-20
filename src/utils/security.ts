@@ -136,3 +136,15 @@ export const SecurityHeaders = {
   'Referrer-Policy': 'strict-origin-when-cross-origin',
   'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
 }
+
+// 获取动态安全Headers（支持插件认证页面）
+export function getSecurityHeaders(pathname?: string) {
+  const headers = { ...SecurityHeaders }
+
+  // 允许插件认证页面被iframe嵌入
+  if (pathname && pathname.startsWith('/plugin/auth')) {
+    headers['X-Frame-Options'] = 'SAMEORIGIN'
+  }
+
+  return headers
+}

@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(req: NextRequest) {
   const res = NextResponse.json({ ok: true, authenticated: true, mode: 'dev' })
-  // Set a simple dev cookie for local plugin sync
+  // Set a simple dev cookie for local plugin sync（2小时过期）
   res.cookies.set('rp_dev_auth', '1', {
     httpOnly: true,
     sameSite: 'lax',
     path: '/',
+    maxAge: 60 * 60 * 2 // 2小时
   })
   return res
 }
@@ -27,15 +28,15 @@ export async function POST(req: NextRequest) {
       }
     })
 
-    // 设置开发认证cookie
+    // 设置开发认证cookie（2小时过期，更安全）
     response.cookies.set('rp_dev_auth', '1', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7 // 7天
+      maxAge: 60 * 60 * 2 // 2小时
     })
 
-    // 设置用户信息cookie
+    // 设置用户信息cookie（2小时过期，更安全）
     response.cookies.set('rp_dev_user', JSON.stringify({
       username: username,
       id: username === 'admin' ? 'admin-123' : 'dev-123',
@@ -44,7 +45,7 @@ export async function POST(req: NextRequest) {
       httpOnly: false, // 前端需要读取
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7 // 7天
+      maxAge: 60 * 60 * 2 // 2小时
     })
 
     return response

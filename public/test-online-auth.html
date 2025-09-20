@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>在线认证测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        .button:hover {
+            background: #0056b3;
+        }
+        .button.success {
+            background: #28a745;
+        }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 10px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .status.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .status.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .status.info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        .iframe-demo {
+            border: 2px solid #007bff;
+            border-radius: 8px;
+            overflow: hidden;
+            margin: 20px 0;
+            background: #f8f9fa;
+        }
+        .iframe-demo iframe {
+            width: 100%;
+            height: 500px;
+            border: none;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌐 在线认证测试</h1>
+        <p>此页面测试使用在线网站 https://www.researchopia.com 进行认证</p>
+        
+        <div>
+            <button class="button success" onclick="testOnlineAuth()">测试在线认证API</button>
+            <button class="button" onclick="loadOnlineIframe()">加载在线认证iframe</button>
+            <button class="button" onclick="clearLog()">清除日志</button>
+        </div>
+        
+        <div id="status" class="status info">
+            准备就绪，点击按钮开始测试
+        </div>
+        
+        <div class="log" id="log">
+            [等待操作...]
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>🔧 修复说明</h2>
+        <div style="background: #e7f3ff; border: 1px solid #b3d9ff; border-radius: 4px; padding: 15px;">
+            <h3>主要修复内容：</h3>
+            <ul>
+                <li><strong>使用在线网站</strong>：避免localhost的CookieSandbox问题</li>
+                <li><strong>简化认证逻辑</strong>：移除复杂的PostMessage通信</li>
+                <li><strong>使用fetch API</strong>：避免XMLHttpRequest的withCredentials问题</li>
+                <li><strong>优化用户体验</strong>：直接在iframe中显示完整的认证页面</li>
+            </ul>
+            
+            <h3>预期效果：</h3>
+            <ul>
+                <li>✅ iframe正确加载在线认证页面</li>
+                <li>✅ 用户可以直接在iframe中登录</li>
+                <li>✅ 插件定期检查认证状态</li>
+                <li>✅ 避免所有localhost相关问题</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="container" id="iframe-container" style="display: none;">
+        <h2>📱 在线认证iframe演示</h2>
+        <p>以下iframe加载在线认证页面：</p>
+        <div class="iframe-demo" id="iframe-area"></div>
+    </div>
+
+    <script>
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            const logElement = document.getElementById('log');
+            logElement.textContent += `[${timestamp}] ${message}\n`;
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+
+        function setStatus(message, type = 'info') {
+            const statusElement = document.getElementById('status');
+            statusElement.textContent = message;
+            statusElement.className = `status ${type}`;
+        }
+
+        function clearLog() {
+            document.getElementById('log').textContent = '[日志已清除]\n';
+            setStatus('日志已清除', 'info');
+        }
+
+        async function testOnlineAuth() {
+            log('🌐 测试在线认证API...');
+            setStatus('正在测试在线认证...', 'info');
+            
+            try {
+                const apiUrl = 'https://www.researchopia.com/api';
+                const authUrl = `${apiUrl}/auth/status`;
+                
+                log(`请求URL: ${authUrl}`);
+                
+                const response = await fetch(authUrl, {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'User-Agent': 'Zotero-Plugin-Researchopia/1.0'
+                    }
+                });
+                
+                log(`响应状态: ${response.status} ${response.statusText}`);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    log(`✅ 在线认证API响应: ${JSON.stringify(data, null, 2)}`);
+                    
+                    if (data.authenticated) {
+                        setStatus(`认证成功: ${data.user?.name || '用户'}`, 'success');
+                    } else {
+                        setStatus('用户未登录', 'info');
+                    }
+                } else {
+                    log(`❌ API请求失败: ${response.status}`);
+                    setStatus(`API请求失败: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                log(`❌ 在线认证测试失败: ${error.message}`);
+                setStatus(`测试失败: ${error.message}`, 'error');
+            }
+        }
+
+        function loadOnlineIframe() {
+            log('🔧 加载在线认证iframe...');
+            setStatus('正在加载iframe...', 'info');
+            
+            const iframeContainer = document.getElementById('iframe-container');
+            const iframeArea = document.getElementById('iframe-area');
+            
+            // 清空之前的内容
+            iframeArea.innerHTML = '';
+            
+            // 创建加载提示
+            const loadingDiv = document.createElement('div');
+            loadingDiv.style.cssText = 'padding: 20px; text-align: center; color: #6c757d;';
+            loadingDiv.innerHTML = `
+                <div style="display: inline-block; width: 20px; height: 20px; border: 2px solid #f3f3f3; border-top: 2px solid #007bff; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                <p style="margin: 10px 0 0 0;">正在加载在线认证页面...</p>
+                <style>
+                    @keyframes spin {
+                        0% { transform: rotate(0deg); }
+                        100% { transform: rotate(360deg); }
+                    }
+                </style>
+            `;
+            iframeArea.appendChild(loadingDiv);
+            
+            const iframe = document.createElement('iframe');
+            iframe.style.cssText = `
+                width: 100%;
+                height: 500px;
+                border: none;
+                display: block;
+            `;
+            
+            const authUrl = 'https://www.researchopia.com/plugin/auth';
+            iframe.src = authUrl;
+            
+            log(`🌐 iframe URL: ${authUrl}`);
+            
+            iframe.onload = () => {
+                log('✅ 在线认证iframe加载完成');
+                setStatus('在线认证页面加载成功', 'success');
+                
+                // 移除加载提示
+                if (loadingDiv.parentNode) {
+                    loadingDiv.parentNode.removeChild(loadingDiv);
+                }
+            };
+            
+            iframe.onerror = (error) => {
+                log('❌ iframe加载失败: ' + JSON.stringify(error));
+                setStatus('iframe加载失败', 'error');
+                
+                // 显示错误信息
+                iframeArea.innerHTML = `
+                    <div style="padding: 20px; text-align: center; color: #dc3545;">
+                        <p>在线认证页面加载失败</p>
+                        <p style="font-size: 12px; margin-top: 8px;">URL: ${authUrl}</p>
+                        <button onclick="loadOnlineIframe()" style="margin-top: 10px; padding: 5px 10px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer;">重试</button>
+                    </div>
+                `;
+            };
+            
+            iframeArea.appendChild(iframe);
+            iframeContainer.style.display = 'block';
+            
+            log('✅ 在线认证iframe已创建并开始加载');
+        }
+
+        // 页面加载时的初始化
+        window.onload = function() {
+            log('🚀 在线认证测试页面已加载');
+            log('此页面将测试使用 https://www.researchopia.com 进行认证');
+        };
+    </script>
+</body>
+</html>

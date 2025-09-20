@@ -10,7 +10,17 @@
     "lint": "eslint",
     "setup-supabase": "node setup-supabase.js",
     "websocket": "node websocket-server.js",
-    "dev:full": "concurrently \"npm run websocket\" \"npm run dev\""
+    "websocket:enhanced": "node websocket-server-enhanced.js",
+    "dev:full": "concurrently \"npm run websocket:enhanced\" \"npm run dev\"",
+    "db:migrate": "psql -f database/annotation-sharing-schema.sql",
+    "db:security-fix": "psql -f database/security-fixes-simple.sql",
+    "db:setup": "npm run db:migrate && npm run db:security-fix",
+    "zotero:build": "cd zotero-plugin && bash build-enhanced.sh",
+    "zotero:build:win": "cd zotero-plugin && build-enhanced.bat",
+    "zotero:fix": "cd zotero-plugin && bash quick-fix.sh",
+    "zotero:fix:win": "cd zotero-plugin && quick-fix.bat",
+    "zotero:test": "cd zotero-plugin && bash test-simple.sh",
+    "zotero:package": "cd zotero-plugin && zip -r researchopia-enhanced.xpi ."
   },
   "dependencies": {
     "@supabase/auth-ui-react": "^0.4.7",

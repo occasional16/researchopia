@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { rateLimiter, SecurityHeaders } from '@/utils/security'
+import { rateLimiter, SecurityHeaders, getSecurityHeaders } from '@/utils/security'
 
 // API安全中间件
 export function withSecurity(handler: (req: NextRequest) => Promise<NextResponse>) {
@@ -26,16 +26,38 @@ export function withSecurity(handler: (req: NextRequest) => Promise<NextResponse
       // 2. CORS检查
       const origin = req.headers.get('origin')
       const allowedOrigins = [
-        'http://localhost:3006',
         'http://localhost:3000',
+        'http://localhost:3001',
+        'http://localhost:3002',
+        'http://localhost:3003',
+        'http://localhost:3004',
+        'http://localhost:3005',
+        'http://localhost:3006',
+        'http://localhost:3007',
+        'http://localhost:3008',
+        'http://localhost:3009',
+        'http://127.0.0.1:3000',
+        'http://127.0.0.1:3001',
+        'http://127.0.0.1:3002',
+        'http://127.0.0.1:3003',
+        'http://127.0.0.1:3004',
+        'http://127.0.0.1:3005',
+        'http://127.0.0.1:3006',
+        'http://127.0.0.1:3007',
+        'http://127.0.0.1:3008',
+        'http://127.0.0.1:3009',
         'https://researchopia.vercel.app',
         'https://www.researchopia.com'
       ]
 
-      if (origin && !allowedOrigins.includes(origin)) {
+      // 对于Zotero插件请求，可能没有origin头部，需要特殊处理
+      const userAgent = req.headers.get('user-agent') || ''
+      const isZoteroRequest = userAgent.includes('Zotero') || !origin
+
+      if (origin && !allowedOrigins.includes(origin) && !isZoteroRequest) {
         return NextResponse.json(
           { error: '不允许的源' },
-          { 
+          {
             status: 403,
             headers: SecurityHeaders
           }
@@ -45,8 +67,9 @@ export function withSecurity(handler: (req: NextRequest) => Promise<NextResponse
       // 3. 执行原始处理器
       const response = await handler(req)
       
-      // 4. 添加安全头部
-      Object.entries(SecurityHeaders).forEach(([key, value]) => {
+      // 4. 添加动态安全头部
+      const securityHeaders = getSecurityHeaders(req.nextUrl.pathname)
+      Object.entries(securityHeaders).forEach(([key, value]) => {
         response.headers.set(key, value)
       })
 
@@ -54,8 +77,23 @@ export function withSecurity(handler: (req: NextRequest) => Promise<NextResponse
       if (origin && allowedOrigins.includes(origin)) {
         response.headers.set('Access-Control-Allow-Origin', origin)
         response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
-        response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+        response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, Cookie, User-Agent')
+        response.headers.set('Access-Control-Allow-Credentials', 'true')
         response.headers.set('Access-Control-Max-Age', '86400')
+      } else if (isZoteroRequest || !origin) {
+        // 为Zotero插件请求或同源请求设置CORS头部
+        // 注意：当使用credentials时，不能设置Access-Control-Allow-Origin为*
+        const requestOrigin = origin || req.headers.get('referer')?.split('/').slice(0, 3).join('/') || 'http://localhost:3000'
+        response.headers.set('Access-Control-Allow-Origin', requestOrigin)
+        response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+        response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, Cookie, User-Agent')
+        response.headers.set('Access-Control-Allow-Credentials', 'true')
+        response.headers.set('Access-Control-Max-Age', '86400')
+      }
+
+      // 6. 处理预检请求
+      if (req.method === 'OPTIONS') {
+        return new NextResponse(null, { status: 200, headers: response.headers })
       }
 
       return response

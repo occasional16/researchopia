@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "研学港 Researchopia - 智能标注分享",
-  "version": "0.8.12",
+  "version": "0.8.21",
   "description": "Integrates Researchopia (研学港) for paper metrics, discovery, and cross-platform annotation sharing with Zotero, Mendeley, and more.",
   "homepage_url": "https://www.researchopia.com",
 
@@ -22,8 +22,26 @@
 
   "permissions": [
     "storage",
+    "http://localhost:3000/*",
     "http://localhost:3001/*",
-    "http://127.0.0.1:3001/*"
+    "http://localhost:3002/*",
+    "http://localhost:3003/*",
+    "http://localhost:3004/*",
+    "http://localhost:3005/*",
+    "http://localhost:3006/*",
+    "http://localhost:3007/*",
+    "http://localhost:3008/*",
+    "http://localhost:3009/*",
+    "http://127.0.0.1:3000/*",
+    "http://127.0.0.1:3001/*",
+    "http://127.0.0.1:3002/*",
+    "http://127.0.0.1:3003/*",
+    "http://127.0.0.1:3004/*",
+    "http://127.0.0.1:3005/*",
+    "http://127.0.0.1:3006/*",
+    "http://127.0.0.1:3007/*",
+    "http://127.0.0.1:3008/*",
+    "http://127.0.0.1:3009/*"
   ],
 
   "icons": {

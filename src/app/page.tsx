@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useLanguage } from '@/contexts/LanguageContext'
 import BrandLogo from '@/components/ui/BrandLogo'
 import { useSmartSearch } from '@/hooks/useSmartSearch'
+import { useAuthenticatedFetch } from '@/hooks/useAuthenticatedFetch'
 import NetworkOptimizer from '@/components/NetworkOptimizer'
 import AnnouncementForm from '@/components/AnnouncementForm'
 
@@ -49,16 +50,17 @@ interface Announcement {
 }
 
 export default function HomePage() {
-  const { user, isAuthenticated } = useAuth()
+  const { profile, isAuthenticated } = useAuth()
   const { t } = useLanguage()
+  const authenticatedFetch = useAuthenticatedFetch()
   const [searchQuery, setSearchQuery] = useState('')
-  const { 
-    searchStatus, 
-    processingMessage, 
-    error, 
-    detectInputType, 
+  const {
+    searchStatus,
+    processingMessage,
+    error,
+    detectInputType,
     handleSearch: performSmartSearch,
-    clearError 
+    clearError
   } = useSmartSearch()
   
   const [stats, setStats] = useState<SiteStats>({
@@ -260,7 +262,7 @@ export default function HomePage() {
     }
 
     try {
-      const response = await fetch(`/api/announcements?id=${id}`, {
+      const response = await authenticatedFetch(`/api/announcements?id=${id}`, {
         method: 'DELETE',
       })
 
@@ -467,7 +469,7 @@ export default function HomePage() {
                         <span className="ml-4">发布者: {announcement.created_by}</span>
                       )}
                     </div>
-                    {user && user.username === 'admin' && (
+                    {profile && profile.role === 'admin' && (
                       <div className="flex space-x-2">
                         <button
                           onClick={() => handleEditAnnouncement(announcement)}
@@ -492,7 +494,7 @@ export default function HomePage() {
       )}
 
       {/* Admin Announcement Form */}
-      {user && user.username === 'admin' && (
+      {profile && profile.role === 'admin' && (
         <div className="bg-white rounded-lg shadow">
           <div className="px-6 py-4 border-b border-gray-200">
             <div className="flex justify-between items-center">

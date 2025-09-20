@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { AlertCircle, CheckCircle, Info, AlertTriangle } from 'lucide-react'
+import { useAuthenticatedFetch } from '@/hooks/useAuthenticatedFetch'
 
 interface AnnouncementFormProps {
   editingAnnouncement?: any
@@ -10,6 +11,7 @@ interface AnnouncementFormProps {
 }
 
 export default function AnnouncementForm({ editingAnnouncement, onSuccess, onCancel }: AnnouncementFormProps) {
+  const authenticatedFetch = useAuthenticatedFetch()
   const [title, setTitle] = useState(editingAnnouncement?.title || '')
   const [content, setContent] = useState(editingAnnouncement?.content || '')
   const [type, setType] = useState<'info' | 'warning' | 'success' | 'error'>(editingAnnouncement?.type || 'info')
@@ -47,7 +49,7 @@ export default function AnnouncementForm({ editingAnnouncement, onSuccess, onCan
             is_active: true
           }
 
-      const response = await fetch(url, {
+      const response = await authenticatedFetch(url, {
         method,
         headers: {
           'Content-Type': 'application/json',

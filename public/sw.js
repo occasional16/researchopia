@@ -1,16 +1,25 @@
 const CACHE_NAME = 'researchopia-v1';
 const urlsToCache = [
   '/',
-  '/api/site/statistics',
-  '/api/papers/recent-comments',
-  '/_next/static/css/',
-  '/_next/static/chunks/',
 ];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then((cache) => cache.addAll(urlsToCache))
+      .then((cache) => {
+        // 逐个添加URL，避免某个URL失败导致整个缓存失败
+        return Promise.allSettled(
+          urlsToCache.map(url =>
+            cache.add(url).catch(err => {
+              console.warn('Failed to cache:', url, err);
+              return null;
+            })
+          )
+        );
+      })
+      .catch(err => {
+        console.warn('Service Worker install failed:', err);
+      })
   );
 });
 

@@ -19,8 +19,8 @@ export default function NetworkOptimizer() {
       document.head.appendChild(link);
     });
 
-    // Service Worker注册（用于缓存优化）
-    if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
+    // Service Worker注册（仅在本地开发环境，避免Vercel部署问题）
+    if ('serviceWorker' in navigator && process.env.NODE_ENV === 'development') {
       navigator.serviceWorker.register('/sw.js').catch(err => {
         console.log('Service Worker registration failed:', err);
       });

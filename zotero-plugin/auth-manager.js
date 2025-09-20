@@ -326,9 +326,10 @@ const AuthManager = {
       this.log("Checking website authentication status...");
 
       const hosts = [
-        'http://localhost:3001', // 当前运行端口
+        'http://localhost:3002', // 当前运行端口
+        'http://localhost:3001',
         'http://localhost:3000',
-        'http://localhost:3002',
+        'http://127.0.0.1:3002',
         'http://127.0.0.1:3001',
         'http://127.0.0.1:3000',
         'https://researchopia.com'
@@ -362,14 +363,35 @@ const AuthManager = {
   httpGetJson(url, opts = {}) {
     return new Promise((resolve, reject) => {
       try {
+        // 尝试使用Zotero的HTTP客户端
+        if (typeof Zotero !== 'undefined' && Zotero.HTTP && Zotero.HTTP.request) {
+          const requestOptions = {
+            method: 'GET',
+            url: url,
+            timeout: opts.timeout || 8000,
+            responseType: 'text'
+          };
+
+          Zotero.HTTP.request(requestOptions)
+            .then(response => {
+              try {
+                const data = JSON.parse(response.responseText || '{}');
+                resolve(data);
+              } catch (e) {
+                reject(new Error('Invalid JSON response'));
+              }
+            })
+            .catch(error => {
+              reject(new Error(`HTTP request failed: ${error.message}`));
+            });
+          return;
+        }
+
+        // 回退到标准XMLHttpRequest
         const xhr = new XMLHttpRequest();
         xhr.timeout = opts.timeout || 8000;
-        xhr.open('GET', url, true);
 
-        // 在open之后设置withCredentials，避免Zotero环境报错
-        if (typeof opts.withCredentials === 'boolean') {
-          xhr.withCredentials = opts.withCredentials;
-        }
+        // 设置事件处理器
         xhr.onload = () => {
           if (xhr.status >= 200 && xhr.status < 300) {
             try {
@@ -384,6 +406,19 @@ const AuthManager = {
         };
         xhr.onerror = () => reject(new Error('Network error'));
         xhr.ontimeout = () => reject(new Error('Timeout'));
+
+        // 打开连接
+        xhr.open('GET', url, true);
+
+        // 在send之前设置withCredentials
+        if (opts.withCredentials === true) {
+          try {
+            xhr.withCredentials = true;
+          } catch (e) {
+            this.log(`Warning: Could not set withCredentials: ${e.message}`, 'warn');
+          }
+        }
+
         xhr.send();
       } catch (e) {
         reject(e);

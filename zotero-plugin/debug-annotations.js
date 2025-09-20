@@ -4,7 +4,7 @@
 */
 
 // 调试函数：检测当前选中项目的标注
-function debugAnnotationDetection() {
+async function debugAnnotationDetection() {
   console.log("=== 开始调试标注检测 ===");
   
   try {
@@ -29,21 +29,57 @@ function debugAnnotationDetection() {
     // 方法1：直接从当前项目获取标注
     if (item.isAttachment() && item.attachmentContentType === 'application/pdf') {
       console.log("🔍 方法1: 检测PDF附件的标注");
+      
+      let annotationIDs = [];
+      
+      // 方法1a: 使用getAnnotations()
       if (typeof item.getAnnotations === 'function') {
-        const annotationIDs = item.getAnnotations();
-        console.log(`📝 找到标注ID: ${JSON.stringify(annotationIDs)}`);
-        
-        if (annotationIDs && annotationIDs.length > 0) {
-          for (const annotID of annotationIDs) {
+        try {
+          annotationIDs = item.getAnnotations();
+          console.log(`📝 方法1a - getAnnotations() 结果: ${JSON.stringify(annotationIDs)}`);
+        } catch (e) {
+          console.log(`❌ 方法1a 失败: ${e.message}`);
+        }
+      }
+      
+      // 方法1b: 使用getAnnotationsAsync() (Zotero 8+)
+      if (annotationIDs.length === 0 && typeof item.getAnnotationsAsync === 'function') {
+        try {
+          annotationIDs = await item.getAnnotationsAsync();
+          console.log(`📝 方法1b - getAnnotationsAsync() 结果: ${JSON.stringify(annotationIDs)}`);
+        } catch (e) {
+          console.log(`❌ 方法1b 失败: ${e.message}`);
+        }
+      }
+      
+      // 方法1c: 通过搜索获取
+      if (annotationIDs.length === 0) {
+        try {
+          const search = new Zotero.Search();
+          search.addCondition('itemType', 'is', 'annotation');
+          search.addCondition('parentID', 'is', item.id);
+          const searchResults = await search.search();
+          annotationIDs = searchResults;
+          console.log(`📝 方法1c - 搜索结果: ${JSON.stringify(annotationIDs)}`);
+        } catch (e) {
+          console.log(`❌ 方法1c 失败: ${e.message}`);
+        }
+      }
+      
+      if (annotationIDs && annotationIDs.length > 0) {
+        for (const annotID of annotationIDs) {
+          try {
             const annotation = Zotero.Items.get(annotID);
             if (annotation && annotation.isAnnotation()) {
               totalAnnotations.push(annotation);
-              console.log(`✅ 标注 ${annotID}: 类型=${annotation.annotationType}, 文本="${annotation.annotationText || annotation.getField('annotationText') || ''}"`);
+              console.log(`✅ 标注 ${annotID}: 类型=${annotation.annotationType || annotation.getField?.('annotationType') || 'unknown'}, 文本="${annotation.annotationText || annotation.getField?.('annotationText') || ''}"`);
             }
+          } catch (e) {
+            console.log(`❌ 获取标注 ${annotID} 失败: ${e.message}`);
           }
         }
       } else {
-        console.log("❌ item.getAnnotations 方法不存在");
+        console.log("❌ PDF附件中没有找到标注ID");
       }
     }
     
@@ -55,22 +91,61 @@ function debugAnnotationDetection() {
       
       if (attachments && attachments.length > 0) {
         for (const attachmentID of attachments) {
-          const attachment = Zotero.Items.get(attachmentID);
-          console.log(`📎 附件 ${attachmentID}: 类型=${attachment ? attachment.attachmentContentType : 'null'}`);
-          
-          if (attachment && attachment.attachmentContentType === 'application/pdf' && typeof attachment.getAnnotations === 'function') {
-            const annotationIDs = attachment.getAnnotations();
-            console.log(`📝 附件 ${attachmentID} 的标注ID: ${JSON.stringify(annotationIDs)}`);
+          try {
+            const attachment = Zotero.Items.get(attachmentID);
+            console.log(`📎 附件 ${attachmentID}: 类型=${attachment ? attachment.attachmentContentType : 'null'}`);
             
-            if (annotationIDs && annotationIDs.length > 0) {
-              for (const annotID of annotationIDs) {
-                const annotation = Zotero.Items.get(annotID);
-                if (annotation && annotation.isAnnotation()) {
-                  totalAnnotations.push(annotation);
-                  console.log(`✅ 从附件添加标注 ${annotID}: 类型=${annotation.annotationType}, 文本="${annotation.annotationText || annotation.getField('annotationText') || ''}"`);
+            if (attachment && attachment.attachmentContentType === 'application/pdf') {
+              let attachmentAnnotationIDs = [];
+              
+              // 尝试多种方法获取附件的标注
+              if (typeof attachment.getAnnotations === 'function') {
+                try {
+                  attachmentAnnotationIDs = attachment.getAnnotations();
+                  console.log(`📝 附件 ${attachmentID} getAnnotations() 结果: ${JSON.stringify(attachmentAnnotationIDs)}`);
+                } catch (e) {
+                  console.log(`❌ 附件 ${attachmentID} getAnnotations() 失败: ${e.message}`);
+                }
+              }
+              
+              if (attachmentAnnotationIDs.length === 0 && typeof attachment.getAnnotationsAsync === 'function') {
+                try {
+                  attachmentAnnotationIDs = await attachment.getAnnotationsAsync();
+                  console.log(`📝 附件 ${attachmentID} getAnnotationsAsync() 结果: ${JSON.stringify(attachmentAnnotationIDs)}`);
+                } catch (e) {
+                  console.log(`❌ 附件 ${attachmentID} getAnnotationsAsync() 失败: ${e.message}`);
+                }
+              }
+              
+              if (attachmentAnnotationIDs.length === 0) {
+                try {
+                  const search = new Zotero.Search();
+                  search.addCondition('itemType', 'is', 'annotation');
+                  search.addCondition('parentID', 'is', attachmentID);
+                  const searchResults = await search.search();
+                  attachmentAnnotationIDs = searchResults;
+                  console.log(`📝 附件 ${attachmentID} 搜索结果: ${JSON.stringify(attachmentAnnotationIDs)}`);
+                } catch (e) {
+                  console.log(`❌ 附件 ${attachmentID} 搜索失败: ${e.message}`);
+                }
+              }
+              
+              if (attachmentAnnotationIDs && attachmentAnnotationIDs.length > 0) {
+                for (const annotID of attachmentAnnotationIDs) {
+                  try {
+                    const annotation = Zotero.Items.get(annotID);
+                    if (annotation && annotation.isAnnotation()) {
+                      totalAnnotations.push(annotation);
+                      console.log(`✅ 从附件添加标注 ${annotID}: 类型=${annotation.annotationType || annotation.getField?.('annotationType') || 'unknown'}, 文本="${annotation.annotationText || annotation.getField?.('annotationText') || ''}"`);
+                    }
+                  } catch (e) {
+                    console.log(`❌ 获取附件标注 ${annotID} 失败: ${e.message}`);
+                  }
                 }
               }
             }
+          } catch (e) {
+            console.log(`❌ 处理附件 ${attachmentID} 时出错: ${e.message}`);
           }
         }
       }

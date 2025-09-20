@@ -46,6 +46,50 @@ async function startup(data, reason) {
     log("Failed to load DOI annotation sharing: " + e);
   }
   
+  // Load core system modules first
+  try {
+    Services.scriptloader.loadSubScript(rootURI + "error-handler.js");
+    log("Error handler loaded");
+  } catch (e) {
+    log("Failed to load error handler: " + e);
+  }
+
+  try {
+    Services.scriptloader.loadSubScript(rootURI + "feedback-system.js");
+    log("Feedback system loaded");
+  } catch (e) {
+    log("Failed to load feedback system: " + e);
+  }
+
+  try {
+    Services.scriptloader.loadSubScript(rootURI + "diagnostic-tool.js");
+    log("Diagnostic tool loaded");
+  } catch (e) {
+    log("Failed to load diagnostic tool: " + e);
+  }
+
+  try {
+    Services.scriptloader.loadSubScript(rootURI + "annotation-share-dialog.js");
+    log("Annotation share dialog loaded");
+  } catch (e) {
+    log("Failed to load annotation share dialog: " + e);
+  }
+
+  try {
+    Services.scriptloader.loadSubScript(rootURI + "doi-annotation-display.js");
+    log("DOI annotation display loaded");
+  } catch (e) {
+    log("Failed to load DOI annotation display: " + e);
+  }
+
+  // Load authentication manager (other modules depend on it)
+  try {
+    Services.scriptloader.loadSubScript(rootURI + "auth-manager.js");
+    log("Authentication manager loaded");
+  } catch (e) {
+    log("Failed to load authentication manager: " + e);
+  }
+
   try {
     Services.scriptloader.loadSubScript(rootURI + "annotation-sharing.js");
     log("Annotation sharing module loaded");
@@ -53,10 +97,93 @@ async function startup(data, reason) {
     log("Failed to load annotation sharing module: " + e);
   }
 
+  // Load user interface module
+  try {
+    Services.scriptloader.loadSubScript(rootURI + "user-interface.js");
+    log("User interface module loaded");
+  } catch (e) {
+    log("Failed to load user interface module: " + e);
+  }
+
+  // Load annotation selector module
+  try {
+    Services.scriptloader.loadSubScript(rootURI + "annotation-selector.js");
+    log("Annotation selector module loaded");
+  } catch (e) {
+    log("Failed to load annotation selector module: " + e);
+  }
+
+  // Load social features module
+  try {
+    Services.scriptloader.loadSubScript(rootURI + "social-features.js");
+    log("Social features module loaded");
+  } catch (e) {
+    log("Failed to load social features module: " + e);
+  }
+
+  // Load annotation browser module
+  try {
+    Services.scriptloader.loadSubScript(rootURI + "annotation-browser.js");
+    log("Annotation browser module loaded");
+  } catch (e) {
+    log("Failed to load annotation browser module: " + e);
+  }
+
+  // Load privacy manager module
+  try {
+    Services.scriptloader.loadSubScript(rootURI + "privacy-manager.js");
+    log("Privacy manager module loaded");
+  } catch (e) {
+    log("Failed to load privacy manager module: " + e);
+  }
+
+  // Load collaboration manager module
+  try {
+    Services.scriptloader.loadSubScript(rootURI + "collaboration-manager.js");
+    log("Collaboration manager module loaded");
+  } catch (e) {
+    log("Failed to load collaboration manager module: " + e);
+  }
+
   // Initialize plugin with root URI
   Zotero.Researchopia.init({ id, version, rootURI });
   Zotero.Researchopia.addToAllWindows();
   try { await Zotero.Researchopia.main(); } catch {}
+
+  // Initialize core systems first
+  try {
+    if (typeof ErrorHandler !== 'undefined') {
+      ErrorHandler.init();
+      log("Error handler initialized");
+    }
+  } catch (e) {
+    log("Failed to initialize error handler: " + e);
+  }
+
+  try {
+    if (typeof FeedbackSystem !== 'undefined') {
+      FeedbackSystem.init();
+      log("Feedback system initialized");
+    }
+  } catch (e) {
+    log("Failed to initialize feedback system: " + e);
+  }
+
+  try {
+    if (typeof DiagnosticTool !== 'undefined') {
+      DiagnosticTool.init();
+      log("Diagnostic tool initialized");
+    }
+  } catch (e) {
+    log("Failed to initialize diagnostic tool: " + e);
+  }
+
+  // Start up all plugin modules
+  try {
+    Zotero.Researchopia.startup();
+  } catch (e) {
+    log("Failed to startup plugin modules: " + e);
+  }
 
   log("Researchopia plugin started successfully");
 }

@@ -42,6 +42,3 @@ Known limitations (MVP):
 - Port more UI from your existing browser extension
 
 Note: For development/testing, you can also use Tools → Plugins → Debug Add-ons → Load Temporary Add-on to load the folder directly without creating XPI.
-
-## Troubleshooting
-If you encounter installation errors, see [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) for detailed solutions.

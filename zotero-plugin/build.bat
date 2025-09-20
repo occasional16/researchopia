@@ -6,7 +6,7 @@ echo ==================================================
 
 REM 设置变量
 set PLUGIN_NAME=researchopia-zotero-plugin-doi-enhanced
-set VERSION=v1.0.0
+set VERSION=v0.4.0
 set BUILD_DIR=build
 set XPI_NAME=%PLUGIN_NAME%-%VERSION%.xpi
 
@@ -39,10 +39,14 @@ xcopy /e /i icons %BUILD_DIR%\icons
 xcopy /e /i locale %BUILD_DIR%\locale
 xcopy /e /i panel %BUILD_DIR%\panel
 
-REM 创建XPI文件 (先创建ZIP再重命名)
+REM 创建XPI文件 (使用简单可靠的方法)
 echo 🗜️  Creating XPI package...
 set TEMP_ZIP=%PLUGIN_NAME%-%VERSION%.zip
-powershell -command "Compress-Archive -Path '%BUILD_DIR%\*' -DestinationPath '%TEMP_ZIP%'"
+
+REM 使用PowerShell的简单压缩方法（兼容性最好）
+echo 使用PowerShell压缩...
+powershell -command "Compress-Archive -Path '%BUILD_DIR%\*' -DestinationPath '%TEMP_ZIP%' -CompressionLevel Optimal -Force"
+
 if exist "%TEMP_ZIP%" (
     ren "%TEMP_ZIP%" "%XPI_NAME%"
 )
@@ -60,9 +64,9 @@ if exist "%XPI_NAME%" (
     echo 5. Restart Zotero
     echo.
     echo 🔗 API Configuration:
-    echo - Ensure Next.js dev server is running on http://localhost:3003
+    echo - Ensure Next.js dev server is running on http://localhost:3000
     echo - Ensure WebSocket server is running on ws://localhost:8080
-    echo - Test API at: http://localhost:3003/test/doi-api
+    echo - Test API at: http://localhost:3000/test/doi-api
 ) else (
     echo ❌ Failed to create XPI file
     pause

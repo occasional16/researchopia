@@ -60,9 +60,9 @@ if [ -f "${XPI_NAME}" ]; then
     echo "5. Restart Zotero"
     echo ""
     echo "🔗 API Configuration:"
-    echo "- Ensure Next.js dev server is running on http://localhost:3003"
+    echo "- Ensure Next.js dev server is running on http://localhost:3000"
     echo "- Ensure WebSocket server is running on ws://localhost:8080"
-    echo "- Test API at: http://localhost:3003/test/doi-api"
+    echo "- Test API at: http://localhost:3000/test/doi-api"
 else
     echo "❌ Failed to create XPI file"
     exit 1

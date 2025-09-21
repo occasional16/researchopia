@@ -107,7 +107,7 @@ export async function addToFavorites(userId: string, paperId: string): Promise<b
 
     if (!supabase) throw new Error('Database not available')
 
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from('paper_favorites')
       .insert({
         user_id: userId,
@@ -240,8 +240,8 @@ export async function getUserFavorites(userId: string): Promise<PaperWithFavorit
 
     if (error) throw error
 
-    return (data || []).map(fav => ({
-      ...fav.papers,
+    return (data || []).map((fav: any) => ({
+      ...(fav as any).papers,
       is_favorited: true
     })) as PaperWithFavorite[]
   } catch (error) {
@@ -309,7 +309,7 @@ export async function getPapersWithFavoriteStatus(
 
     if (error) throw error
 
-    const favoriteIds = new Set(favorites?.map(f => f.paper_id) || [])
+    const favoriteIds = new Set(favorites?.map((f: any) => (f as any).paper_id) || [])
 
     return papers.map(paper => ({
       ...paper,

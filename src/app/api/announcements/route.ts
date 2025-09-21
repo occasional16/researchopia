@@ -55,10 +55,10 @@ async function checkAdminAuth(request: NextRequest) {
     }
 
     return {
-      isAdmin: profile.role === 'admin',
+      isAdmin: (profile as any).role === 'admin',
       user: {
         id: user.id,
-        username: profile.username,
+        username: (profile as any).username,
         email: user.email
       }
     }
@@ -207,7 +207,7 @@ export async function POST(request: NextRequest) {
     // 优先使用Supabase
     if (supabase) {
       try {
-        const { data, error } = await supabase
+        const { data, error } = await (supabase as any)
           .from('announcements')
           .insert([newAnnouncementData])
           .select()
@@ -276,7 +276,7 @@ export async function PUT(request: NextRequest) {
     // 优先使用Supabase
     if (supabase) {
       try {
-        const { data, error } = await supabase
+        const { data, error } = await (supabase as any)
           .from('announcements')
           .update(updates)
           .eq('id', id)

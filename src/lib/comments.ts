@@ -107,17 +107,17 @@ export async function getCommentsWithVotes(paperId: string, userId?: string): Pr
         .from('comment_votes')
         .select('comment_id, vote_type')
         .eq('user_id', userId)
-        .in('comment_id', comments.map(c => c.id))
+        .in('comment_id', (comments as any).map((c: any) => c.id))
 
-      const voteMap = new Map(userVotes?.map(v => [v.comment_id, v.vote_type]) || [])
+      const voteMap = new Map((userVotes as any)?.map((v: any) => [v.comment_id, v.vote_type]) || [])
 
-      return comments.map(comment => ({
+      return (comments as any).map((comment: any) => ({
         ...comment,
         user_vote: voteMap.get(comment.id) || null
       }))
     }
 
-    return comments.map(comment => ({
+    return (comments as any).map((comment: any) => ({
       ...comment,
       user_vote: null
     }))
@@ -190,26 +190,26 @@ export async function voteOnComment(
       .single()
 
     if (existingVote) {
-      if (existingVote.vote_type === voteType) {
+      if ((existingVote as any).vote_type === voteType) {
         // Remove vote if clicking the same vote type
-        const { error } = await supabase
+        const { error } = await (supabase as any)
           .from('comment_votes')
           .delete()
-          .eq('id', existingVote.id)
+          .eq('id', (existingVote as any).id)
         
         if (error) throw error
       } else {
         // Update vote type
-        const { error } = await supabase
+        const { error } = await (supabase as any)
           .from('comment_votes')
           .update({ vote_type: voteType })
-          .eq('id', existingVote.id)
+          .eq('id', (existingVote as any).id)
         
         if (error) throw error
       }
     } else {
       // Create new vote
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('comment_votes')
         .insert({
           user_id: userId,
@@ -260,7 +260,7 @@ export async function addComment(
 
     if (!supabase) return false
 
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from('comments')
       .insert({
         paper_id: paperId,

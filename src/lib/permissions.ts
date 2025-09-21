@@ -58,13 +58,13 @@ export async function getUserPermissions(request: NextRequest): Promise<UserPerm
     }
 
     // 检查用户是否为管理员
-    const isAdmin = userData?.role === 'admin'
+    const isAdmin = (userData as any)?.role === 'admin'
 
     return {
       isAuthenticated: true,
       isAdmin,
       userId: user.id,
-      username: userData?.username || user.email?.split('@')[0] || '用户'
+      username: (userData as any)?.username || user.email?.split('@')[0] || '用户'
     }
     
   } catch (error) {
@@ -109,7 +109,7 @@ export async function canUserEditReport(
       return false
     }
 
-    return report.created_by === userPermissions.userId
+    return (report as any).created_by === userPermissions.userId
   } catch (error) {
     console.error('Edit permission check error:', error)
     return false

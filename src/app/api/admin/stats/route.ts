@@ -55,10 +55,10 @@ export async function GET(request: NextRequest) {
 
     let activity: any[] = []
     if (!activityError && recentActivity) {
-      activity = recentActivity.map(paper => ({
+      activity = recentActivity.map((paper: any) => ({
         type: 'paper',
         action: '添加了新论文',
-        user: (paper.users as any)?.username || 'Unknown',
+        user: paper.users?.username || 'Unknown',
         time: formatTimeAgo(paper.created_at),
         title: paper.title
       }))

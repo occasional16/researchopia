@@ -40,7 +40,7 @@ export async function POST(
 
     // 将爬取到的文章保存到数据库
     let addedCount = 0
-    const savedReports = []
+    const savedReports: any[] = []
 
     for (const article of crawledArticles) {
       try {
@@ -55,7 +55,7 @@ export async function POST(
           view_count: 0
         }
 
-        const { data, error } = await supabase!
+        const { data, error } = await (supabase as any)!
           .from('paper_reports')
           .insert([reportData])
           .select()

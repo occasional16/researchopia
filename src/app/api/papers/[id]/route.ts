@@ -72,7 +72,7 @@ export async function PUT(
     }
 
     // Use Supabase
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('papers')
       .update(body)
       .eq('id', id)

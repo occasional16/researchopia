@@ -258,7 +258,7 @@ export async function createPaper(paper: Omit<Paper, 'id' | 'created_at' | 'upda
 
   if (!supabase) throw new Error('Database not available')
 
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('papers')
     .insert(paper)
     .select()
@@ -390,7 +390,7 @@ export async function searchOrCreatePaperByDOI(doi: string) {
       created_by: user?.id || '00000000-0000-0000-0000-000000000000' // System created
     }
 
-    const { data: createdPaper, error: createError } = await supabase
+    const { data: createdPaper, error: createError } = await (supabase as any)
       .from('papers')
       .insert(newPaper)
       .select(`
@@ -416,7 +416,7 @@ export async function searchOrCreatePaperByDOI(doi: string) {
 export async function createOrUpdateRating(rating: Omit<Rating, 'id' | 'created_at' | 'updated_at'>) {
   if (!supabase) throw new Error('Database not available')
 
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('ratings')
     .upsert(rating, { onConflict: 'user_id,paper_id' })
     .select()
@@ -477,7 +477,7 @@ export async function createComment(comment: Omit<Comment, 'id' | 'created_at' |
 
   if (!supabase) throw new Error('Database not available')
 
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('comments')
     .insert(comment)
     .select(`
@@ -514,7 +514,7 @@ export async function updatePaper(id: string, paperData: Partial<Paper>) {
 
   if (!supabase) throw new Error('Database not available')
 
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('papers')
     .update(paperData)
     .eq('id', id)
@@ -570,7 +570,7 @@ export async function getUser(id: string) {
 export async function updateUser(id: string, updates: Partial<User>) {
   if (!supabase) throw new Error('Database not available')
 
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('users')
     .update(updates)
     .eq('id', id)

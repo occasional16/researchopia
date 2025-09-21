@@ -221,7 +221,7 @@ export async function getUserStats(userId: string): Promise<UserStats> {
 
     const ratings = ratingsResult.data || []
     const avgRating = ratings.length > 0 
-      ? ratings.reduce((sum, r) => sum + r.overall_score, 0) / ratings.length 
+      ? ratings.reduce((sum: any, r: any) => sum + r.overall_score, 0) / ratings.length
       : 0
 
     return {

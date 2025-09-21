@@ -147,10 +147,10 @@ export async function GET(request: NextRequest) {
           .eq('annotation_id', annotation.id)
 
         const stats = {
-          likes: interactions?.filter(i => i.interaction_type === 'like').length || 0,
-          dislikes: interactions?.filter(i => i.interaction_type === 'dislike').length || 0,
-          helpful: interactions?.filter(i => i.interaction_type === 'helpful').length || 0,
-          flags: interactions?.filter(i => i.interaction_type === 'flag').length || 0
+          likes: (interactions as any)?.filter((i: any) => i.interaction_type === 'like').length || 0,
+          dislikes: (interactions as any)?.filter((i: any) => i.interaction_type === 'dislike').length || 0,
+          helpful: (interactions as any)?.filter((i: any) => i.interaction_type === 'helpful').length || 0,
+          flags: (interactions as any)?.filter((i: any) => i.interaction_type === 'flag').length || 0
         }
 
         return {
@@ -253,9 +253,9 @@ export async function POST(request: NextRequest) {
     }
 
     // 验证页码范围
-    if (page_number < 1 || page_number > document.total_pages) {
+    if (page_number < 1 || page_number > (document as any).total_pages) {
       return NextResponse.json({
-        error: `Invalid page_number. Must be between 1 and ${document.total_pages}`
+        error: `Invalid page_number. Must be between 1 and ${(document as any).total_pages}`
       }, { status: 400 })
     }
 
@@ -278,7 +278,7 @@ export async function POST(request: NextRequest) {
     const userId = 'demo-user-id' // TODO: 从认证系统获取真实用户ID
 
     // 插入新的标注记录
-    const { data: annotation, error } = await supabase
+    const { data: annotation, error } = await (supabase as any)
       .from('pdf_annotations')
       .insert([{
         pdf_document_id,

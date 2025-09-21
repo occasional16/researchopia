@@ -2,10 +2,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { UniversalAnnotation, APIResponse } from '@/types/annotation-protocol';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+// 创建Supabase客户端的辅助函数
+function createSupabaseClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !supabaseKey) {
+    throw new Error('Missing Supabase environment variables');
+  }
+
+  return createClient(supabaseUrl, supabaseKey);
+}
 
 /**
  * 获取标注列表
@@ -13,6 +20,8 @@ const supabase = createClient(
  */
 export async function GET(request: NextRequest) {
   try {
+    const supabase = createSupabaseClient();
+
     const { searchParams } = new URL(request.url);
     const documentId = searchParams.get('documentId');
     const userId = searchParams.get('userId');
@@ -112,6 +121,8 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
+    const supabase = createSupabaseClient();
+
     const body = await request.json();
     const annotation: Omit<UniversalAnnotation, 'id' | 'createdAt' | 'modifiedAt'> = body;
 
@@ -235,6 +246,8 @@ export async function POST(request: NextRequest) {
  */
 export async function PUT(request: NextRequest) {
   try {
+    const supabase = createSupabaseClient();
+
     const body = await request.json();
     const { action, annotations } = body;
 

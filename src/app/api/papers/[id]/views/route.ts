@@ -31,10 +31,10 @@ export async function POST(
     }
 
     // 增加查看次数
-    const currentViewCount = paperData?.view_count || 0
-    const { error } = await supabase
+    const currentViewCount = (paperData as any)?.view_count || 0
+    const { error } = await (supabase as any)
       .from('papers')
-      .update({ 
+      .update({
         view_count: currentViewCount + 1,
         updated_at: new Date().toISOString()
       })
@@ -50,13 +50,13 @@ export async function POST(
 
     // 记录访问历史（可选）
     try {
-      await supabase
+      await (supabase as any)
         .from('paper_views')
         .insert({
           paper_id: paperId,
           viewed_at: new Date().toISOString(),
-          ip_address: request.headers.get('x-forwarded-for') || 
-                     request.headers.get('x-real-ip') || 
+          ip_address: request.headers.get('x-forwarded-for') ||
+                     request.headers.get('x-real-ip') ||
                      'unknown'
         })
     } catch (viewError) {
@@ -106,8 +106,8 @@ export async function GET(
       )
     }
 
-    return NextResponse.json({ 
-      viewCount: data?.view_count || 0 
+    return NextResponse.json({
+      viewCount: (data as any)?.view_count || 0
     })
   } catch (error) {
     console.error('Error getting view count:', error)

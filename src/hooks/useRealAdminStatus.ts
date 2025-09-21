@@ -40,7 +40,7 @@ export function useRealAdminStatus() {
           console.error('Failed to fetch user role:', error)
           setIsAdmin(false)
         } else {
-          setIsAdmin(userData?.role === 'admin')
+          setIsAdmin((userData as any)?.role === 'admin')
         }
       } catch (error) {
         console.error('Error checking admin status:', error)

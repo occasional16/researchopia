@@ -76,15 +76,15 @@ export async function GET(
       .eq('annotation_id', id)
 
     const stats = {
-      likes: interactions?.filter(i => i.interaction_type === 'like').length || 0,
-      dislikes: interactions?.filter(i => i.interaction_type === 'dislike').length || 0,
-      helpful: interactions?.filter(i => i.interaction_type === 'helpful').length || 0,
-      flags: interactions?.filter(i => i.interaction_type === 'flag').length || 0
+      likes: (interactions as any)?.filter((i: any) => i.interaction_type === 'like').length || 0,
+      dislikes: (interactions as any)?.filter((i: any) => i.interaction_type === 'dislike').length || 0,
+      helpful: (interactions as any)?.filter((i: any) => i.interaction_type === 'helpful').length || 0,
+      flags: (interactions as any)?.filter((i: any) => i.interaction_type === 'flag').length || 0
     }
 
     return NextResponse.json({
       annotation: {
-        ...annotation,
+        ...(annotation as any),
         interactions: stats
       }
     })
@@ -147,7 +147,7 @@ export async function PUT(
     const userId = 'demo-user-id' // TODO: 从认证系统获取真实用户ID
 
     // 检查权限（只有标注作者可以编辑）
-    if (existing.user_id !== userId) {
+    if ((existing as any).user_id !== userId) {
       return NextResponse.json({ error: 'Permission denied' }, { status: 403 })
     }
 
@@ -164,7 +164,7 @@ export async function PUT(
     }
 
     // 更新标注
-    const { data: annotation, error } = await supabase
+    const { data: annotation, error } = await (supabase as any)
       .from('pdf_annotations')
       .update(updateData)
       .eq('id', id)
@@ -224,7 +224,7 @@ export async function DELETE(
     const userId = 'demo-user-id' // TODO: 从认证系统获取真实用户ID
 
     // 检查权限（只有标注作者可以删除）
-    if (existing.user_id !== userId) {
+    if ((existing as any).user_id !== userId) {
       return NextResponse.json({ error: 'Permission denied' }, { status: 403 })
     }
 

@@ -57,12 +57,12 @@ export const GET = withSecurity(async (req: NextRequest) => {
                 }
               }
             } catch (e) {
-              console.log('⚠️ Supabase token解析失败:', e.message)
+              console.log('⚠️ Supabase token解析失败:', e instanceof Error ? e.message : String(e))
             }
           }
         }
       } catch (e) {
-        console.log('⚠️ Supabase认证检查失败:', e.message)
+        console.log('⚠️ Supabase认证检查失败:', e instanceof Error ? e.message : String(e))
       }
     }
 

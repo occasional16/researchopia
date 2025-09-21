@@ -422,9 +422,9 @@ const AnnotationViewer: React.FC<AnnotationViewerProps> = ({
               <select
                 multiple
                 value={filters.type}
-                onChange={(e) => setFilters(prev => ({ 
-                  ...prev, 
-                  type: Array.from(e.target.selectedOptions, option => option.value)
+                onChange={(e) => setFilters(prev => ({
+                  ...prev,
+                  type: Array.from(e.target.selectedOptions, option => option.value) as AnnotationType[]
                 }))}
                 className="w-full px-3 py-1 border rounded text-sm"
               >
@@ -439,9 +439,9 @@ const AnnotationViewer: React.FC<AnnotationViewerProps> = ({
               <select
                 multiple
                 value={filters.visibility}
-                onChange={(e) => setFilters(prev => ({ 
-                  ...prev, 
-                  visibility: Array.from(e.target.selectedOptions, option => option.value)
+                onChange={(e) => setFilters(prev => ({
+                  ...prev,
+                  visibility: Array.from(e.target.selectedOptions, option => option.value) as VisibilityLevel[]
                 }))}
                 className="w-full px-3 py-1 border rounded text-sm"
               >

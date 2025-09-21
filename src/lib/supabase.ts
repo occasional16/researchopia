@@ -1,21 +1,37 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+// 创建客户端Supabase客户端的函数
+export function createSupabaseClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-// Only create Supabase client if environment variables are provided
-// Otherwise, the app will use Mock mode
-export const supabase = supabaseUrl && supabaseAnonKey
-  ? createClient(supabaseUrl, supabaseAnonKey, {
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: true,
-        storage: typeof window !== 'undefined' ? window.localStorage : undefined,
-        flowType: 'pkce'
-      }
-    })
-  : null
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return null
+  }
+
+  return createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+      storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+      flowType: 'pkce'
+    }
+  })
+}
+
+// 懒加载的客户端
+let _supabase: any | null = null
+
+export function getSupabase() {
+  if (_supabase === null) {
+    _supabase = createSupabaseClient()
+  }
+  return _supabase
+}
+
+// 向后兼容的导出
+export const supabase = getSupabase()
 
 // Types for our database tables
 export interface User {

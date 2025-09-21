@@ -69,7 +69,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (data && mountedRef.current) {
-        console.log('✅ Profile loaded:', data.email)
+        console.log('✅ Profile loaded:', (data as any).email)
         setProfile(data)
       }
     } catch (error) {
@@ -97,7 +97,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return
       }
 
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('users')
         .insert({
           id: userId,
@@ -396,7 +396,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // 监听认证状态变化
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      async (event: any, session: any) => {
         console.log('🔄 Auth state changed:', event, session?.user?.email)
         
         // 只有在初始会话检查完成后才处理状态变化

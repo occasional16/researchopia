@@ -81,9 +81,9 @@ export async function getPaperById(id: string): Promise<PaperWithStats | null> {
     return null
   }
 
-  const ratings = paper.ratings || []
-  const commentCount = Array.isArray(paper.comments) ? paper.comments.length : 0
-  const favoriteCount = Array.isArray(paper.favorites) ? paper.favorites.length : 0
+  const ratings = (paper as any).ratings || []
+  const commentCount = Array.isArray((paper as any).comments) ? (paper as any).comments.length : 0
+  const favoriteCount = Array.isArray((paper as any).favorites) ? (paper as any).favorites.length : 0
   
   let averageRating = 0
   if (ratings.length > 0) {
@@ -92,7 +92,7 @@ export async function getPaperById(id: string): Promise<PaperWithStats | null> {
   }
 
   return {
-    ...paper,
+    ...(paper as any),
     ratings,
     rating_count: ratings.length,
     comment_count: commentCount,
@@ -171,7 +171,7 @@ export async function createPaper(paperData: Omit<Paper, 'id' | 'created_at' | '
     throw new Error('Supabase is not available')
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('papers')
     .insert([{
       ...paperData,
@@ -217,7 +217,7 @@ export async function createPaperFromDOI(doi: string, userId: string): Promise<P
     created_by: userId
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('papers')
     .insert([newPaper])
     .select()
@@ -244,7 +244,7 @@ export async function createRating(
     throw new Error('Supabase is not available')
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('ratings')
     .insert([{
       paper_id: paperId,
@@ -295,7 +295,7 @@ export async function updateRating(
     throw new Error('Supabase is not available')
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('ratings')
     .update(ratingData)
     .eq('id', ratingId)
@@ -319,7 +319,7 @@ export async function createComment(
     throw new Error('Supabase is not available')
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('comments')
     .insert([{
       paper_id: paperId,
@@ -387,7 +387,7 @@ export async function toggleFavorite(paperId: string, userId: string): Promise<b
     return false
   } else {
     // Add favorite
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from('favorites')
       .insert([{
         paper_id: paperId,

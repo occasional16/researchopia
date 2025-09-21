@@ -150,7 +150,7 @@ export async function POST(
       created_by: null // TODO: 添加用户认证后设置实际用户ID
     }
 
-    const { data: report, error } = await supabase
+    const { data: report, error } = await (supabase as any)
       .from('paper_reports')
       .insert(reportData)
       .select()
@@ -248,7 +248,7 @@ export async function PATCH(
       updated_at: new Date().toISOString()
     }
 
-    const { data: report, error } = await supabase
+    const { data: report, error } = await (supabase as any)
       .from('paper_reports')
       .update(updateData)
       .eq('id', reportId)

@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
     }
 
     console.log('🗄️ 插入到Supabase数据库...')
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('papers')
       .insert([{
         ...body,

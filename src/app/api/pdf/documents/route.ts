@@ -74,7 +74,7 @@ export async function GET(request: NextRequest) {
         }
         
         if (supabase) {
-          const { data: statsData } = await supabase.rpc('get_pdf_annotation_stats', {
+          const { data: statsData } = await (supabase as any).rpc('get_pdf_annotation_stats', {
             document_id: doc.id
           })
           stats = statsData?.[0] || stats
@@ -181,7 +181,7 @@ export async function POST(request: NextRequest) {
     const userId = 'demo-user-id' // TODO: 从认证系统获取真实用户ID
 
     // 插入新的PDF文档记录
-    const { data: document, error } = await supabase
+    const { data: document, error } = await (supabase as any)
       .from('pdf_documents')
       .insert([{
         title,

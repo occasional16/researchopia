@@ -43,7 +43,7 @@ export async function GET(
     const totalReports = reports?.length || 0
     
     // 统计按来源分类
-    const crawledReports = reports?.filter(r => 
+    const crawledReports = reports?.filter((r: any) =>
       r.source === 'news' || r.source === 'blog'
     ).length || 0
     
@@ -51,10 +51,10 @@ export async function GET(
     
     // 统计贡献者
     const contributorCounts = new Map<string, number>()
-    reports?.forEach(report => {
+    reports?.forEach((report: any) => {
       if (report.created_by) {
         contributorCounts.set(
-          report.created_by, 
+          report.created_by,
           (contributorCounts.get(report.created_by) || 0) + 1
         )
       }
@@ -79,7 +79,7 @@ export async function GET(
         .single()
       
       topContributor = {
-        name: userData?.username || '匿名贡献者',
+        name: (userData as any)?.username || '匿名贡献者',
         count: topContributorCount
       }
     }

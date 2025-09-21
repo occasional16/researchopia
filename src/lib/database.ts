@@ -78,7 +78,7 @@ export async function getPapersWithSort(
     switch (sortBy) {
       case 'rating':
         // 评分最高：按平均评分降序，评分相同时按评分数量降序
-        papersWithStats.sort((a, b) => {
+        papersWithStats.sort((a: any, b: any) => {
           if (b.average_rating !== a.average_rating) {
             return b.average_rating - a.average_rating
           }
@@ -87,7 +87,7 @@ export async function getPapersWithSort(
         break
       case 'comments':
         // 评论最多：按评论数量降序，评论数相同时按最新评论时间降序
-        papersWithStats.sort((a, b) => {
+        papersWithStats.sort((a: any, b: any) => {
           if (b.comment_count !== a.comment_count) {
             return b.comment_count - a.comment_count
           }
@@ -96,7 +96,7 @@ export async function getPapersWithSort(
         break
       case 'recent_comments':
         // 最新评论：按最新评论时间降序，没有评论的论文按创建时间降序排在后面
-        papersWithStats.sort((a, b) => {
+        papersWithStats.sort((a: any, b: any) => {
           // 如果都有评论，按最新评论时间排序
           if (a.latest_comment_time > 0 && b.latest_comment_time > 0) {
             return b.latest_comment_time - a.latest_comment_time
@@ -114,7 +114,7 @@ export async function getPapersWithSort(
         break
       default:
         // 默认按最新评论排序
-        papersWithStats.sort((a, b) => {
+        papersWithStats.sort((a: any, b: any) => {
           if (a.latest_comment_time > 0 && b.latest_comment_time > 0) {
             return b.latest_comment_time - a.latest_comment_time
           }
@@ -179,7 +179,7 @@ export async function getPapersWithSort(
       // 应用相同的排序逻辑
       switch (sortBy) {
         case 'rating':
-          papersWithStats.sort((a, b) => {
+          papersWithStats.sort((a: any, b: any) => {
             if (b.average_rating !== a.average_rating) {
               return b.average_rating - a.average_rating
             }
@@ -187,7 +187,7 @@ export async function getPapersWithSort(
           })
           break
         case 'comments':
-          papersWithStats.sort((a, b) => {
+          papersWithStats.sort((a: any, b: any) => {
             if (b.comment_count !== a.comment_count) {
               return b.comment_count - a.comment_count
             }
@@ -195,7 +195,7 @@ export async function getPapersWithSort(
           })
           break
         case 'recent_comments':
-          papersWithStats.sort((a, b) => {
+          papersWithStats.sort((a: any, b: any) => {
             if (a.latest_comment_time > 0 && b.latest_comment_time > 0) {
               return b.latest_comment_time - a.latest_comment_time
             }
@@ -209,7 +209,7 @@ export async function getPapersWithSort(
           })
           break
         default:
-          papersWithStats.sort((a, b) => {
+          papersWithStats.sort((a: any, b: any) => {
             if (a.latest_comment_time > 0 && b.latest_comment_time > 0) {
               return b.latest_comment_time - a.latest_comment_time
             }
@@ -257,9 +257,9 @@ export async function getPaperById(id: string): Promise<PaperWithStats | null> {
     return null
   }
 
-  const ratings = paper.ratings || []
-  const commentCount = Array.isArray(paper.comments) ? paper.comments.length : 0
-  const favoriteCount = Array.isArray(paper.paper_favorites) ? paper.paper_favorites.length : 0
+  const ratings = (paper as any).ratings || []
+  const commentCount = Array.isArray((paper as any).comments) ? (paper as any).comments.length : 0
+  const favoriteCount = Array.isArray((paper as any).paper_favorites) ? (paper as any).paper_favorites.length : 0
   
   let averageRating = 0
   if (ratings.length > 0) {
@@ -268,7 +268,7 @@ export async function getPaperById(id: string): Promise<PaperWithStats | null> {
   }
 
   return {
-    ...paper,
+    ...(paper as any),
     ratings,
     rating_count: ratings.length,
     comment_count: commentCount,
@@ -347,7 +347,7 @@ export async function createPaper(paperData: Omit<Paper, 'id' | 'created_at' | '
     throw new Error('Supabase is not available')
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('papers')
     .insert([{
       ...paperData,
@@ -394,7 +394,7 @@ export async function createPaperFromDOI(doi: string, userId: string): Promise<P
     created_by: userId
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('papers')
     .insert([newPaper])
     .select()
@@ -421,7 +421,7 @@ export async function createRating(
     throw new Error('Supabase is not available')
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('ratings')
     .insert([{
       paper_id: paperId,
@@ -472,7 +472,7 @@ export async function updateRating(
     throw new Error('Supabase is not available')
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('ratings')
     .update(ratingData)
     .eq('id', ratingId)
@@ -496,7 +496,7 @@ export async function createComment(
     throw new Error('Supabase is not available')
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('comments')
     .insert([{
       paper_id: paperId,
@@ -564,7 +564,7 @@ export async function toggleFavorite(paperId: string, userId: string): Promise<b
     return false
   } else {
     // Add favorite
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from('paper_favorites')
       .insert([{
         paper_id: paperId,
@@ -682,7 +682,7 @@ export async function updatePaper(id: string, paperData: Partial<Paper>): Promis
     throw new Error('Supabase is not available')
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('papers')
     .update(paperData)
     .eq('id', id)
@@ -739,7 +739,7 @@ export async function searchOrCreatePaperByDOI(doi: string): Promise<Paper[]> {
     created_by: '00000000-0000-0000-0000-000000000000' // System user UUID
   }
 
-  const { data, error } = await supabase!
+  const { data, error } = await (supabase as any)!
     .from('papers')
     .insert([newPaper])
     .select()

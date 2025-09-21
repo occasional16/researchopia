@@ -46,7 +46,7 @@ export async function POST(
           .single()
 
         if (!existingReport) {
-          const { data: newReport, error } = await supabase
+          const { data: newReport, error } = await (supabase as any)
             .from('paper_reports')
             .insert({
               paper_id: paperId,

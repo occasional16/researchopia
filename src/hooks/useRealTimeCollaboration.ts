@@ -177,7 +177,10 @@ export const useRealTimeCollaboration = (options: UseRealTimeCollaborationOption
             lastSeen: new Date()
           }]
         }));
-        onUserJoined?.(message.payload.user);
+        onUserJoined?.({
+          ...message.payload.user,
+          lastSeen: new Date()
+        });
         break;
 
       case 'user:disconnected':
@@ -195,14 +198,22 @@ export const useRealTimeCollaboration = (options: UseRealTimeCollaborationOption
           ...prev,
           cursorPositions: new Map(prev.cursorPositions).set(
             message.payload.user.id,
-            message.payload.position
+            {
+              x: message.payload.position.pdf?.rects?.[0]?.[0] || 0,
+              y: message.payload.position.pdf?.rects?.[0]?.[1] || 0,
+              page: message.payload.position.pdf?.pageIndex || 0
+            }
           )
         }));
-        onCursorMoved?.(message.payload.user.id, message.payload.position);
+        onCursorMoved?.(message.payload.user.id, {
+          x: message.payload.position.pdf?.rects?.[0]?.[0] || 0,
+          y: message.payload.position.pdf?.rects?.[0]?.[1] || 0,
+          page: message.payload.position.pdf?.pageIndex || 0
+        });
         break;
 
       default:
-        console.warn('Unknown WebSocket message type:', message.type);
+        console.warn('Unknown WebSocket message type:', (message as any).type);
     }
   }, [onAnnotationReceived, onAnnotationUpdated, onAnnotationDeleted, onUserJoined, onUserLeft, onCursorMoved]);
 

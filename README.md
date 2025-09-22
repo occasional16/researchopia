@@ -1,5 +1,10 @@
 # 研学港 Researchopia - 开放的学术交流平台
 
+[![zotero target version](https://img.shields.io/badge/Zotero-8-green?style=flat-square&logo=zotero&logoColor=CC2936)](https://www.zotero.org) 
+![Downloads](https://gh-down-badges.linkof.link/occasional15/researchopia)
+[![Latest release](https://img.shields.io/github/v/release/occasional15/researchopia)](https://github.com/occasional15/researchopia/releases)
+![License](https://img.shields.io/badge/License-MIT-green.svg)
+
 > **研学并进，智慧共享** | Where Research Meets Community
 
 ## 💡 项目声明

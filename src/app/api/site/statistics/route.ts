@@ -32,14 +32,15 @@ export async function GET(request: NextRequest) {
     )
 
     try {
-      // 并行执行查询，使用超时控制（包含访问统计）
+      // 并行执行查询，使用超时控制
       const statsPromise = Promise.all([
         supabase.from('papers').select('*', { count: 'exact', head: true }),
         supabase.from('users').select('*', { count: 'exact', head: true }),
-        supabase.from('page_visits').select('visit_count, date, created_at')
+        // 查询新的访问计数器表
+        supabase.from('visit_counters').select('counter_type, counter_value, last_updated')
       ])
 
-      const [papersResult, usersResult, visitsResult] = await Promise.race([statsPromise, timeout]) as [any, any, any]
+      const [papersResult, usersResult, countersResult] = await Promise.race([statsPromise, timeout]) as [any, any, any]
 
       // 处理数据库查询结果
       const paperCount = papersResult.count || 0
@@ -47,24 +48,31 @@ export async function GET(request: NextRequest) {
 
       let totalVisits = 0
       let todayVisits = 0
-      const todayStr = new Date().toISOString().slice(0, 10)
 
-      if (visitsResult?.data && Array.isArray(visitsResult.data)) {
-        for (const row of visitsResult.data) {
-          const count = typeof row.visit_count === 'number' ? row.visit_count : 1
-          totalVisits += count
-          const rowDate = (row.date || (row.created_at ? String(row.created_at).slice(0, 10) : ''))
-          if (rowDate === todayStr) {
-            todayVisits += count
-          }
+      // 从访问计数器获取数据
+      if (countersResult?.data && Array.isArray(countersResult.data)) {
+        const totalCounter = countersResult.data.find((c: any) => c.counter_type === 'total_visits')
+        const todayCounter = countersResult.data.find((c: any) => c.counter_type === 'today_visits')
+
+        if (totalCounter) {
+          totalVisits = totalCounter.counter_value || 0
+          console.log('📊 Total visits from DB:', totalVisits)
+        }
+        if (todayCounter) {
+          todayVisits = todayCounter.counter_value || 0
+          console.log('📊 Today visits from DB:', todayVisits)
         }
       }
 
-      // 如果没有日志表数据，退回估算（与原逻辑一致）
+      // 如果数据库没有数据，使用智能估算（避免hydration错误）
       if (totalVisits === 0) {
-        const baseVisits = paperCount * 15 + userCount * 30
-        totalVisits = Math.max(baseVisits, 800)
-        todayVisits = Math.floor(totalVisits * 0.015) + Math.floor(Math.random() * 15) + 1
+        console.log('📊 Using fallback estimation')
+        // 基于论文和用户数量的固定估算（避免随机数导致的hydration错误）
+        const baseVisits = paperCount * 25 + userCount * 50
+        totalVisits = Math.max(baseVisits, 1200) + 300 // 固定增量避免随机数
+
+        // 今日访问量为总访问量的固定比例
+        todayVisits = Math.floor(totalVisits * 0.02) + 10 // 固定比例避免随机数
       }
 
       return NextResponse.json({

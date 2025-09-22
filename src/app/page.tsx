@@ -11,6 +11,27 @@ import { useAuthenticatedFetch } from '@/hooks/useAuthenticatedFetch'
 import NetworkOptimizer from '@/components/NetworkOptimizer'
 import AnnouncementForm from '@/components/AnnouncementForm'
 
+// 日期格式化工具函数（避免hydration错误）
+function formatDate(dateString: string): string {
+  const date = new Date(dateString)
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  const hours = String(date.getHours()).padStart(2, '0')
+  const minutes = String(date.getMinutes()).padStart(2, '0')
+
+  return `${year}-${month}-${day} ${hours}:${minutes}`
+}
+
+function formatDateOnly(dateString: string): string {
+  const date = new Date(dateString)
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+
+  return `${year}-${month}-${day}`
+}
+
 interface SiteStats {
   totalPapers: number
   totalUsers: number
@@ -76,12 +97,40 @@ export default function HomePage() {
   const [showAnnouncementForm, setShowAnnouncementForm] = useState(false)
   const [editingAnnouncement, setEditingAnnouncement] = useState<Announcement | null>(null)
 
+  // 访问跟踪函数
+  const trackVisit = async () => {
+    try {
+      const response = await fetch('/api/visits/track', { method: 'POST' })
+      const result = await response.json()
+
+      if (process.env.NODE_ENV === 'development') {
+        console.log('📊 访问统计:', result)
+      }
+
+      // 如果API返回了访问量数据，立即更新状态
+      if (result.success && (result.totalVisits || result.todayVisits)) {
+        setStats(prev => ({
+          ...prev,
+          totalVisits: result.totalVisits || prev.totalVisits,
+          todayVisits: result.todayVisits || prev.todayVisits
+        }))
+      }
+    } catch (e) {
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('📊 访问统计失败:', e)
+      }
+    }
+  }
+
   useEffect(() => {
     const loadData = async () => {
       setLoading(true)
       setDataError(null)
-      
+
       try {
+        // 先记录访问，再加载数据，避免状态被覆盖
+        await trackVisit()
+
         // 并行加载统计数据、评论数据和公告数据，提高性能
         const [statsResponse, commentsResponse, announcementsResponse] = await Promise.allSettled([
           fetch('/api/site/statistics', {
@@ -181,15 +230,6 @@ export default function HomePage() {
     }
 
     loadData()
-    
-    // 记录一次访问（PV）
-    ;(async () => {
-      try {
-        await fetch('/api/visits/track', { method: 'POST' })
-      } catch (e) {
-        // 忽略打点失败
-      }
-    })()
 
     // 定时刷新统计数据（每60秒）
     const interval = setInterval(async () => {
@@ -464,7 +504,7 @@ export default function HomePage() {
                   </div>
                   <div className="mt-3 flex justify-between items-center">
                     <div className="text-sm text-gray-500">
-                      发布时间: {new Date(announcement.created_at).toLocaleString('zh-CN')}
+                      发布时间: {formatDate(announcement.created_at)}
                       {announcement.created_by && (
                         <span className="ml-4">发布者: {announcement.created_by}</span>
                       )}
@@ -579,13 +619,7 @@ export default function HomePage() {
                             评论者：<span className="font-medium">{comment.latest_comment.user?.username || '匿名用户'}</span>
                           </span>
                           <span>
-                            {new Date(comment.latest_comment.created_at).toLocaleDateString('zh-CN', {
-                              year: 'numeric',
-                              month: 'short',
-                              day: 'numeric',
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            })}
+                            {formatDate(comment.latest_comment.created_at)}
                           </span>
                         </div>
                       </div>
@@ -606,7 +640,7 @@ export default function HomePage() {
                           )}
                         </div>
                         <div className="text-xs text-gray-400 text-right">
-                          论文发布：{new Date(comment.created_at).toLocaleDateString('zh-CN')}
+                          论文发布：{formatDateOnly(comment.created_at)}
                         </div>
                       </div>
                     </div>
@@ -654,6 +688,36 @@ export default function HomePage() {
 
       {/* 网络优化组件 */}
       <NetworkOptimizer />
+
+      {/* 开发环境调试面板 */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="bg-gray-100 border border-gray-300 rounded-lg p-4 mt-8">
+          <h3 className="text-lg font-semibold text-gray-800 mb-3">🔧 访问统计调试信息</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+            <div>
+              <span className="font-medium text-gray-600">总访问量:</span>
+              <span className="ml-2 text-blue-600 font-bold">{stats.totalVisits}</span>
+            </div>
+            <div>
+              <span className="font-medium text-gray-600">今日访问:</span>
+              <span className="ml-2 text-green-600 font-bold">{stats.todayVisits}</span>
+            </div>
+            <div>
+              <span className="font-medium text-gray-600">论文数量:</span>
+              <span className="ml-2 text-purple-600 font-bold">{stats.totalPapers}</span>
+            </div>
+            <div>
+              <span className="font-medium text-gray-600">用户数量:</span>
+              <span className="ml-2 text-orange-600 font-bold">{stats.totalUsers}</span>
+            </div>
+          </div>
+          <div className="mt-3 text-xs text-gray-500">
+            <p>• 访问统计每60秒自动刷新</p>
+            <p>• 每次页面加载会记录一次访问</p>
+            <p>• 数据来源：Supabase realtime_counters 表</p>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

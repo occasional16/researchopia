@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import { Eye, EyeOff, CheckCircle, XCircle, Loader2 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { validateEducationalEmail } from '@/lib/emailValidation'
 
@@ -23,8 +24,59 @@ export default function SignUpForm({ onToggleMode, onClose }: SignUpFormProps) {
     institution?: string
     error?: string
   } | null>(null)
+  const [usernameValidation, setUsernameValidation] = useState<{
+    available: boolean
+    message: string
+    suggestions?: string[]
+    checking?: boolean
+  } | null>(null)
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
   const { signUp } = useAuth()
+
+  // 防抖检查用户名
+  const checkUsername = useCallback(async (username: string) => {
+    if (!username || username.length < 3) {
+      setUsernameValidation(null)
+      return
+    }
+
+    setUsernameValidation({ available: false, message: '', checking: true })
+
+    try {
+      const response = await fetch('/api/auth/check-username', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username })
+      })
+
+      const result = await response.json()
+      setUsernameValidation({
+        available: result.available,
+        message: result.message,
+        suggestions: result.suggestions,
+        checking: false
+      })
+    } catch (error) {
+      setUsernameValidation({
+        available: false,
+        message: '检查失败，请重试',
+        checking: false
+      })
+    }
+  }, [])
+
+  // 用户名输入防抖
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (username) {
+        checkUsername(username)
+      }
+    }, 500)
+
+    return () => clearTimeout(timer)
+  }, [username, checkUsername])
 
   const handleEmailChange = (value: string) => {
     setEmail(value)
@@ -59,6 +111,20 @@ export default function SignUpForm({ onToggleMode, onClose }: SignUpFormProps) {
 
     if (password.length < 6) {
       setError('密码长度至少6位')
+      setLoading(false)
+      return
+    }
+
+    // 检查密码复杂度
+    if (!/[a-zA-Z]/.test(password) || !/\d/.test(password)) {
+      setError('密码必须包含字母和数字')
+      setLoading(false)
+      return
+    }
+
+    // 检查用户名可用性
+    if (!usernameValidation?.available) {
+      setError(usernameValidation?.message || '请检查用户名')
       setLoading(false)
       return
     }
@@ -117,15 +183,56 @@ export default function SignUpForm({ onToggleMode, onClose }: SignUpFormProps) {
           <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
             用户名
           </label>
-          <input
-            id="username"
-            type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="请输入用户名"
-          />
+          <div className="relative">
+            <input
+              id="username"
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-10 ${
+                usernameValidation?.available === false
+                  ? 'border-red-300 bg-red-50'
+                  : usernameValidation?.available === true
+                  ? 'border-green-300 bg-green-50'
+                  : 'border-gray-300'
+              }`}
+              placeholder="请输入用户名（3-20个字符）"
+            />
+            <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+              {usernameValidation?.checking ? (
+                <Loader2 className="h-4 w-4 text-gray-400 animate-spin" />
+              ) : usernameValidation?.available === true ? (
+                <CheckCircle className="h-4 w-4 text-green-500" />
+              ) : usernameValidation?.available === false ? (
+                <XCircle className="h-4 w-4 text-red-500" />
+              ) : null}
+            </div>
+          </div>
+          {usernameValidation?.message && (
+            <p className={`text-sm mt-1 ${
+              usernameValidation.available ? 'text-green-600' : 'text-red-600'
+            }`}>
+              {usernameValidation.message}
+            </p>
+          )}
+          {usernameValidation?.suggestions && usernameValidation.suggestions.length > 0 && (
+            <div className="mt-2">
+              <p className="text-xs text-gray-600 mb-1">建议用户名：</p>
+              <div className="flex flex-wrap gap-1">
+                {usernameValidation.suggestions.map((suggestion, index) => (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={() => setUsername(suggestion)}
+                    className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
+                  >
+                    {suggestion}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         <div>
@@ -165,30 +272,59 @@ export default function SignUpForm({ onToggleMode, onClose }: SignUpFormProps) {
           <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
             密码
           </label>
-          <input
-            id="password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="请输入密码（至少6位）"
-          />
+          <div className="relative">
+            <input
+              id="password"
+              type={showPassword ? 'text' : 'password'}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-10"
+              placeholder="请输入密码（至少6位）"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute inset-y-0 right-0 pr-3 flex items-center"
+            >
+              {showPassword ? (
+                <EyeOff className="h-4 w-4 text-gray-400" />
+              ) : (
+                <Eye className="h-4 w-4 text-gray-400" />
+              )}
+            </button>
+          </div>
+          <p className="text-xs text-gray-500 mt-1">
+            密码必须包含字母和数字，至少6位
+          </p>
         </div>
 
         <div>
           <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
             确认密码
           </label>
-          <input
-            id="confirmPassword"
-            type="password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="请再次输入密码"
-          />
+          <div className="relative">
+            <input
+              id="confirmPassword"
+              type={showConfirmPassword ? 'text' : 'password'}
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-10"
+              placeholder="请再次输入密码"
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              className="absolute inset-y-0 right-0 pr-3 flex items-center"
+            >
+              {showConfirmPassword ? (
+                <EyeOff className="h-4 w-4 text-gray-400" />
+              ) : (
+                <Eye className="h-4 w-4 text-gray-400" />
+              )}
+            </button>
+          </div>
         </div>
 
         <button

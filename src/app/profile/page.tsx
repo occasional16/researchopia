@@ -8,6 +8,7 @@ import { getUserStats, type UserStats } from '@/lib/userActivity'
 import UserRatings from '@/components/profile/UserRatings'
 import UserComments from '@/components/profile/UserComments'
 import UserFavorites from '@/components/profile/UserFavorites'
+import AccountManagement from '@/components/profile/AccountManagement'
 
 export default function ProfilePage() {
   const router = useRouter()
@@ -188,53 +189,7 @@ export default function ProfilePage() {
             {activeTab === 'account' && (
               <div className="p-6">
                 <h2 className="text-xl font-semibold text-gray-900 mb-6">账户管理</h2>
-                <div className="space-y-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      邮箱地址
-                    </label>
-                    <input
-                      type="email"
-                      value={user.email}
-                      disabled
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-500"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">邮箱地址不可修改</p>
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      用户名
-                    </label>
-                    <input
-                      type="text"
-                      value={profile?.username || ''}
-                      readOnly
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      账户类型
-                    </label>
-                    <div className="flex items-center space-x-2">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        profile?.role === 'admin' 
-                          ? 'bg-red-100 text-red-800' 
-                          : 'bg-blue-100 text-blue-800'
-                      }`}>
-                        {profile?.role === 'admin' ? '管理员' : '普通用户'}
-                      </span>
-                    </div>
-                  </div>
-                  
-                  <div className="pt-4">
-                    <button className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
-                      保存更改
-                    </button>
-                  </div>
-                </div>
+                <AccountManagement user={user} profile={profile} />
               </div>
             )}
 

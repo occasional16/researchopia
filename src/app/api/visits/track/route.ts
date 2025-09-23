@@ -1,6 +1,56 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
+// 检查并重置今日访问量（精确的0点重置逻辑）
+async function checkAndResetTodayVisits(supabase: any) {
+  try {
+    // 获取今日访问量计数器的最后更新时间
+    const { data: counter, error } = await supabase
+      .from('visit_counters')
+      .select('counter_value, last_updated')
+      .eq('counter_type', 'today_visits')
+      .single()
+
+    if (error || !counter) {
+      console.warn('Failed to get today visits counter:', error?.message)
+      return
+    }
+
+    // 使用中国时区（UTC+8）进行日期计算
+    const now = new Date()
+    const chinaTime = new Date(now.getTime() + (8 * 60 * 60 * 1000)) // UTC+8
+    const lastUpdated = new Date(counter.last_updated)
+    const lastUpdatedChina = new Date(lastUpdated.getTime() + (8 * 60 * 60 * 1000))
+
+    // 获取今天0点的时间戳（中国时区）
+    const todayStart = new Date(chinaTime.getFullYear(), chinaTime.getMonth(), chinaTime.getDate())
+    const lastUpdateDate = new Date(lastUpdatedChina.getFullYear(), lastUpdatedChina.getMonth(), lastUpdatedChina.getDate())
+
+    // 如果最后更新时间早于今天0点，则需要重置
+    if (lastUpdateDate.getTime() < todayStart.getTime()) {
+      console.log(`🔄 Resetting today visits counter (new day detected)`)
+      console.log(`   Last update: ${lastUpdatedChina.toLocaleString('zh-CN')}`)
+      console.log(`   Today start: ${todayStart.toLocaleString('zh-CN')}`)
+
+      const { error: resetError } = await supabase
+        .from('visit_counters')
+        .update({
+          counter_value: 0,
+          last_updated: now.toISOString() // 使用UTC时间存储
+        })
+        .eq('counter_type', 'today_visits')
+
+      if (resetError) {
+        console.warn('Failed to reset today visits:', resetError.message)
+      } else {
+        console.log('✅ Today visits counter reset successfully')
+      }
+    }
+  } catch (error) {
+    console.warn('Error in checkAndResetTodayVisits:', error)
+  }
+}
+
 // 极简访问统计 - 记录页面访问
 export async function POST(request: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -45,7 +95,10 @@ export async function POST(request: NextRequest) {
       // 不影响主要功能
     }
 
-    // 2. 更新访问计数器（核心功能）
+    // 2. 检查是否需要重置今日访问量
+    await checkAndResetTodayVisits(supabase)
+
+    // 3. 更新访问计数器（核心功能）
     let totalVisits = 0
     let todayVisits = 0
 

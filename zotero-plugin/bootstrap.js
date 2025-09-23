@@ -94,26 +94,20 @@ class BuiltinAuthManager {
    */
   async showInternalLoginForm() {
     try {
-      // 首先询问用户选择登录方式
-      const choice = await this.askLoginChoice();
+      // 直接进入登录流程，不再询问模式选择
+      log('Starting direct Supabase login...');
 
-      if (choice === 'demo') {
-        // 启动演示模式
-        await this.startDemoMode();
-        return;
-      }
+      // 创建登录对话框
+      const loginDialog = this.createLoginDialog();
 
-      if (choice === 'login') {
-        // 创建登录对话框
-        const loginDialog = this.createLoginDialog();
+      // 显示对话框并等待用户输入
+      const result = await this.showLoginDialog(loginDialog);
 
-        // 显示对话框并等待用户输入
-        const result = await this.showLoginDialog(loginDialog);
-
-        if (result.success) {
-          // 直接调用Supabase认证API
-          await this.authenticateWithSupabase(result.email, result.password);
-        }
+      if (result.success) {
+        // 直接调用Supabase认证API
+        await this.authenticateWithSupabase(result.email, result.password);
+      } else if (result.error !== 'User cancelled') {
+        throw new Error(result.error);
       }
 
     } catch (error) {
@@ -122,40 +116,7 @@ class BuiltinAuthManager {
     }
   }
 
-  /**
-   * 询问登录方式选择
-   */
-  async askLoginChoice() {
-    try {
-      // 显示选择对话框
-      const choice = await new Promise((resolve) => {
-        const result = Zotero.alert(
-          null,
-          'Researchopia 登录方式',
-          '请选择登录方式：\n\n' +
-          '1. 真实登录 - 使用您的研学港账户\n' +
-          '2. 演示模式 - 体验功能（推荐）\n\n' +
-          '注意：由于技术限制，真实登录需要手动输入账户信息',
-          3, // 显示三个按钮
-          '真实登录',
-          '演示模式',
-          '取消'
-        );
 
-        switch (result) {
-          case 0: resolve('login'); break;
-          case 1: resolve('demo'); break;
-          default: resolve('cancel'); break;
-        }
-      });
-
-      return choice;
-
-    } catch (error) {
-      log('Ask login choice failed: ' + error.message);
-      return 'demo'; // 默认演示模式
-    }
-  }
 
   /**
    * 直接调用Supabase认证API
@@ -259,16 +220,38 @@ class BuiltinAuthManager {
    */
   createLoginDialog() {
     try {
-      // 使用简单的输入对话框
+      // 使用改进的输入对话框
       return {
         getCredentials: () => {
-          const email = this.promptUser('Researchopia 登录', '请输入您的邮箱地址：', '');
-          if (!email) return null;
+          // 显示登录说明
+          const proceed = Zotero.alert(
+            null,
+            'Researchopia 登录',
+            '🔐 登录研学港账户\n\n' +
+            '请准备您的研学港账户信息：\n' +
+            '• 注册邮箱地址\n' +
+            '• 账户密码\n\n' +
+            '注意：由于Zotero插件的技术限制，需要分别输入邮箱和密码',
+            2, // 显示两个按钮
+            '继续登录',
+            '取消'
+          );
 
-          const password = this.promptUser('Researchopia 登录', '请输入您的密码：', '', true);
-          if (!password) return null;
+          if (proceed !== 0) return null; // 用户取消
 
-          return { email, password };
+          const email = this.promptUser('Researchopia 登录', '请输入您的研学港邮箱地址：', '');
+          if (!email || !email.trim()) {
+            Zotero.alert(null, 'Researchopia 登录', '❌ 邮箱地址不能为空');
+            return null;
+          }
+
+          const password = this.promptUser('Researchopia 登录', '请输入您的研学港密码：', '', true);
+          if (!password || !password.trim()) {
+            Zotero.alert(null, 'Researchopia 登录', '❌ 密码不能为空');
+            return null;
+          }
+
+          return { email: email.trim(), password: password.trim() };
         }
       };
     } catch (error) {
@@ -344,32 +327,21 @@ class BuiltinAuthManager {
   }
 
   /**
-   * 简化输入方法
+   * 简化输入方法 - 备用方案
    */
   getSimpleInput(title, message, defaultValue, isPassword = false) {
     try {
-      // 对于演示，我们提供一个测试账户
-      if (message.includes('邮箱')) {
-        Zotero.alert(
-          null,
-          title,
-          '请输入您的邮箱地址\n\n如需测试，可以使用演示模式'
-        );
-        // 返回一个测试邮箱用于演示
-        return 'demo@researchopia.com';
-      }
+      // 这是一个备用方案，正常情况下应该使用Services.prompt
+      log('Using fallback input method for: ' + message);
 
-      if (message.includes('密码')) {
-        Zotero.alert(
-          null,
-          title,
-          '请输入您的密码\n\n如需测试，可以使用演示模式'
-        );
-        // 返回一个测试密码用于演示
-        return 'demo123456';
-      }
+      // 显示输入说明
+      Zotero.alert(
+        null,
+        title,
+        message + '\n\n⚠️ 请注意：由于技术限制，无法直接输入。\n建议重启Zotero后重试，或联系技术支持。'
+      );
 
-      return defaultValue;
+      return null;
 
     } catch (error) {
       log('Simple input failed: ' + error.message);
@@ -1852,35 +1824,7 @@ class ResearchopiaMain {
       }
     };
 
-    // 创建演示按钮
-    const demoBtn = doc.createElement('button');
-    demoBtn.style.cssText = 'padding: 8px 16px; background: #6b7280; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;';
-    demoBtn.textContent = '演示模式';
-    demoBtn.onclick = () => {
-      this.startDemoMode();
-      // 重新渲染界面
-      setTimeout(() => {
-        // 触发Item Pane重新渲染 - 使用正确的Zotero API
-        try {
-          // 方法1: 触发选中项目的重新渲染
-          if (Zotero.getActiveZoteroPane && Zotero.getActiveZoteroPane()) {
-            const zoteroPane = Zotero.getActiveZoteroPane();
-            if (zoteroPane.itemsView && zoteroPane.itemsView.selection) {
-              // 重新选择当前项目以触发Item Pane刷新
-              const currentSelection = zoteroPane.itemsView.selection.currentIndex;
-              if (currentSelection >= 0) {
-                zoteroPane.itemsView.selection.select(currentSelection);
-              }
-            }
-          }
-        } catch (refreshError) {
-          log("Item Pane refresh failed: " + refreshError.message);
-        }
-      }, 500);
-    };
-
     buttonContainer.appendChild(loginBtn);
-    buttonContainer.appendChild(demoBtn);
     existingContainer.appendChild(buttonContainer);
   }
 
@@ -2416,40 +2360,7 @@ class ResearchopiaMain {
     );
   }
 
-  /**
-   * 启动演示模式
-   */
-  startDemoMode() {
-    try {
-      // 创建演示用户
-      const demoUser = {
-        id: 'demo-user',
-        name: '演示用户',
-        email: 'demo@researchopia.com',
-        avatar: null
-      };
 
-      // 设置演示认证状态
-      this.authManager.currentUser = demoUser;
-      this.authManager.authToken = 'demo-token-' + Date.now();
-      this.authManager.isAuthenticated = true;
-
-      // 保存演示状态
-      this.authManager.saveAuthState();
-
-      Zotero.alert(
-        null,
-        'Researchopia 演示模式',
-        '🎭 演示模式已启动！\n\n您现在可以体验标注共享功能\n注意：这只是演示，不会连接到真实服务器'
-      );
-
-      log('Demo mode activated');
-
-    } catch (error) {
-      log('Failed to start demo mode: ' + error.message);
-      Zotero.alert(null, 'Researchopia 演示模式', '❌ 启动演示模式失败: ' + error.message);
-    }
-  }
 
   /**
    * 创建文献信息

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { Eye, EyeOff, Loader2 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 
 interface LoginFormProps {
@@ -13,8 +14,38 @@ export default function LoginForm({ onToggleMode, onClose }: LoginFormProps) {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [showForgotPassword, setShowForgotPassword] = useState(false)
+  const [forgotPasswordLoading, setForgotPasswordLoading] = useState(false)
+  const [forgotPasswordMessage, setForgotPasswordMessage] = useState('')
 
   const { signIn } = useAuth()
+
+  const handleForgotPassword = async () => {
+    if (!email) {
+      setError('请先输入邮箱地址')
+      return
+    }
+
+    setForgotPasswordLoading(true)
+    setForgotPasswordMessage('')
+    setError('')
+
+    try {
+      const response = await fetch('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      })
+
+      const result = await response.json()
+      setForgotPasswordMessage(result.message || '密码重置邮件已发送')
+    } catch (error) {
+      setError('发送失败，请重试')
+    } finally {
+      setForgotPasswordLoading(false)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -58,19 +89,86 @@ export default function LoginForm({ onToggleMode, onClose }: LoginFormProps) {
         </div>
 
         <div>
-          <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-            密码
-          </label>
-          <input
-            id="password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="请输入密码"
-          />
+          <div className="flex justify-between items-center mb-1">
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              密码
+            </label>
+            <button
+              type="button"
+              onClick={() => setShowForgotPassword(!showForgotPassword)}
+              className="text-sm text-blue-600 hover:text-blue-500"
+            >
+              忘记密码？
+            </button>
+          </div>
+          <div className="relative">
+            <input
+              id="password"
+              type={showPassword ? 'text' : 'password'}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-10"
+              placeholder="请输入密码"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute inset-y-0 right-0 pr-3 flex items-center"
+            >
+              {showPassword ? (
+                <EyeOff className="h-4 w-4 text-gray-400" />
+              ) : (
+                <Eye className="h-4 w-4 text-gray-400" />
+              )}
+            </button>
+          </div>
         </div>
+
+        {/* 忘记密码区域 */}
+        {showForgotPassword && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+            <h4 className="text-sm font-medium text-blue-900 mb-2">重置密码</h4>
+            <p className="text-xs text-blue-700 mb-3">
+              我们将向您的邮箱发送密码重置链接
+            </p>
+
+            {forgotPasswordMessage && (
+              <div className="bg-green-50 border border-green-200 rounded p-3 mb-3">
+                <p className="text-green-700 text-sm">{forgotPasswordMessage}</p>
+              </div>
+            )}
+
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={handleForgotPassword}
+                disabled={forgotPasswordLoading || !email}
+                className="flex-1 bg-blue-600 text-white py-2 px-3 rounded text-sm hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+              >
+                {forgotPasswordLoading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                    发送中...
+                  </>
+                ) : (
+                  '发送重置邮件'
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowForgotPassword(false)
+                  setForgotPasswordMessage('')
+                  setError('')
+                }}
+                className="px-3 py-2 text-sm text-gray-600 hover:text-gray-800"
+              >
+                取消
+              </button>
+            </div>
+          </div>
+        )}
 
         <button
           type="submit"

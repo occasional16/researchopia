@@ -26,12 +26,12 @@ export async function POST(request: NextRequest) {
 
     // 重置今日访问计数器
     const { error } = await supabase
-      .from('realtime_counters')
-      .update({ 
+      .from('visit_counters')
+      .update({
         counter_value: 0,
         last_updated: new Date().toISOString()
       })
-      .eq('counter_name', 'today_visits')
+      .eq('counter_type', 'today_visits')
 
     if (error) {
       console.error('Failed to reset today counter:', error)

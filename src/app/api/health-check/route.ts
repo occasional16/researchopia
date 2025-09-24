@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
+import { emailService } from '@/lib/emailService'
+import { emailMonitor } from '@/lib/emailMonitor'
+import { emailValidationMonitor, emailValidationCache } from '@/lib/emailValidationMonitor'
 
 export async function GET(request: NextRequest) {
   console.log('🔍 Health check requested')
@@ -16,6 +19,12 @@ export async function GET(request: NextRequest) {
         nextVersion: 'unknown',
         hasSupabaseUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
         hasSupabaseKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+      },
+      emailSystem: {
+        smtpService: emailService.isAvailable(),
+        emailValidationApi: !!process.env.EMAIL_VALIDATION_API_KEY && process.env.EMAIL_VALIDATION_API_KEY !== 'your_email_validation_api_key',
+        recaptcha: !!process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY,
+        monitoring: true
       }
     }
 
@@ -52,6 +61,27 @@ export async function GET(request: NextRequest) {
     } else {
       console.log('⚠️ Supabase client not initialized')
       checks.databaseError = 'Supabase client not initialized'
+    }
+
+    // 获取邮件系统统计
+    try {
+      const emailStats = emailMonitor.getStats()
+      const validationStats = emailValidationMonitor.getStats()
+      const cacheStats = emailValidationCache.getStats()
+
+      checks.emailStats = {
+        totalEmailsSent: emailStats.totalSent,
+        bounceRate: (emailStats.bounceRate * 100).toFixed(2) + '%',
+        validationsPerformed: validationStats.totalValidations,
+        cacheSize: cacheStats.size,
+        alerts: {
+          highBounceRate: emailStats.bounceRate > 0.05,
+          recentFailures: emailStats.recentSends.filter(log => !log.success).length
+        }
+      }
+    } catch (statsError) {
+      console.error('❌ Failed to get email stats:', statsError)
+      checks.emailStats = { error: 'Failed to retrieve stats' }
     }
 
     console.log('✅ Health check completed:', checks)

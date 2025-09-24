@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Eye, EyeOff, Lock, Mail, Trash2, AlertTriangle, CheckCircle, XCircle } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
+import { supabase } from '@/lib/supabase'
 
 interface AccountManagementProps {
   user: any
@@ -68,11 +69,20 @@ export default function AccountManagement({ user, profile }: AccountManagementPr
     }
 
     try {
+      // 获取当前会话的访问令牌
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+
+      if (sessionError || !session?.access_token) {
+        setChangePasswordError('无法获取认证信息，请重新登录')
+        setChangePasswordLoading(false)
+        return
+      }
+
       const response = await fetch('/api/auth/change-password', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${user.access_token || ''}`
+          'Authorization': `Bearer ${session.access_token}`
         },
         body: JSON.stringify({
           currentPassword,
@@ -120,11 +130,20 @@ export default function AccountManagement({ user, profile }: AccountManagementPr
     }
 
     try {
+      // 获取当前会话的访问令牌
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+
+      if (sessionError || !session?.access_token) {
+        setChangeUsernameError('无法获取认证信息，请重新登录')
+        setChangeUsernameLoading(false)
+        return
+      }
+
       const response = await fetch('/api/auth/change-username', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${user.access_token || ''}`
+          'Authorization': `Bearer ${session.access_token}`
         },
         body: JSON.stringify({
           newUsername,
@@ -177,11 +196,20 @@ export default function AccountManagement({ user, profile }: AccountManagementPr
     setDeleteAccountError('')
 
     try {
+      // 获取当前会话的访问令牌
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+
+      if (sessionError || !session?.access_token) {
+        setDeleteAccountError('无法获取认证信息，请重新登录')
+        setDeleteAccountLoading(false)
+        return
+      }
+
       const response = await fetch('/api/auth/delete-account', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${user.access_token || ''}`
+          'Authorization': `Bearer ${session.access_token}`
         },
         body: JSON.stringify({
           password: deletePassword,

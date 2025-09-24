@@ -38,11 +38,11 @@
 
 论文详情页：
 
-![alt text](/doc/img/image.png)
+![alt text](/doc/img/xiangqingye.png)
 
 个人中心页：
 
-![alt text](/doc/img/image-1.png)
+![alt text](/doc/img/gerenzhongxin.png)
 
 ## 🚀 主要功能
 

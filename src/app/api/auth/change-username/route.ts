@@ -134,37 +134,26 @@ export async function POST(request: NextRequest) {
     // 获取当前用户信息
     const { data: currentProfile, error: profileError } = await supabase
       .from('users')
-      .select('username, last_username_change')
+      .select('username')
       .eq('id', user.id)
       .single()
 
     if (profileError) {
+      console.error('Profile fetch error:', profileError)
       return NextResponse.json({
         success: false,
-        message: '获取用户信息失败'
+        message: '获取用户信息失败：' + profileError.message
       }, { status: 500 })
     }
 
-    // 检查用户名修改频率限制（30天内只能修改一次）
-    if (currentProfile.last_username_change) {
-      const lastChange = new Date(currentProfile.last_username_change)
-      const now = new Date()
-      const daysSinceLastChange = Math.floor((now.getTime() - lastChange.getTime()) / (1000 * 60 * 60 * 24))
-      
-      if (daysSinceLastChange < 30) {
-        return NextResponse.json({
-          success: false,
-          message: `用户名修改过于频繁，请等待 ${30 - daysSinceLastChange} 天后再试`
-        }, { status: 400 })
-      }
-    }
+    // 暂时移除频率限制检查，因为数据库中没有last_username_change字段
+    // 如果需要频率限制，需要先在数据库中添加该字段
 
     // 更新用户名
     const { error: updateError } = await supabase
       .from('users')
-      .update({ 
-        username: newUsername,
-        last_username_change: new Date().toISOString()
+      .update({
+        username: newUsername
       })
       .eq('id', user.id)
 

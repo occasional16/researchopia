@@ -9,7 +9,12 @@ import {
 
 export async function POST(request: NextRequest) {
   const startTime = Date.now()
-  const ip = request.ip || 'unknown'
+
+  // 获取客户端IP地址（兼容不同部署环境）
+  const forwarded = request.headers.get('x-forwarded-for')
+  const realIp = request.headers.get('x-real-ip')
+  const ip = forwarded?.split(',')[0] || realIp || 'unknown'
+
   const userAgent = request.headers.get('user-agent') || 'unknown'
 
   try {

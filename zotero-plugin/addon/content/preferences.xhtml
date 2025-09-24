@@ -2,7 +2,7 @@
   <html:link rel="localization" href="__addonRef__-preferences.ftl" />
 </linkset>
 <groupbox
-  onpaneload="Zotero.__addonInstance__.hooks.onPrefsEvent('load', { window });"
+  onload="Zotero.__addonInstance__.hooks.onPrefsEvent('load', { window });"
 >
   <label><html:h2>研学港 (Researchopia)</html:h2></label>
 
@@ -49,11 +49,12 @@
         <hbox align="center">
           <button id="researchopia-login-btn"
                   label="登录"
-                  style="margin-right: 10px;"
-                  oncommand="if (typeof ResearchopiaPreferences !== 'undefined') ResearchopiaPreferences.performLogin();" />
+                  style="margin-right: 10px;" />
+          <button id="researchopia-register-btn"
+                  label="注册"
+                  style="margin-right: 10px;" />
           <button id="researchopia-clear-btn"
-                  label="清空"
-                  oncommand="if (typeof ResearchopiaPreferences !== 'undefined') ResearchopiaPreferences.clearLoginForm();" />
+                  label="清空" />
           <spacer flex="1" />
           <label id="researchopia-login-message"
                  value=""
@@ -103,14 +104,81 @@
                 label="显示私人标注"
                 preference="showPrivateAnnotations" />
 
+      <checkbox id="researchopia-reader-integration"
+                label="在PDF阅读器中显示共享标注"
+                preference="readerIntegration" />
+
+      <checkbox id="researchopia-show-user-avatars"
+                label="显示用户头像"
+                preference="showUserAvatars" />
+
       <hbox align="center" style="margin-top: 10px;">
         <label value="标注显示数量：" />
         <textbox id="researchopia-max-annotations"
                  type="number"
                  min="10"
-                 max="100"
+                 max="1000"
                  preference="maxAnnotations"
-                 style="width: 60px;" />
+                 style="width: 80px;" />
+      </hbox>
+
+      <hbox align="center" style="margin-top: 10px;">
+        <label value="标注排序方式：" />
+        <menulist id="researchopia-sort-method"
+                  preference="sortMethod">
+          <menupopup>
+            <menuitem label="按点赞数" value="likes" />
+            <menuitem label="按评论数" value="comments" />
+            <menuitem label="按时间" value="time" />
+            <menuitem label="按相关性" value="relevance" />
+          </menupopup>
+        </menulist>
+      </hbox>
+
+      <hbox align="center" style="margin-top: 10px;">
+        <label value="标注透明度：" />
+        <scale id="researchopia-annotation-opacity"
+               min="10"
+               max="100"
+               value="70"
+               preference="annotationOpacity"
+               style="width: 150px;" />
+        <label id="researchopia-opacity-value" value="70%" />
+      </hbox>
+    </vbox>
+  </groupbox>
+
+  <!-- 社交功能设置 -->
+  <groupbox>
+    <label><html:h3>社交功能</html:h3></label>
+
+    <vbox>
+      <checkbox id="researchopia-enable-likes"
+                label="启用点赞功能"
+                preference="enableLikes" />
+
+      <checkbox id="researchopia-enable-comments"
+                label="启用评论功能"
+                preference="enableComments" />
+
+      <checkbox id="researchopia-enable-follows"
+                label="启用关注功能"
+                preference="enableFollows" />
+
+      <checkbox id="researchopia-notifications"
+                label="接收通知"
+                preference="enableNotifications" />
+
+      <hbox align="center" style="margin-top: 10px;">
+        <label value="标注可见性：" />
+        <menulist id="researchopia-annotation-visibility"
+                  preference="annotationVisibility">
+          <menupopup>
+            <menuitem label="公开" value="public" />
+            <menuitem label="仅关注者" value="followers" />
+            <menuitem label="私有" value="private" />
+          </menupopup>
+        </menulist>
       </hbox>
     </vbox>
   </groupbox>
@@ -134,20 +202,103 @@
                  style="width: 60px;" />
       </hbox>
 
+      <hbox align="center" style="margin-top: 10px;">
+        <label value="同步间隔（分钟）：" />
+        <textbox id="researchopia-sync-interval"
+                 type="number"
+                 min="1"
+                 max="60"
+                 value="5"
+                 preference="syncInterval"
+                 style="width: 60px;" />
+      </hbox>
+
+      <hbox align="center" style="margin-top: 10px;">
+        <label value="缓存大小（MB）：" />
+        <textbox id="researchopia-cache-size"
+                 type="number"
+                 min="10"
+                 max="500"
+                 value="50"
+                 preference="cacheSize"
+                 style="width: 60px;" />
+      </hbox>
+
       <checkbox id="researchopia-debug-mode"
                 label="启用调试模式"
                 preference="debugMode"
                 style="margin-top: 10px;" />
+
+      <checkbox id="researchopia-offline-mode"
+                label="离线模式"
+                preference="offlineMode"
+                style="margin-top: 5px;" />
+
+      <checkbox id="researchopia-auto-share"
+                label="自动共享新标注"
+                preference="autoShare"
+                style="margin-top: 5px;" />
+    </vbox>
+  </groupbox>
+
+  <!-- 统计信息 -->
+  <groupbox>
+    <label><html:h3>使用统计</html:h3></label>
+
+    <vbox>
+      <grid>
+        <columns>
+          <column />
+          <column />
+        </columns>
+        <rows>
+          <row>
+            <label value="共享标注数：" />
+            <label id="researchopia-stats-shared" value="--" style="font-weight: bold; color: #007bff;" />
+          </row>
+          <row>
+            <label value="收到点赞数：" />
+            <label id="researchopia-stats-likes" value="--" style="font-weight: bold; color: #28a745;" />
+          </row>
+          <row>
+            <label value="发表评论数：" />
+            <label id="researchopia-stats-comments" value="--" style="font-weight: bold; color: #17a2b8;" />
+          </row>
+          <row>
+            <label value="关注用户数：" />
+            <label id="researchopia-stats-following" value="--" style="font-weight: bold; color: #6f42c1;" />
+          </row>
+          <row>
+            <label value="粉丝数：" />
+            <label id="researchopia-stats-followers" value="--" style="font-weight: bold; color: #fd7e14;" />
+          </row>
+        </rows>
+      </grid>
+
+      <hbox align="center" style="margin-top: 15px;">
+        <button id="researchopia-refresh-stats-btn"
+                label="刷新统计" />
+      </hbox>
     </vbox>
   </groupbox>
 
   <!-- 操作按钮 -->
   <hbox style="margin-top: 20px;">
-    <button id="researchopia-reset-btn"
-            label="重置设置" />
+    <button id="researchopia-clear-cache-btn"
+            label="清除缓存" />
+    <button id="researchopia-export-settings-btn"
+            label="导出设置"
+            style="margin-left: 10px;" />
+    <button id="researchopia-import-settings-btn"
+            label="导入设置"
+            style="margin-left: 10px;" />
     <spacer flex="1" />
+    <button id="researchopia-reset-btn"
+            label="重置设置"
+            style="background: #dc3545; color: white;" />
     <button id="researchopia-test-btn"
-            label="测试连接" />
+            label="测试连接"
+            style="margin-left: 10px;" />
   </hbox>
   <hbox class="virtualized-table-container" flex="1" height="300px">
     <html:div id="__addonRef__-table-container" />

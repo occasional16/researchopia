@@ -6,12 +6,17 @@ const basicTool = new BasicTool();
 
 // @ts-expect-error - Plugin instance is not typed
 if (!basicTool.getGlobal("Zotero")[config.addonInstance]) {
-  _globalThis.addon = new Addon();
-  defineGlobal("ztoolkit", () => {
-    return _globalThis.addon.data.ztoolkit;
-  });
+  // Create addon instance first
+  const addonInstance = new Addon();
+
+  // Define global variables
+  defineGlobal("addon", () => addonInstance);
+  defineGlobal("ztoolkit", () => addonInstance.data.ztoolkit);
+  defineGlobal("Zotero");
+  defineGlobal("rootURI", () => `chrome://${config.addonRef}/content/`);
+
   // @ts-expect-error - Plugin instance is not typed
-  Zotero[config.addonInstance] = addon;
+  Zotero[config.addonInstance] = addonInstance;
 }
 
 function defineGlobal(name: Parameters<BasicTool["getGlobal"]>[0]): void;

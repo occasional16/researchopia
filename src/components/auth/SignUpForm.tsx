@@ -1,9 +1,11 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Eye, EyeOff, CheckCircle, XCircle, Loader2 } from 'lucide-react'
+import { Eye, EyeOff, CheckCircle, XCircle, Loader2, Shield } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { validateEducationalEmail } from '@/lib/emailValidation'
+import { validateEmailEnhanced, validateReCaptcha, EmailValidationResult } from '@/lib/emailValidationEnhanced'
+import { useReCaptcha } from '@/hooks/useReCaptcha'
 
 interface SignUpFormProps {
   onToggleMode: () => void
@@ -18,12 +20,8 @@ export default function SignUpForm({ onToggleMode, onClose }: SignUpFormProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
-  const [emailValidation, setEmailValidation] = useState<{
-    isValid: boolean
-    isEducational: boolean
-    institution?: string
-    error?: string
-  } | null>(null)
+  const [emailValidation, setEmailValidation] = useState<EmailValidationResult | null>(null)
+  const [emailValidating, setEmailValidating] = useState(false)
   const [usernameValidation, setUsernameValidation] = useState<{
     available: boolean
     message: string
@@ -34,6 +32,7 @@ export default function SignUpForm({ onToggleMode, onClose }: SignUpFormProps) {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
   const { signUp } = useAuth()
+  const { executeReCaptcha } = useReCaptcha()
 
   // 防抖检查用户名
   const checkUsername = useCallback(async (username: string) => {
@@ -67,6 +66,28 @@ export default function SignUpForm({ onToggleMode, onClose }: SignUpFormProps) {
     }
   }, [])
 
+  // 增强的邮箱验证
+  const validateEmailWithDelay = useCallback(async (email: string) => {
+    if (!email.trim()) {
+      setEmailValidation(null)
+      return
+    }
+
+    setEmailValidating(true)
+
+    try {
+      const validation = await validateEmailEnhanced(email)
+      setEmailValidation(validation)
+    } catch (error) {
+      console.error('Email validation error:', error)
+      // 降级到基础验证
+      const basicValidation = validateEducationalEmail(email)
+      setEmailValidation(basicValidation)
+    } finally {
+      setEmailValidating(false)
+    }
+  }, [])
+
   // 用户名输入防抖
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -78,16 +99,21 @@ export default function SignUpForm({ onToggleMode, onClose }: SignUpFormProps) {
     return () => clearTimeout(timer)
   }, [username, checkUsername])
 
+  // 邮箱验证防抖
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (email) {
+        validateEmailWithDelay(email)
+      }
+    }, 800) // 稍长的延迟，因为需要API调用
+
+    return () => clearTimeout(timer)
+  }, [email, validateEmailWithDelay])
+
   const handleEmailChange = (value: string) => {
     setEmail(value)
     setError('')
-
-    if (value.trim()) {
-      const validation = validateEducationalEmail(value)
-      setEmailValidation(validation)
-    } else {
-      setEmailValidation(null)
-    }
+    setEmailValidation(null)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -95,45 +121,58 @@ export default function SignUpForm({ onToggleMode, onClose }: SignUpFormProps) {
     setLoading(true)
     setError('')
 
-    // Validate email first
-    const emailValidation = validateEducationalEmail(email)
-    if (!emailValidation.isValid) {
-      setError(emailValidation.error || '邮箱验证失败')
-      setLoading(false)
-      return
-    }
-
-    if (password !== confirmPassword) {
-      setError('密码不匹配')
-      setLoading(false)
-      return
-    }
-
-    if (password.length < 6) {
-      setError('密码长度至少6位')
-      setLoading(false)
-      return
-    }
-
-    // 检查密码复杂度
-    if (!/[a-zA-Z]/.test(password) || !/\d/.test(password)) {
-      setError('密码必须包含字母和数字')
-      setLoading(false)
-      return
-    }
-
-    // 检查用户名可用性
-    if (!usernameValidation?.available) {
-      setError(usernameValidation?.message || '请检查用户名')
-      setLoading(false)
-      return
-    }
-
     try {
+      // 1. 验证reCAPTCHA
+      const recaptchaToken = await executeReCaptcha('signup')
+      if (!recaptchaToken) {
+        throw new Error('人机验证失败，请刷新页面重试')
+      }
+
+      const recaptchaResult = await validateReCaptcha(recaptchaToken, 'signup')
+      if (!recaptchaResult.isValid) {
+        throw new Error(recaptchaResult.error || '安全验证未通过')
+      }
+
+      // 2. 验证邮箱
+      if (!emailValidation || !emailValidation.isValid) {
+        throw new Error('请输入有效的教育邮箱')
+      }
+
+      // 3. 检查邮箱可投递性
+      if (emailValidation.isDeliverable === false) {
+        throw new Error('该邮箱无法接收邮件，请检查拼写或使用其他邮箱')
+      }
+
+      // 4. 检查一次性邮箱
+      if (emailValidation.isDisposable === true) {
+        throw new Error('不支持一次性邮箱，请使用真实的教育邮箱')
+      }
+
+      // 5. 验证密码
+      if (password !== confirmPassword) {
+        throw new Error('密码不匹配')
+      }
+
+      if (password.length < 6) {
+        throw new Error('密码长度至少6位')
+      }
+
+      // 检查密码复杂度
+      if (!/[a-zA-Z]/.test(password) || !/\d/.test(password)) {
+        throw new Error('密码必须包含字母和数字')
+      }
+
+      // 6. 检查用户名可用性
+      if (!usernameValidation?.available) {
+        throw new Error(usernameValidation?.message || '请检查用户名')
+      }
+
+      // 7. 执行注册
       await signUp(email, password, username)
       setSuccess(true)
+
     } catch (err: any) {
-      setError(err.message || 'An error occurred during registration')
+      setError(err.message || '注册过程中发生错误，请重试')
     } finally {
       setLoading(false)
     }
@@ -239,30 +278,79 @@ export default function SignUpForm({ onToggleMode, onClose }: SignUpFormProps) {
           <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
             教育邮箱
           </label>
-          <input
-            id="email"
-            type="email"
-            value={email}
-            onChange={(e) => handleEmailChange(e.target.value)}
-            required
-            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-              emailValidation?.error
-                ? 'border-red-300 bg-red-50'
-                : emailValidation?.isEducational
-                ? 'border-green-300 bg-green-50'
-                : 'border-gray-300'
-            }`}
-            placeholder="请输入教育邮箱（如：student@university.edu.cn）"
-          />
+          <div className="relative">
+            <input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => handleEmailChange(e.target.value)}
+              required
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-10 ${
+                emailValidation?.error
+                  ? 'border-red-300 bg-red-50'
+                  : emailValidation?.isValid && emailValidation?.isEducational
+                  ? 'border-green-300 bg-green-50'
+                  : 'border-gray-300'
+              }`}
+              placeholder="请输入教育邮箱（如：student@university.edu.cn）"
+            />
+            <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+              {emailValidating ? (
+                <Loader2 className="h-4 w-4 text-gray-400 animate-spin" />
+              ) : emailValidation?.isValid && emailValidation?.isEducational ? (
+                <div className="flex items-center space-x-1">
+                  {emailValidation?.isDeliverable && (
+                    <div title="邮箱可投递">
+                      <Shield className="h-3 w-3 text-blue-500" />
+                    </div>
+                  )}
+                  <CheckCircle className="h-4 w-4 text-green-500" />
+                </div>
+              ) : emailValidation?.error ? (
+                <XCircle className="h-4 w-4 text-red-500" />
+              ) : null}
+            </div>
+          </div>
+
+          {/* 错误信息 */}
           {emailValidation?.error && (
             <p className="text-sm text-red-600 mt-1">{emailValidation.error}</p>
           )}
-          {emailValidation?.isEducational && (
-            <p className="text-sm text-green-600 mt-1">
-              ✓ 有效的教育邮箱
-              {emailValidation.institution && ` - ${emailValidation.institution}`}
-            </p>
+
+          {/* 成功信息 */}
+          {emailValidation?.isValid && emailValidation?.isEducational && (
+            <div className="text-sm text-green-600 mt-1">
+              <div className="flex items-center space-x-1">
+                <span>✓ 有效的教育邮箱</span>
+                {emailValidation.institution && <span>- {emailValidation.institution}</span>}
+              </div>
+              {emailValidation.isDeliverable && (
+                <div className="text-xs text-blue-600 mt-1">
+                  ✓ 邮箱可正常接收邮件
+                </div>
+              )}
+            </div>
           )}
+
+          {/* 建议 */}
+          {emailValidation?.suggestions && emailValidation.suggestions.length > 0 && (
+            <div className="mt-2">
+              <p className="text-xs text-gray-600 mb-1">建议邮箱：</p>
+              <div className="flex flex-wrap gap-1">
+                {emailValidation.suggestions.map((suggestion, index) => (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={() => setEmail(suggestion)}
+                    className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
+                  >
+                    {suggestion}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           <p className="text-xs text-gray-500 mt-1">
             仅支持教育机构邮箱注册（.edu.cn、.edu、.ac.uk等）
           </p>
@@ -327,12 +415,59 @@ export default function SignUpForm({ onToggleMode, onClose }: SignUpFormProps) {
           </div>
         </div>
 
+        {/* 安全验证状态 */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+          <div className="flex items-center space-x-2 text-sm text-blue-700">
+            <Shield className="h-4 w-4" />
+            <span className="font-medium">安全验证</span>
+          </div>
+          <div className="mt-2 space-y-1 text-xs text-blue-600">
+            <div className="flex items-center space-x-2">
+              {emailValidation?.isEducational ? (
+                <CheckCircle className="h-3 w-3 text-green-500" />
+              ) : emailValidation && !emailValidation.isEducational ? (
+                <XCircle className="h-3 w-3 text-red-500" />
+              ) : (
+                <div className="h-3 w-3 rounded-full border border-gray-300" />
+              )}
+              <span>教育邮箱验证</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              {emailValidation?.isDeliverable ? (
+                <CheckCircle className="h-3 w-3 text-green-500" />
+              ) : emailValidation && emailValidation.isEducational && !emailValidation.isDeliverable ? (
+                <XCircle className="h-3 w-3 text-red-500" />
+              ) : (
+                <div className="h-3 w-3 rounded-full border border-gray-300" />
+              )}
+              <span>邮箱可投递性检查</span>
+              {emailValidation?.error && (
+                <span className="text-xs text-red-500">({emailValidation.error})</span>
+              )}
+            </div>
+            <div className="flex items-center space-x-2">
+              <Shield className="h-3 w-3 text-blue-500" />
+              <span>Google reCAPTCHA 人机验证（提交时自动验证）</span>
+            </div>
+          </div>
+        </div>
+
         <button
           type="submit"
-          disabled={loading}
-          className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled={loading || !emailValidation?.isValid || emailValidating}
+          className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
         >
-          {loading ? '注册中...' : '注册'}
+          {loading ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>注册中...</span>
+            </>
+          ) : (
+            <>
+              <Shield className="h-4 w-4" />
+              <span>安全注册</span>
+            </>
+          )}
         </button>
       </form>
 

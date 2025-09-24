@@ -2,8 +2,8 @@ import { config } from "../package.json";
 import { ColumnOptions, DialogHelper } from "zotero-plugin-toolkit";
 import hooks from "./hooks";
 import { createZToolkit } from "./utils/ztoolkit";
-import { SupabaseAPI } from "./modules/supabase";
-import { UIManager } from "./modules/ui";
+
+// Keep it simple for now - we'll add modules back gradually
 
 class Addon {
   public data: {
@@ -23,14 +23,12 @@ class Addon {
     };
     dialog?: DialogHelper;
   };
+
   // Lifecycle hooks
   public hooks: typeof hooks;
-  // APIs
-  public api: {
-    supabase: SupabaseAPI;
-  };
-  // UI Manager
-  public ui: UIManager;
+
+  // APIs - simplified for now
+  public api: object;
 
   constructor() {
     this.data = {
@@ -41,11 +39,23 @@ class Addon {
       ztoolkit: createZToolkit(),
     };
     this.hooks = hooks;
-    this.api = {
-      supabase: new SupabaseAPI(),
-    };
-    this.ui = new UIManager();
+    this.api = {};
+
+    // Simple initialization
+    try {
+      if (this.data.env === 'development') {
+        this.data.ztoolkit.log('🔍 开发模式已启动');
+      }
+      this.data.ztoolkit.log('✅ Addon constructor completed successfully');
+    } catch (error) {
+      // Fallback to basic error handling if ztoolkit fails
+      if (this.data.ztoolkit && this.data.ztoolkit.log) {
+        this.data.ztoolkit.log(`❌ Addon constructor failed: ${(error as Error).message}`);
+      }
+    }
   }
+
+
 }
 
 export default Addon;

@@ -13,9 +13,22 @@ declare namespace _ZoteroTypes {
       "syncOnStartup": boolean;
       "showSharedAnnotations": boolean;
       "showPrivateAnnotations": boolean;
+      "readerIntegration": boolean;
+      "showUserAvatars": boolean;
       "maxAnnotations": number;
+      "sortMethod": string;
+      "annotationOpacity": number;
+      "enableLikes": boolean;
+      "enableComments": boolean;
+      "enableFollows": boolean;
+      "enableNotifications": boolean;
+      "annotationVisibility": string;
       "requestTimeout": number;
+      "syncInterval": number;
+      "cacheSize": number;
       "debugMode": boolean;
+      "offlineMode": boolean;
+      "autoShare": boolean;
       "input": string;
     };
   }

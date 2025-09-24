@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useEffect, useState, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import { safeSignOut } from '@/lib/auth-utils'
+import { sessionManager } from '@/lib/auth-security'
 import type { User as SupabaseUser, Session } from '@supabase/supabase-js'
 
 // 应用用户类型定义
@@ -168,41 +169,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // 登录
   const signIn = async (email: string, password: string) => {
-    if (!supabase) {
-      throw new Error('数据库连接不可用')
-    }
-
     console.log('🔄 Attempting sign in for:', email)
-    
+
     try {
       setLoading(true)
-      
-      const { data, error } = await supabase.auth.signInWithPassword({ 
-        email, 
-        password 
+
+      // 使用自定义登录API
+      const loginResponse = await fetch('/api/auth/custom-signin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
       })
-      
-      if (error) {
-        console.error('❌ Sign in error:', error)
-        // 提供更友好的错误信息
-        if (error.message === 'Invalid login credentials') {
-          throw new Error('登录失败：邮箱或密码错误。请检查邮箱和密码是否正确，或联系管理员重置密码。')
-        } else if (error.message.includes('Email not confirmed')) {
-          throw new Error('请先验证您的邮箱，检查邮件并点击验证链接')
-        } else if (error.message.includes('Too many requests')) {
-          throw new Error('登录尝试次数过多，请稍后再试')
-        } else if (error.message.includes('Account not found')) {
-          throw new Error('账户不存在，请先注册或检查邮箱地址')
-        } else {
-          throw new Error(error.message || '登录失败，请重试')
-        }
+
+      const loginResult = await loginResponse.json()
+
+      if (!loginResponse.ok) {
+        throw new Error(loginResult.error || '登录失败')
       }
 
-      if (data.user) {
+      const { data, error } = loginResult
+
+      if (error) {
+        console.error('❌ Sign in error:', error)
+        throw new Error(error.message || '登录失败')
+      }
+
+      if (data.user && data.session) {
         console.log('✅ Sign in successful:', email)
+
+        // 设置会话到本地Supabase客户端
+        if (supabase) {
+          await supabase.auth.setSession({
+            access_token: data.session.access_token,
+            refresh_token: data.session.refresh_token
+          })
+        }
+
         await handleAuthUser(data.user)
       } else {
-        throw new Error('登录异常，请重试')
+        throw new Error('登录失败：未能获取用户信息')
       }
     } catch (error) {
       console.error('❌ Sign in failed:', error)
@@ -221,21 +226,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     console.log('🔄 Attempting sign up for:', email)
-    
+
     try {
       setLoading(true)
-      
-      // 首先尝试注册
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            username,
-            full_name: username
-          }
-        }
+
+      // 使用自定义API注册，完全绕过Supabase邮件发送
+      const registrationResponse = await fetch('/api/auth/custom-signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, username })
       })
+
+      const registrationResult = await registrationResponse.json()
+
+      if (!registrationResponse.ok) {
+        throw new Error(registrationResult.error || '注册失败')
+      }
+
+      const { data, error } = registrationResult
       
       if (error) {
         console.error('❌ Sign up error:', error)
@@ -257,13 +265,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (data.user) {
         console.log('✅ Sign up successful:', email)
-        
-        // 如果需要邮箱验证
+
+        // 如果需要邮箱验证，使用自定义邮件服务
         if (!data.user.email_confirmed_at) {
-          console.log('📧 Email confirmation required for:', email)
-          throw new Error('注册成功！请检查您的邮箱并点击验证链接完成注册。')
+          console.log('📧 Sending custom verification email for:', email)
+
+          try {
+            // 生成验证URL（自动适配开发和生产环境）
+            const baseUrl = process.env.NODE_ENV === 'production'
+              ? 'https://www.researchopia.com'
+              : window.location.origin
+            const verificationUrl = `${baseUrl}/auth/verify?token=${data.user.id}&email=${encodeURIComponent(email)}`
+
+            const emailResponse = await fetch('/api/auth/send-verification', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email, verificationUrl })
+            })
+
+            const emailResult = await emailResponse.json()
+
+            if (emailResult.success) {
+              console.log('✅ Custom verification email sent successfully')
+              throw new Error('注册成功！我们已向您的邮箱发送验证链接，请查收并点击验证。')
+            } else if (emailResult.fallback) {
+              // 如果自定义邮件服务不可用，使用Supabase默认服务
+              console.log('📧 Falling back to Supabase email service')
+              throw new Error('注册成功！请检查您的邮箱并点击验证链接完成注册。')
+            } else {
+              console.warn('Custom email service failed:', emailResult.error)
+              throw new Error('注册成功！请检查您的邮箱并点击验证链接完成注册。')
+            }
+          } catch (emailError) {
+            console.error('Custom email service error:', emailError)
+            // 仍然显示成功消息，因为用户已经注册成功
+            throw new Error('注册成功！请检查您的邮箱并点击验证链接完成注册。')
+          }
         }
-        
+
         await handleAuthUser(data.user)
       } else {
         throw new Error('注册成功但未能获取用户信息，请尝试登录')

@@ -1,6 +1,11 @@
-// Removed template examples - using only Researchopia functionality
+import {
+  BasicExampleFactory,
+  HelperExampleFactory,
+  KeyExampleFactory,
+  PromptExampleFactory,
+  UIExampleFactory,
+} from "./modules/examples";
 import { getString, initLocale } from "./utils/locale";
-import { registerPrefsScripts } from "./modules/preferenceScript";
 import { createZToolkit } from "./utils/ztoolkit";
 
 
@@ -13,33 +18,19 @@ async function onStartup() {
 
   initLocale();
 
-  ztoolkit.log("🚀 Researchopia Plugin Starting with Hot Reload!");
+  BasicExampleFactory.registerPrefs();
 
-  // Initialize Supabase API
-  try {
-    await addon.api.supabase.initialize();
-  } catch (error) {
-    ztoolkit.log(`⚠️ Supabase initialization failed: ${(error as Error).message}`);
-  }
+  BasicExampleFactory.registerNotifier();
 
-  // Register preferences
-  Zotero.PreferencePanes.register({
-    pluginID: addon.data.config.addonID,
-    src: rootURI + "content/preferences.xhtml",
-    label: getString("prefs-title"),
-    image: `chrome://${addon.data.config.addonRef}/content/icons/favicon.png`,
-    scripts: [rootURI + "content/scripts/" + addon.data.config.addonRef + ".js"],
-  });
+  KeyExampleFactory.registerShortcuts();
 
-  // Register Researchopia Item Pane
-  registerResearchopiaItemPane();
+  UIExampleFactory.registerItemPaneSection();
 
   await Promise.all(
     Zotero.getMainWindows().map((win) => onMainWindowLoad(win)),
   );
 
   // Mark initialized as true to confirm plugin loading status
-  // outside of the plugin (e.g. scaffold testing process)
   addon.data.initialized = true;
 
   ztoolkit.log("✅ Researchopia Plugin Started Successfully!");
@@ -121,13 +112,27 @@ async function onNotify(
 async function onPrefsEvent(type: string, data: { [key: string]: any }) {
   switch (type) {
     case "load":
-      registerPrefsScripts(data.window);
-      // 不再调用PreferencesManager.init()，因为registerPrefsScripts中已经处理了
+      ztoolkit.log("🔧 Preferences pane loaded - using external script");
+      // 偏好设置逻辑现在在独立的JavaScript文件中处理
+      // 确保ResearchopiaPreferences对象可用
+      try {
+        const window = data.window;
+        if (window && window.ResearchopiaPreferences) {
+          ztoolkit.log("✅ ResearchopiaPreferences found, initializing...");
+          window.ResearchopiaPreferences.init();
+        } else {
+          ztoolkit.log("⚠️ ResearchopiaPreferences not found in window");
+        }
+      } catch (error) {
+        ztoolkit.log(`❌ Error in preferences initialization: ${(error as Error).message}`);
+      }
       break;
     default:
       return;
   }
 }
+
+// 偏好设置事件处理现在在独立的JavaScript文件中 (addon/content/scripts/preferences.js)
 
 function onShortcuts(type: string) {
   // Researchopia shortcut handling
@@ -141,50 +146,9 @@ function onDialogEvents(type: string) {
   // Add Researchopia-specific dialog events here if needed
 }
 
-// Researchopia specific functions
-function registerResearchopiaItemPane() {
-  try {
-    ztoolkit.log("📋 Registering Researchopia Item Pane...");
-    Zotero.ItemPaneManager.registerSection({
-      paneID: "researchopia",
-      pluginID: addon.data.config.addonID,
-      header: {
-        l10nID: "researchopia-item-section-head-text",
-        icon: `chrome://${addon.data.config.addonRef}/content/icons/favicon.png`,
-      },
-      sidenav: {
-        l10nID: "researchopia-item-section-sidenav-tooltip",
-        icon: `chrome://${addon.data.config.addonRef}/content/icons/favicon.png`,
-      },
-      onRender: ({ body, item }) => {
-        ztoolkit.log("🎨 Rendering Researchopia Item Pane for item:", item?.key);
-        if (item) {
-          addon.ui.renderPane(body, item);
-        } else {
-          // Render empty state when no item is selected
-          const doc = body.ownerDocument;
-          if (doc) {
-            const emptyDiv = ztoolkit.UI.createElement(doc, "div", {
-            styles: {
-              padding: "20px",
-              textAlign: "center",
-              color: "#666",
-              fontFamily: "system-ui, -apple-system, sans-serif"
-            },
-            properties: {
-              textContent: "请选择一个文献项目"
-            }
-          });
-          body.appendChild(emptyDiv);
-          }
-        }
-      },
-    });
-    ztoolkit.log("✅ Researchopia Item Pane registered successfully");
-  } catch (error) {
-    ztoolkit.log(`❌ Failed to register Researchopia Item Pane: ${(error as Error).message}`);
-  }
-}
+// Simplified hooks - using examples factory pattern
+
+
 
 // Add your hooks here. For element click, etc.
 // Keep in mind hooks only do dispatch. Don't add code that does real jobs in hooks.

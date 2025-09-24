@@ -46,7 +46,9 @@ export async function POST(request: NextRequest) {
       body: new URLSearchParams({
         secret: secretKey,
         response: token,
-        remoteip: request.ip || 'unknown'
+        remoteip: request.headers.get('x-forwarded-for')?.split(',')[0] ||
+                 request.headers.get('x-real-ip') ||
+                 'unknown'
       }),
     })
 

@@ -73,7 +73,6 @@ export class BasicExampleFactory {
       src: rootURI + "content/preferences.xhtml",
       label: getString("prefs-title"),
       image: `chrome://${addon.data.config.addonRef}/content/icons/favicon.png`,
-      scripts: [`chrome://${addon.data.config.addonRef}/content/scripts/preferences.js`],
     });
   }
 
@@ -217,6 +216,90 @@ export class UIExampleFactory {
                   <div style="color: #666; font-size: 11px;">添加时间: ${new Date(dateAdded).toLocaleDateString('zh-CN')}</div>
                 `
               }
+            }
+          ]
+        },
+        // Action Buttons
+        {
+          tag: "div",
+          styles: {
+            background: "#ffffff",
+            padding: "15px",
+            borderRadius: "6px",
+            marginBottom: "15px",
+            border: "1px solid #e0e0e0"
+          },
+          children: [
+            {
+              tag: "div",
+              styles: { fontSize: "13px", fontWeight: "600", color: "#2c3e50", marginBottom: "12px" },
+              properties: { textContent: "🔧 功能操作" }
+            },
+            {
+              tag: "div",
+              styles: { display: "flex", flexDirection: "column", gap: "8px" },
+              children: [
+                {
+                  tag: "button",
+                  styles: {
+                    padding: "8px 12px",
+                    backgroundColor: "#007acc",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "4px",
+                    fontSize: "12px",
+                    cursor: "pointer",
+                    fontFamily: "system-ui, -apple-system, sans-serif"
+                  },
+                  properties: { textContent: "提取我的标注" },
+                  listeners: [{
+                    type: "click",
+                    listener: () => {
+                      ztoolkit.getGlobal("alert")("提取标注功能开发中...");
+                    }
+                  }]
+                },
+                {
+                  tag: "button",
+                  styles: {
+                    padding: "8px 12px",
+                    backgroundColor: "#28a745",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "4px",
+                    fontSize: "12px",
+                    cursor: "pointer",
+                    fontFamily: "system-ui, -apple-system, sans-serif"
+                  },
+                  properties: { textContent: "共享我的标注" },
+                  listeners: [{
+                    type: "click",
+                    listener: () => {
+                      ztoolkit.getGlobal("alert")("共享标注功能开发中...");
+                    }
+                  }]
+                },
+                {
+                  tag: "button",
+                  styles: {
+                    padding: "8px 12px",
+                    backgroundColor: "#6f42c1",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "4px",
+                    fontSize: "12px",
+                    cursor: "pointer",
+                    fontFamily: "system-ui, -apple-system, sans-serif"
+                  },
+                  properties: { textContent: "查看共享标注" },
+                  listeners: [{
+                    type: "click",
+                    listener: () => {
+                      ztoolkit.getGlobal("alert")("查看共享标注功能开发中...");
+                    }
+                  }]
+                }
+              ]
             }
           ]
         }

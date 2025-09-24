@@ -1,0 +1,178 @@
+<!-- 移除本地化引用以避免UI冲突 -->
+
+<groupbox id="researchopia-preferences-container" onload="ResearchopiaPreferences.init()">
+  <label><html:h2>研学港 (Researchopia)</html:h2></label>
+  
+  <!-- 账户设置 -->
+  <groupbox>
+    <label><html:h3>账户设置</html:h3></label>
+    
+    <vbox>
+      <hbox align="center">
+        <label value="登录状态：" />
+        <label id="researchopia-login-status" value="未登录" style="font-weight: bold;" />
+      </hbox>
+
+      <hbox align="center" style="margin-top: 8px;">
+        <label value="用户名：" />
+        <label id="researchopia-user-name" value="--" style="font-weight: bold; color: #2563eb;" />
+      </hbox>
+
+      <hbox align="center" style="margin-top: 5px;">
+        <label value="邮箱地址：" />
+        <label id="researchopia-user-email" value="--" style="color: #6b7280;" />
+      </hbox>
+
+      <!-- 登录表单 -->
+      <vbox id="researchopia-login-form" style="margin-top: 15px; padding: 10px; border: 1px solid #ccc; border-radius: 5px; background-color: #f9f9f9;">
+        <label style="font-weight: bold; margin-bottom: 10px;">登录研学港账户</label>
+
+        <hbox align="center" style="margin-bottom: 8px;">
+          <label value="邮箱地址：" style="width: 80px;" />
+          <html:input id="researchopia-email-input"
+                      type="email"
+                      placeholder="请输入邮箱地址"
+                      style="flex: 1; margin-left: 10px; padding: 6px; border: 1px solid #ccc; border-radius: 4px;" />
+        </hbox>
+
+        <hbox align="center" style="margin-bottom: 15px;">
+          <label value="密码：" style="width: 80px;" />
+          <html:input id="researchopia-password-input"
+                      type="password"
+                      placeholder="请输入密码"
+                      style="flex: 1; margin-left: 10px; padding: 6px; border: 1px solid #ccc; border-radius: 4px;" />
+        </hbox>
+
+        <hbox align="center">
+          <button id="researchopia-login-btn"
+                  label="登录"
+                  style="margin-right: 10px;" />
+          <button id="researchopia-clear-btn"
+                  label="清空" />
+          <spacer flex="1" />
+          <label id="researchopia-login-message"
+                 value=""
+                 style="color: #666; font-size: 12px;" />
+        </hbox>
+      </vbox>
+
+      <!-- 已登录状态 -->
+      <hbox id="researchopia-logged-in-actions" align="center" style="margin-top: 15px;" hidden="true">
+        <button id="researchopia-logout-btn"
+                label="退出登录" />
+        <spacer flex="1" />
+        <label value="已成功登录研学港" style="color: #28a745; font-weight: bold;" />
+      </hbox>
+    </vbox>
+  </groupbox>
+  
+  <!-- 同步设置 -->
+  <groupbox>
+    <label><html:h3>同步设置</html:h3></label>
+    
+    <vbox>
+      <checkbox id="researchopia-auto-sync" 
+                label="自动同步标注" 
+                preference="extensions.researchopia.autoSync" />
+      
+      <checkbox id="researchopia-realtime-updates" 
+                label="实时更新共享标注" 
+                preference="extensions.researchopia.realtimeUpdates" />
+      
+      <checkbox id="researchopia-sync-on-startup" 
+                label="启动时自动同步" 
+                preference="extensions.researchopia.syncOnStartup" />
+    </vbox>
+  </groupbox>
+  
+  <!-- 显示设置 -->
+  <groupbox>
+    <label><html:h3>显示设置</html:h3></label>
+    
+    <vbox>
+      <checkbox id="researchopia-show-shared" 
+                label="显示共享标注" 
+                preference="extensions.researchopia.showSharedAnnotations" />
+      
+      <checkbox id="researchopia-show-private" 
+                label="显示私人标注" 
+                preference="extensions.researchopia.showPrivateAnnotations" />
+      
+      <hbox align="center" style="margin-top: 10px;">
+        <label value="标注显示数量：" />
+        <textbox id="researchopia-max-annotations" 
+                 type="number" 
+                 min="10" 
+                 max="100" 
+                 preference="extensions.researchopia.maxAnnotations" 
+                 style="width: 60px;" />
+      </hbox>
+    </vbox>
+  </groupbox>
+  
+  <!-- 高级设置 -->
+  <groupbox>
+    <label><html:h3>高级设置</html:h3></label>
+
+    <vbox>
+      <label style="font-size: 11px; color: #666; margin-bottom: 10px;">
+        标注数据存储使用统一的Supabase配置，无需手动设置服务器地址。
+      </label>
+      
+      <hbox align="center" style="margin-top: 10px;">
+        <label value="请求超时（秒）：" />
+        <textbox id="researchopia-timeout" 
+                 type="number" 
+                 min="5" 
+                 max="60" 
+                 preference="extensions.researchopia.requestTimeout" 
+                 style="width: 60px;" />
+      </hbox>
+      
+      <checkbox id="researchopia-debug-mode" 
+                label="启用调试模式" 
+                preference="extensions.researchopia.debugMode" 
+                style="margin-top: 10px;" />
+    </vbox>
+  </groupbox>
+  
+  <!-- 操作按钮 -->
+  <hbox style="margin-top: 20px;">
+    <button id="researchopia-reset-btn"
+            label="重置设置" />
+    <spacer flex="1" />
+    <button id="researchopia-test-btn"
+            label="测试连接" />
+  </hbox>
+</groupbox>
+
+<!-- 偏好设置定义 -->
+<preferences>
+  <preference id="extensions.researchopia.autoSync" 
+              name="extensions.researchopia.autoSync" 
+              type="bool" />
+  <preference id="extensions.researchopia.realtimeUpdates" 
+              name="extensions.researchopia.realtimeUpdates" 
+              type="bool" />
+  <preference id="extensions.researchopia.syncOnStartup" 
+              name="extensions.researchopia.syncOnStartup" 
+              type="bool" />
+  <preference id="extensions.researchopia.showSharedAnnotations" 
+              name="extensions.researchopia.showSharedAnnotations" 
+              type="bool" />
+  <preference id="extensions.researchopia.showPrivateAnnotations" 
+              name="extensions.researchopia.showPrivateAnnotations" 
+              type="bool" />
+  <preference id="extensions.researchopia.maxAnnotations" 
+              name="extensions.researchopia.maxAnnotations" 
+              type="int" />
+  <preference id="extensions.researchopia.serverUrl" 
+              name="extensions.researchopia.serverUrl" 
+              type="string" />
+  <preference id="extensions.researchopia.requestTimeout" 
+              name="extensions.researchopia.requestTimeout" 
+              type="int" />
+  <preference id="extensions.researchopia.debugMode" 
+              name="extensions.researchopia.debugMode" 
+              type="bool" />
+</preferences>

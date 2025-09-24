@@ -1,0 +1,328 @@
+/* Researchopia 偏好设置样式 - 限制作用域避免影响其他面板 */
+
+/* 主容器样式 - 仅影响研学港面板 */
+#researchopia-preferences-container groupbox,
+groupbox[onload*="ResearchopiaPreferences"] {
+  margin: 10px 0;
+  padding: 15px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background-color: #fafafa;
+}
+
+#researchopia-preferences-container groupbox label[value],
+groupbox[onload*="ResearchopiaPreferences"] label[value] {
+  font-weight: 600;
+  color: #333;
+}
+
+/* 标题样式 - 仅影响研学港面板 */
+#researchopia-preferences-container html|h2,
+groupbox[onload*="ResearchopiaPreferences"] html|h2 {
+  margin: 0 0 15px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #2c3e50;
+  border-bottom: 2px solid #3498db;
+  padding-bottom: 5px;
+}
+
+#researchopia-preferences-container html|h3,
+groupbox[onload*="ResearchopiaPreferences"] html|h3 {
+  margin: 0 0 10px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #34495e;
+}
+
+/* 输入控件样式 - 仅影响研学港面板 */
+#researchopia-preferences-container textbox,
+#researchopia-preferences-container html|input[type="text"],
+#researchopia-preferences-container html|input[type="email"],
+#researchopia-preferences-container html|input[type="password"],
+#researchopia-preferences-container html|input[type="number"],
+groupbox[onload*="ResearchopiaPreferences"] textbox,
+groupbox[onload*="ResearchopiaPreferences"] html|input[type="text"],
+groupbox[onload*="ResearchopiaPreferences"] html|input[type="email"],
+groupbox[onload*="ResearchopiaPreferences"] html|input[type="password"],
+groupbox[onload*="ResearchopiaPreferences"] html|input[type="number"] {
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 6px 8px;
+  font-size: 13px;
+  background-color: white;
+}
+
+#researchopia-preferences-container textbox:focus,
+#researchopia-preferences-container html|input[type="text"]:focus,
+#researchopia-preferences-container html|input[type="email"]:focus,
+#researchopia-preferences-container html|input[type="password"]:focus,
+#researchopia-preferences-container html|input[type="number"]:focus,
+groupbox[onload*="ResearchopiaPreferences"] textbox:focus,
+groupbox[onload*="ResearchopiaPreferences"] html|input[type="text"]:focus,
+groupbox[onload*="ResearchopiaPreferences"] html|input[type="email"]:focus,
+groupbox[onload*="ResearchopiaPreferences"] html|input[type="password"]:focus,
+groupbox[onload*="ResearchopiaPreferences"] html|input[type="number"]:focus {
+  border-color: #3498db;
+  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+  outline: none;
+}
+
+/* 复选框样式 - 仅影响研学港面板 */
+#researchopia-preferences-container checkbox,
+groupbox[onload*="ResearchopiaPreferences"] checkbox {
+  margin: 5px 0;
+  font-size: 13px;
+}
+
+#researchopia-preferences-container checkbox[checked="true"],
+groupbox[onload*="ResearchopiaPreferences"] checkbox[checked="true"] {
+  font-weight: 500;
+}
+
+/* 按钮样式 - 仅影响研学港面板 */
+#researchopia-preferences-container button,
+groupbox[onload*="ResearchopiaPreferences"] button {
+  padding: 8px 16px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: linear-gradient(to bottom, #f8f9fa, #e9ecef);
+  font-size: 13px;
+  cursor: pointer;
+  margin: 0 5px;
+}
+
+#researchopia-preferences-container button:hover,
+groupbox[onload*="ResearchopiaPreferences"] button:hover {
+  background: linear-gradient(to bottom, #e9ecef, #dee2e6);
+  border-color: #adb5bd;
+}
+
+#researchopia-preferences-container button:active,
+groupbox[onload*="ResearchopiaPreferences"] button:active {
+  background: linear-gradient(to bottom, #dee2e6, #ced4da);
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* 主要按钮样式 */
+button#researchopia-login-btn {
+  background: linear-gradient(to bottom, #28a745, #218838);
+  color: white;
+  border-color: #1e7e34;
+  font-weight: 500;
+}
+
+button#researchopia-login-btn:hover {
+  background: linear-gradient(to bottom, #218838, #1e7e34);
+}
+
+button#researchopia-login-btn:disabled {
+  background: linear-gradient(to bottom, #6c757d, #5a6268);
+  border-color: #545b62;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* 清空按钮样式 */
+button#researchopia-clear-btn {
+  background: linear-gradient(to bottom, #6c757d, #5a6268);
+  color: white;
+  border-color: #545b62;
+}
+
+button#researchopia-clear-btn:hover {
+  background: linear-gradient(to bottom, #5a6268, #495057);
+}
+
+/* 危险按钮样式 */
+button#researchopia-logout-btn {
+  background: linear-gradient(to bottom, #dc3545, #c82333);
+  color: white;
+  border-color: #bd2130;
+}
+
+button#researchopia-logout-btn:hover {
+  background: linear-gradient(to bottom, #c82333, #bd2130);
+}
+
+/* 登录表单样式 */
+#researchopia-login-form {
+  background: linear-gradient(to bottom, #f8f9fa, #ffffff);
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 15px;
+  margin: 15px 0;
+}
+
+#researchopia-login-form label[style*="font-weight: bold"] {
+  color: #495057;
+  font-size: 14px;
+  margin-bottom: 10px;
+  display: block;
+}
+
+/* 登录输入框样式 */
+html|input#researchopia-email-input,
+html|input#researchopia-password-input {
+  min-width: 200px;
+  flex: 1;
+  padding: 6px 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 13px;
+  background-color: white;
+}
+
+html|input#researchopia-email-input:focus,
+html|input#researchopia-password-input:focus {
+  border-color: #28a745;
+  box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.2);
+  outline: none;
+}
+
+html|input#researchopia-email-input:disabled,
+html|input#researchopia-password-input:disabled {
+  background-color: #f8f9fa;
+  border-color: #e9ecef;
+  color: #6c757d;
+  cursor: not-allowed;
+}
+
+/* 登录消息样式 */
+#researchopia-login-message {
+  font-size: 12px;
+  font-style: italic;
+  margin-left: 10px;
+}
+
+/* 已登录操作区域样式 */
+#researchopia-logged-in-actions {
+  background: linear-gradient(to bottom, #d4edda, #c3e6cb);
+  border: 1px solid #c3e6cb;
+  border-radius: 8px;
+  padding: 15px;
+  margin: 15px 0;
+}
+
+/* 状态标签样式 */
+#researchopia-login-status {
+  font-weight: bold;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+}
+
+#researchopia-login-status[value="已登录"] {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+#researchopia-login-status[value="未登录"] {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+/* 布局样式 - 仅影响研学港面板 */
+#researchopia-preferences-container hbox,
+groupbox[onload*="ResearchopiaPreferences"] hbox {
+  align-items: center;
+  margin: 5px 0;
+}
+
+#researchopia-preferences-container vbox,
+groupbox[onload*="ResearchopiaPreferences"] vbox {
+  margin: 5px 0;
+}
+
+/* 间距调整 - 仅影响研学港面板 */
+#researchopia-preferences-container hbox[style*="margin-top"],
+groupbox[onload*="ResearchopiaPreferences"] hbox[style*="margin-top"] {
+  margin-top: 10px;
+}
+
+/* 标签样式 - 仅影响研学港面板 */
+#researchopia-preferences-container label,
+groupbox[onload*="ResearchopiaPreferences"] label {
+  font-size: 13px;
+  color: #495057;
+  margin-right: 10px;
+}
+
+#researchopia-preferences-container label[value*="："],
+groupbox[onload*="ResearchopiaPreferences"] label[value*="："] {
+  min-width: 80px;
+  font-weight: 500;
+}
+
+/* 数字输入框样式 - 仅影响研学港面板 */
+#researchopia-preferences-container textbox[type="number"],
+groupbox[onload*="ResearchopiaPreferences"] textbox[type="number"] {
+  text-align: center;
+  width: 60px;
+}
+
+/* 服务器地址输入框 */
+#researchopia-server-url {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 12px;
+}
+
+/* 响应式调整 - 仅影响研学港面板 */
+@media (max-width: 600px) {
+  #researchopia-preferences-container groupbox,
+  groupbox[onload*="ResearchopiaPreferences"] {
+    margin: 5px 0;
+    padding: 10px;
+  }
+
+  #researchopia-preferences-container button,
+  groupbox[onload*="ResearchopiaPreferences"] button {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+
+  #researchopia-preferences-container html|h2,
+  groupbox[onload*="ResearchopiaPreferences"] html|h2 {
+    font-size: 16px;
+  }
+}
+
+/* 深色主题支持 - 仅影响研学港面板 */
+@media (prefers-color-scheme: dark) {
+  #researchopia-preferences-container groupbox,
+  groupbox[onload*="ResearchopiaPreferences"] {
+    background-color: #2d3748;
+    border-color: #4a5568;
+  }
+
+  #researchopia-preferences-container html|h2,
+  groupbox[onload*="ResearchopiaPreferences"] html|h2 {
+    color: #e2e8f0;
+    border-bottom-color: #4299e1;
+  }
+
+  #researchopia-preferences-container html|h3,
+  groupbox[onload*="ResearchopiaPreferences"] html|h3 {
+    color: #cbd5e0;
+  }
+
+  #researchopia-preferences-container label,
+  groupbox[onload*="ResearchopiaPreferences"] label {
+    color: #a0aec0;
+  }
+
+  #researchopia-preferences-container textbox,
+  groupbox[onload*="ResearchopiaPreferences"] textbox {
+    background-color: #4a5568;
+    border-color: #718096;
+    color: #e2e8f0;
+  }
+
+  #researchopia-preferences-container textbox:focus,
+  groupbox[onload*="ResearchopiaPreferences"] textbox:focus {
+    border-color: #4299e1;
+    box-shadow: 0 0 0 2px rgba(66, 153, 225, 0.2);
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "name": "researchopia-zotero-plugin",
+  "version": "0.1.95",
+  "description": "Academic annotation sharing and real-time collaboration for Zotero",
+  "main": "bootstrap.js",
+  "config": {
+    "addonName": "Researchopia",
+    "addonID": "researchopia@zotero.plugin",
+    "addonRef": "researchopia",
+    "addonInstance": "Researchopia",
+    "prefsPrefix": "extensions.zotero.researchopia"
+  },
+  "scripts": {
+    "build": "node build-script.js",
+    "watch": "node watch-script.js",
+    "start": "npm run watch"
+  },
+  "keywords": [
+    "zotero",
+    "plugin",
+    "annotation",
+    "sharing"
+  ],
+  "author": "Researchopia Team",
+  "license": "MIT",
+  "devDependencies": {
+    "chokidar": "^3.5.3",
+    "fs-extra": "^11.1.1"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.2"
+  }
+}

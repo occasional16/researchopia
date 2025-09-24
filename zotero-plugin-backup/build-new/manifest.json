@@ -1,0 +1,20 @@
+{
+  "manifest_version": 2,
+  "name": "Researchopia",
+  "version": "0.1.96",
+  "description": "Academic annotation sharing and real-time collaboration for Zotero",
+  "homepage_url": "https://www.researchopia.com",
+  "author": "Researchopia Team",
+  "icons": {
+    "48": "content/icons/favicon@0.5x.png",
+    "96": "content/icons/favicon.png"
+  },
+  "applications": {
+    "zotero": {
+      "id": "researchopia@zotero.plugin",
+      "update_url": "https://www.researchopia.com/updates.json",
+      "strict_min_version": "7.0.0",
+      "strict_max_version": "8.*"
+    }
+  }
+}

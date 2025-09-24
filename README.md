@@ -1,9 +1,10 @@
 # 研学港 Researchopia - 开放的学术交流平台
 
 [![zotero target version](https://img.shields.io/badge/Zotero-8-green?style=flat-square&logo=zotero&logoColor=CC2936)](https://www.zotero.org) 
+[![Using Zotero Plugin Template](https://img.shields.io/badge/Using-Zotero%20Plugin%20Template-blue?style=flat-square&logo=github)](https://github.com/windingwind/zotero-plugin-template)
 ![Downloads](https://gh-down-badges.linkof.link/occasional15/researchopia)
 [![Latest release](https://img.shields.io/github/v/release/occasional15/researchopia)](https://github.com/occasional15/researchopia/releases)
-![License](https://img.shields.io/badge/License-MIT-green.svg)
+![License](https://img.shields.io/badge/License-AGPLv3-green.svg)
 
 > **研学并进，智慧共享** | Where Research Meets Community
 
@@ -134,7 +135,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_key
 
 ## 📄 许可证
 
-本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情。
+本项目采用 AGPL-v3 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情。
 
 ## 🤝 贡献指南
 

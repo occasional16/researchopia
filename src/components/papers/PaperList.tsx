@@ -2,7 +2,6 @@
 
 import { useEffect } from 'react'
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll'
-import { initializeSampleData } from '@/lib/mockData'
 import PaperCard from './PaperCard'
 import { PaperListSkeleton, InfiniteScrollSentinel, EmptyState } from '../ui/LoadingStates'
 import type { Paper, Rating } from '@/lib/supabase'
@@ -42,10 +41,7 @@ export default function PaperList({
     }
   )
 
-  useEffect(() => {
-    // Initialize sample data first
-    initializeSampleData()
-  }, [])
+  // 移除了mock数据初始化逻辑，现在完全使用Supabase数据
 
   // 如果设置了limit且不显示无限滚动，则截取数据
   const displayPapers = (!showInfiniteScroll && limit) 

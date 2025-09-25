@@ -188,9 +188,10 @@ export async function isFavorited(userId: string, paperId: string): Promise<bool
       .select('id')
       .eq('user_id', userId)
       .eq('paper_id', paperId)
-      .single()
+      .limit(1)
+      .maybeSingle()
 
-    if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
+    if (error) {
       throw error
     }
 

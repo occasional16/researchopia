@@ -57,7 +57,7 @@ export function useInfiniteScroll<T>(
   // 加载数据
   const loadData = useCallback(async (pageNum: number, isReset = false) => {
     if (loadingRef.current || !enabled) return
-    
+
     try {
       loadingRef.current = true
       setLoading(true)
@@ -74,7 +74,7 @@ export function useInfiniteScroll<T>(
         headers: { 'Accept': 'application/json' },
         cache: 'no-store'
       })
-      
+
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`)
       }
@@ -95,7 +95,10 @@ export function useInfiniteScroll<T>(
         return [...prevData, ...newData]
       })
 
-      setHasMore(result.pagination.hasMore)
+      //  :  hasMore 
+      // API total 
+      const clientHasMore = result.pagination?.hasMore || (Array.isArray(result.data) && result.data.length >= limit)
+      setHasMore(clientHasMore)
       setTotalCount(result.pagination.total)
       setPage(result.pagination.page)
 
@@ -146,7 +149,15 @@ export function useInfiniteScroll<T>(
 
     observerRef.current = new IntersectionObserver((entries) => {
       const [entry] = entries
+      console.log('🔍 无限滚动检测:', {
+        isIntersecting: entry.isIntersecting,
+        hasMore,
+        loading: loadingRef.current,
+        page,
+        dataLength: data.length
+      })
       if (entry.isIntersecting && hasMore && !loadingRef.current) {
+        console.log('🚀 触发加载更多数据')
         loadMore()
       }
     }, options)
@@ -162,6 +173,46 @@ export function useInfiniteScroll<T>(
       }
     }
   }, [hasMore, loadMore, enabled, threshold])
+
+  // 内容不足一屏时，自动预取下一页，确保“无限滚动”在初始渲染后也能继续加载
+  useEffect(() => {
+    if (!enabled || !hasMore) return
+    if (loadingRef.current) return
+    if (typeof window === 'undefined') return
+
+    const docHeight = document.documentElement.scrollHeight
+    const winHeight = window.innerHeight
+
+    if (docHeight <= winHeight + threshold) {
+      // 预取一页数据以填满视口
+      loadMore()
+    }
+  }, [data.length, hasMore, enabled, threshold, loadMore])
+
+
+  // : 
+  useEffect(() => {
+    if (!enabled || !hasMore) return
+
+    const onScrollOrResize = () => {
+      if (loadingRef.current) return
+      const nearBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - threshold
+      if (nearBottom) {
+        loadMore()
+      }
+    }
+
+    window.addEventListener('scroll', onScrollOrResize, { passive: true })
+    window.addEventListener('resize', onScrollOrResize)
+    // 
+    onScrollOrResize()
+
+    return () => {
+      window.removeEventListener('scroll', onScrollOrResize)
+      window.removeEventListener('resize', onScrollOrResize)
+    }
+  }, [enabled, hasMore, threshold, loadMore])
+
 
   // 清理观察器
   useEffect(() => {

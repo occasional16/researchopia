@@ -1,0 +1,21 @@
+{
+  "name": "path-webpack",
+  "version": "0.0.3",
+  "description": "Node Path, for Webpack",
+  "main": "path.js",
+  "scripts": {
+    "test": "echo \"Test are in Node.js\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/fchasen/path-webpack.git"
+  },
+  "keywords": [
+    "webpack"
+  ],
+  "author": "fchasen@gmail.com",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/fchasen/path-webpack/issues"
+  }
+}

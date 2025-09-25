@@ -28,19 +28,14 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       // 注意：搜索结果不需要总数，因为它基于相关性
       total = papers.length
     } else {
-      // 普通分页查询，支持排序
-      const { getPapersWithSort } = await import('@/lib/database')
-      papers = await getPapersWithSort(safeLimit, offset, sortBy)
-      
-      // 获取总数（用于计算总页数）
-      // 这里我们估算总数，避免额外的count查询影响性能
-      if (papers.length < safeLimit) {
-        // 如果返回的结果少于请求数量，说明已经到末页
-        total = offset + papers.length
-      } else {
-        // 估算总数（这是一个优化，避免expensive count查询）
-        total = offset + papers.length + 1 // +1表示可能还有更多
-      }
+      // 普通分页查询，支持排序（使用真实总数）
+      const { getPapersWithSort, getTotalPapersCount } = await import('@/lib/database')
+      const [pageData, totalCount] = await Promise.all([
+        getPapersWithSort(safeLimit, offset, sortBy),
+        getTotalPapersCount()
+      ])
+      papers = pageData
+      total = totalCount
     }
 
     const totalPages = Math.ceil(total / safeLimit)

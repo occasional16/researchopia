@@ -17,9 +17,31 @@ export async function getPapers(limit: number = 10, offset: number = 0): Promise
   return getPapersWithSort(limit, offset, 'newest')
 }
 
+export async function getTotalPapersCount(): Promise<number> {
+  if (!supabase) {
+    throw new Error('Supabase is not available')
+  }
+
+  try {
+    const { count, error } = await supabase
+      .from('papers')
+      .select('*', { count: 'exact', head: true })
+
+    if (error) {
+      console.error('Error getting papers count:', error)
+      throw error
+    }
+
+    return count || 0
+  } catch (error) {
+    console.error('Error in getTotalPapersCount:', error)
+    throw error
+  }
+}
+
 export async function getPapersWithSort(
-  limit: number = 10, 
-  offset: number = 0, 
+  limit: number = 10,
+  offset: number = 0,
   sortBy: string = 'recent_comments'
 ): Promise<PaperWithStats[]> {
   if (!supabase) {
@@ -27,208 +49,97 @@ export async function getPapersWithSort(
   }
 
   try {
-    let query = supabase
+    // 1) 取出所有论文的基础信息（数量目前较小，便于在服务端完成统计与排序）
+    const { data: allPapers, error: papersError } = await supabase
       .from('papers')
-      .select(`
-        *,
-        ratings(*),
-        comments(*),
-        paper_favorites(*)
-      `)
+      .select('*')
 
-    // 对于所有排序方式，我们都需要获取完整数据来进行内存排序
-    // 这是因为 Supabase 不支持直接按计算字段（如平均评分、评论数量）排序
-
-    const { data, error } = await query
-
-    if (error) {
-      console.error('Error fetching papers:', error)
-      throw error
+    if (papersError) {
+      console.error('Error fetching papers:', papersError)
+      throw papersError
     }
-      
-    // Calculate stats for each paper
-    let papersWithStats = (data || []).map((paper: any) => {
-      const ratings = paper.ratings || []
-      const comments = Array.isArray(paper.comments) ? paper.comments : []
-      const favoriteCount = Array.isArray(paper.paper_favorites) ? paper.paper_favorites.length : 0
-      
-      let averageRating = 0
-      if (ratings.length > 0) {
-        const totalScore = ratings.reduce((sum: number, rating: any) => sum + rating.overall_score, 0)
-        averageRating = totalScore / ratings.length
-      }
 
-      // 获取最新评论时间
-      const latestCommentTime = comments.length > 0 
-        ? Math.max(...comments.map((c: any) => new Date(c.created_at).getTime()))
-        : 0
+    const papers = (allPapers || []) as any[]
+    const paperIds = papers.map(p => p.id).filter(Boolean)
 
+    // 无数据直接返回
+    if (paperIds.length === 0) return []
+
+    // 2) 聚合拉取评分与评论（在Node侧做聚合，避免PostgREST group语法限制）
+    const [ratingsRes, commentsRes] = await Promise.all([
+      supabase.from('ratings').select('paper_id, overall_score').in('paper_id', paperIds),
+      supabase.from('comments').select('paper_id, created_at').in('paper_id', paperIds)
+    ])
+
+    if (ratingsRes.error) throw ratingsRes.error
+    if (commentsRes.error) throw commentsRes.error
+
+    // 3) 统计映射
+    const ratingMap = new Map<string, { count: number; sum: number }>()
+    for (const r of ratingsRes.data || []) {
+      const key = (r as any).paper_id as string
+      const score = Number((r as any).overall_score) || 0
+      const prev = ratingMap.get(key) || { count: 0, sum: 0 }
+      ratingMap.set(key, { count: prev.count + 1, sum: prev.sum + score })
+    }
+
+    const commentMap = new Map<string, { count: number; latest: number }>()
+    for (const c of commentsRes.data || []) {
+      const key = (c as any).paper_id as string
+      const ts = new Date((c as any).created_at).getTime()
+      const prev = commentMap.get(key) || { count: 0, latest: 0 }
+      commentMap.set(key, { count: prev.count + 1, latest: Math.max(prev.latest, ts) })
+    }
+
+    // 4) 合成统计字段
+    const enriched = papers.map(p => {
+      const r = ratingMap.get(p.id) || { count: 0, sum: 0 }
+      const c = commentMap.get(p.id) || { count: 0, latest: 0 }
+      const avg = r.count > 0 ? Math.round((r.sum / r.count) * 10) / 10 : 0
       return {
-        ...paper,
-        ratings,
-        rating_count: ratings.length,
-        comment_count: comments.length,
-        favorite_count: favoriteCount,
-        average_rating: Math.round(averageRating * 10) / 10,
-        latest_comment_time: latestCommentTime
-      }
+        ...p,
+        ratings: [],
+        rating_count: r.count,
+        comment_count: c.count,
+        favorite_count: 0,
+        average_rating: avg,
+        latest_comment_time: c.latest
+      } as PaperWithStats
     })
 
-    // 根据排序类型进行排序
-    switch (sortBy) {
-      case 'rating':
-        // 评分最高：按平均评分降序，评分相同时按评分数量降序
-        papersWithStats.sort((a: any, b: any) => {
-          if (b.average_rating !== a.average_rating) {
-            return b.average_rating - a.average_rating
-          }
-          return b.rating_count - a.rating_count
-        })
-        break
-      case 'comments':
-        // 评论最多：按评论数量降序，评论数相同时按最新评论时间降序
-        papersWithStats.sort((a: any, b: any) => {
-          if (b.comment_count !== a.comment_count) {
-            return b.comment_count - a.comment_count
-          }
-          return b.latest_comment_time - a.latest_comment_time
-        })
-        break
-      case 'recent_comments':
-        // 最新评论：按最新评论时间降序，没有评论的论文按创建时间降序排在后面
-        papersWithStats.sort((a: any, b: any) => {
-          // 如果都有评论，按最新评论时间排序
-          if (a.latest_comment_time > 0 && b.latest_comment_time > 0) {
-            return b.latest_comment_time - a.latest_comment_time
-          }
-          // 如果只有一个有评论，有评论的排在前面
-          if (a.latest_comment_time > 0 && b.latest_comment_time === 0) {
-            return -1
-          }
-          if (a.latest_comment_time === 0 && b.latest_comment_time > 0) {
-            return 1
-          }
-          // 如果都没有评论，按创建时间降序排序
-          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        })
-        break
-      default:
-        // 默认按最新评论排序
-        papersWithStats.sort((a: any, b: any) => {
-          if (a.latest_comment_time > 0 && b.latest_comment_time > 0) {
-            return b.latest_comment_time - a.latest_comment_time
-          }
-          if (a.latest_comment_time > 0 && b.latest_comment_time === 0) {
-            return -1
-          }
-          if (a.latest_comment_time === 0 && b.latest_comment_time > 0) {
-            return 1
-          }
-          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        })
-    }
+    // 5) 根据 sortBy 排序
+    const sortKey = (sortBy || 'recent_comments') as string
+    enriched.sort((a, b) => {
+      if (sortKey === 'rating') {
+        // 评分最高优先，其次评分次数，其次发布时间
+        if ((b.average_rating || 0) !== (a.average_rating || 0)) {
+          return (b.average_rating || 0) - (a.average_rating || 0)
+        }
+        if ((b.rating_count || 0) !== (a.rating_count || 0)) {
+          return (b.rating_count || 0) - (a.rating_count || 0)
+        }
+        return new Date(b.created_at as any).getTime() - new Date(a.created_at as any).getTime()
+      }
+      if (sortKey === 'comments') {
+        // 评论最多优先
+        if ((b.comment_count || 0) !== (a.comment_count || 0)) {
+          return (b.comment_count || 0) - (a.comment_count || 0)
+        }
+        return new Date(b.created_at as any).getTime() - new Date(a.created_at as any).getTime()
+      }
+      // 默认：最新评论优先（没有评论时按创建时间降序）
+      const lb = (b.latest_comment_time || 0)
+      const la = (a.latest_comment_time || 0)
+      if (lb !== la) return lb - la
+      return new Date(b.created_at as any).getTime() - new Date(a.created_at as any).getTime()
+    })
 
-    // 应用分页
-    papersWithStats = papersWithStats.slice(offset, offset + limit)
-
-    return papersWithStats
+    // 6) 分页切片
+    const slice = enriched.slice(offset, offset + limit)
+    return slice
   } catch (error) {
     console.error('Error in getPapersWithSort:', error)
-    
-    // 如果paper_favorites查询失败，尝试不包含favorites的查询
-    try {
-      let fallbackQuery = supabase
-        .from('papers')
-        .select(`
-          *,
-          ratings(*),
-          comments(*)
-        `)
-
-      const { data: fallbackData, error: fallbackError } = await fallbackQuery
-
-      if (fallbackError) throw fallbackError
-
-      console.warn('⚠️ Using fallback query without favorites')
-      
-      let papersWithStats = (fallbackData || []).map((paper: any) => {
-        const ratings = paper.ratings || []
-        const comments = Array.isArray(paper.comments) ? paper.comments : []
-        
-        let averageRating = 0
-        if (ratings.length > 0) {
-          const totalScore = ratings.reduce((sum: number, rating: any) => sum + rating.overall_score, 0)
-          averageRating = totalScore / ratings.length
-        }
-
-        const latestCommentTime = comments.length > 0 
-          ? Math.max(...comments.map((c: any) => new Date(c.created_at).getTime()))
-          : 0
-
-        return {
-          ...paper,
-          ratings,
-          rating_count: ratings.length,
-          comment_count: comments.length,
-          favorite_count: 0, // fallback时没有收藏数据
-          average_rating: Math.round(averageRating * 10) / 10,
-          latest_comment_time: latestCommentTime
-        }
-      })
-
-      // 应用相同的排序逻辑
-      switch (sortBy) {
-        case 'rating':
-          papersWithStats.sort((a: any, b: any) => {
-            if (b.average_rating !== a.average_rating) {
-              return b.average_rating - a.average_rating
-            }
-            return b.rating_count - a.rating_count
-          })
-          break
-        case 'comments':
-          papersWithStats.sort((a: any, b: any) => {
-            if (b.comment_count !== a.comment_count) {
-              return b.comment_count - a.comment_count
-            }
-            return b.latest_comment_time - a.latest_comment_time
-          })
-          break
-        case 'recent_comments':
-          papersWithStats.sort((a: any, b: any) => {
-            if (a.latest_comment_time > 0 && b.latest_comment_time > 0) {
-              return b.latest_comment_time - a.latest_comment_time
-            }
-            if (a.latest_comment_time > 0 && b.latest_comment_time === 0) {
-              return -1
-            }
-            if (a.latest_comment_time === 0 && b.latest_comment_time > 0) {
-              return 1
-            }
-            return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-          })
-          break
-        default:
-          papersWithStats.sort((a: any, b: any) => {
-            if (a.latest_comment_time > 0 && b.latest_comment_time > 0) {
-              return b.latest_comment_time - a.latest_comment_time
-            }
-            if (a.latest_comment_time > 0 && b.latest_comment_time === 0) {
-              return -1
-            }
-            if (a.latest_comment_time === 0 && b.latest_comment_time > 0) {
-              return 1
-            }
-            return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-          })
-      }
-
-      // 应用分页
-      return papersWithStats.slice(offset, offset + limit)
-    } catch (fallbackError) {
-      console.error('Fallback query also failed:', fallbackError)
-      throw error // 抛出原始错误
-    }
+    throw error
   }
 }
 
@@ -242,8 +153,7 @@ export async function getPaperById(id: string): Promise<PaperWithStats | null> {
     .select(`
       *,
       ratings(*),
-      comments(*),
-      paper_favorites(*)
+      comments(*)
     `)
     .eq('id', id)
     .single()
@@ -259,7 +169,7 @@ export async function getPaperById(id: string): Promise<PaperWithStats | null> {
 
   const ratings = (paper as any).ratings || []
   const commentCount = Array.isArray((paper as any).comments) ? (paper as any).comments.length : 0
-  const favoriteCount = Array.isArray((paper as any).paper_favorites) ? (paper as any).paper_favorites.length : 0
+  const favoriteCount = 0 // 暂时设为0，避免权限问题
   
   let averageRating = 0
   if (ratings.length > 0) {
@@ -287,8 +197,7 @@ export async function searchPapers(query: string, limit: number = 10): Promise<P
     .select(`
       *,
       ratings(*),
-      comments(*),
-      paper_favorites(*)
+      comments(*)
     `)
     .or(`title.ilike.%${query}%,abstract.ilike.%${query}%,doi.ilike.%${query}%`)
     .order('created_at', { ascending: false })
@@ -303,7 +212,7 @@ export async function searchPapers(query: string, limit: number = 10): Promise<P
   const papersWithStats = (data || []).map((paper: any) => {
     const ratings = paper.ratings || []
     const commentCount = Array.isArray(paper.comments) ? paper.comments.length : 0
-    const favoriteCount = Array.isArray(paper.paper_favorites) ? paper.paper_favorites.length : 0
+    const favoriteCount = 0 // 暂时设为0，避免权限问题
     
     let averageRating = 0
     if (ratings.length > 0) {
@@ -537,95 +446,15 @@ export async function getComments(paperId: string): Promise<Comment[]> {
 }
 
 export async function toggleFavorite(paperId: string, userId: string): Promise<boolean> {
-  if (!supabase) {
-    throw new Error('Supabase is not available')
-  }
-
-  // Check if favorite already exists
-  const { data: existing } = await supabase
-    .from('paper_favorites')
-    .select('id')
-    .eq('paper_id', paperId)
-    .eq('user_id', userId)
-    .single()
-
-  if (existing) {
-    // Remove favorite
-    const { error } = await supabase
-      .from('paper_favorites')
-      .delete()
-      .eq('paper_id', paperId)
-      .eq('user_id', userId)
-
-    if (error) {
-      console.error('Error removing favorite:', error)
-      throw error
-    }
-    return false
-  } else {
-    // Add favorite
-    const { error } = await (supabase as any)
-      .from('paper_favorites')
-      .insert([{
-        paper_id: paperId,
-        user_id: userId
-      }])
-
-    if (error) {
-      console.error('Error adding favorite:', error)
-      throw error
-    }
-    return true
-  }
+  // 暂时禁用收藏功能，避免权限问题
+  console.warn('toggleFavorite temporarily disabled due to RLS issues')
+  return false
 }
 
 export async function getUserFavorites(userId: string): Promise<PaperWithStats[]> {
-  if (!supabase) {
-    throw new Error('Supabase is not available')
-  }
-
-  const { data, error } = await supabase
-    .from('paper_favorites')
-    .select(`
-      paper:papers(
-        *,
-        ratings(*),
-        comments(*),
-        paper_favorites(*)
-      )
-    `)
-    .eq('user_id', userId)
-    .order('created_at', { ascending: false })
-
-  if (error) {
-    console.error('Error fetching user favorites:', error)
-    throw error
-  }
-
-  // Calculate stats for each paper
-  const papersWithStats = (data || []).map((favorite: any) => {
-    const paper = favorite.paper
-    const ratings = paper.ratings || []
-    const commentCount = Array.isArray(paper.comments) ? paper.comments.length : 0
-    const favoriteCount = Array.isArray(paper.paper_favorites) ? paper.paper_favorites.length : 0
-    
-    let averageRating = 0
-    if (ratings.length > 0) {
-      const totalScore = ratings.reduce((sum: number, rating: any) => sum + rating.overall_score, 0)
-      averageRating = totalScore / ratings.length
-    }
-
-    return {
-      ...paper,
-      ratings,
-      rating_count: ratings.length,
-      comment_count: commentCount,
-      favorite_count: favoriteCount,
-      average_rating: Math.round(averageRating * 10) / 10
-    }
-  })
-
-  return papersWithStats
+  // 暂时禁用收藏功能，避免权限问题
+  console.warn('getUserFavorites temporarily disabled due to RLS issues')
+  return []
 }
 
 export async function getUserRatings(userId: string): Promise<(Rating & { paper: Paper })[]> {

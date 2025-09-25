@@ -15,26 +15,35 @@ interface PaperCardProps {
 }
 
 export default function PaperCard({ paper }: PaperCardProps) {
-  const averageRating = paper.ratings ? calculateAverageRating(paper.ratings) : null
+  // 优先使用后端聚合字段，其次退回到 ratings 数组计算
+  const ratingCount = (paper as any).rating_count ?? (paper.ratings?.length || 0)
+  const averageValue = (typeof (paper as any).average_rating === 'number' && ratingCount > 0)
+    ? (paper as any).average_rating
+    : (paper.ratings ? (calculateAverageRating(paper.ratings)?.overall ?? null) : null)
+
+  // 计算详细评分（用于显示分项评分）
+  const averageRating = paper.ratings && paper.ratings.length > 0
+    ? calculateAverageRating(paper.ratings)
+    : null
 
   return (
     <div className="bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow p-6">
       <div className="flex justify-between items-start mb-3">
-        <Link 
+        <Link
           href={`/papers/${paper.id}`}
           className="text-lg font-semibold text-gray-900 hover:text-blue-600 transition-colors line-clamp-2"
         >
           {paper.title}
         </Link>
-        
-        {averageRating && (
+
+        {averageValue !== null && averageValue !== undefined && (
           <div className="flex items-center space-x-1 ml-4 flex-shrink-0">
             <Star className="w-4 h-4 text-yellow-400 fill-current" />
             <span className="text-sm font-medium text-gray-700">
-              {averageRating.overall}
+              {averageValue}
             </span>
             <span className="text-xs text-gray-500">
-              ({averageRating.count})
+              ({ratingCount})
             </span>
           </div>
         )}
@@ -116,8 +125,8 @@ export default function PaperCard({ paper }: PaperCardProps) {
         <div className="flex items-center space-x-4 text-sm text-gray-500">
           <div className="flex items-center space-x-1">
             <Star className="w-4 h-4" />
-            <span>{averageRating?.overall || '0.0'}</span>
-            <span>({paper.ratings?.length || 0}评分)</span>
+            <span>{averageValue !== null && averageValue !== undefined ? averageValue : '暂无评分'}</span>
+            <span>({ratingCount}评分)</span>
           </div>
           <div className="flex items-center space-x-1">
             <MessageCircle className="w-4 h-4" />

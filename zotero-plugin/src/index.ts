@@ -5,15 +5,11 @@ import { config } from "../package.json";
 const basicTool = new BasicTool();
 
 if (!basicTool.getGlobal("Zotero")[config.addonInstance]) {
-  // Initialize global addon instance
-  const addonInstance = new Addon();
-  _globalThis.addon = addonInstance;
-
+  _globalThis.addon = new Addon();
   defineGlobal("ztoolkit", () => {
     return _globalThis.addon.data.ztoolkit;
   });
-
-  (Zotero as any)[config.addonInstance] = addonInstance;
+  (Zotero as any)[config.addonInstance] = addon;
 }
 
 function defineGlobal(name: Parameters<BasicTool["getGlobal"]>[0]): void;

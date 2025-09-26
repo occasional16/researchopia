@@ -7,18 +7,29 @@ export interface QualityMetrics {
   authorReputation: number;
   recency: number;
   relevance: number;
+  academicValue: number;
   totalScore: number;
+  grade: 'A+' | 'A' | 'B+' | 'B' | 'C+' | 'C' | 'D';
 }
 
 export class QualityScoringEngine {
-  // Weights for different quality factors
+  // Enhanced weights for different quality factors
   private static readonly WEIGHTS = {
-    contentQuality: 0.3,
-    socialEngagement: 0.25,
-    authorReputation: 0.2,
-    recency: 0.15,
-    relevance: 0.1,
+    contentQuality: 0.25,
+    socialEngagement: 0.2,
+    authorReputation: 0.15,
+    recency: 0.1,
+    relevance: 0.15,
+    academicValue: 0.15,
   };
+
+  // Academic keywords that indicate scholarly value
+  private static readonly ACADEMIC_KEYWORDS = [
+    'hypothesis', 'methodology', 'analysis', 'conclusion', 'evidence', 'research',
+    'study', 'findings', 'results', 'discussion', 'theory', 'framework',
+    'significant', 'correlation', 'causation', 'statistical', 'empirical',
+    'peer-reviewed', 'citation', 'reference', 'literature', 'meta-analysis'
+  ];
 
   // Content quality thresholds
   private static readonly CONTENT_THRESHOLDS = {
@@ -35,13 +46,17 @@ export class QualityScoringEngine {
     const authorReputation = await this.calculateAuthorReputation(annotation.user_id);
     const recency = this.calculateRecency(annotation);
     const relevance = this.calculateRelevance(annotation);
+    const academicValue = this.calculateAcademicValue(annotation);
 
-    const totalScore = 
+    const totalScore =
       contentQuality * this.WEIGHTS.contentQuality +
       socialEngagement * this.WEIGHTS.socialEngagement +
       authorReputation * this.WEIGHTS.authorReputation +
       recency * this.WEIGHTS.recency +
-      relevance * this.WEIGHTS.relevance;
+      relevance * this.WEIGHTS.relevance +
+      academicValue * this.WEIGHTS.academicValue;
+
+    const grade = this.calculateGrade(totalScore);
 
     return {
       contentQuality,
@@ -49,8 +64,72 @@ export class QualityScoringEngine {
       authorReputation,
       recency,
       relevance,
-      totalScore: Math.round(totalScore * 100) / 100, // Round to 2 decimal places
+      academicValue,
+      totalScore: Math.round(totalScore * 100) / 100,
+      grade,
     };
+  }
+
+  /**
+   * Calculate academic value based on scholarly keywords and content depth
+   */
+  private static calculateAcademicValue(annotation: SharedAnnotation): number {
+    let score = 0;
+    const maxScore = 100;
+
+    const fullText = `${annotation.annotation_text || ''} ${annotation.annotation_comment || ''}`.toLowerCase();
+
+    // Check for academic keywords
+    let keywordCount = 0;
+    for (const keyword of this.ACADEMIC_KEYWORDS) {
+      if (fullText.includes(keyword)) {
+        keywordCount++;
+      }
+    }
+
+    // Score based on keyword density
+    if (keywordCount >= 5) {
+      score += 40;
+    } else if (keywordCount >= 3) {
+      score += 30;
+    } else if (keywordCount >= 1) {
+      score += 20;
+    }
+
+    // Check for citations or references
+    if (/\(\d{4}\)|et al\.|doi:|http[s]?:\/\//.test(fullText)) {
+      score += 25;
+    }
+
+    // Check for methodological language
+    if (/method|approach|technique|procedure|protocol/.test(fullText)) {
+      score += 15;
+    }
+
+    // Check for critical thinking indicators
+    if (/however|although|despite|nevertheless|on the other hand|in contrast/.test(fullText)) {
+      score += 10;
+    }
+
+    // Check for quantitative indicators
+    if (/\d+%|\d+\.\d+|significant|p\s*[<>=]\s*\d/.test(fullText)) {
+      score += 10;
+    }
+
+    return Math.min(score, maxScore);
+  }
+
+  /**
+   * Calculate grade based on total score
+   */
+  private static calculateGrade(totalScore: number): 'A+' | 'A' | 'B+' | 'B' | 'C+' | 'C' | 'D' {
+    if (totalScore >= 90) return 'A+';
+    if (totalScore >= 85) return 'A';
+    if (totalScore >= 80) return 'B+';
+    if (totalScore >= 75) return 'B';
+    if (totalScore >= 70) return 'C+';
+    if (totalScore >= 60) return 'C';
+    return 'D';
   }
 
   /**
@@ -310,5 +389,158 @@ export class QualityScoringEngine {
       max: scores[scores.length - 1],
       distribution
     };
+  }
+
+  /**
+   * Recommend annotations based on user preferences and quality
+   */
+  static async recommendAnnotations(
+    allAnnotations: SharedAnnotation[],
+    userPreferences: {
+      followedUsers?: string[];
+      preferredTopics?: string[];
+      minQualityScore?: number;
+      maxResults?: number;
+    } = {}
+  ): Promise<SharedAnnotation[]> {
+    try {
+      // Calculate quality scores for all annotations
+      const qualityScores = await this.calculateBatchQualityScores(allAnnotations);
+
+      // Filter and score annotations
+      const scoredAnnotations = allAnnotations.map(annotation => {
+        const quality = qualityScores.get(annotation.id);
+        let recommendationScore = quality?.totalScore || 0;
+
+        // Boost score for followed users
+        if (userPreferences.followedUsers?.includes(annotation.user_id)) {
+          recommendationScore += 15;
+        }
+
+        // Boost score for preferred topics (based on keywords in annotation)
+        if (userPreferences.preferredTopics) {
+          const annotationText = `${annotation.annotation_text || ''} ${annotation.annotation_comment || ''}`.toLowerCase();
+          const topicMatches = userPreferences.preferredTopics.filter(topic =>
+            annotationText.includes(topic.toLowerCase())
+          ).length;
+          recommendationScore += topicMatches * 5;
+        }
+
+        return {
+          ...annotation,
+          recommendationScore,
+          qualityMetrics: quality
+        };
+      });
+
+      // Filter by minimum quality score
+      const minScore = userPreferences.minQualityScore || 60;
+      const filteredAnnotations = scoredAnnotations.filter(a =>
+        (a.qualityMetrics?.totalScore || 0) >= minScore
+      );
+
+      // Sort by recommendation score
+      filteredAnnotations.sort((a, b) => b.recommendationScore - a.recommendationScore);
+
+      // Return top recommendations
+      const maxResults = userPreferences.maxResults || 20;
+      return filteredAnnotations.slice(0, maxResults);
+
+    } catch (error) {
+      ztoolkit.log("Error generating recommendations:", error);
+      return allAnnotations.slice(0, userPreferences.maxResults || 20);
+    }
+  }
+
+  /**
+   * Analyze annotation trends over time
+   */
+  static analyzeAnnotationTrends(annotations: SharedAnnotation[], days: number = 30) {
+    const now = new Date();
+    const cutoffDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+
+    const recentAnnotations = annotations.filter(a =>
+      new Date(a.created_at) >= cutoffDate
+    );
+
+    // Group by day
+    const dailyStats = new Map<string, { count: number; totalLikes: number }>();
+
+    recentAnnotations.forEach(annotation => {
+      const dateKey = new Date(annotation.created_at).toISOString().split('T')[0];
+      const existing = dailyStats.get(dateKey) || { count: 0, totalLikes: 0 };
+
+      existing.count++;
+      existing.totalLikes += annotation.likes_count || 0;
+
+      dailyStats.set(dateKey, existing);
+    });
+
+    return {
+      totalAnnotations: recentAnnotations.length,
+      dailyStats: Object.fromEntries(dailyStats),
+      averagePerDay: Math.round((recentAnnotations.length / days) * 100) / 100,
+      topAuthors: this.getTopAuthors(recentAnnotations),
+      qualityTrend: this.calculateQualityTrend(recentAnnotations),
+    };
+  }
+
+  /**
+   * Get top authors by annotation count and engagement
+   */
+  static getTopAuthors(annotations: SharedAnnotation[], limit: number = 10) {
+    const authorStats = new Map<string, {
+      count: number;
+      totalLikes: number;
+      totalComments: number;
+      name: string;
+      engagementScore: number;
+    }>();
+
+    annotations.forEach(annotation => {
+      const existing = authorStats.get(annotation.user_id) || {
+        count: 0,
+        totalLikes: 0,
+        totalComments: 0,
+        name: annotation.user_name,
+        engagementScore: 0
+      };
+
+      existing.count++;
+      existing.totalLikes += annotation.likes_count || 0;
+      existing.totalComments += annotation.comments_count || 0;
+      existing.engagementScore = existing.count * 10 + existing.totalLikes * 2 + existing.totalComments * 3;
+
+      authorStats.set(annotation.user_id, existing);
+    });
+
+    return Array.from(authorStats.entries())
+      .map(([userId, stats]) => ({ userId, ...stats }))
+      .sort((a, b) => b.engagementScore - a.engagementScore)
+      .slice(0, limit);
+  }
+
+  /**
+   * Calculate quality trend over time
+   */
+  private static calculateQualityTrend(annotations: SharedAnnotation[]) {
+    if (annotations.length < 2) return { trend: 'stable', change: 0 };
+
+    // Sort by date
+    const sortedAnnotations = annotations.sort((a, b) =>
+      new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    );
+
+    const midpoint = Math.floor(sortedAnnotations.length / 2);
+    const firstHalf = sortedAnnotations.slice(0, midpoint);
+    const secondHalf = sortedAnnotations.slice(midpoint);
+
+    const firstHalfAvg = firstHalf.reduce((sum, a) => sum + (a.quality_score || 0), 0) / firstHalf.length;
+    const secondHalfAvg = secondHalf.reduce((sum, a) => sum + (a.quality_score || 0), 0) / secondHalf.length;
+
+    const change = secondHalfAvg - firstHalfAvg;
+    const trend = change > 5 ? 'improving' : change < -5 ? 'declining' : 'stable';
+
+    return { trend, change: Math.round(change * 100) / 100 };
   }
 }

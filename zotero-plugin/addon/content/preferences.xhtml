@@ -1,50 +1,136 @@
 <linkset>
   <html:link rel="localization" href="researchopia-preferences.ftl" />
-  <html:link rel="stylesheet" href="chrome://researchopia/content/preferences.css" />
+  <html:link rel="stylesheet" href="preferences.css" />
 </linkset>
 <vbox onload="setTimeout(() => { if (typeof ResearchopiaPreferences !== 'undefined') ResearchopiaPreferences.init(); }, 100)">
   <groupbox>
-    <label><html:h2>Researchopia Settings</html:h2></label>
+    <label><html:h2>🔬 Researchopia - Academic Annotation Sharing</html:h2></label>
+    <html:p class="description">Share and discover academic annotations with researchers worldwide</html:p>
 
-    <!-- Login Section -->
-    <html:div id="researchopia-login-section">
-      <label><html:h3>Account Login</html:h3></label>
-      <html:div class="form-group">
-        <html:label for="researchopia-email">Email:</html:label>
-        <html:input type="email" id="researchopia-email" placeholder="Enter your email" />
-      </html:div>
-      <html:div class="form-group">
-        <html:label for="researchopia-password">Password:</html:label>
-        <html:input type="password" id="researchopia-password" placeholder="Enter your password" />
-      </html:div>
-      <html:div class="form-group">
-        <html:button id="researchopia-login-btn" class="researchopia-btn primary">Login</html:button>
-      </html:div>
-      <html:div id="researchopia-error-message" class="error-message"></html:div>
-    </html:div>
+    <!-- Account Section -->
+    <groupbox>
+      <label><html:h3>👤 Account</html:h3></label>
 
-    <!-- Logged In Section -->
-    <html:div id="researchopia-logged-in-section" style="display: none;">
-      <label><html:h3>Account</html:h3></label>
-      <html:p>Logged in as: <html:span id="researchopia-user-email" style="font-weight: bold; color: #007acc;"></html:span></html:p>
-      <html:div class="form-group">
-        <html:button id="researchopia-logout-btn" class="researchopia-btn secondary">Logout</html:button>
+      <!-- Login Section -->
+      <html:div id="login-section" class="auth-section">
+        <html:div class="form-group">
+          <html:label for="researchopia-email">Email:</html:label>
+          <html:input type="email" id="researchopia-email" placeholder="Enter your email" />
+        </html:div>
+        <html:div class="form-group">
+          <html:label for="researchopia-password">Password:</html:label>
+          <html:input type="password" id="researchopia-password" placeholder="Enter your password" />
+        </html:div>
+        <html:div class="form-group">
+          <html:button id="researchopia-login-btn" class="primary-button">Login</html:button>
+          <html:button id="researchopia-register-btn" class="secondary-button">Register</html:button>
+          <html:button id="researchopia-test-connection-btn" class="test-button">Test Connection</html:button>
+        </html:div>
       </html:div>
-    </html:div>
 
-    <!-- Settings Section -->
-    <label><html:h3>Settings</html:h3></label>
-    <html:div class="form-group">
-      <html:label>
-        <html:input type="checkbox" preference="extensions.zotero.researchopia.autoSync" />
-        <html:span>Auto-sync annotations</html:span>
-      </html:label>
-    </html:div>
-    <html:div class="form-group">
-      <html:label>
-        <html:input type="checkbox" preference="extensions.zotero.researchopia.showNotifications" />
-        <html:span>Show notifications</html:span>
-      </html:label>
-    </html:div>
+      <!-- Logout Section -->
+      <html:div id="logout-section" class="auth-section" style="display: none;">
+        <html:div class="user-info">
+          <html:p id="user-email-display">Logged in as: <html:span id="current-user-email"></html:span></html:p>
+          <html:p id="login-time-display">Login time: <html:span id="current-login-time"></html:span></html:p>
+        </html:div>
+        <html:div class="form-group">
+          <html:button id="researchopia-logout-btn" class="danger-button">Logout</html:button>
+          <html:button id="researchopia-refresh-btn" class="secondary-button">Refresh Status</html:button>
+        </html:div>
+      </html:div>
+
+      <!-- Status Display -->
+      <html:div id="auth-status" class="status-message info">Please log in to access shared annotations</html:div>
+    </groupbox>
+
+    <!-- Features Section -->
+    <groupbox>
+      <label><html:h3>📝 Annotation Features</html:h3></label>
+      <html:div class="form-group">
+        <html:label class="checkbox-label">
+          <html:input type="checkbox" id="auto-upload-annotations" />
+          <html:span>Automatically upload new annotations</html:span>
+          <html:small>New annotations will be shared immediately when created</html:small>
+        </html:label>
+      </html:div>
+      <html:div class="form-group">
+        <html:label class="checkbox-label">
+          <html:input type="checkbox" id="show-notifications" />
+          <html:span>Show notification messages</html:span>
+          <html:small>Display status messages for uploads, downloads, and errors</html:small>
+        </html:label>
+      </html:div>
+      <html:div class="form-group">
+        <html:label class="checkbox-label">
+          <html:input type="checkbox" id="enable-precise-tracking" />
+          <html:span>Enable precise annotation tracking</html:span>
+          <html:small>Track annotations at paragraph and sentence level (experimental)</html:small>
+        </html:label>
+      </html:div>
+    </groupbox>
+
+    <!-- Privacy Section -->
+    <groupbox>
+      <label><html:h3>🔒 Privacy Settings</html:h3></label>
+      <html:div class="form-group">
+        <html:label for="default-visibility">Default annotation visibility:</html:label>
+        <html:select id="default-visibility">
+          <html:option value="public">Public - Visible to all users</html:option>
+          <html:option value="followers">Followers only</html:option>
+          <html:option value="private">Private - Only visible to me</html:option>
+        </html:select>
+      </html:div>
+      <html:div class="form-group">
+        <html:label class="checkbox-label">
+          <html:input type="checkbox" id="allow-anonymous-view" />
+          <html:span>Allow anonymous users to view my public annotations</html:span>
+        </html:label>
+      </html:div>
+    </groupbox>
+
+    <!-- Display Section -->
+    <groupbox>
+      <label><html:h3>🎨 Display Options</html:h3></label>
+      <html:div class="form-group">
+        <html:label for="annotation-display-mode">Annotation display mode:</html:label>
+        <html:select id="annotation-display-mode">
+          <html:option value="inline">Inline with text</html:option>
+          <html:option value="sidebar">Sidebar panel</html:option>
+          <html:option value="popup">Popup on hover</html:option>
+        </html:select>
+      </html:div>
+      <html:div class="form-group">
+        <html:label for="max-annotations-per-page">Max annotations per page:</html:label>
+        <html:input type="number" id="max-annotations-per-page" min="5" max="100" value="20" />
+      </html:div>
+    </groupbox>
+
+    <!-- About Section -->
+    <groupbox>
+      <label><html:h3>ℹ️ About</html:h3></label>
+      <html:div class="about-info">
+        <html:p><strong>Version:</strong> 0.1.1</html:p>
+        <html:p><strong>Compatible with:</strong> Zotero 8 beta</html:p>
+        <html:p><strong>Support:</strong> <html:a href="https://github.com/occasional15/researchopia/issues">GitHub Issues</html:a></html:p>
+        <html:div class="stats-container" id="user-stats" style="display: none;">
+          <html:h4>Your Statistics</html:h4>
+          <html:div class="stats-grid">
+            <html:div class="stat-item">
+              <html:span class="stat-number" id="annotations-shared">0</html:span>
+              <html:span class="stat-label">Annotations Shared</html:span>
+            </html:div>
+            <html:div class="stat-item">
+              <html:span class="stat-number" id="likes-received">0</html:span>
+              <html:span class="stat-label">Likes Received</html:span>
+            </html:div>
+            <html:div class="stat-item">
+              <html:span class="stat-number" id="followers-count">0</html:span>
+              <html:span class="stat-label">Followers</html:span>
+            </html:div>
+          </html:div>
+        </html:div>
+      </html:div>
+    </groupbox>
   </groupbox>
 </vbox>

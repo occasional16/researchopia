@@ -1,6 +1,6 @@
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { getPref, setPref, clearPref } from "../utils/prefs";
-import { SUPABASE_CONFIG } from "../config/supabase";
+import { getSupabaseConfig, getEnvConfig } from "../config/env";
 
 export class AuthManager {
   private static supabase: SupabaseClient | null = null;
@@ -8,7 +8,8 @@ export class AuthManager {
   static initialize() {
     // Initialize Supabase client
     try {
-      this.supabase = createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey);
+      const config = getSupabaseConfig();
+      this.supabase = createClient(config.url, config.anonKey);
       ztoolkit.log("Supabase client initialized");
 
       // Check for existing session

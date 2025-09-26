@@ -1,12 +1,18 @@
 import { AnnotationManager, SharedAnnotation } from "./annotations";
 import { AuthManager } from "./auth";
 import { DataTransform } from "../utils/dataTransform";
+import { PreciseTrackingEngine, PreciseAnnotation, TextPosition } from "./preciseTracking";
+import { SocialManager } from "./social";
 
 export class ReaderUIManager {
   private static overlayElements = new Map<string, HTMLElement>();
   private static currentDOI: string | null = null;
   private static currentAnnotations: SharedAnnotation[] = [];
+  private static preciseAnnotations: PreciseAnnotation[] = [];
+  private static textPositions: TextPosition[] = [];
+  private static currentReadingPosition: { page: number; paragraph: number } | null = null;
   private static isInitialized = false;
+  private static readerInstances = new Map<string, any>();
 
   static initialize() {
     ztoolkit.log("ReaderUIManager initialized");
@@ -89,7 +95,7 @@ export class ReaderUIManager {
       return;
     }
 
-    // Create overlay container
+    // Create enhanced overlay container
     const overlay = iframeDocument.createElement("div");
     overlay.id = "researchopia-reader-overlay";
     overlay.innerHTML = `
@@ -98,6 +104,15 @@ export class ReaderUIManager {
           <button id="toggle-panel" class="toggle-btn" title="Toggle Shared Annotations">
             📝 <span class="annotation-count">0</span>
           </button>
+          <div class="panel-controls">
+            <button id="precise-mode-btn" class="control-btn ${this.isPreciseModeEnabled() ? 'active' : ''}" title="Toggle Precise Tracking">
+              🎯
+            </button>
+            <button id="real-time-btn" class="control-btn active" title="Real-time Updates">
+              ⚡
+            </button>
+          </div>
+        </div>
         </div>
         <div class="panel-content">
           <div class="panel-title">Shared Annotations</div>
@@ -161,16 +176,74 @@ export class ReaderUIManager {
     const viewerContainer = doc.querySelector(".viewer");
     viewerContainer?.addEventListener("scroll", () => {
       this.updateVisibleAnnotations(doc, reader);
+
+      // Update reading position for precise tracking
+      if (this.isPreciseModeEnabled()) {
+        this.updateReadingPosition(doc, reader);
+      }
     });
+
+    // Setup real-time position tracking
+    if (this.isPreciseModeEnabled()) {
+      this.setupPositionTracking(doc, reader);
+    }
   }
 
   static async loadSharedAnnotations(doi: string) {
     try {
       this.currentAnnotations = await AnnotationManager.fetchSharedAnnotations(doi);
+
+      // If precise mode is enabled, process annotations for precise tracking
+      if (this.isPreciseModeEnabled()) {
+        await this.processPreciseAnnotations();
+      }
+
       this.updateAllReaderPanels();
     } catch (error) {
       ztoolkit.log("Error loading shared annotations for reader:", error);
     }
+  }
+
+  static async processPreciseAnnotations() {
+    try {
+      // Extract text structure from current PDF
+      const reader = this.getCurrentReader();
+      if (!reader) return;
+
+      const pdfDocument = await reader.getPDFDocument();
+      if (!pdfDocument) return;
+
+      this.textPositions = await PreciseTrackingEngine.extractTextStructure(pdfDocument);
+
+      // Match annotations to precise positions
+      this.preciseAnnotations = [];
+      for (const annotation of this.currentAnnotations) {
+        const preciseAnnotation = PreciseTrackingEngine.matchAnnotationToPosition(
+          annotation,
+          this.textPositions
+        );
+        if (preciseAnnotation) {
+          this.preciseAnnotations.push(preciseAnnotation);
+        }
+      }
+
+      ztoolkit.log(`Processed ${this.preciseAnnotations.length} precise annotations`);
+    } catch (error) {
+      ztoolkit.log("Error processing precise annotations:", error);
+    }
+  }
+
+  static getCurrentReader(): any {
+    // Get the currently active reader
+    // @ts-expect-error - Reader API exists in Zotero 8
+    const readers = Zotero.Reader._readers;
+    return readers.length > 0 ? readers[readers.length - 1] : null;
+  }
+
+  static isPreciseModeEnabled(): boolean {
+    // Check if precise tracking mode is enabled in preferences
+    const checkbox = addon.data.prefs?.window?.document?.getElementById('enable-precise-tracking') as HTMLInputElement;
+    return checkbox?.checked || false;
   }
 
   static updateAllReaderPanels() {
@@ -591,6 +664,135 @@ export class ReaderUIManager {
   static cleanup() {
     this.overlayElements.clear();
     this.currentAnnotations = [];
+    this.preciseAnnotations = [];
+    this.textPositions = [];
+    this.currentReadingPosition = null;
     this.currentDOI = null;
+  }
+
+  // Enhanced Position Tracking Methods
+  static setupPositionTracking(doc: Document, reader: any) {
+    try {
+      // Listen for position change events
+      window.addEventListener('researchopia-position-change', (event: any) => {
+        this.onPositionChange(doc, event.detail);
+      });
+
+      // Start tracking reading position
+      PreciseTrackingEngine.trackReadingPosition(reader._iframeWindow);
+
+      ztoolkit.log("Position tracking setup complete");
+    } catch (error) {
+      ztoolkit.log("Error setting up position tracking:", error);
+    }
+  }
+
+  static updateReadingPosition(doc: Document, reader: any) {
+    try {
+      // Get current scroll position and visible page
+      const viewerContainer = doc.querySelector(".viewer");
+      if (!viewerContainer) return;
+
+      const scrollTop = viewerContainer.scrollTop;
+      const viewerHeight = viewerContainer.clientHeight;
+
+      // Find the currently visible page
+      const pages = doc.querySelectorAll('.page');
+      let currentPage = 1;
+      let currentParagraph = 0;
+
+      for (let i = 0; i < pages.length; i++) {
+        const page = pages[i] as HTMLElement;
+        const rect = page.getBoundingClientRect();
+
+        if (rect.top <= viewerHeight / 2 && rect.bottom >= viewerHeight / 2) {
+          currentPage = i + 1;
+          // Estimate paragraph based on scroll position within page
+          const pageProgress = Math.max(0, (viewerHeight / 2 - rect.top) / rect.height);
+          currentParagraph = Math.floor(pageProgress * 10); // Assume 10 paragraphs per page
+          break;
+        }
+      }
+
+      this.currentReadingPosition = { page: currentPage, paragraph: currentParagraph };
+
+      // Update relevant annotations display
+      this.updateRelevantAnnotations(doc);
+
+    } catch (error) {
+      ztoolkit.log("Error updating reading position:", error);
+    }
+  }
+
+  static onPositionChange(doc: Document, position: { page: number; paragraph: number }) {
+    this.currentReadingPosition = position;
+    this.updateRelevantAnnotations(doc);
+  }
+
+  static updateRelevantAnnotations(doc: Document) {
+    if (!this.currentReadingPosition || !this.isPreciseModeEnabled()) return;
+
+    try {
+      // Get annotations relevant to current reading position
+      const relevantAnnotations = PreciseTrackingEngine.getAnnotationsForPosition(
+        this.currentReadingPosition.page,
+        this.currentReadingPosition.paragraph,
+        this.preciseAnnotations
+      );
+
+      // Update the relevant annotations section
+      const relevantSection = doc.querySelector("#relevant-annotations");
+      if (relevantSection) {
+        if (relevantAnnotations.length === 0) {
+          relevantSection.innerHTML = '<div class="no-relevant">No annotations for current position</div>';
+        } else {
+          const html = relevantAnnotations.map(annotation => this.renderPreciseAnnotation(annotation)).join('');
+          relevantSection.innerHTML = html;
+        }
+      }
+
+      // Highlight relevant annotations in the main list
+      this.highlightRelevantInMainList(doc, relevantAnnotations);
+
+    } catch (error) {
+      ztoolkit.log("Error updating relevant annotations:", error);
+    }
+  }
+
+  static renderPreciseAnnotation(annotation: PreciseAnnotation): string {
+    const confidenceColor = annotation.confidence > 0.8 ? '#28a745' :
+                           annotation.confidence > 0.6 ? '#ffc107' : '#dc3545';
+
+    return `
+      <div class="precise-annotation" data-id="${annotation.id}">
+        <div class="annotation-header">
+          <span class="author">${annotation.author}</span>
+          <span class="confidence" style="color: ${confidenceColor}" title="Match confidence: ${Math.round(annotation.confidence * 100)}%">
+            ${Math.round(annotation.confidence * 100)}%
+          </span>
+        </div>
+        <div class="annotation-content">
+          <div class="annotation-text">"${annotation.originalText}"</div>
+          ${annotation.comment ? `<div class="annotation-comment">${annotation.comment}</div>` : ''}
+        </div>
+        <div class="position-info">
+          <small>Page ${annotation.position.page}, Paragraph ${annotation.position.paragraph}</small>
+        </div>
+      </div>
+    `;
+  }
+
+  static highlightRelevantInMainList(doc: Document, relevantAnnotations: PreciseAnnotation[]) {
+    // Remove existing highlights
+    const allAnnotations = doc.querySelectorAll('.annotation-item');
+    allAnnotations.forEach(item => item.classList.remove('relevant-highlight'));
+
+    // Add highlights to relevant annotations
+    relevantAnnotations.forEach(annotation => {
+      const element = doc.querySelector(`[data-id="${annotation.id}"]`);
+      if (element) {
+        element.classList.add('relevant-highlight');
+      }
+    });
   }
 }

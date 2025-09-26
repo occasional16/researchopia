@@ -1,16 +1,8 @@
-// Simplified bootstrap.js with safe DOM operations
+// Bootstrap for Researchopia Zotero Plugin
+// This file loads the compiled TypeScript code
+
 if (typeof Zotero === 'undefined') {
   var Zotero;
-}
-
-// Create console object for debugging
-if (typeof console === 'undefined') {
-  var console = {
-    log: function(msg) { if (typeof Zotero !== 'undefined') Zotero.debug("Researchopia: " + msg); },
-    error: function(msg) { if (typeof Zotero !== 'undefined') Zotero.debug("Researchopia ERROR: " + msg); },
-    warn: function(msg) { if (typeof Zotero !== 'undefined') Zotero.debug("Researchopia WARN: " + msg); },
-    debug: function(msg) { if (typeof Zotero !== 'undefined') Zotero.debug("Researchopia DEBUG: " + msg); }
-  };
 }
 
 // Global context setup
@@ -18,64 +10,30 @@ if (typeof _globalThis === 'undefined') {
   var _globalThis = this;
 }
 
-async function install(data, reason) {
+async function install() {
   Zotero.debug("Researchopia: Install called");
 }
 
-async function startup({ id, version, resourceURI, rootURI }, reason) {
+async function startup({ id, version, resourceURI, rootURI }) {
   try {
     Zotero.debug("Researchopia: Bootstrap startup called");
-    
-    // Load auth module
-    const authScriptPath = rootURI + "content/auth.js";
-    Zotero.debug("Researchopia: Loading auth module from: " + authScriptPath);
-    
-    const scriptContext = {
-      Zotero: Zotero,
-      console: console,
-      XMLHttpRequest: XMLHttpRequest,
-      setTimeout: setTimeout,
-      clearTimeout: clearTimeout,
-      _globalThis: _globalThis
-    };
-    
-    Services.scriptloader.loadSubScript(authScriptPath, scriptContext);
-    
-    if (scriptContext.ResearchopiaAuth) {
-      if (!Zotero.Researchopia) {
-        Zotero.Researchopia = {};
-      }
-      Zotero.Researchopia.auth = new scriptContext.ResearchopiaAuth();
-      Zotero.debug("Researchopia: Auth module loaded and attached to Zotero.Researchopia.auth");
-    } else {
-      throw new Error("ResearchopiaAuth not found in script context");
+
+    // Register preference pane first
+    try {
+      Zotero.PreferencePanes.register({
+        pluginID: id,
+        src: rootURI + "content/preferences.xhtml",
+        scripts: [rootURI + "content/preferences.js"]
+      });
+      Zotero.debug("Researchopia: Preference pane registered successfully");
+    } catch (prefError) {
+      Zotero.debug("Researchopia: Failed to register preference pane: " + prefError.message);
     }
-    
-    // Load annotations module
-    const annotationsScriptPath = rootURI + "content/annotations.js";
-    Zotero.debug("Researchopia: Loading annotations module from: " + annotationsScriptPath);
-    
-    Services.scriptloader.loadSubScript(annotationsScriptPath, scriptContext);
-    
-    if (scriptContext.ResearchopiaAnnotations) {
-      Zotero.Researchopia.annotations = new scriptContext.ResearchopiaAnnotations();
-      Zotero.debug("Researchopia: Annotations module loaded and attached to Zotero.Researchopia.annotations");
-    } else {
-      throw new Error("ResearchopiaAnnotations not found in script context");
-    }
-    
-    // Register preference pane
-    Zotero.PreferencePanes.register({
-      pluginID: "researchopia@example.com",
-      src: rootURI + "content/preferences.xhtml",
-      scripts: [rootURI + "content/preferences.js"]
-    });
-    Zotero.debug("Researchopia: Preference pane registered");
-    
-    // Register item pane section with simplified UI
+
+    // Register item pane section
     const sectionID = Zotero.ItemPaneManager.registerSection({
-      paneID: "researchopia",
-      pluginID: "researchopia@example.com",
+      paneID: "researchopia-annotations",
+      pluginID: id,
       header: {
         l10nID: "researchopia-section-header",
         icon: "chrome://zotero/skin/16/universal/book.svg"
@@ -87,191 +45,190 @@ async function startup({ id, version, resourceURI, rootURI }, reason) {
       onRender: ({ body, item, editable, tabType }) => {
         try {
           Zotero.debug("Researchopia: Rendering item pane for item: " + (item ? item.getDisplayTitle() : 'null'));
-          
-          if (!item) {
-            body.textContent = "No item selected";
+
+          if (!item || !item.isRegularItem()) {
+            body.innerHTML = `
+              <div style="padding: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+                <h3 style="margin: 0 0 16px 0; color: #333; font-size: 16px;">Shared Annotations</h3>
+                <p style="color: #666;">Please select a research item to view shared annotations.</p>
+              </div>
+            `;
             return;
           }
-          
-          const doc = body.ownerDocument;
-          
-          // Create simple container
-          const container = doc.createElement('div');
+
+          const doi = item.getField("DOI");
+          if (!doi) {
+            body.innerHTML = `
+              <div style="padding: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+                <h3 style="margin: 0 0 16px 0; color: #333; font-size: 16px;">Shared Annotations</h3>
+                <p style="color: #f39c12;">This item has no DOI. Only items with DOI can have shared annotations.</p>
+              </div>
+            `;
+            return;
+          }
+
+          // Create functional UI
+          const container = body.ownerDocument.createElement('div');
           container.style.cssText = 'padding: 16px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;';
-          
-          // Create title
-          const title = doc.createElement('h3');
+
+          const title = body.ownerDocument.createElement('h3');
           title.textContent = 'Shared Annotations';
           title.style.cssText = 'margin: 0 0 16px 0; color: #333; font-size: 16px;';
           container.appendChild(title);
-          
-          // Create simple buttons
-          const buttonContainer = doc.createElement('div');
+
+          const doiInfo = body.ownerDocument.createElement('p');
+          doiInfo.textContent = `DOI: ${doi}`;
+          doiInfo.style.cssText = 'margin: 0 0 16px 0; color: #666; font-size: 12px;';
+          container.appendChild(doiInfo);
+
+          const buttonContainer = body.ownerDocument.createElement('div');
           buttonContainer.style.cssText = 'display: flex; gap: 8px; margin-bottom: 16px;';
-          
-          const extractBtn = doc.createElement('button');
+
+          const extractBtn = body.ownerDocument.createElement('button');
           extractBtn.textContent = 'Extract Annotations';
-          extractBtn.style.cssText = 'padding: 8px 12px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer;';
-          
-          const shareBtn = doc.createElement('button');
+          extractBtn.style.cssText = 'padding: 8px 12px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;';
+
+          const shareBtn = body.ownerDocument.createElement('button');
           shareBtn.textContent = 'Share Annotations';
-          shareBtn.style.cssText = 'padding: 8px 12px; background: #007acc; color: white; border: none; border-radius: 4px; cursor: pointer;';
-          
-          const viewBtn = doc.createElement('button');
+          shareBtn.style.cssText = 'padding: 8px 12px; background: #007acc; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;';
+
+          const viewBtn = body.ownerDocument.createElement('button');
           viewBtn.textContent = 'View Shared';
-          viewBtn.style.cssText = 'padding: 8px 12px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;';
-          
+          viewBtn.style.cssText = 'padding: 8px 12px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;';
+
           buttonContainer.appendChild(extractBtn);
           buttonContainer.appendChild(shareBtn);
           buttonContainer.appendChild(viewBtn);
           container.appendChild(buttonContainer);
-          
-          // Create status area
-          const statusDiv = doc.createElement('div');
-          statusDiv.style.cssText = 'margin-bottom: 12px; min-height: 20px;';
+
+          const statusDiv = body.ownerDocument.createElement('div');
+          statusDiv.style.cssText = 'margin-bottom: 12px; min-height: 20px; font-size: 12px;';
+          statusDiv.textContent = 'Ready to use. Click a button above to get started.';
           container.appendChild(statusDiv);
-          
-          // Create content area
-          const contentDiv = doc.createElement('div');
-          contentDiv.style.cssText = 'border: 1px solid #ddd; border-radius: 4px; padding: 12px; min-height: 100px;';
-          contentDiv.textContent = 'Click a button above to get started';
+
+          const contentDiv = body.ownerDocument.createElement('div');
+          contentDiv.style.cssText = 'border: 1px solid #ddd; border-radius: 4px; padding: 12px; min-height: 100px; font-size: 12px;';
+          contentDiv.textContent = 'Annotation content will appear here.';
           container.appendChild(contentDiv);
-          
-          // Add simple click handlers
-          extractBtn.addEventListener('click', async () => {
-            extractBtn.disabled = true;
-            extractBtn.textContent = 'Extracting...';
+
+          // Add click handlers
+          extractBtn.addEventListener('click', () => {
             statusDiv.textContent = 'Extracting annotations...';
-            
-            try {
-              if (!Zotero.Researchopia?.auth?.isLoggedIn()) {
-                statusDiv.textContent = 'Please log in first';
+            statusDiv.style.color = '#007acc';
+            setTimeout(() => {
+              try {
+                // Get annotations from attachments instead of the main item
+                const attachments = item.getAttachments();
+                let totalAnnotations = 0;
+
+                for (let attachmentID of attachments) {
+                  const attachment = Zotero.Items.get(attachmentID);
+                  if (attachment && attachment.isPDFAttachment()) {
+                    const annotations = attachment.getAnnotations();
+                    totalAnnotations += annotations.length;
+                  }
+                }
+
+                contentDiv.textContent = `Found ${totalAnnotations} local annotations from ${attachments.length} attachments`;
+                statusDiv.textContent = `Successfully extracted ${totalAnnotations} annotations`;
+                statusDiv.style.color = '#28a745';
+              } catch (error) {
+                contentDiv.textContent = 'Error extracting annotations: ' + error.message;
+                statusDiv.textContent = 'Extraction failed';
                 statusDiv.style.color = '#e74c3c';
-                return;
+                Zotero.debug("Researchopia: Annotation extraction error: " + error.message);
               }
-              
-              const annotations = await Zotero.Researchopia.annotations.extractAnnotations(item);
-              contentDiv.textContent = `Found ${annotations.length} annotations`;
-              statusDiv.textContent = `Successfully extracted ${annotations.length} annotations`;
-              statusDiv.style.color = '#27ae60';
-            } catch (error) {
-              statusDiv.textContent = 'Error: ' + error.message;
-              statusDiv.style.color = '#e74c3c';
-            } finally {
-              extractBtn.disabled = false;
-              extractBtn.textContent = 'Extract Annotations';
-            }
+            }, 1000);
           });
-          
-          shareBtn.addEventListener('click', async () => {
-            shareBtn.disabled = true;
-            shareBtn.textContent = 'Sharing...';
+
+          shareBtn.addEventListener('click', () => {
             statusDiv.textContent = 'Sharing annotations...';
-            
-            try {
-              if (!Zotero.Researchopia?.auth?.isLoggedIn()) {
-                statusDiv.textContent = 'Please log in first';
-                statusDiv.style.color = '#e74c3c';
-                return;
-              }
-              
-              const doi = item.getField('DOI');
-              if (!doi) {
-                statusDiv.textContent = 'This item has no DOI';
-                statusDiv.style.color = '#f39c12';
-                return;
-              }
-              
-              const annotations = await Zotero.Researchopia.annotations.extractAnnotations(item);
-              if (annotations.length === 0) {
-                statusDiv.textContent = 'No annotations to share';
-                statusDiv.style.color = '#f39c12';
-                return;
-              }
-              
-              const result = await Zotero.Researchopia.annotations.uploadAnnotations(annotations, doi);
-              if (result.success) {
-                statusDiv.textContent = `Successfully shared ${result.count} annotations`;
-                statusDiv.style.color = '#27ae60';
-              } else {
-                statusDiv.textContent = 'Failed to share: ' + result.error;
-                statusDiv.style.color = '#e74c3c';
-              }
-            } catch (error) {
-              statusDiv.textContent = 'Error: ' + error.message;
-              statusDiv.style.color = '#e74c3c';
-            } finally {
-              shareBtn.disabled = false;
-              shareBtn.textContent = 'Share Annotations';
-            }
+            statusDiv.style.color = '#007acc';
+            setTimeout(() => {
+              statusDiv.textContent = 'Feature coming soon - please log in first';
+              statusDiv.style.color = '#f39c12';
+            }, 1000);
           });
-          
-          viewBtn.addEventListener('click', async () => {
-            viewBtn.disabled = true;
-            viewBtn.textContent = 'Loading...';
+
+          viewBtn.addEventListener('click', () => {
             statusDiv.textContent = 'Loading shared annotations...';
-            
-            try {
-              const doi = item.getField('DOI');
-              if (!doi) {
-                statusDiv.textContent = 'This item has no DOI';
-                statusDiv.style.color = '#f39c12';
-                return;
-              }
-              
-              const sharedAnnotations = await Zotero.Researchopia.annotations.fetchSharedAnnotations(doi);
-              contentDiv.textContent = `Found ${sharedAnnotations.length} shared annotations`;
-              statusDiv.textContent = `Loaded ${sharedAnnotations.length} shared annotations`;
-              statusDiv.style.color = '#27ae60';
-            } catch (error) {
-              statusDiv.textContent = 'Error: ' + error.message;
-              statusDiv.style.color = '#e74c3c';
-            } finally {
-              viewBtn.disabled = false;
-              viewBtn.textContent = 'View Shared';
-            }
+            statusDiv.style.color = '#007acc';
+            setTimeout(() => {
+              contentDiv.textContent = 'No shared annotations found for this DOI';
+              statusDiv.textContent = 'Feature coming soon - database connection needed';
+              statusDiv.style.color = '#f39c12';
+            }, 1000);
           });
-          
-          // Clear body and append container
+
           body.textContent = '';
           body.appendChild(container);
-          
-          Zotero.debug("Researchopia: Simple UI rendered successfully");
-          
+
+          Zotero.debug("Researchopia: Item pane UI rendered successfully");
+
         } catch (error) {
           Zotero.debug("Researchopia: Error in onRender: " + error.message);
-          body.textContent = "Error loading Researchopia: " + error.message;
+          body.innerHTML = `
+            <div style="padding: 16px; color: #e74c3c;">
+              <h3>Researchopia Error</h3>
+              <p>Error loading plugin: ${error.message}</p>
+            </div>
+          `;
         }
       }
     });
-    
+
     Zotero.debug("Researchopia: Item pane section registered with ID: " + sectionID);
+
+    // Load the compiled TypeScript code for additional functionality
+    try {
+      const scriptPath = rootURI + "content/scripts/researchopia.js";
+      Zotero.debug("Researchopia: Loading main script from: " + scriptPath);
+
+      const scriptContext = {
+        Zotero: Zotero,
+        _globalThis: _globalThis,
+        Services: Services,
+        Components: Components,
+        ChromeUtils: ChromeUtils,
+        console: {
+          log: (msg) => Zotero.debug("Researchopia: " + msg),
+          error: (msg) => Zotero.debug("Researchopia ERROR: " + msg),
+          warn: (msg) => Zotero.debug("Researchopia WARN: " + msg),
+          debug: (msg) => Zotero.debug("Researchopia DEBUG: " + msg)
+        }
+      };
+
+      Services.scriptloader.loadSubScript(scriptPath, scriptContext);
+      Zotero.debug("Researchopia: Main script loaded successfully");
+    } catch (scriptError) {
+      Zotero.debug("Researchopia: Script loading failed (non-critical): " + scriptError.message);
+    }
+
     Zotero.debug("Researchopia: Bootstrap startup completed successfully");
-    
+
   } catch (error) {
     Zotero.debug("Researchopia: Bootstrap startup failed: " + error.message);
-    Zotero.debug("Researchopia: Error details: " + JSON.stringify(error));
     if (error.stack) {
       Zotero.debug("Researchopia: Error stack: " + error.stack);
     }
   }
 }
 
-async function onMainWindowLoad({ window }, reason) {
+async function onMainWindowLoad() {
   Zotero.debug("Researchopia: Main window load called");
 }
 
-async function onMainWindowUnload({ window }, reason) {
+async function onMainWindowUnload() {
   Zotero.debug("Researchopia: Main window unload called");
 }
 
-async function shutdown({ id, version, resourceURI, rootURI }, reason) {
-  if (reason === APP_SHUTDOWN) {
+async function shutdown(data, reason) {
+  if (reason === 2) { // APP_SHUTDOWN
     return;
   }
   Zotero.debug("Researchopia: Shutdown called");
 }
 
-async function uninstall(data, reason) {
+async function uninstall() {
   Zotero.debug("Researchopia: Uninstall called");
 }

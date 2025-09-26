@@ -4,6 +4,7 @@ import { createZToolkit } from "./utils/ztoolkit";
 import { AuthManager } from "./modules/auth";
 import { AnnotationManager } from "./modules/annotations";
 import { UIManager } from "./modules/ui";
+import { logConfig } from "./config/env";
 
 async function onStartup() {
   try {
@@ -17,6 +18,9 @@ async function onStartup() {
 
     ztoolkit.log("Researchopia: Zotero ready, initializing locale...");
     initLocale();
+
+    ztoolkit.log("Researchopia: Loading configuration...");
+    logConfig();
 
     ztoolkit.log("Researchopia: Initializing modules...");
     // Initialize Researchopia modules

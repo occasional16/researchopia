@@ -11,24 +11,24 @@ export class UIManager {
       ztoolkit.log("Registering Item Pane section...");
 
       // Check if ItemPaneManager is available
-      // @ts-expect-error - ItemPaneManager exists in Zotero 7+
+      // @ts-expect-error - ItemPaneManager exists in Zotero 8
       if (!Zotero.ItemPaneManager) {
         ztoolkit.log("ItemPaneManager not available, skipping registration");
         return;
       }
 
       // Register custom section in item pane using official Zotero API
-      // @ts-expect-error - ItemPaneManager exists in Zotero 7+
+      // @ts-expect-error - ItemPaneManager exists in Zotero 8
       const registeredID = Zotero.ItemPaneManager.registerSection({
         paneID: "researchopia-annotations",
         pluginID: addon.data.config.addonID,
         header: {
-          l10nID: "researchopia-annotations-header",
-          icon: `chrome://${addon.data.config.addonRef}/content/icons/favicon.png`,
+          l10nID: "researchopia-section-header",
+          icon: "chrome://zotero/skin/16/universal/book.svg",
         },
         sidenav: {
-          l10nID: "researchopia-annotations-sidenav",
-          icon: `chrome://${addon.data.config.addonRef}/content/icons/favicon.png`,
+          l10nID: "researchopia-section-sidenav",
+          icon: "chrome://zotero/skin/16/universal/book.svg",
         },
         onRender: ({ body, item }) => {
           try {
@@ -501,6 +501,7 @@ export class UIManager {
 
   static showUserProfile(userId: string) {
     // TODO: Implement user profile dialog
+    ztoolkit.log("Showing user profile for:", userId);
     this.showNotification("User profile feature coming soon!", "info");
   }
 

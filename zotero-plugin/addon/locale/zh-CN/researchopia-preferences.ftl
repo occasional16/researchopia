@@ -1,0 +1,15 @@
+pref-title = Researchopia 设置
+pref-login-title = 账户登录
+pref-email-label = 邮箱：
+pref-password-label = 密码：
+pref-login-btn = 登录
+pref-account-title = 账户
+pref-logged-in-text = 您已登录到 Researchopia。
+pref-logout-btn = 退出登录
+pref-settings-title = 偏好设置
+pref-auto-sync = 自动同步标注
+pref-auto-upload =
+    .label = 创建标注时自动上传
+pref-show-notifications =
+    .label = 显示新共享标注的通知
+pref-help = { $name } 版本 { $version } { $time }

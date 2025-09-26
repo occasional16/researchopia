@@ -2,6 +2,7 @@
 
 # dependencies
 /node_modules
+**/node_modules
 /.pnp
 .pnp.*
 .yarn/*
@@ -42,3 +43,12 @@ next-env.d.ts
 
 .vercel
 .env*.local
+
+# Zotero plugin specific
+zotero-plugin/.scaffold/
+zotero-plugin/build/
+zotero-plugin/dist/
+zotero-plugin/*.xpi
+zotero-plugin/node_modules/
+zotero-plugin/.vscode/
+zotero-plugin/.idea/

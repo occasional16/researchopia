@@ -277,3 +277,163 @@
   color: #0c5460;
   border-color: #bee5eb;
 }
+
+/* Enhanced Preferences Styles */
+.description {
+  color: #666;
+  font-size: 14px;
+  margin-bottom: 20px;
+  line-height: 1.4;
+}
+
+.account-section {
+  margin-bottom: 24px;
+}
+
+.checkbox-label {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  font-size: 14px;
+  color: #333;
+  cursor: pointer;
+  margin-bottom: 12px;
+}
+
+.checkbox-label input[type="checkbox"] {
+  margin-right: 8px;
+  margin-bottom: 4px;
+  width: auto;
+}
+
+.checkbox-label small {
+  color: #666;
+  font-size: 12px;
+  margin-left: 20px;
+  line-height: 1.3;
+}
+
+select {
+  width: 100%;
+  max-width: 300px;
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+  background-color: #fff;
+}
+
+select:focus {
+  outline: none;
+  border-color: #007acc;
+  box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.2);
+}
+
+input[type="number"] {
+  width: 100px;
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+  background-color: #fff;
+}
+
+input[type="number"]:focus {
+  outline: none;
+  border-color: #007acc;
+  box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.2);
+}
+
+.about-info {
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+}
+
+.about-info p {
+  margin: 8px 0;
+  font-size: 14px;
+  color: #333;
+}
+
+.about-info a {
+  color: #007acc;
+  text-decoration: none;
+}
+
+.about-info a:hover {
+  text-decoration: underline;
+}
+
+.stats-container {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #e9ecef;
+}
+
+.stats-container h4 {
+  margin: 0 0 12px 0;
+  color: #333;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.stat-item {
+  text-align: center;
+  padding: 12px;
+  background: #fff;
+  border-radius: 6px;
+  border: 1px solid #e9ecef;
+}
+
+.stat-number {
+  display: block;
+  font-size: 24px;
+  font-weight: 700;
+  color: #007acc;
+  margin-bottom: 4px;
+}
+
+.stat-label {
+  display: block;
+  font-size: 12px;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Groupbox styling */
+groupbox {
+  margin-bottom: 20px;
+  padding: 16px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background: #fafafa;
+}
+
+groupbox label h3 {
+  margin: 0 0 16px 0;
+  color: #333;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+/* Button loading states */
+.btn-loading {
+  display: none;
+}
+
+.researchopia-btn:disabled .btn-text {
+  display: none;
+}
+
+.researchopia-btn:disabled .btn-loading {
+  display: inline;
+}

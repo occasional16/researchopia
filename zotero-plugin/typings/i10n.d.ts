@@ -3,6 +3,17 @@
 /* eslint-disable */
 // @ts-nocheck
 export type FluentMessageId =
+  | 'error'
+  | 'extract-annotations'
+  | 'extracting'
+  | 'loading'
+  | 'loading-annotations'
+  | 'login'
+  | 'login-required'
+  | 'logout'
+  | 'no-annotations-found'
+  | 'no-doi-available'
+  | 'no-item-selected'
   | 'pref-account-title'
   | 'pref-auto-sync'
   | 'pref-auto-upload'
@@ -16,7 +27,15 @@ export type FluentMessageId =
   | 'pref-settings-title'
   | 'pref-show-notifications'
   | 'pref-title'
+  | 'refresh'
   | 'researchopia-annotations-header'
   | 'researchopia-annotations-sidenav'
+  | 'researchopia-section-header'
+  | 'researchopia-section-sidenav'
+  | 'share-annotations'
+  | 'sharing'
   | 'startup-begin'
-  | 'startup-finish';
+  | 'startup-finish'
+  | 'success'
+  | 'view-shared'
+  | 'warning';

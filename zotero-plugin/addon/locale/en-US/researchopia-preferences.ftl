@@ -1,0 +1,15 @@
+pref-title = Researchopia Settings
+pref-login-title = Account Login
+pref-email-label = Email:
+pref-password-label = Password:
+pref-login-btn = Login
+pref-account-title = Account
+pref-logged-in-text = You are logged in to Researchopia.
+pref-logout-btn = Logout
+pref-settings-title = Preferences
+pref-auto-sync = Auto-sync annotations
+pref-auto-upload =
+    .label = Automatically upload my annotations when I create them
+pref-show-notifications =
+    .label = Show notifications for new shared annotations
+pref-help = { $name } Build { $version } { $time }

@@ -1,0 +1,33 @@
+<!-- 48x48 icon - Researchopia Logo Design -->
+<svg width="48" height="48" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+  <!-- Wave patterns -->
+  <path d="M4 36 Q12 34 24 36 T44 36" fill="none" stroke="#a855f7" stroke-width="2" opacity="0.6"/>
+  <path d="M4 38 Q12 36 24 38 T44 38" fill="none" stroke="#a855f7" stroke-width="1.5" opacity="0.4"/>
+  
+  <!-- Main document/book -->
+  <rect x="12" y="16" width="24" height="14" rx="2" fill="#7c3aed"/>
+  <rect x="12.5" y="16.5" width="23" height="13" rx="1.5" fill="#8b5cf6"/>
+  
+  <!-- Document content lines -->
+  <line x1="16" y1="20" x2="32" y2="20" stroke="white" stroke-width="1.5"/>
+  <line x1="16" y1="23" x2="32" y2="23" stroke="white" stroke-width="1.5"/>
+  <line x1="16" y1="26" x2="28" y2="26" stroke="white" stroke-width="1.5"/>
+  <line x1="16" y1="29" x2="30" y2="29" stroke="white" stroke-width="1.5"/>
+  
+  <!-- Vertical divider -->
+  <line x1="24" y1="16.5" x2="24" y2="29.5" stroke="#6d28d9" stroke-width="1"/>
+  
+  <!-- Light bulb -->
+  <circle cx="36" cy="10" r="4" fill="#fbbf24"/>
+  <rect x="34.5" y="13.5" width="3" height="4" fill="#f59e0b"/>
+  <!-- Light rays -->
+  <g stroke="#fbbf24" stroke-width="1.5" opacity="0.7">
+    <line x1="28" y1="10" x2="26" y2="10"/>
+    <line x1="44" y1="10" x2="46" y2="10"/>
+    <line x1="36" y1="2" x2="36" y2="0"/>
+    <line x1="31" y1="5" x2="29" y2="3"/>
+    <line x1="41" y1="5" x2="43" y2="3"/>
+    <line x1="31" y1="15" x2="29" y2="17"/>
+    <line x1="41" y1="15" x2="43" y2="17"/>
+  </g>
+</svg>

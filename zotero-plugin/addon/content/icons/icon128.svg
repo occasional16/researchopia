@@ -1,0 +1,36 @@
+<!-- 128x128 icon - Researchopia Logo Design -->
+<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+  <!-- Wave patterns -->
+  <path d="M10 96 Q30 90 64 96 T118 96" fill="none" stroke="#a855f7" stroke-width="3" opacity="0.6"/>
+  <path d="M10 102 Q30 96 64 102 T118 102" fill="none" stroke="#a855f7" stroke-width="2" opacity="0.4"/>
+  
+  <!-- Main document/book -->
+  <rect x="32" y="42" width="64" height="36" rx="4" fill="#7c3aed"/>
+  <rect x="33" y="43" width="62" height="34" rx="3" fill="#8b5cf6"/>
+  
+  <!-- Document content lines -->
+  <line x1="42" y1="52" x2="86" y2="52" stroke="white" stroke-width="2"/>
+  <line x1="42" y1="59" x2="86" y2="59" stroke="white" stroke-width="2"/>
+  <line x1="42" y1="66" x2="74" y2="66" stroke="white" stroke-width="2"/>
+  <line x1="42" y1="73" x2="82" y2="73" stroke="white" stroke-width="2"/>
+  
+  <!-- Vertical divider -->
+  <line x1="64" y1="43" x2="64" y2="77" stroke="#6d28d9" stroke-width="1"/>
+  
+  <!-- Light bulb -->
+  <circle cx="96" cy="26" r="10" fill="#fbbf24"/>
+  <rect x="92" y="35" width="8" height="10" fill="#f59e0b"/>
+  <!-- Light rays -->
+  <g stroke="#fbbf24" stroke-width="3" opacity="0.7">
+    <line x1="74" y1="26" x2="68" y2="26"/>
+    <line x1="118" y1="26" x2="124" y2="26"/>
+    <line x1="96" y1="4" x2="96" y2="-2"/>
+    <line x1="82" y1="12" x2="77" y2="7"/>
+    <line x1="110" y1="12" x2="115" y2="7"/>
+    <line x1="82" y1="40" x2="77" y2="45"/>
+    <line x1="110" y1="40" x2="115" y2="45"/>
+  </g>
+  
+  <!-- Brand text -->
+  <text x="64" y="115" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#7c3aed" text-anchor="middle">研学港 Researchopia</text>
+</svg>

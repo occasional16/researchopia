@@ -1,0 +1,50 @@
+<linkset>
+  <html:link rel="localization" href="researchopia-preferences.ftl" />
+  <html:link rel="stylesheet" href="chrome://researchopia/content/preferences.css" />
+</linkset>
+<vbox onload="setTimeout(() => { if (typeof ResearchopiaPreferences !== 'undefined') ResearchopiaPreferences.init(); }, 100)">
+  <groupbox>
+    <label><html:h2>Researchopia Settings</html:h2></label>
+
+    <!-- Login Section -->
+    <html:div id="researchopia-login-section">
+      <label><html:h3>Account Login</html:h3></label>
+      <html:div class="form-group">
+        <html:label for="researchopia-email">Email:</html:label>
+        <html:input type="email" id="researchopia-email" placeholder="Enter your email" />
+      </html:div>
+      <html:div class="form-group">
+        <html:label for="researchopia-password">Password:</html:label>
+        <html:input type="password" id="researchopia-password" placeholder="Enter your password" />
+      </html:div>
+      <html:div class="form-group">
+        <html:button id="researchopia-login-btn" class="researchopia-btn primary">Login</html:button>
+      </html:div>
+      <html:div id="researchopia-error-message" class="error-message"></html:div>
+    </html:div>
+
+    <!-- Logged In Section -->
+    <html:div id="researchopia-logged-in-section" style="display: none;">
+      <label><html:h3>Account</html:h3></label>
+      <html:p>Logged in as: <html:span id="researchopia-user-email" style="font-weight: bold; color: #007acc;"></html:span></html:p>
+      <html:div class="form-group">
+        <html:button id="researchopia-logout-btn" class="researchopia-btn secondary">Logout</html:button>
+      </html:div>
+    </html:div>
+
+    <!-- Settings Section -->
+    <label><html:h3>Settings</html:h3></label>
+    <html:div class="form-group">
+      <html:label>
+        <html:input type="checkbox" preference="extensions.zotero.researchopia.autoSync" />
+        <html:span>Auto-sync annotations</html:span>
+      </html:label>
+    </html:div>
+    <html:div class="form-group">
+      <html:label>
+        <html:input type="checkbox" preference="extensions.zotero.researchopia.showNotifications" />
+        <html:span>Show notifications</html:span>
+      </html:label>
+    </html:div>
+  </groupbox>
+</vbox>

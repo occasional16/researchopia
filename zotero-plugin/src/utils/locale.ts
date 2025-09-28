@@ -26,3 +26,7 @@ export function getString(
     return key;
   }
 }
+
+export function getLocaleID(id: string): string {
+  return `${config.addonRef}-${id}`;
+}

@@ -30,19 +30,25 @@ export default defineConfig({
       {
         entryPoints: ["src/index.ts"],
         define: {
-          __env__: `"${process.env.NODE_ENV}"`,
+          __env__: `"${process.env.NODE_ENV || "development"}"`,
         },
         bundle: true,
         target: "firefox140",
+        format: "esm",
+        platform: "browser",
         outfile: `.scaffold/build/addon/content/scripts/${pkg.config.addonRef}.js`,
       },
     ],
+  },
+
+  server: {
+    asProxy: true,
   },
 
   test: {
     waitForPlugin: `() => Zotero.${pkg.config.addonInstance}.data.initialized`,
   },
 
-  // If you need to see a more detailed log, uncomment the following line:
-  // logLevel: "trace",
+  // Detailed logging for development
+  logLevel: process.env.NODE_ENV === "development" ? "TRACE" : "INFO",
 });

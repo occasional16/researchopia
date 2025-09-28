@@ -237,11 +237,16 @@ var ResearchopiaPreferences = {
           if (response.ok) {
             const user = await response.json();
             this.currentUser = user;
+            
+            // Update stored session with fresh user data
+            this.saveAuthState(user.email, this.accessToken, user);
+            
             return { success: true, user: user };
           } else {
-            // Token might be expired, clear auth state
-            this.signOut();
-            return { success: false, error: 'Session expired' };
+            // Token might be expired, but don't clear auth state immediately
+            // Let user try to re-login
+            const data = response.status === 401 ? 'Token已过期，请重新登录' : 'Session validation failed';
+            return { success: false, error: data };
           }
         } catch (error) {
           return { success: false, error: error.message };
@@ -563,17 +568,30 @@ var ResearchopiaPreferences = {
       const result = await this.auth.refreshSession();
 
       if (result.success) {
-        this.updateUI(true, result.user.email);
-        this.showSuccess('Session refreshed successfully!');
+        // Get user display name
+        let displayName = result.user.email;
+        const user = result.user;
+        const username = user.user_metadata?.username || 
+                        user.user_metadata?.name ||
+                        user.user_metadata?.full_name;
+        
+        if (username) {
+          displayName = username;
+        } else if (user.email) {
+          displayName = user.email.includes('@') ? user.email.split('@')[0] : user.email;
+        }
+
+        this.updateUI(true, displayName);
+        this.showSuccess('会话状态刷新成功！');
       } else {
-        this.updateUI(false);
-        this.showError('Session expired. Please log in again.');
+        // Don't update UI to logged out state immediately, just show error
+        this.showError('会话验证失败: ' + result.error);
       }
     } catch (error) {
       if (typeof Zotero !== 'undefined') {
         Zotero.debug('Researchopia: Refresh error: ' + error.message);
       }
-      this.showError('Refresh failed: ' + error.message);
+      this.showError('刷新失败: ' + error.message);
     } finally {
       if (refreshBtn) {
         refreshBtn.disabled = false;
@@ -605,8 +623,25 @@ var ResearchopiaPreferences = {
       logoutSection.style.display = isLoggedIn ? 'block' : 'none';
     }
 
-    if (currentUserEmail && userEmail) {
-      currentUserEmail.textContent = userEmail;
+    // Get user display name from current user
+    let displayName = userEmail;
+    if (isLoggedIn && this.auth && this.auth.currentUser) {
+      const user = this.auth.currentUser;
+      // Try to extract username from user metadata
+      const username = user.user_metadata?.username || 
+                      user.user_metadata?.name ||
+                      user.user_metadata?.full_name;
+      
+      if (username) {
+        displayName = username;
+      } else if (user.email) {
+        // Use email prefix as fallback
+        displayName = user.email.includes('@') ? user.email.split('@')[0] : user.email;
+      }
+    }
+
+    if (currentUserEmail && displayName) {
+      currentUserEmail.textContent = displayName;
     }
 
     if (currentLoginTime && isLoggedIn) {
@@ -625,10 +660,10 @@ var ResearchopiaPreferences = {
 
     if (authStatus) {
       if (isLoggedIn) {
-        authStatus.textContent = `Logged in as ${userEmail || 'Unknown'}`;
+        authStatus.textContent = `已登录为 ${displayName || 'Unknown'}`;
         authStatus.className = 'status-message success';
       } else {
-        authStatus.textContent = 'Please log in to access shared annotations';
+        authStatus.textContent = '请登录以访问共享标注功能';
         authStatus.className = 'status-message info';
       }
     }

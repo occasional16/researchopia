@@ -29,9 +29,11 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
     "types": ["node"],
-    "typeRoots": ["./typings", "./node_modules/@types"]
+    "typeRoots": ["./typings", "./node_modules/@types", "./node_modules/zotero-types"]
   },
-  "include": ["src/**/*", "typings/**/*"],
-  "exclude": ["node_modules", "**/*.test.ts", "build"]
+  "include": ["src/**/*", "typings/**/*", "addon/**/*"],
+  "exclude": ["node_modules", "**/*.test.ts", "build", ".scaffold"]
 }

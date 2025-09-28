@@ -48,11 +48,53 @@
   cursor: pointer;
   font-size: 12px;
   text-decoration: none;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .researchopia-btn:hover {
   background: #005a9e;
   border-color: #005a9e;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.researchopia-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.researchopia-btn.secondary {
+  background: #6c757d;
+  border-color: #6c757d;
+}
+
+.researchopia-btn.secondary:hover {
+  background: #5a6268;
+  border-color: #5a6268;
+}
+
+.researchopia-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.researchopia-btn.loading {
+  position: relative;
+  color: transparent;
+}
+
+.researchopia-btn.loading::after {
+  content: "⏳";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  animation: spin 1s linear infinite;
 }
 
 .login-prompt {
@@ -197,6 +239,18 @@
   background: #fff;
   cursor: pointer;
   font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.filter-btn:hover {
+  background: #f8f9fa;
+  border-color: #007acc;
+}
+
+.filter-btn.active {
+  background: #007acc;
+  color: white;
+  border-color: #007acc;
 }
 
 .filter-panel {
@@ -266,6 +320,65 @@
 
 .annotation-item.following-author {
   border-left: 4px solid #28a745;
+}
+
+.annotation-item.own-annotation {
+  border-left: 4px solid #007acc;
+  background: #f8fbff;
+}
+
+.annotation-item[data-quality="high"] {
+  box-shadow: 0 2px 8px rgba(255, 215, 0, 0.2);
+}
+
+.quality-badge.excellent {
+  color: #ffd700;
+  text-shadow: 0 0 2px rgba(255, 215, 0, 0.5);
+}
+
+.quality-badge.good {
+  color: #17a2b8;
+}
+
+.own-indicator {
+  color: #007acc;
+  font-size: 12px;
+}
+
+.quote-mark {
+  color: #999;
+  font-size: 1.2em;
+  font-weight: bold;
+}
+
+.expand-btn {
+  background: none;
+  border: none;
+  color: #007acc;
+  cursor: pointer;
+  font-size: 11px;
+  text-decoration: underline;
+  margin-left: 8px;
+}
+
+.expand-btn:hover {
+  color: #005a9e;
+}
+
+.full-text {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #eee;
+}
+
+.comment-icon {
+  display: inline-block;
+  margin-right: 6px;
+  opacity: 0.7;
+}
+
+.comment-text {
+  display: inline;
 }
 
 .annotation-header {
@@ -351,12 +464,30 @@
   display: flex;
   align-items: center;
   gap: 4px;
+  min-width: 50px;
+  justify-content: center;
 }
 
-.annotation-actions button:hover {
+.annotation-actions button:hover:not(:disabled) {
   background: #e9ecef;
   color: #333;
   transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.annotation-actions button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.action-icon {
+  font-size: 14px;
+}
+
+.action-count {
+  font-size: 11px;
+  font-weight: 600;
 }
 
 .like-btn.liked {
@@ -372,11 +503,47 @@
 }
 
 /* Loading and Empty States */
-.loading {
+.loading-state {
   text-align: center;
   padding: 48px 32px;
   color: #666;
+}
+
+.loading-spinner {
+  font-size: 24px;
+  margin-bottom: 12px;
+  animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-text {
   font-style: italic;
+  color: #666;
+}
+
+.error-state {
+  text-align: center;
+  padding: 48px 32px;
+  color: #dc3545;
+  background: #fff5f5;
+  border: 1px solid #fed7d7;
+  border-radius: 6px;
+  margin: 8px;
+}
+
+.error-icon {
+  font-size: 32px;
+  margin-bottom: 12px;
+  opacity: 0.8;
+}
+
+.error-text {
+  margin-bottom: 16px;
+  color: #666;
 }
 
 .no-annotations {
@@ -401,6 +568,22 @@
   font-size: 14px;
   color: #999;
   font-style: italic;
+  margin-bottom: 16px;
+}
+
+.clear-search-btn {
+  padding: 8px 16px;
+  background: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  margin-top: 8px;
+}
+
+.clear-search-btn:hover {
+  background: #5a6268;
 }
 
 /* Dialog Styles */

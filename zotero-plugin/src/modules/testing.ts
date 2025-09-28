@@ -50,8 +50,7 @@ export class TestingManager {
     
     try {
       // Get selected items
-      // @ts-expect-error - getActiveZoteroPane exists in Zotero
-      const selectedItems = Zotero.getActiveZoteroPane().getSelectedItems();
+      const selectedItems = (Zotero as any).getActiveZoteroPane().getSelectedItems();
       
       if (selectedItems.length === 0) {
         ztoolkit.log("No items selected, skipping annotation extraction test");
@@ -138,8 +137,7 @@ export class TestingManager {
 
     try {
       // Get selected item
-      // @ts-expect-error - getActiveZoteroPane exists in Zotero
-      const selectedItems = Zotero.getActiveZoteroPane().getSelectedItems();
+      const selectedItems = (Zotero as any).getActiveZoteroPane().getSelectedItems();
       
       if (selectedItems.length === 0) {
         ztoolkit.log("Please select an item with a DOI to create demo data");
@@ -215,8 +213,7 @@ export class TestingManager {
       const startTime = Date.now();
       
       // Test annotation loading performance
-      // @ts-expect-error - getActiveZoteroPane exists in Zotero
-      const selectedItems = Zotero.getActiveZoteroPane().getSelectedItems();
+      const selectedItems = (Zotero as any).getActiveZoteroPane().getSelectedItems();
       if (selectedItems.length > 0) {
         const item = selectedItems[0];
         const doi = item.getField("DOI");
@@ -277,8 +274,7 @@ export class TestingManager {
       }
 
       // Check Zotero version compatibility
-      // @ts-expect-error - version exists in Zotero
-      const zoteroVersion = Zotero.version;
+      const zoteroVersion = (Zotero as any).version;
       ztoolkit.log(`Zotero version: ${zoteroVersion}`);
       
       if (zoteroVersion.startsWith('8.')) {

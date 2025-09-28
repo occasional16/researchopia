@@ -2,7 +2,7 @@
   <html:link rel="localization" href="researchopia-preferences.ftl" />
   <html:link rel="stylesheet" href="preferences.css" />
 </linkset>
-<vbox onload="setTimeout(() => { if (typeof ResearchopiaPreferences !== 'undefined') ResearchopiaPreferences.init(); }, 100)">
+<vbox data-researchopia="true" onload="setTimeout(() => { if (typeof ResearchopiaPreferences !== 'undefined') ResearchopiaPreferences.init(); }, 100)">
   <groupbox>
     <label><html:h2>🔬 Researchopia - Academic Annotation Sharing</html:h2></label>
     <html:p class="description">Share and discover academic annotations with researchers worldwide</html:p>

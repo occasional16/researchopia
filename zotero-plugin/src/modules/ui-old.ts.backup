@@ -1,0 +1,1026 @@
+import { AnnotationManager, SharedAnnotation } from "./annotations";
+import { AuthManager } from "./auth";
+
+export class UIManager {
+  static initialize() {
+    ztoolkit.log("🚀 UIManager initialized");
+
+    // Comprehensive Zotero environment check
+    ztoolkit.log("🔍 Zotero environment check:");
+    // @ts-expect-error - version exists in Zotero
+    ztoolkit.log("  - Zotero version:", Zotero.version);
+    // @ts-expect-error - ItemPaneManager exists in Zotero 7/8
+    ztoolkit.log("  - Zotero.ItemPaneManager exists:", !!Zotero.ItemPaneManager);
+
+    // Check if we're in the right context
+    if (typeof window !== 'undefined') {
+      ztoolkit.log("  - Running in window context");
+    }
+    if (typeof document !== 'undefined') {
+      ztoolkit.log("  - Document available");
+    }
+
+    // List some key Zotero objects to verify environment
+    const zoteroKeys = Object.keys(Zotero).filter(key =>
+      key.includes('Pane') || key.includes('Manager') || key.includes('UI')
+    );
+    ztoolkit.log("  - Zotero UI-related objects:", zoteroKeys);
+  }
+
+  static registerItemPaneSection() {
+    try {
+      ztoolkit.log("🚀 Researchopia: Starting Item Pane section registration...");
+
+      // Check Zotero version and availability
+      // @ts-expect-error - version exists in Zotero
+      ztoolkit.log("🔍 Zotero version:", Zotero.version);
+      ztoolkit.log("🔍 Zotero object keys:", Object.keys(Zotero).slice(0, 10));
+
+      // Check if ItemPaneManager is available
+      // @ts-expect-error - ItemPaneManager exists in Zotero 7/8
+      ztoolkit.log("🔍 ItemPaneManager available:", !!Zotero.ItemPaneManager);
+      // @ts-expect-error - ItemPaneManager exists in Zotero 7/8
+      if (!Zotero.ItemPaneManager) {
+        ztoolkit.log("❌ ItemPaneManager not available, skipping registration");
+        return null;
+      }
+
+      // Get plugin ID from bootstrap or addon config
+      const pluginID = (_globalThis as any).researchopiaBootstrap?.id || addon.data.config.addonID;
+      ztoolkit.log("🔍 Plugin ID:", pluginID);
+      ztoolkit.log("🔍 Bootstrap info:", (_globalThis as any).researchopiaBootstrap);
+      ztoolkit.log("🔍 Addon config:", addon.data.config);
+
+      // Validate plugin ID
+      if (!pluginID) {
+        ztoolkit.log("❌ No plugin ID available, cannot register Item Pane section");
+        return null;
+      }
+
+      // Register custom section in item pane using official Zotero API
+      ztoolkit.log("🔧 Attempting to register Item Pane section...");
+
+      // @ts-expect-error - ItemPaneManager exists in Zotero 7/8
+      const registeredID = Zotero.ItemPaneManager.registerSection({
+        paneID: "researchopia-annotations",
+        pluginID: pluginID,
+        header: {
+          l10nID: "researchopia-section-header",
+          icon: "chrome://zotero/skin/16/universal/book.svg",
+        },
+        sidenav: {
+          l10nID: "researchopia-section-sidenav",
+          icon: "chrome://zotero/skin/16/universal/book.svg",
+        },
+        onRender: ({ body, item, editable, tabType }) => {
+          try {
+            ztoolkit.log("🎯 Researchopia: onRender called!");
+            ztoolkit.log("🎯 Item:", item?.getDisplayTitle() || 'null');
+            ztoolkit.log("🎯 Body element:", body);
+
+            // Check if item has DOI for annotation sharing
+            const doi = item?.getField?.('DOI');
+            const itemId = item?.id;
+
+            if (!doi) {
+              body.innerHTML = `
+                <div class="researchopia-message">
+                  <div class="message-icon">📄</div>
+                  <h3>No DOI Found</h3>
+                  <p>This item doesn't have a DOI. Only items with DOI can share annotations.</p>
+                </div>
+              `;
+              return;
+            }
+
+            // Render full annotations section
+            this.renderAnnotationsSection(body, doi, itemId);
+            this.injectItemPaneStyles(body);
+
+            ztoolkit.log("🎯 Researchopia: Annotations section rendered successfully!");
+          } catch (error) {
+            ztoolkit.log("🚨 Researchopia: Error in onRender:", error);
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            const errorStack = error instanceof Error ? error.stack : '';
+            body.innerHTML = `
+              <div class="researchopia-error">
+                <div class="error-icon">⚠️</div>
+                <h3>Rendering Error</h3>
+                <p>Failed to render: ${errorMessage}</p>
+                <pre>${errorStack}</pre>
+                <button class="retry-btn" onclick="location.reload()">Retry</button>
+              </div>
+            `;
+          }
+        },
+        onDestroy: () => {
+          // Cleanup when section is destroyed
+          ztoolkit.log("Item Pane section destroyed");
+        }
+      });
+
+      ztoolkit.log("✅ Item Pane section registered with ID:", registeredID);
+      ztoolkit.log("✅ Registration successful! Section should now be visible in Item Pane.");
+
+      // Store section ID for cleanup
+      if (addon.data) {
+        (addon.data as any).itemPaneSectionID = registeredID;
+      }
+      return registeredID;
+    } catch (error) {
+      ztoolkit.log("❌ Error registering Item Pane section:", error);
+      ztoolkit.log("❌ Error details:", error instanceof Error ? error.stack : error);
+      return null;
+    }
+  }
+
+
+
+  static injectItemPaneStyles(container: HTMLElement) {
+    const doc = container.ownerDocument;
+    if (!doc) return;
+
+    // Check if styles are already injected
+    if (doc.querySelector('#researchopia-item-pane-styles')) return;
+
+    const style = doc.createElement('style');
+    style.id = 'researchopia-item-pane-styles';
+    style.textContent = `
+      /* Import main styles */
+      @import url("chrome://researchopia/content/zoteroPane.css");
+
+      /* Additional item pane specific styles */
+      .researchopia-container {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        font-size: 13px;
+        line-height: 1.4;
+      }
+
+      .researchopia-message {
+        text-align: center;
+        padding: 24px 16px;
+        color: #666;
+      }
+
+      .message-icon, .error-icon {
+        font-size: 32px;
+        margin-bottom: 12px;
+        opacity: 0.7;
+      }
+
+      .researchopia-message h3 {
+        margin: 0 0 12px 0;
+        color: #333;
+        font-size: 16px;
+        font-weight: 600;
+      }
+
+      .researchopia-message p {
+        margin: 8px 0;
+        color: #666;
+      }
+
+      .researchopia-error {
+        text-align: center;
+        padding: 24px 16px;
+        background: #fff5f5;
+        border: 1px solid #fed7d7;
+        border-radius: 6px;
+        margin: 8px;
+      }
+
+      .retry-btn {
+        margin-top: 12px;
+        padding: 8px 16px;
+        background: #007acc;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;
+      }
+
+      .retry-btn:hover {
+        background: #005a9e;
+      }
+    `;
+
+    doc.head.appendChild(style);
+  }
+
+  static renderAnnotationsSection(container: HTMLElement, doi: string, itemId: number): void {
+    // Render UI synchronously first
+    container.innerHTML = `
+      <div id="researchopia-container" class="researchopia-container">
+        <div class="researchopia-header">
+          <h3 data-l10n-id="researchopia-section-header">Shared Annotations</h3>
+          <div class="header-controls">
+            ${AuthManager.isLoggedIn() ?
+              `<button id="upload-annotations-btn" class="researchopia-btn primary">
+                <span class="btn-icon">📤</span>
+                <span class="btn-text" data-l10n-id="share-annotations">Share My Annotations</span>
+              </button>` :
+              `<div class="login-prompt">
+                <span>🔒 <span data-l10n-id="login-required">Please log in to share annotations</span></span>
+                <button id="open-prefs-btn" class="researchopia-btn secondary" data-l10n-id="login">Login</button>
+              </div>`
+            }
+          </div>
+        </div>
+
+        <div class="annotations-controls">
+          <div class="search-box">
+            <input type="text" id="search-annotations" data-l10n-id="search-placeholder" placeholder="Search annotations..." />
+            <button id="search-btn" class="search-btn" title="Search">🔍</button>
+          </div>
+          <div class="filter-controls">
+            <select id="sort-select">
+              <option value="quality" data-l10n-id="sort-quality">Best Quality</option>
+              <option value="recent" data-l10n-id="sort-recent">Most Recent</option>
+              <option value="likes" data-l10n-id="sort-likes">Most Liked</option>
+              <option value="comments" data-l10n-id="sort-comments">Most Discussed</option>
+            </select>
+            <button id="filter-btn" class="filter-btn" title="Filters">⚙️</button>
+          </div>
+        </div>
+
+        <div id="filter-panel" class="filter-panel" style="display: none;">
+          <div class="filter-options">
+            <label><input type="checkbox" id="filter-has-comments"> <span data-l10n-id="filter-has-comments">Has Comments</span></label>
+            <label><input type="checkbox" id="filter-has-likes"> <span data-l10n-id="filter-has-likes">Has Likes</span></label>
+            <label><input type="checkbox" id="filter-following"> <span data-l10n-id="filter-following">From Followed Users</span></label>
+          </div>
+        </div>
+
+        <div class="annotations-stats" id="annotations-stats">
+          <span data-l10n-id="doi-info">DOI: ${doi}</span>
+        </div>
+        <div id="annotations-list">
+          <div class="loading-state">
+            <div class="loading-spinner">⏳</div>
+            <div data-l10n-id="loading-annotations">Loading shared annotations...</div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // Apply localization immediately
+    this.applyLocalization(container);
+
+    // Bind event listeners
+    this.bindEventListeners(container, doi, itemId);
+
+    // Load annotations asynchronously (don't return promise)
+    this.loadAndDisplayAnnotations(container.querySelector("#annotations-list")!, doi)
+      .catch(error => {
+        ztoolkit.log("Error loading annotations:", error);
+        const annotationsList = container.querySelector("#annotations-list");
+        if (annotationsList) {
+          annotationsList.innerHTML = `
+            <div class="error-state">
+              <div class="error-icon">⚠️</div>
+              <div class="error-text">Failed to load annotations: ${error.message}</div>
+              <button class="retry-btn" onclick="location.reload()">Retry</button>
+            </div>
+          `;
+        }
+      });
+  }
+
+  static bindEventListeners(container: HTMLElement, doi: string, itemId: number) {
+    try {
+      // Upload button
+      const uploadBtn = container.querySelector("#upload-annotations-btn");
+      uploadBtn?.addEventListener("click", async (e) => {
+        e.preventDefault();
+        this.setButtonLoading(uploadBtn as HTMLElement, true);
+
+        try {
+          // Check if user is still logged in
+          if (!AuthManager.isLoggedIn()) {
+            this.showNotification("Please log in first", "error");
+            return;
+          }
+
+          const success = await AnnotationManager.uploadAnnotations(itemId);
+          if (success) {
+            this.showNotification("Annotations uploaded successfully!", "success");
+            // Refresh the annotations list
+            await this.loadAndDisplayAnnotations(container.querySelector("#annotations-list")!, doi);
+          } else {
+            this.showNotification("Failed to upload annotations. Please try again.", "error");
+          }
+        } catch (error) {
+          ztoolkit.log("Error uploading annotations:", error);
+          this.showNotification("Upload failed due to an error", "error");
+        } finally {
+          this.setButtonLoading(uploadBtn as HTMLElement, false);
+        }
+      });
+
+      // Login button
+      const openPrefsBtn = container.querySelector("#open-prefs-btn");
+      openPrefsBtn?.addEventListener("click", (e) => {
+        e.preventDefault();
+        try {
+          // Open Zotero preferences to Researchopia tab
+          // @ts-expect-error - openPreferences exists in Zotero 8
+          Zotero.Prefs.openPreferences("researchopia");
+        } catch (error) {
+          ztoolkit.log("Error opening preferences:", error);
+          this.showNotification("Could not open preferences", "error");
+        }
+      });
+
+      // Search functionality
+      const searchInput = container.querySelector("#search-annotations") as HTMLInputElement;
+      const searchBtn = container.querySelector("#search-btn");
+
+      const performSearch = async () => {
+        try {
+          const searchText = searchInput?.value.trim();
+          const sortSelect = container.querySelector("#sort-select") as HTMLSelectElement;
+          const sortBy = sortSelect?.value || "quality";
+
+          await this.loadAndDisplayAnnotations(
+            container.querySelector("#annotations-list")!,
+            doi,
+            {
+              searchText: searchText || undefined,
+              sortBy: sortBy,
+              filters: this.getActiveFilters(container)
+            }
+          );
+        } catch (error) {
+          ztoolkit.log("Error performing search:", error);
+          this.showNotification("Search failed", "error");
+        }
+      };
+
+      // Debounced search for better performance
+      let searchTimeout: NodeJS.Timeout;
+      const debouncedSearch = () => {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(performSearch, 300);
+      };
+
+      searchBtn?.addEventListener("click", (e) => {
+        e.preventDefault();
+        performSearch();
+      });
+
+      searchInput?.addEventListener("input", debouncedSearch);
+      searchInput?.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          performSearch();
+        }
+      });
+
+      // Sort functionality
+      const sortSelect = container.querySelector("#sort-select") as HTMLSelectElement;
+      sortSelect?.addEventListener("change", async () => {
+        try {
+          await this.loadAndDisplayAnnotations(
+            container.querySelector("#annotations-list")!,
+            doi,
+            {
+              sortBy: sortSelect.value,
+              searchText: searchInput?.value.trim() || undefined,
+              filters: this.getActiveFilters(container)
+            }
+          );
+        } catch (error) {
+          ztoolkit.log("Error changing sort:", error);
+          this.showNotification("Sort failed", "error");
+        }
+      });
+
+      // Filter panel toggle
+      const filterBtn = container.querySelector("#filter-btn");
+      const filterPanel = container.querySelector("#filter-panel") as HTMLElement;
+      filterBtn?.addEventListener("click", (e) => {
+        e.preventDefault();
+        const isVisible = filterPanel?.style.display !== "none";
+        if (filterPanel) {
+          filterPanel.style.display = isVisible ? "none" : "block";
+          // Update button appearance
+          filterBtn.classList.toggle("active", !isVisible);
+        }
+      });
+
+      // Filter checkboxes
+      const filterCheckboxes = container.querySelectorAll(".filter-options input[type='checkbox']");
+      filterCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener("change", async () => {
+          try {
+            const filters = this.getActiveFilters(container);
+            const searchInput = container.querySelector("#search-annotations") as HTMLInputElement;
+            const sortSelect = container.querySelector("#sort-select") as HTMLSelectElement;
+
+            await this.loadAndDisplayAnnotations(
+              container.querySelector("#annotations-list")!,
+              doi,
+              {
+                filters,
+                searchText: searchInput?.value.trim() || undefined,
+                sortBy: sortSelect?.value || "quality"
+              }
+            );
+          } catch (error) {
+            ztoolkit.log("Error applying filters:", error);
+            this.showNotification("Filter failed", "error");
+          }
+        });
+      });
+
+    } catch (error) {
+      ztoolkit.log("Error binding event listeners:", error);
+    }
+  }
+
+  static getMockAnnotations(doi: string): any[] {
+    // Return mock data for testing UI functionality
+    return [
+      {
+        id: "mock-1",
+        user_name: "Alice Chen",
+        user_id: "user-1",
+        annotation_text: "This finding contradicts previous research on the topic. The methodology seems flawed in several aspects.",
+        annotation_comment: "Interesting methodology issue that needs further investigation.",
+        annotation_color: "#ffff00",
+        created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
+        page_number: 3,
+        quality_score: 85,
+        likes_count: 3,
+        comments_count: 1,
+        is_liked: false,
+        is_following_author: true
+      },
+      {
+        id: "mock-2",
+        user_name: "Bob Wilson",
+        user_id: "user-2",
+        annotation_text: "The statistical analysis here is particularly robust.",
+        annotation_comment: null,
+        annotation_color: "#00ff00",
+        created_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
+        page_number: 5,
+        quality_score: 72,
+        likes_count: 0,
+        comments_count: 0,
+        is_liked: false,
+        is_following_author: false
+      },
+      {
+        id: "mock-3",
+        user_name: "Carol Davis",
+        user_id: "user-3",
+        annotation_text: "This section provides excellent context for understanding the broader implications of the research findings.",
+        annotation_comment: "Great summary of the key points.",
+        annotation_color: "#ff0000",
+        created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
+        page_number: 12,
+        quality_score: 91,
+        likes_count: 7,
+        comments_count: 3,
+        is_liked: true,
+        is_following_author: false
+      }
+    ];
+  }
+
+  static async loadAndDisplayAnnotations(
+    container: HTMLElement,
+    doi: string,
+    options?: {
+      searchText?: string;
+      sortBy?: string;
+      filters?: any;
+    }
+  ) {
+    try {
+      // Show loading state
+      container.innerHTML = `
+        <div class='loading-state'>
+          <div class="loading-spinner">⏳</div>
+          <div class="loading-text" data-l10n-id="loading-annotations">Loading annotations...</div>
+        </div>
+      `;
+
+      let annotations;
+      try {
+        annotations = await AnnotationManager.fetchSharedAnnotations(doi);
+      } catch (error) {
+        ztoolkit.log("Error fetching annotations, using mock data:", error);
+        // Use mock data for testing UI functionality
+        annotations = this.getMockAnnotations(doi);
+      }
+
+      // Apply search and filters
+      if (options?.searchText || options?.filters) {
+        annotations = await AnnotationManager.searchAnnotations(doi, options.searchText, options.filters);
+      }
+
+      // Apply sorting
+      if (options?.sortBy) {
+        annotations = this.sortAnnotations(annotations, options.sortBy);
+      }
+
+      // Update stats in parent container
+      const statsContainer = container.parentElement?.querySelector("#annotations-stats");
+      if (statsContainer) {
+        this.updateAnnotationsStats(statsContainer as HTMLElement, annotations.length, doi);
+      }
+
+      if (annotations.length === 0) {
+        const isSearching = options?.searchText || options?.filters;
+        container.innerHTML = `
+          <div class='no-annotations'>
+            <div class="no-annotations-icon">${isSearching ? '🔍' : '📝'}</div>
+            <div class="no-annotations-text">
+              ${isSearching ? 'No annotations match your search criteria.' : 'No shared annotations found for this paper.'}
+            </div>
+            ${!isSearching && AuthManager.isLoggedIn() ?
+              '<div class="no-annotations-hint">Be the first to share your annotations!</div>' : ''
+            }
+            ${isSearching ? '<button class="clear-search-btn" onclick="this.closest(\'#researchopia-container\').querySelector(\'#search-annotations\').value=\'\'; this.closest(\'#researchopia-container\').querySelector(\'#search-btn\').click();">Clear Search</button>' : ''}
+          </div>
+        `;
+        return;
+      }
+
+      // Render annotations
+      const annotationsHTML = annotations.map(annotation => this.renderAnnotationItem(annotation)).join('');
+      container.innerHTML = `
+        <div class="annotations-container">
+          ${annotationsHTML}
+        </div>
+      `;
+
+      // Add event listeners for actions
+      this.addAnnotationEventListeners(container);
+
+      // Apply localization to newly added elements
+      this.applyLocalization(container);
+
+    } catch (error) {
+      ztoolkit.log("Error loading annotations:", error);
+      container.innerHTML = `
+        <div class='error-state'>
+          <div class="error-icon">⚠️</div>
+          <div class="error-text">Error loading annotations. Please check your connection and try again.</div>
+          <button class="retry-btn" onclick="location.reload()">Retry</button>
+        </div>
+      `;
+      this.showNotification("Failed to load annotations", "error");
+    }
+  }
+
+  static renderAnnotationItem(annotation: SharedAnnotation): string {
+    const timeAgo = this.getTimeAgo(new Date(annotation.created_at));
+    const qualityBadge = annotation.quality_score > 80 ? '<span class="quality-badge excellent">⭐</span>' :
+                        annotation.quality_score > 60 ? '<span class="quality-badge good">✨</span>' : '';
+
+    const isOwnAnnotation = AuthManager.getCurrentUser()?.id === annotation.user_id;
+    const truncatedText = annotation.annotation_text && annotation.annotation_text.length > 200 ?
+      annotation.annotation_text.substring(0, 200) + '...' : annotation.annotation_text;
+
+    return `
+      <div class="annotation-item ${annotation.is_following_author ? 'following-author' : ''} ${isOwnAnnotation ? 'own-annotation' : ''}"
+           data-id="${annotation.id}"
+           data-quality="${annotation.quality_score}">
+        <div class="annotation-header">
+          <div class="author-info">
+            <span class="author" data-user-id="${annotation.user_id}" title="Click to view profile">
+              ${this.escapeHtml(annotation.user_name)}
+              ${qualityBadge}
+              ${annotation.is_following_author ? '<span class="following-indicator" title="Following">👤</span>' : ''}
+              ${isOwnAnnotation ? '<span class="own-indicator" title="Your annotation">✏️</span>' : ''}
+            </span>
+            <span class="date" title="${new Date(annotation.created_at).toLocaleString()}">${timeAgo}</span>
+          </div>
+          <div class="annotation-meta">
+            ${annotation.page_number ? `<span class="page-info" title="Page ${annotation.page_number}">📄 ${annotation.page_number}</span>` : ''}
+            <span class="quality-score" title="Quality Score: ${annotation.quality_score}/100">
+              ${annotation.quality_score}
+            </span>
+          </div>
+        </div>
+
+        <div class="annotation-content">
+          ${annotation.annotation_text ? `
+            <div class="annotation-text" style="border-left-color: ${annotation.annotation_color}">
+              <span class="quote-mark">"</span>${this.escapeHtml(truncatedText)}<span class="quote-mark">"</span>
+              ${annotation.annotation_text.length > 200 ?
+                `<button class="expand-btn" onclick="this.parentElement.querySelector('.full-text').style.display='block'; this.style.display='none';">Show more</button>
+                 <div class="full-text" style="display:none;">"${this.escapeHtml(annotation.annotation_text)}"</div>` : ''
+              }
+            </div>
+          ` : ''}
+          ${annotation.annotation_comment ? `
+            <div class="annotation-comment">
+              <div class="comment-icon">💭</div>
+              <div class="comment-text">${this.escapeHtml(annotation.annotation_comment)}</div>
+            </div>
+          ` : ''}
+        </div>
+
+        <div class="annotation-actions">
+          <button class="like-btn ${annotation.is_liked ? 'liked' : ''}"
+                  data-id="${annotation.id}"
+                  title="${annotation.is_liked ? 'Unlike' : 'Like'} this annotation"
+                  ${!AuthManager.isLoggedIn() ? 'disabled title="Please log in to like"' : ''}>
+            <span class="action-icon">${annotation.is_liked ? '❤️' : '👍'}</span>
+            <span class="action-count">${annotation.likes_count}</span>
+          </button>
+          <button class="comment-btn" data-id="${annotation.id}" title="View and add comments">
+            <span class="action-icon">💬</span>
+            <span class="action-count">${annotation.comments_count}</span>
+          </button>
+          ${!isOwnAnnotation ? `
+            <button class="follow-btn ${annotation.is_following_author ? 'following' : ''}"
+                    data-user-id="${annotation.user_id}"
+                    title="${annotation.is_following_author ? 'Unfollow user' : 'Follow user'}"
+                    ${!AuthManager.isLoggedIn() ? 'disabled title="Please log in to follow"' : ''}>
+              <span class="action-icon">${annotation.is_following_author ? '👤✓' : '👤+'}</span>
+            </button>
+          ` : ''}
+          <button class="share-btn" data-id="${annotation.id}" title="Copy link to annotation">
+            <span class="action-icon">🔗</span>
+          </button>
+        </div>
+      </div>
+    `;
+  }
+
+  static addAnnotationEventListeners(container: HTMLElement) {
+    // Like buttons
+    container.querySelectorAll(".like-btn").forEach(btn => {
+      btn.addEventListener("click", async (e) => {
+        e.preventDefault();
+        const target = e.target as HTMLElement;
+        const annotationId = target.dataset.id;
+
+        if (!annotationId) return;
+
+        if (!AuthManager.isLoggedIn()) {
+          this.showNotification("Please log in to like annotations", "error");
+          return;
+        }
+
+        const isLiked = target.classList.contains("liked");
+        const success = isLiked ?
+          await AnnotationManager.unlikeAnnotation(annotationId) :
+          await AnnotationManager.likeAnnotation(annotationId);
+
+        if (success) {
+          // Optimistic update
+          target.classList.toggle("liked");
+          const countSpan = target.textContent?.match(/\d+/);
+          if (countSpan) {
+            const currentCount = parseInt(countSpan[0]);
+            const newCount = isLiked ? currentCount - 1 : currentCount + 1;
+            target.innerHTML = `${isLiked ? '👍' : '❤️'} ${newCount}`;
+          }
+        } else {
+          this.showNotification("Failed to update like", "error");
+        }
+      });
+    });
+
+    // Comment buttons
+    container.querySelectorAll(".comment-btn").forEach(btn => {
+      btn.addEventListener("click", async (e) => {
+        const annotationId = (e.target as HTMLElement).dataset.id;
+        if (annotationId) {
+          await this.showCommentsDialog(annotationId);
+        }
+      });
+    });
+
+    // Follow buttons
+    container.querySelectorAll(".follow-btn").forEach(btn => {
+      btn.addEventListener("click", async (e) => {
+        e.preventDefault();
+        const target = e.target as HTMLElement;
+        const userId = target.dataset.userId;
+
+        if (!userId) return;
+
+        if (!AuthManager.isLoggedIn()) {
+          this.showNotification("Please log in to follow users", "error");
+          return;
+        }
+
+        const isFollowing = target.classList.contains("following");
+        const success = isFollowing ?
+          await AnnotationManager.unfollowUser(userId) :
+          await AnnotationManager.followUser(userId);
+
+        if (success) {
+          target.classList.toggle("following");
+          target.innerHTML = isFollowing ? '👤+' : '👤✓';
+          target.title = isFollowing ? 'Follow user' : 'Unfollow user';
+          this.showNotification(
+            isFollowing ? "Unfollowed user" : "Following user",
+            "success"
+          );
+        } else {
+          this.showNotification("Failed to update follow status", "error");
+        }
+      });
+    });
+
+    // Share buttons
+    container.querySelectorAll(".share-btn").forEach(btn => {
+      btn.addEventListener("click", (e) => {
+        const annotationId = (e.target as HTMLElement).dataset.id;
+        if (annotationId) {
+          this.shareAnnotation(annotationId);
+        }
+      });
+    });
+
+    // Author name clicks (show user profile)
+    container.querySelectorAll(".author").forEach(author => {
+      author.addEventListener("click", (e) => {
+        const userId = (e.target as HTMLElement).dataset.userId;
+        if (userId) {
+          this.showUserProfile(userId);
+        }
+      });
+    });
+  }
+
+  static async showCommentsDialog(annotationId: string) {
+    try {
+      const comments = await AnnotationManager.getAnnotationComments(annotationId);
+
+      let dialogContent = `
+        <div class="comments-dialog">
+          <h3>Comments</h3>
+          <div class="comments-list">
+      `;
+
+      if (comments.length === 0) {
+        dialogContent += '<div class="no-comments">No comments yet. Be the first to comment!</div>';
+      } else {
+        comments.forEach(comment => {
+          dialogContent += `
+            <div class="comment-item">
+              <div class="comment-header">
+                <span class="comment-author">${comment.user_name}</span>
+                <span class="comment-date">${this.getTimeAgo(new Date(comment.created_at))}</span>
+              </div>
+              <div class="comment-text">${this.escapeHtml(comment.comment_text)}</div>
+            </div>
+          `;
+        });
+      }
+
+      if (AuthManager.isLoggedIn()) {
+        dialogContent += `
+          <div class="add-comment">
+            <textarea id="new-comment" placeholder="Add a comment..." rows="3"></textarea>
+            <button id="submit-comment" class="researchopia-btn primary">Post Comment</button>
+          </div>
+        `;
+      } else {
+        dialogContent += '<div class="login-required">Please log in to add comments.</div>';
+      }
+
+      dialogContent += '</div></div>';
+
+      // Create and show dialog
+      const dialog = this.createDialog("Comments", dialogContent);
+
+      if (AuthManager.isLoggedIn()) {
+        const submitBtn = dialog.querySelector("#submit-comment");
+        const textarea = dialog.querySelector("#new-comment") as HTMLTextAreaElement;
+
+        submitBtn?.addEventListener("click", async () => {
+          const commentText = textarea.value.trim();
+          if (commentText) {
+            const success = await AnnotationManager.addComment(annotationId, commentText);
+            if (success) {
+              this.showNotification("Comment added!", "success");
+              dialog.remove();
+              // Refresh comments
+              this.showCommentsDialog(annotationId);
+            } else {
+              this.showNotification("Failed to add comment", "error");
+            }
+          }
+        });
+      }
+    } catch (error) {
+      this.showNotification("Failed to load comments", "error");
+    }
+  }
+
+  static shareAnnotation(annotationId: string) {
+    try {
+      const link = `https://researchopia.com/annotation/${annotationId}`;
+      navigator.clipboard.writeText(link);
+      this.showNotification("Annotation link copied to clipboard!", "success");
+    } catch (error) {
+      // Fallback for browsers that don't support clipboard API
+      const textArea = document.createElement("textarea");
+      textArea.value = `https://researchopia.com/annotation/${annotationId}`;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      this.showNotification("Annotation link copied to clipboard!", "success");
+    }
+  }
+
+  static showUserProfile(userId: string) {
+    // TODO: Implement user profile dialog
+    ztoolkit.log("Showing user profile for:", userId);
+    this.showNotification("User profile feature coming soon!", "info");
+  }
+
+  // Utility methods
+  static getTimeAgo(date: Date): string {
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return "just now";
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return date.toLocaleDateString();
+  }
+
+  static escapeHtml(text: string): string {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  static setButtonLoading(button: HTMLElement, loading: boolean) {
+    if (loading) {
+      button.setAttribute('disabled', 'true');
+      button.classList.add('loading');
+      // Store original text
+      const originalText = button.textContent;
+      if (originalText) {
+        button.setAttribute('data-original-text', originalText);
+      }
+    } else {
+      button.removeAttribute('disabled');
+      button.classList.remove('loading');
+      // Restore original text
+      const originalText = button.getAttribute('data-original-text');
+      if (originalText) {
+        button.textContent = originalText;
+        button.removeAttribute('data-original-text');
+      }
+    }
+  }
+
+  static applyLocalization(container: HTMLElement) {
+    try {
+      const doc = container.ownerDocument;
+      if (!doc) return;
+
+      // Apply localization to elements with data-l10n-id
+      const l10nElements = container.querySelectorAll('[data-l10n-id]');
+      l10nElements.forEach(element => {
+        const l10nId = element.getAttribute('data-l10n-id');
+        if (l10nId) {
+          try {
+            // Use Zotero's localization system
+            // @ts-expect-error - getString exists in Zotero
+            const localizedText = Zotero.getString(`researchopia.${l10nId}`);
+            if (localizedText && localizedText !== `researchopia.${l10nId}`) {
+              if (element.tagName === 'INPUT' && element.getAttribute('type') === 'text') {
+                (element as HTMLInputElement).placeholder = localizedText;
+              } else {
+                element.textContent = localizedText;
+              }
+            }
+          } catch (error) {
+            // Fallback to English text if localization fails
+            ztoolkit.log(`Localization failed for ${l10nId}:`, error);
+          }
+        }
+      });
+    } catch (error) {
+      ztoolkit.log("Error applying localization:", error);
+    }
+  }
+
+  static showNotification(message: string, type: "success" | "error" | "info", duration: number = 3000) {
+    try {
+      // Use Zotero's built-in notification system
+      // @ts-expect-error - ProgressWindow exists on ztoolkit
+      const progressWindow = new ztoolkit.ProgressWindow("Researchopia", {
+        closeOnClick: true,
+        closeTime: duration,
+      });
+
+      progressWindow
+        .createLine({
+          text: message,
+          type: type === "error" ? "fail" : type === "success" ? "success" : "default",
+          progress: 100,
+        })
+        .show();
+
+      // Auto-close after duration
+      if (duration > 0) {
+        progressWindow.startCloseTimer(duration);
+      }
+    } catch (error) {
+      ztoolkit.log("Error showing notification:", error);
+      // Fallback to console log
+      console.log(`[Researchopia ${type.toUpperCase()}] ${message}`);
+    }
+  }
+
+  static sortAnnotations(annotations: SharedAnnotation[], sortBy: string): SharedAnnotation[] {
+    switch (sortBy) {
+      case "recent":
+        return annotations.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      case "likes":
+        return annotations.sort((a, b) => b.likes_count - a.likes_count);
+      case "comments":
+        return annotations.sort((a, b) => b.comments_count - a.comments_count);
+      case "quality":
+      default:
+        return annotations.sort((a, b) => b.quality_score - a.quality_score);
+    }
+  }
+
+  static getActiveFilters(container: HTMLElement) {
+    const hasComments = (container.querySelector("#filter-has-comments") as HTMLInputElement)?.checked;
+    const hasLikes = (container.querySelector("#filter-has-likes") as HTMLInputElement)?.checked;
+    const followingOnly = (container.querySelector("#filter-following") as HTMLInputElement)?.checked;
+
+    return {
+      hasComments: hasComments || undefined,
+      hasLikes: hasLikes || undefined,
+      followingOnly: followingOnly || undefined,
+    };
+  }
+
+  static updateAnnotationsStats(container: HTMLElement, count: number, doi: string) {
+    const statsElement = container.querySelector("#annotations-stats");
+    if (statsElement) {
+      statsElement.innerHTML = `
+        <div class="stats-info">
+          <span class="stats-count">${count} annotation${count !== 1 ? 's' : ''}</span>
+          <span class="stats-doi" title="DOI: ${doi}">📄 ${doi.substring(0, 30)}${doi.length > 30 ? '...' : ''}</span>
+        </div>
+      `;
+    }
+  }
+
+  static createDialog(title: string, content: string): HTMLElement {
+    const dialog = document.createElement('div');
+    dialog.className = 'researchopia-dialog-overlay';
+    dialog.innerHTML = `
+      <div class="researchopia-dialog">
+        <div class="dialog-header">
+          <h3>${title}</h3>
+          <button class="dialog-close">×</button>
+        </div>
+        <div class="dialog-content">
+          ${content}
+        </div>
+      </div>
+    `;
+
+    // Add close functionality
+    const closeBtn = dialog.querySelector('.dialog-close');
+    const overlay = dialog;
+
+    closeBtn?.addEventListener('click', () => dialog.remove());
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) dialog.remove();
+    });
+
+    document.body.appendChild(dialog);
+    return dialog;
+  }
+
+  static registerReaderUI() {
+    // Import and initialize reader UI manager
+    import("./readerUI").then(({ ReaderUIManager }) => {
+      ReaderUIManager.initialize();
+    }).catch(error => {
+      ztoolkit.log("Error loading ReaderUIManager:", error);
+    });
+  }
+
+  static handleItemSelection(ids: Array<string | number>) {
+    // Handle item selection changes
+    ztoolkit.log("Item selection changed:", ids);
+  }
+}

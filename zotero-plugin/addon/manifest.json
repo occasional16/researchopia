@@ -6,19 +6,26 @@
   "homepage_url": "__homepage__",
   "author": "__author__",
   "icons": {
-    "48": "content/icons/favicon@0.5x.png",
-    "96": "content/icons/favicon.png"
+    "16": "content/icons/icon16.svg",
+    "32": "content/icons/icon32.svg",
+    "48": "content/icons/icon48.svg",
+    "96": "content/icons/icon96.svg",
+    "128": "content/icons/icon128.svg"
   },
   "applications": {
     "zotero": {
       "id": "__addonID__",
       "update_url": "__updateURL__",
-      "strict_min_version": "8.0.0-beta.1",
-      "strict_max_version": "8.999"
+      "strict_min_version": "7.0.8",
+      "strict_max_version": "8.*"
     }
   },
   "content_scripts": [],
   "web_accessible_resources": [
     "content/*"
-  ]
+  ],
+  "background": {
+    "page": "content/background.html",
+    "persistent": true
+  }
 }

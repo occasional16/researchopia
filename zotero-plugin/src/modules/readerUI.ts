@@ -21,16 +21,14 @@ export class ReaderUIManager {
 
   static registerReaderEvents() {
     // Register event listener for when reader toolbar is rendered
-    // @ts-expect-error - Reader API exists in Zotero 8
-    Zotero.Reader.registerEventListener(
+    (Zotero.Reader as any).registerEventListener(
       "renderToolbar",
-      (event) => this.onReaderToolbarRender(event),
+      (event: any) => this.onReaderToolbarRender(event),
       addon.data.config.addonID
     );
 
     // Handle existing readers
-    // @ts-expect-error - Reader API exists in Zotero 8
-    Zotero.Reader._readers.forEach((reader) => {
+    (Zotero.Reader as any)._readers.forEach((reader: any) => {
       this.onReaderToolbarRender({ reader });
     });
 
@@ -235,8 +233,7 @@ export class ReaderUIManager {
 
   static getCurrentReader(): any {
     // Get the currently active reader
-    // @ts-expect-error - Reader API exists in Zotero 8
-    const readers = Zotero.Reader._readers;
+    const readers = (Zotero.Reader as any)._readers;
     return readers.length > 0 ? readers[readers.length - 1] : null;
   }
 

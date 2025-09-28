@@ -1,6 +1,8 @@
-/* Researchopia Preferences Styles */
+/* Researchopia Preferences Styles - Scoped to avoid conflicts */
 
-.researchopia-btn {
+/* Scope all styles to Researchopia preference panes */
+#researchopia-preferences .researchopia-btn,
+vbox[data-researchopia="true"] .researchopia-btn {
   padding: 10px 20px;
   border: 1px solid #ccc;
   border-radius: 6px;
@@ -13,37 +15,43 @@
   text-align: center;
 }
 
-.researchopia-btn:hover {
+#researchopia-preferences .researchopia-btn:hover,
+vbox[data-researchopia="true"] .researchopia-btn:hover {
   background: #e9ecef;
   transform: translateY(-1px);
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-.researchopia-btn:disabled {
+#researchopia-preferences .researchopia-btn:disabled,
+vbox[data-researchopia="true"] .researchopia-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
 }
 
-.researchopia-btn.primary {
+#researchopia-preferences .researchopia-btn.primary,
+vbox[data-researchopia="true"] .researchopia-btn.primary {
   background: #007acc;
   color: white;
   border-color: #007acc;
 }
 
-.researchopia-btn.primary:hover:not(:disabled) {
+#researchopia-preferences .researchopia-btn.primary:hover:not(:disabled),
+vbox[data-researchopia="true"] .researchopia-btn.primary:hover:not(:disabled) {
   background: #005a9e;
   border-color: #005a9e;
 }
 
-.researchopia-btn.secondary {
+#researchopia-preferences .researchopia-btn.secondary,
+vbox[data-researchopia="true"] .researchopia-btn.secondary {
   background: #6c757d;
   color: white;
   border-color: #6c757d;
 }
 
-.researchopia-btn.secondary:hover:not(:disabled) {
+#researchopia-preferences .researchopia-btn.secondary:hover:not(:disabled),
+vbox[data-researchopia="true"] .researchopia-btn.secondary:hover:not(:disabled) {
   background: #545b62;
   border-color: #545b62;
 }
@@ -57,20 +65,20 @@
   max-width: 400px;
 }
 
-/* Form Styles */
-.form-group {
+/* Form Styles - Scoped */
+vbox[data-researchopia="true"] .form-group {
   margin-bottom: 15px;
 }
 
-.form-group label {
+vbox[data-researchopia="true"] .form-group label {
   display: block;
   margin-bottom: 5px;
   font-weight: bold;
   color: var(--fill-primary, #333);
 }
 
-.form-group input[type="email"],
-.form-group input[type="password"] {
+vbox[data-researchopia="true"] .form-group input[type="email"],
+vbox[data-researchopia="true"] .form-group input[type="password"] {
   width: 100%;
   max-width: 300px;
   padding: 8px 12px;
@@ -80,8 +88,8 @@
   background-color: #fff;
 }
 
-.form-group input[type="email"]:focus,
-.form-group input[type="password"]:focus {
+vbox[data-researchopia="true"] .form-group input[type="email"]:focus,
+vbox[data-researchopia="true"] .form-group input[type="password"]:focus {
   outline: none;
   border-color: #007acc;
   box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.2);
@@ -313,7 +321,8 @@
   line-height: 1.3;
 }
 
-select {
+/* Scoped select and input styles */
+vbox[data-researchopia="true"] select {
   width: 100%;
   max-width: 300px;
   padding: 8px 12px;
@@ -323,13 +332,13 @@ select {
   background-color: #fff;
 }
 
-select:focus {
+vbox[data-researchopia="true"] select:focus {
   outline: none;
   border-color: #007acc;
   box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.2);
 }
 
-input[type="number"] {
+vbox[data-researchopia="true"] input[type="number"] {
   width: 100px;
   padding: 8px 12px;
   border: 1px solid #ccc;
@@ -338,7 +347,7 @@ input[type="number"] {
   background-color: #fff;
 }
 
-input[type="number"]:focus {
+vbox[data-researchopia="true"] input[type="number"]:focus {
   outline: none;
   border-color: #007acc;
   box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.2);
@@ -409,8 +418,8 @@ input[type="number"]:focus {
   letter-spacing: 0.5px;
 }
 
-/* Groupbox styling */
-groupbox {
+/* Scoped Groupbox styling */
+vbox[data-researchopia="true"] groupbox {
   margin-bottom: 20px;
   padding: 16px;
   border: 1px solid #e0e0e0;
@@ -418,7 +427,7 @@ groupbox {
   background: #fafafa;
 }
 
-groupbox label h3 {
+vbox[data-researchopia="true"] groupbox label h3 {
   margin: 0 0 16px 0;
   color: #333;
   font-size: 16px;

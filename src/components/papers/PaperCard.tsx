@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { Calendar, Users, Star, MessageCircle, Eye } from 'lucide-react'
 import FavoriteButton from './FavoriteButton'
+import { getPaperRoute } from '@/utils/paperRoutes'
 import type { Paper, Rating } from '@/lib/supabase'
 import { calculateAverageRating } from '@/lib/database'
 
@@ -25,12 +26,14 @@ export default function PaperCard({ paper }: PaperCardProps) {
   const averageRating = paper.ratings && paper.ratings.length > 0
     ? calculateAverageRating(paper.ratings)
     : null
+  
+  const paperRoute = getPaperRoute(paper)
 
   return (
     <div className="bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow p-6">
       <div className="flex justify-between items-start mb-3">
         <Link
-          href={`/papers/${paper.id}`}
+          href={paperRoute.href}
           className="text-lg font-semibold text-gray-900 hover:text-blue-600 transition-colors line-clamp-2"
         >
           {paper.title}
@@ -148,7 +151,7 @@ export default function PaperCard({ paper }: PaperCardProps) {
             showCount={true}
           />
           <Link
-            href={`/papers/${paper.id}`}
+            href={paperRoute.href}
             className="text-blue-600 hover:text-blue-700 font-medium text-sm"
           >
             查看详情 →

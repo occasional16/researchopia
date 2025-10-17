@@ -324,6 +324,8 @@ export async function createRating(
     methodology_score: number
     practicality_score: number
     overall_score: number
+    is_anonymous?: boolean // 🆕
+    show_username?: boolean // 🆕
   }
 ): Promise<Rating> {
   if (!supabase) {
@@ -375,6 +377,8 @@ export async function updateRating(
     methodology_score: number
     practicality_score: number
     overall_score: number
+    is_anonymous?: boolean // 🆕
+    show_username?: boolean // 🆕
   }
 ): Promise<Rating> {
   if (!supabase) {
@@ -589,6 +593,8 @@ export async function createOrUpdateRating(
     methodology_score: number
     practicality_score: number
     overall_score: number
+    is_anonymous?: boolean // 🆕 匿名选项
+    show_username?: boolean // 🆕 显示用户名选项
   }
 ): Promise<Rating> {
   if (!supabase) {
@@ -604,7 +610,9 @@ export async function createOrUpdateRating(
       innovation_score: ratingData.innovation_score,
       methodology_score: ratingData.methodology_score,
       practicality_score: ratingData.practicality_score,
-      overall_score: ratingData.overall_score
+      overall_score: ratingData.overall_score,
+      is_anonymous: ratingData.is_anonymous, // 🆕
+      show_username: ratingData.show_username, // 🆕
     })
   } else {
     // Create new rating
@@ -612,7 +620,9 @@ export async function createOrUpdateRating(
       innovation_score: ratingData.innovation_score,
       methodology_score: ratingData.methodology_score,
       practicality_score: ratingData.practicality_score,
-      overall_score: ratingData.overall_score
+      overall_score: ratingData.overall_score,
+      is_anonymous: ratingData.is_anonymous, // 🆕
+      show_username: ratingData.show_username, // 🆕
     })
   }
 }

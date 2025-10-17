@@ -1,0 +1,29 @@
+<!-- 20x20 icon - Researchopia Logo Design for Sidenav -->
+<svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+  <!-- Wave patterns -->
+  <path d="M1 15 Q5 14 10 15 T19 15" fill="none" stroke="#a855f7" stroke-width="1.2" opacity="0.6"/>
+  
+  <!-- Main document/book -->
+  <rect x="5" y="5" width="10" height="8" rx="1.2" fill="#7c3aed"/>
+  <rect x="5.6" y="5.6" width="8.8" height="6.8" rx="0.6" fill="#8b5cf6"/>
+  
+  <!-- Document content lines -->
+  <line x1="7.5" y1="7.5" x2="12.5" y2="7.5" stroke="white" stroke-width="0.6"/>
+  <line x1="7.5" y1="9.5" x2="12.5" y2="9.5" stroke="white" stroke-width="0.6"/>
+  <line x1="7.5" y1="11.5" x2="11.5" y2="11.5" stroke="white" stroke-width="0.6"/>
+  
+  <!-- Vertical divider -->
+  <line x1="10" y1="5.6" x2="10" y2="12.4" stroke="#6d28d9" stroke-width="0.4"/>
+  
+  <!-- Light bulb -->
+  <circle cx="15" cy="3.8" r="1.8" fill="#fbbf24"/>
+  <rect x="14.4" y="5.3" width="1.2" height="1.8" fill="#f59e0b"/>
+  <!-- Light rays -->
+  <g stroke="#fbbf24" stroke-width="0.6" opacity="0.7">
+    <line x1="12" y1="3.8" x2="11.2" y2="3.8"/>
+    <line x1="18" y1="3.8" x2="18.8" y2="3.8"/>
+    <line x1="15" y1="0.7" x2="15" y2="0"/>
+    <line x1="13" y1="1.8" x2="12.3" y2="1.1"/>
+    <line x1="17" y1="1.8" x2="17.7" y2="1.1"/>
+  </g>
+</svg>

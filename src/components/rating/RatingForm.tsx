@@ -26,6 +26,8 @@ export default function RatingForm({ paperId, onRatingSubmitted }: RatingFormPro
     practicality_score: 0,
     overall_score: 0,
   })
+  const [isAnonymous, setIsAnonymous] = useState(false) // 🆕 匿名选项
+  const [showUsername, setShowUsername] = useState(true) // 🆕 显示用户名选项
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [existingRating, setExistingRating] = useState<Rating | null>(null)
@@ -40,7 +42,7 @@ export default function RatingForm({ paperId, onRatingSubmitted }: RatingFormPro
     if (!user) return
 
     try {
-      const rating = await getUserRating(user.id, paperId)
+      const rating = await getUserRating(paperId, user.id)
       if (rating) {
         setExistingRating(rating)
         setScores({
@@ -49,6 +51,9 @@ export default function RatingForm({ paperId, onRatingSubmitted }: RatingFormPro
           practicality_score: rating.practicality_score,
           overall_score: rating.overall_score,
         })
+        // 🆕 加载匿名设置
+        setIsAnonymous(rating.is_anonymous || false)
+        setShowUsername(rating.show_username !== false) // 默认true
       }
     } catch (error) {
       // 静默处理错误，不显示给用户
@@ -81,6 +86,8 @@ export default function RatingForm({ paperId, onRatingSubmitted }: RatingFormPro
         user_id: user.id,
         paper_id: paperId,
         ...scores,
+        is_anonymous: isAnonymous, // 🆕 包含匿名设置
+        show_username: isAnonymous ? false : showUsername, // 🆕 匿名时强制不显示用户名
       }
 
       const rating = await createOrUpdateRating(ratingData)
@@ -93,6 +100,8 @@ export default function RatingForm({ paperId, onRatingSubmitted }: RatingFormPro
     }
   }
 
+  const [hoveredStars, setHoveredStars] = useState<{ [key: string]: number }>({})
+
   const renderStarRating = (
     category: keyof RatingScores,
     label: string,
@@ -104,24 +113,31 @@ export default function RatingForm({ paperId, onRatingSubmitted }: RatingFormPro
         <p className="text-sm text-gray-600">{description}</p>
       </div>
       <div className="flex items-center space-x-1">
-        {[1, 2, 3, 4, 5].map((star) => (
-          <button
-            key={star}
-            type="button"
-            onClick={() => handleScoreChange(category, star)}
-            className="p-1 hover:scale-110 transition-transform"
-          >
-            <Star
-              size={24}
-              className={
-                star <= scores[category]
-                  ? 'text-yellow-400 fill-current'
-                  : 'text-gray-300'
-              }
-            />
-          </button>
-        ))}
-        <span className="ml-2 text-sm text-gray-600">
+        {[1, 2, 3, 4, 5].map((star) => {
+          const isHovered = hoveredStars[category] >= star
+          const isFilled = !hoveredStars[category] && star <= scores[category]
+          
+          return (
+            <button
+              key={star}
+              type="button"
+              onClick={() => handleScoreChange(category, star)}
+              onMouseEnter={() => setHoveredStars(prev => ({ ...prev, [category]: star }))}
+              onMouseLeave={() => setHoveredStars(prev => ({ ...prev, [category]: 0 }))}
+              className="p-1 transition-all duration-150 ease-out hover:scale-125 active:scale-95"
+            >
+              <Star
+                size={24}
+                className={`transition-colors duration-150 ${
+                  isHovered || isFilled
+                    ? 'text-yellow-400 fill-yellow-400'
+                    : 'text-gray-300'
+                }`}
+              />
+            </button>
+          )
+        })}
+        <span className="ml-2 text-sm text-gray-600 font-medium min-w-[50px]">
           {scores[category] > 0 ? `${scores[category]}/5` : '未评分'}
         </span>
       </div>
@@ -170,6 +186,45 @@ export default function RatingForm({ paperId, onRatingSubmitted }: RatingFormPro
           '对论文的整体评价'
         )}
 
+        {/* 🆕 匿名选项 */}
+        {user && (
+          <div className="pt-4 border-t space-y-3">
+            <div className="flex items-start space-x-3">
+              <input
+                type="checkbox"
+                id="isAnonymous"
+                checked={isAnonymous}
+                onChange={(e) => setIsAnonymous(e.target.checked)}
+                className="mt-1 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              />
+              <label htmlFor="isAnonymous" className="flex-1 text-sm">
+                <span className="font-medium text-gray-900">匿名评分</span>
+                <p className="text-gray-600 mt-0.5">
+                  评分将不会显示您的用户名,显示为"匿名学者"
+                </p>
+              </label>
+            </div>
+
+            {!isAnonymous && (
+              <div className="flex items-start space-x-3">
+                <input
+                  type="checkbox"
+                  id="showUsername"
+                  checked={showUsername}
+                  onChange={(e) => setShowUsername(e.target.checked)}
+                  className="mt-1 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                />
+                <label htmlFor="showUsername" className="flex-1 text-sm">
+                  <span className="font-medium text-gray-900">显示用户名</span>
+                  <p className="text-gray-600 mt-0.5">
+                    在评分历史中显示您的用户名(您可以随时修改此设置)
+                  </p>
+                </label>
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="pt-4 border-t">
           {!user ? (
             <div className="text-center">
@@ -190,7 +245,7 @@ export default function RatingForm({ paperId, onRatingSubmitted }: RatingFormPro
             <button
               type="submit"
               disabled={loading || Object.values(scores).some(score => score === 0)}
-              className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 active:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 ease-out hover:shadow-md transform hover:-translate-y-0.5 active:translate-y-0"
             >
               {loading ? '提交中...' : existingRating ? '更新评分' : '提交评分'}
             </button>

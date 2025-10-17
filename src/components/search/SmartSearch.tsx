@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Search, Plus, ExternalLink, BookOpen } from 'lucide-react'
 import { LoadingSpinner, ErrorMessage } from '@/components/ui/LoadingStates'
 import { useAuth } from '@/contexts/AuthContext'
+import { getPaperRoute } from '@/utils/paperRoutes'
 
 interface SmartSearchProps {
   onSearch: (query: string) => void
@@ -180,7 +181,8 @@ export function SmartSearch({ onSearch, onPaperAdded, className = '' }: SmartSea
         setProcessingMessage('')
         setIsProcessing(false)
         // 论文已存在，跳转到论文详情页
-        window.location.href = `/papers/${checkResult.paper.id}`
+        const route = getPaperRoute(checkResult.paper)
+        window.location.href = route.href
         return
       }
 
@@ -213,7 +215,8 @@ export function SmartSearch({ onSearch, onPaperAdded, className = '' }: SmartSea
 
       // 跳转到新添加的论文
       setTimeout(() => {
-        window.location.href = `/papers/${newPaper.paper.id}`
+        const route = getPaperRoute(newPaper.paper)
+        window.location.href = route.href
       }, 1000)
 
     } catch (err: any) {

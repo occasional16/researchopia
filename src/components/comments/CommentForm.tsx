@@ -13,6 +13,7 @@ interface CommentFormProps {
 export default function CommentForm({ paperId, onCommentAdded }: CommentFormProps) {
   const { user } = useAuth()
   const [content, setContent] = useState('')
+  const [isAnonymous, setIsAnonymous] = useState(false) // 🆕 匿名选项
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
@@ -35,9 +36,10 @@ export default function CommentForm({ paperId, onCommentAdded }: CommentFormProp
     setSuccess(false)
 
     try {
-      const result = await addComment(paperId, user.id, content.trim())
+      const result = await addComment(paperId, user.id, content.trim(), isAnonymous) // 🆕 传递匿名参数
       if (result) {
         setContent('')
+        setIsAnonymous(false) // 🆕 重置匿名选项
         setSuccess(true)
         onCommentAdded?.()
         // 3秒后隐藏成功提示
@@ -87,6 +89,55 @@ export default function CommentForm({ paperId, onCommentAdded }: CommentFormProp
             <span className="text-sm text-gray-500">
               {content.length}/1000
             </span>
+          </div>
+        </div>
+
+        {/* 🆕 匿名选项 */}
+        <div className="flex items-center space-x-2 bg-blue-50 border border-blue-200 rounded-md p-3">
+          <input
+            type="checkbox"
+            id="anonymous-comment"
+            checked={isAnonymous}
+            onChange={(e) => setIsAnonymous(e.target.checked)}
+            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+          />
+          <label 
+            htmlFor="anonymous-comment" 
+            className="text-sm text-gray-700 cursor-pointer select-none flex items-center"
+          >
+            <svg className="w-4 h-4 mr-1.5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+            匿名发表
+            {isAnonymous && (
+              <span className="ml-2 text-xs text-blue-600 font-medium">
+                （将显示为"匿名用户"）
+              </span>
+            )}
+          </label>
+          <div className="ml-auto">
+            <button
+              type="button"
+              className="text-xs text-gray-500 hover:text-gray-700"
+              title="匿名评论说明"
+              onClick={() => {
+                alert(
+                  '匿名评论说明：\n\n' +
+                  '✓ 您的用户名和头像不会显示\n' +
+                  '✓ 系统仍会记录您的身份用于管理\n' +
+                  '✓ 匿名不等于可以发表不当言论\n' +
+                  '✓ 管理员可以追溯违规评论\n\n' +
+                  '适用场景：\n' +
+                  '• 评论权威学者的论文\n' +
+                  '• 提出批评性观点\n' +
+                  '• 保护学术讨论隐私'
+                )
+              }}
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </button>
           </div>
         </div>
 

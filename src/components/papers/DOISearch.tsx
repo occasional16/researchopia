@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Search, ExternalLink, Plus } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { isValidDOI } from '@/lib/crossref'
+import { getPaperRoute } from '@/utils/paperRoutes'
 import { searchOrCreatePaperByDOI } from '@/lib/database'
 
 export default function DOISearch() {
@@ -41,7 +42,8 @@ export default function DOISearch() {
 
         // Auto redirect after 2 seconds, or user can click
         setTimeout(() => {
-          router.push(`/papers/${paper.id}`)
+          const route = getPaperRoute(paper)
+          router.push(route.href)
         }, 2000)
       }
     } catch (err: any) {
@@ -96,7 +98,10 @@ export default function DOISearch() {
           )}
           <div className="flex space-x-2 mt-3">
             <button
-              onClick={() => router.push(`/papers/${paperPreview.id}`)}
+              onClick={() => {
+                const route = getPaperRoute(paperPreview)
+                router.push(route.href)
+              }}
               className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors"
             >
               立即查看

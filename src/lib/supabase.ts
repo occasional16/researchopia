@@ -67,6 +67,8 @@ export interface Rating {
   methodology_score: number
   practicality_score: number
   overall_score: number
+  is_anonymous?: boolean // 🆕 是否匿名评分
+  show_username?: boolean // 🆕 是否显示用户名(可随时切换)
   created_at: string
   updated_at: string
 }

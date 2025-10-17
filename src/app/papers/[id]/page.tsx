@@ -10,6 +10,7 @@ import RatingForm from '@/components/rating/RatingForm'
 import RatingDisplay from '@/components/rating/RatingDisplay'
 import CommentForm from '@/components/comments/CommentForm'
 import CommentList from '@/components/comments/CommentList'
+import ZoteroAnnotations from '@/components/papers/ZoteroAnnotations'
 import QuickSearch from '@/components/papers/QuickSearch'
 import PaperReports from '@/components/papers/PaperReports'
 import ReportsVisibilityInfo from '@/components/papers/ReportsVisibilityInfo'
@@ -261,6 +262,15 @@ export default function PaperDetailPage() {
         />
         <CommentList
           paperId={paperId}
+        />
+      </div>
+
+      {/* Zotero Annotations Section */}
+      <div className="mt-8">
+        <ZoteroAnnotations
+          paperId={paperId}
+          paperTitle={paper.title}
+          paperDOI={paper.doi}
         />
       </div>
     </div>

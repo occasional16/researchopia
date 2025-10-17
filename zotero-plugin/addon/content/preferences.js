@@ -1,707 +1,813 @@
-/**
- * Preferences script for Researchopia plugin
- * Handles preference pane initialization and events
- */
+// Researchopia Preferences Script
+// This file handles the preference panel UI interactions
 
-var ResearchopiaPreferences = {
+// Use Zotero.debug instead of console.log for compatibility
+if (typeof Zotero !== 'undefined' && Zotero.debug) {
+  Zotero.debug("[Researchopia] Preferences.js loaded");
+}
+
+// Supabase configuration
+const SUPABASE_URL = 'https://obcblvdtqhwrihoddlez.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9iY2JsdmR0cWh3cmlob2RkbGV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0OTgyMzUsImV4cCI6MjA3MzA3NDIzNX0.0kYlpFuK5WrKvUhIj7RO4-XJgv1sm39FROD_mBtxYm4';
+
+// Debug logging helper for preferences context
+function debugLog(...args) {
+  try {
+    if (typeof Zotero !== 'undefined' && Zotero.debug) {
+      Zotero.debug(args.join(' '));
+    } else if (typeof console !== 'undefined' && console.log) {
+      console.log(...args);
+    }
+  } catch (e) {
+    // Silent fallback if both fail
+  }
+}
+
+// Global preferences object
+var researchopiaPrefs = {
   initialized: false,
-  auth: null,
-
-  init() {
-    if (this.initialized) return;
-    this.initialized = true;
-
-    // Initialize preference pane
-    if (typeof Zotero !== 'undefined') {
-      Zotero.debug("Researchopia preferences initialized");
-    }
-
-    // Load Supabase auth module
-    this.loadAuthModule();
-
-    // Set up event listeners
-    this.setupEventListeners();
-
-    // Load current auth state
-    this.loadAuthState();
-  },
-
-  loadAuthModule() {
+  
+  // Test connection function
+  testSupabaseConnection: async function() {
+    const startTime = Date.now();
     try {
-      // Create the auth module directly instead of loading from external script
-      this.auth = this.createSupabaseAuth();
-      // Load saved auth state
-      this.auth.loadAuthState();
-      Zotero.debug("Researchopia: Auth module created successfully");
-    } catch (error) {
-      Zotero.debug("Researchopia: Failed to create auth module: " + error.message);
-    }
-  },
-
-  createSupabaseAuth() {
-    return {
-      supabaseUrl: 'https://obcblvdtqhwrihoddlez.supabase.co',
-      supabaseKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9iY2JsdmR0cWh3cmlob2RkbGV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0OTgyMzUsImV4cCI6MjA3MzA3NDIzNX0.0kYlpFuK5WrKvUhIj7RO4-XJgv1sm39FROD_mBtxYm4',
-      currentUser: null,
-      accessToken: null,
-
-      async signIn(email, password) {
-        try {
-          Zotero.debug("Researchopia: Attempting to sign in with email: " + email);
-
-          const response = await fetch(`${this.supabaseUrl}/auth/v1/token?grant_type=password`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'apikey': this.supabaseKey,
-              'Authorization': `Bearer ${this.supabaseKey}`
-            },
-            body: JSON.stringify({
-              email: email,
-              password: password
-            })
-          });
-
-          const data = await response.json();
-
-          if (response.ok && data.access_token) {
-            this.accessToken = data.access_token;
-            this.currentUser = data.user;
-
-            // Save auth state
-            this.saveAuthState(email, data.access_token, data.user);
-
-            Zotero.debug("Researchopia: Sign in successful");
-            return { success: true, user: data.user };
-          } else {
-            Zotero.debug("Researchopia: Sign in failed: " + (data.error_description || data.message || 'Unknown error'));
-            return { success: false, error: data.error_description || data.message || 'Login failed' };
-          }
-        } catch (error) {
-          Zotero.debug("Researchopia: Sign in error: " + error.message);
-          return { success: false, error: error.message };
+      debugLog("[Researchopia] Testing Supabase connection...");
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/`, {
+        method: 'HEAD',
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
         }
-      },
-
-      async signUp(email, password) {
-        try {
-          Zotero.debug("Researchopia: Attempting to sign up with email: " + email);
-
-          const response = await fetch(`${this.supabaseUrl}/auth/v1/signup`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'apikey': this.supabaseKey,
-              'Authorization': `Bearer ${this.supabaseKey}`
-            },
-            body: JSON.stringify({
-              email: email,
-              password: password
-            })
-          });
-
-          const data = await response.json();
-
-          if (response.ok) {
-            Zotero.debug("Researchopia: Sign up successful");
-            return { success: true, message: 'Registration successful. Please check your email for verification.' };
-          } else {
-            Zotero.debug("Researchopia: Sign up failed: " + (data.error_description || data.message || 'Unknown error'));
-            return { success: false, error: data.error_description || data.message || 'Registration failed' };
-          }
-        } catch (error) {
-          Zotero.debug("Researchopia: Sign up error: " + error.message);
-          return { success: false, error: error.message };
-        }
-      },
-
-      async signOut() {
-        try {
-          if (this.accessToken) {
-            await fetch(`${this.supabaseUrl}/auth/v1/logout`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'apikey': this.supabaseKey,
-                'Authorization': `Bearer ${this.accessToken}`
-              }
-            });
-          }
-        } catch (error) {
-          Zotero.debug("Researchopia: Sign out API error: " + error.message);
-        }
-
-        // Clear local state regardless of API call result
-        this.currentUser = null;
-        this.accessToken = null;
-        this.clearAuthState();
-
-        Zotero.debug("Researchopia: Signed out successfully");
-        return { success: true };
-      },
-
-      getCurrentUser() {
-        return this.currentUser;
-      },
-
-      isLoggedIn() {
-        return this.currentUser !== null && this.accessToken !== null;
-      },
-
-      getAccessToken() {
-        return this.accessToken;
-      },
-
-      async testConnection() {
-        try {
-          const response = await fetch(`${this.supabaseUrl}/rest/v1/`, {
-            method: 'GET',
-            headers: {
-              'apikey': this.supabaseKey,
-              'Authorization': `Bearer ${this.supabaseKey}`
-            }
-          });
-
-          if (response.ok) {
-            return { success: true, message: 'Connection successful' };
-          } else {
-            return { success: false, error: `Connection failed: ${response.status}` };
-          }
-        } catch (error) {
-          return { success: false, error: error.message };
-        }
-      },
-
-      saveAuthState(email, accessToken, user) {
-        try {
-          Zotero.Prefs.set('extensions.zotero.researchopia.email', email, true);
-          Zotero.Prefs.set('extensions.zotero.researchopia.accessToken', accessToken, true);
-          Zotero.Prefs.set('extensions.zotero.researchopia.user', JSON.stringify(user), true);
-          Zotero.Prefs.set('extensions.zotero.researchopia.isLoggedIn', true, true);
-          Zotero.Prefs.set('extensions.zotero.researchopia.loginTime', new Date().toISOString(), true);
-
-          Zotero.debug("Researchopia: Auth state saved");
-        } catch (error) {
-          Zotero.debug("Researchopia: Failed to save auth state: " + error.message);
-        }
-      },
-
-      loadAuthState() {
-        try {
-          const isLoggedIn = Zotero.Prefs.get('extensions.zotero.researchopia.isLoggedIn', true);
-          if (isLoggedIn) {
-            const email = Zotero.Prefs.get('extensions.zotero.researchopia.email', true);
-            const accessToken = Zotero.Prefs.get('extensions.zotero.researchopia.accessToken', true);
-            const userJson = Zotero.Prefs.get('extensions.zotero.researchopia.user', true);
-
-            if (email && accessToken && userJson) {
-              this.accessToken = accessToken;
-              this.currentUser = JSON.parse(userJson);
-              Zotero.debug("Researchopia: Auth state loaded for user: " + email);
-            }
-          }
-        } catch (error) {
-          Zotero.debug("Researchopia: Failed to load auth state: " + error.message);
-          this.clearAuthState();
-        }
-      },
-
-      clearAuthState() {
-        try {
-          Zotero.Prefs.clear('extensions.zotero.researchopia.email', true);
-          Zotero.Prefs.clear('extensions.zotero.researchopia.accessToken', true);
-          Zotero.Prefs.clear('extensions.zotero.researchopia.user', true);
-          Zotero.Prefs.clear('extensions.zotero.researchopia.isLoggedIn', true);
-          Zotero.Prefs.clear('extensions.zotero.researchopia.loginTime', true);
-
-          Zotero.debug("Researchopia: Auth state cleared");
-        } catch (error) {
-          Zotero.debug("Researchopia: Failed to clear auth state: " + error.message);
-        }
-      },
-
-      async refreshSession() {
-        if (!this.accessToken) {
-          return { success: false, error: 'No access token available' };
-        }
-
-        try {
-          const response = await fetch(`${this.supabaseUrl}/auth/v1/user`, {
-            method: 'GET',
-            headers: {
-              'apikey': this.supabaseKey,
-              'Authorization': `Bearer ${this.accessToken}`
-            }
-          });
-
-          if (response.ok) {
-            const user = await response.json();
-            this.currentUser = user;
-            
-            // Update stored session with fresh user data
-            this.saveAuthState(user.email, this.accessToken, user);
-            
-            return { success: true, user: user };
-          } else {
-            // Token might be expired, but don't clear auth state immediately
-            // Let user try to re-login
-            const data = response.status === 401 ? 'Token已过期，请重新登录' : 'Session validation failed';
-            return { success: false, error: data };
-          }
-        } catch (error) {
-          return { success: false, error: error.message };
-        }
-      }
-    };
-  },
-
-  setupEventListeners() {
-    // Use setTimeout to ensure DOM is ready
-    setTimeout(() => {
-      const loginBtn = document.getElementById('researchopia-login-btn');
-      const logoutBtn = document.getElementById('researchopia-logout-btn');
-      const registerBtn = document.getElementById('researchopia-register-btn');
-      const testBtn = document.getElementById('researchopia-test-connection-btn');
-      const refreshBtn = document.getElementById('researchopia-refresh-btn');
-      const emailInput = document.getElementById('researchopia-email');
-      const passwordInput = document.getElementById('researchopia-password');
-
-      if (typeof Zotero !== 'undefined') {
-        Zotero.debug("Researchopia: Setting up event listeners");
-        Zotero.debug("Login button found: " + !!loginBtn);
-        Zotero.debug("Logout button found: " + !!logoutBtn);
-        Zotero.debug("Register button found: " + !!registerBtn);
-        Zotero.debug("Test button found: " + !!testBtn);
-      }
-
-      if (loginBtn) {
-        loginBtn.addEventListener('click', (e) => {
-          e.preventDefault();
-          if (typeof Zotero !== 'undefined') {
-            Zotero.debug("Researchopia: Login button clicked");
-          }
-          this.handleLogin();
-        });
-      }
-
-      if (logoutBtn) {
-        logoutBtn.addEventListener('click', (e) => {
-          e.preventDefault();
-          if (typeof Zotero !== 'undefined') {
-            Zotero.debug("Researchopia: Logout button clicked");
-          }
-          this.handleLogout();
-        });
-      }
-
-      if (registerBtn) {
-        registerBtn.addEventListener('click', (e) => {
-          e.preventDefault();
-          this.handleRegister();
-        });
-      }
-
-      if (testBtn) {
-        testBtn.addEventListener('click', (e) => {
-          e.preventDefault();
-          this.handleTestConnection();
-        });
-      }
-
-      if (refreshBtn) {
-        refreshBtn.addEventListener('click', (e) => {
-          e.preventDefault();
-          this.handleRefresh();
-        });
-      }
-
-      // Handle Enter key in both email and password fields
-      if (emailInput) {
-        emailInput.addEventListener('keypress', (e) => {
-          if (e.key === 'Enter') {
-            e.preventDefault();
-            this.handleLogin();
-          }
-        });
-      }
-
-      if (passwordInput) {
-        passwordInput.addEventListener('keypress', (e) => {
-          if (e.key === 'Enter') {
-            e.preventDefault();
-            this.handleLogin();
-          }
-        });
-      }
-    }, 100);
-  },
-
-  async loadAuthState() {
-    try {
-      let isLoggedIn = false;
-      let userEmail = null;
-
-      if (typeof Zotero !== 'undefined') {
-        Zotero.debug('Researchopia: Loading auth state...');
-      }
-
-      // Check auth state using our loaded auth module
-      if (this.auth) {
-        // Force reload auth state from preferences
-        this.auth.loadAuthState();
-
-        isLoggedIn = this.auth.isLoggedIn();
-        if (isLoggedIn) {
-          const user = this.auth.getCurrentUser();
-          userEmail = user?.email;
-
-          if (typeof Zotero !== 'undefined') {
-            Zotero.debug('Researchopia: Session restored for user: ' + userEmail);
-          }
-        } else {
-          if (typeof Zotero !== 'undefined') {
-            Zotero.debug('Researchopia: No valid session found');
-          }
-        }
-      } else {
-        if (typeof Zotero !== 'undefined') {
-          Zotero.debug('Researchopia: Auth module not available');
-        }
-      }
-
-      // Always update UI after loading state
-      setTimeout(() => {
-        this.updateUI(isLoggedIn, userEmail);
-      }, 100);
-
-    } catch (error) {
-      if (typeof Zotero !== 'undefined') {
-        Zotero.debug('Researchopia: Error loading auth state: ' + error.message);
-      }
-      this.updateUI(false);
-    }
-  },
-
-  async handleLogin() {
-    const emailInput = document.getElementById('researchopia-email');
-    const passwordInput = document.getElementById('researchopia-password');
-    const errorMsg = document.getElementById('researchopia-error-message');
-    const loginBtn = document.getElementById('researchopia-login-btn');
-
-    if (!emailInput || !passwordInput) return;
-
-    const email = emailInput.value.trim();
-    const password = passwordInput.value;
-
-    if (!email || !password) {
-      this.showError('Please enter both email and password');
-      return;
-    }
-
-    // Show loading state
-    if (loginBtn) loginBtn.disabled = true;
-    if (errorMsg) errorMsg.textContent = '';
-
-    try {
-      if (typeof Zotero !== 'undefined') {
-        Zotero.debug('Researchopia: Attempting login for: ' + email);
-      }
-
-      // Check if auth module is available
-      if (!this.auth) {
-        this.showError('Authentication module not loaded. Please restart Zotero and try again.');
-        return;
-      }
-
-      // Use real Supabase authentication
-      const result = await this.auth.signIn(email, password);
-
-      if (result.success) {
-        this.updateUI(true, email);
-        this.showSuccess('Login successful!');
-        // Clear password field
-        passwordInput.value = '';
-      } else {
-        this.showError(result.error || 'Login failed. Please check your credentials.');
-      }
-    } catch (error) {
-      if (typeof Zotero !== 'undefined') {
-        Zotero.debug('Researchopia: Login error: ' + error.message);
-      }
-      this.showError('Login failed: ' + error.message);
-    } finally {
-      if (loginBtn) {
-        loginBtn.disabled = false;
-        if (loginBtn.textContent === 'Logging in...') {
-          loginBtn.textContent = 'Login';
-        }
-      }
-    }
-  },
-
-  async handleLogout() {
-    const logoutBtn = document.getElementById('researchopia-logout-btn');
-
-    if (logoutBtn) logoutBtn.disabled = true;
-
-    try {
-      // Use the auth module we loaded
-      if (this.auth) {
-        await this.auth.signOut();
-      } else {
-        this.showError('Authentication module not available.');
-        return;
-      }
-
-      this.updateUI(false);
-      this.showSuccess('Logged out successfully!');
-    } catch (error) {
-      if (typeof Zotero !== 'undefined') {
-        Zotero.debug('Researchopia: Logout error: ' + error.message);
-      }
-      this.showError('Logout failed: ' + error.message);
-    } finally {
-      if (logoutBtn) logoutBtn.disabled = false;
-    }
-  },
-
-  async handleRegister() {
-    const emailInput = document.getElementById('researchopia-email');
-    const passwordInput = document.getElementById('researchopia-password');
-    const registerBtn = document.getElementById('researchopia-register-btn');
-
-    if (!emailInput || !passwordInput) return;
-
-    const email = emailInput.value.trim();
-    const password = passwordInput.value;
-
-    if (!email || !password) {
-      this.showError('Please enter both email and password');
-      return;
-    }
-
-    if (password.length < 6) {
-      this.showError('Password must be at least 6 characters long');
-      return;
-    }
-
-    if (registerBtn) {
-      registerBtn.disabled = true;
-      registerBtn.textContent = 'Registering...';
-    }
-
-    try {
-      if (!this.auth) {
-        this.showError('Authentication module not available.');
-        return;
-      }
-
-      const result = await this.auth.signUp(email, password);
-
-      if (result.success) {
-        this.showSuccess('Registration successful! Please check your email for verification.');
-        passwordInput.value = '';
-      } else {
-        this.showError(result.error || 'Registration failed.');
-      }
-    } catch (error) {
-      if (typeof Zotero !== 'undefined') {
-        Zotero.debug('Researchopia: Registration error: ' + error.message);
-      }
-      this.showError('Registration failed: ' + error.message);
-    } finally {
-      if (registerBtn) {
-        registerBtn.disabled = false;
-        registerBtn.textContent = 'Register';
-      }
-    }
-  },
-
-  async handleTestConnection() {
-    const testBtn = document.getElementById('researchopia-test-connection-btn');
-
-    if (testBtn) {
-      testBtn.disabled = true;
-      testBtn.textContent = 'Testing...';
-    }
-
-    try {
-      if (!this.auth) {
-        this.showError('Authentication module not available.');
-        return;
-      }
-
-      const result = await this.auth.testConnection();
-
-      if (result.success) {
-        this.showSuccess('Connection successful! Supabase is reachable.');
-      } else {
-        this.showError('Connection failed: ' + result.error);
-      }
-    } catch (error) {
-      if (typeof Zotero !== 'undefined') {
-        Zotero.debug('Researchopia: Connection test error: ' + error.message);
-      }
-      this.showError('Connection test failed: ' + error.message);
-    } finally {
-      if (testBtn) {
-        testBtn.disabled = false;
-        testBtn.textContent = 'Test Connection';
-      }
-    }
-  },
-
-  async handleRefresh() {
-    const refreshBtn = document.getElementById('researchopia-refresh-btn');
-
-    if (refreshBtn) {
-      refreshBtn.disabled = true;
-      refreshBtn.textContent = 'Refreshing...';
-    }
-
-    try {
-      if (!this.auth) {
-        this.showError('Authentication module not available.');
-        return;
-      }
-
-      const result = await this.auth.refreshSession();
-
-      if (result.success) {
-        // Get user display name
-        let displayName = result.user.email;
-        const user = result.user;
-        const username = user.user_metadata?.username || 
-                        user.user_metadata?.name ||
-                        user.user_metadata?.full_name;
-        
-        if (username) {
-          displayName = username;
-        } else if (user.email) {
-          displayName = user.email.includes('@') ? user.email.split('@')[0] : user.email;
-        }
-
-        this.updateUI(true, displayName);
-        this.showSuccess('会话状态刷新成功！');
-      } else {
-        // Don't update UI to logged out state immediately, just show error
-        this.showError('会话验证失败: ' + result.error);
-      }
-    } catch (error) {
-      if (typeof Zotero !== 'undefined') {
-        Zotero.debug('Researchopia: Refresh error: ' + error.message);
-      }
-      this.showError('刷新失败: ' + error.message);
-    } finally {
-      if (refreshBtn) {
-        refreshBtn.disabled = false;
-        refreshBtn.textContent = 'Refresh Status';
-      }
-    }
-  },
-
-  updateUI(isLoggedIn, userEmail = null) {
-    if (typeof Zotero !== 'undefined') {
-      Zotero.debug(`Researchopia: Updating UI - isLoggedIn: ${isLoggedIn}, userEmail: ${userEmail}`);
-    }
-
-    const loginSection = document.getElementById('login-section');
-    const logoutSection = document.getElementById('logout-section');
-    const currentUserEmail = document.getElementById('current-user-email');
-    const currentLoginTime = document.getElementById('current-login-time');
-    const authStatus = document.getElementById('auth-status');
-
-    if (typeof Zotero !== 'undefined') {
-      Zotero.debug(`Researchopia: UI elements found - loginSection: ${!!loginSection}, logoutSection: ${!!logoutSection}, authStatus: ${!!authStatus}`);
-    }
-
-    if (loginSection) {
-      loginSection.style.display = isLoggedIn ? 'none' : 'block';
-    }
-
-    if (logoutSection) {
-      logoutSection.style.display = isLoggedIn ? 'block' : 'none';
-    }
-
-    // Get user display name from current user
-    let displayName = userEmail;
-    if (isLoggedIn && this.auth && this.auth.currentUser) {
-      const user = this.auth.currentUser;
-      // Try to extract username from user metadata
-      const username = user.user_metadata?.username || 
-                      user.user_metadata?.name ||
-                      user.user_metadata?.full_name;
+      });
       
-      if (username) {
-        displayName = username;
-      } else if (user.email) {
-        // Use email prefix as fallback
-        displayName = user.email.includes('@') ? user.email.split('@')[0] : user.email;
-      }
+      const responseTime = Date.now() - startTime;
+      debugLog("[Researchopia] Connection test result:", response.status, responseTime + "ms");
+      
+      return {
+        success: response.ok,
+        responseTime: responseTime,
+        error: response.ok ? null : `服务器响应错误 (${response.status})`
+      };
+    } catch (error) {
+      debugLog("[Researchopia] Connection test error:", error);
+      return {
+        success: false,
+        error: '网络连接失败，请检查网络设置'
+      };
     }
-
-    if (currentUserEmail && displayName) {
-      currentUserEmail.textContent = displayName;
-    }
-
-    if (currentLoginTime && isLoggedIn) {
-      try {
-        const loginTime = Zotero.Prefs.get('extensions.zotero.researchopia.loginTime', true);
-        if (loginTime) {
-          const date = new Date(loginTime);
-          currentLoginTime.textContent = date.toLocaleString();
+  },
+  
+  // Supabase login function (now uses AuthManager for role fetching)
+  testLogin: async function(email, password) {
+    try {
+      // 等待AuthManager初始化(最多5秒)
+      debugLog("[Researchopia] Waiting for AuthManager to initialize...");
+      let retries = 50; // 50 * 100ms = 5秒
+      while (retries > 0) {
+        const addon = Zotero.Researchopia;
+        if (addon && addon.authManager) {
+          debugLog("[Researchopia] ✅ AuthManager ready, calling signIn");
+          const result = await addon.authManager.signIn(email, password);
+          debugLog("[Researchopia] AuthManager.signIn result:", result.success, result.error || 'no error');
+          
+          if (result.success) {
+            return {
+              success: true,
+              data: {
+                access_token: addon.authManager.session?.access_token,
+                user: result.user
+              },
+              error: null
+            };
+          } else {
+            return {
+              success: false,
+              data: null,
+              error: result.error || '登录失败'
+            };
+          }
         }
-      } catch (error) {
-        if (typeof Zotero !== 'undefined') {
-          Zotero.debug('Researchopia: Error getting login time: ' + error.message);
-        }
+        
+        // 等待100ms后重试
+        await new Promise(resolve => setTimeout(resolve, 100));
+        retries--;
       }
+      
+      // 超时后使用fallback
+      debugLog("[Researchopia] ❌ AuthManager not available after 5s, falling back to direct login");
+      return await this.directLogin(email, password);
+      
+    } catch (error) {
+      debugLog("[Researchopia] Login error:", error);
+      return {
+        success: false,
+        error: '网络错误,请检查网络连接'
+      };
     }
-
-    if (authStatus) {
-      if (isLoggedIn) {
-        authStatus.textContent = `已登录为 ${displayName || 'Unknown'}`;
-        authStatus.className = 'status-message success';
+  },
+  
+  // Direct login fallback (without role fetching)
+  directLogin: async function(email, password) {
+    try {
+      debugLog("[Researchopia] Attempting direct login for:", email);
+      const response = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+        method: 'POST',
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          email: email,
+          password: password
+        })
+      });
+      
+      const data = await response.json();
+      debugLog("[Researchopia] Login response:", response.status, data);
+      
+      // Check if login was successful
+      if (response.ok && data.access_token) {
+        return {
+          success: true,
+          data: data,
+          error: null
+        };
       } else {
-        authStatus.textContent = '请登录以访问共享标注功能';
-        authStatus.className = 'status-message info';
+        return {
+          success: false,
+          data: data,
+          error: data.error_description || data.error || data.message || '登录失败'
+        };
+      }
+    } catch (error) {
+      debugLog("[Researchopia] Login error:", error);
+      return {
+        success: false,
+        error: '网络错误，请检查网络连接'
+      };
+    }
+  },
+  
+  // User registration function
+  registerUser: async function(email, password) {
+    try {
+      debugLog("[Researchopia] Attempting registration for:", email);
+      const response = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
+        method: 'POST',
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          email: email,
+          password: password
+        })
+      });
+      
+      const data = await response.json();
+      debugLog("[Researchopia] Registration response:", response.status, data);
+      
+      return {
+        success: response.ok,
+        data: data,
+        error: response.ok ? null : (data.error_description || data.message || '注册失败')
+      };
+    } catch (error) {
+      debugLog("[Researchopia] Registration error:", error);
+      return {
+        success: false,
+        error: '网络错误，请检查网络连接'
+      };
+    }
+  },
+  
+  // Show message function
+  showMessage: function(message, type) {
+    // 尝试在登录表单区域显示消息
+    let messageDiv = document.getElementById("login-message");
+    
+    // 如果登录表单不可见，尝试在已登录状态区域显示消息
+    if (!messageDiv || messageDiv.closest('#login-form-section').style.display === 'none') {
+      messageDiv = document.getElementById("status-message");
+    }
+    
+    if (messageDiv) {
+      messageDiv.textContent = message;
+      messageDiv.className = `message ${type}`;
+      
+      if (type === "success" || type === "info") {
+        setTimeout(() => {
+          messageDiv.textContent = "";
+          messageDiv.className = "message";
+        }, 3000);
       }
     }
-
-    // Clear any input fields when logged in
-    if (isLoggedIn) {
-      const emailInput = document.getElementById('researchopia-email');
-      const passwordInput = document.getElementById('researchopia-password');
-      if (emailInput) emailInput.value = '';
-      if (passwordInput) passwordInput.value = '';
+  },
+  
+  // Set button loading state
+  setButtonLoading: function(button, loading) {
+    if (!button) return;
+    const textSpan = button.querySelector(".btn-text");
+    const loadingSpan = button.querySelector(".btn-loading");
+    
+    if (textSpan && loadingSpan) {
+      if (loading) {
+        textSpan.style.display = "none";
+        loadingSpan.style.display = "inline";
+        button.disabled = true;
+      } else {
+        textSpan.style.display = "inline";
+        loadingSpan.style.display = "none";
+        button.disabled = false;
+      }
     }
   },
 
-  showError(message) {
-    const authStatus = document.getElementById('auth-status');
-    if (authStatus) {
-      authStatus.textContent = message;
-      authStatus.className = 'status-message error';
+  // 保存登录状态到Zotero偏好设置
+  saveLoginState: function(loginData, email) {
+    try {
+      if (typeof Zotero !== 'undefined' && Zotero.Prefs) {
+        // 保存登录信息（不包含敏感的token）
+        Zotero.Prefs.set("extensions.researchopia.userEmail", email);
+        Zotero.Prefs.set("extensions.researchopia.isLoggedIn", true);
+        Zotero.Prefs.set("extensions.researchopia.loginTime", new Date().toISOString());
+        
+        // 保存用户信息
+        if (loginData.user) {
+          const username = 
+            loginData.user.username ||
+            loginData.user.user_metadata?.username ||
+            (loginData.user.email ? loginData.user.email.split("@")[0] : null) ||
+            (email ? email.split("@")[0] : "用户");
+          Zotero.Prefs.set("extensions.researchopia.userName", username);
+          Zotero.Prefs.set("extensions.researchopia.userId", loginData.user.id || "");
+        }
+        
+        // 可以选择保存token（注意安全性）
+        if (loginData.access_token) {
+          Zotero.Prefs.set("extensions.researchopia.accessToken", loginData.access_token);
+          // 保存过期时间 - 计算绝对时间戳,保存为字符串避免整数溢出
+          if (loginData.expires_in) {
+            const expiresAt = Date.now() + (loginData.expires_in * 1000);
+            Zotero.Prefs.set("extensions.researchopia.tokenExpires", String(expiresAt));
+            console.log("[Researchopia] Token expires at:", expiresAt, "saved as string");
+          }
+        }
+        
+        debugLog("[Researchopia] Login state saved to preferences");
+      }
+    } catch (error) {
+      debugLog("[Researchopia] Error saving login state:", error);
     }
   },
 
-  showSuccess(message) {
-    const authStatus = document.getElementById('auth-status');
-    if (authStatus) {
-      authStatus.textContent = message;
-      authStatus.className = 'status-message success';
+  // 显示已登录状态
+  showLoggedInState: function(user, email) {
+    const loginContainer = document.getElementById("login-form-section");
+    const loggedInContainer = document.getElementById("logged-in-section");
+    
+    if (loginContainer && loggedInContainer) {
+      // 隐藏登录表单，显示已登录状态
+      loginContainer.style.display = "none";
+      loggedInContainer.style.display = "block";
+      
+      // 更新用户信息显示
+      const userNameDisplay = document.getElementById("user-name-display");
+      const userEmailDisplay = document.getElementById("user-email-display");
+      const loginTimeDisplay = document.getElementById("login-time-display");
+      
+      if (userNameDisplay) {
+        // 优先显示username,如果没有则显示email前缀
+        const displayName = user?.username || user?.email?.split('@')[0] || email.split('@')[0];
+        userNameDisplay.textContent = displayName;
+      }
+      if (userEmailDisplay) {
+        // 显示完整email
+        userEmailDisplay.textContent = email;
+      }
+      if (loginTimeDisplay) {
+        loginTimeDisplay.textContent = new Date().toLocaleString('zh-CN');
+      }
     }
+  },
 
-    // Clear success message after 3 seconds and restore auth status
-    setTimeout(() => {
-      this.loadAuthState();
-    }, 3000);
+  // 检查并恢复登录状态
+  checkLoginState: function() {
+    try {
+      if (typeof Zotero !== 'undefined' && Zotero.Prefs) {
+        const isLoggedIn = Zotero.Prefs.get("extensions.researchopia.isLoggedIn", false);
+        const userEmail = Zotero.Prefs.get("extensions.researchopia.userEmail", "");
+        let userName = Zotero.Prefs.get("extensions.researchopia.userName", "");
+        const loginTime = Zotero.Prefs.get("extensions.researchopia.loginTime", "");
+        // tokenExpires现在保存为字符串,需要转换为数字
+        const tokenExpiresStr = Zotero.Prefs.get("extensions.researchopia.tokenExpires", "0");
+        const tokenExpires = tokenExpiresStr ? parseInt(tokenExpiresStr, 10) : 0;
+
+        // 若缓存的用户名缺失或等同邮箱，尝试从AuthManager获取最新用户名
+        if (typeof Zotero !== "undefined") {
+          const addon = Zotero.Researchopia;
+          const authUser = addon?.authManager?.user;
+          if (authUser?.username && (!userName || userName === userEmail)) {
+            userName = authUser.username;
+            Zotero.Prefs.set("extensions.researchopia.userName", userName);
+          }
+        }
+        
+        // 检查token是否过期 (tokenExpires是毫秒时间戳)
+        const now = Date.now();
+        
+        // 详细日志查看数值
+        console.log("[Researchopia] Token check - tokenExpires:", tokenExpires, 
+                   "type:", typeof tokenExpires, 
+                   "now:", now, 
+                   "diff:", (tokenExpires - now), 
+                   "comparison:", (tokenExpires > now));
+        
+        // 如果tokenExpires是0或无效,说明是刚登录还没设置,不应该清除
+        // 如果tokenExpires是负数或NaN,说明是错误数据,应该清除
+        // 如果tokenExpires > 0 但 < now,说明真的过期了,应该清除
+        const tokenValid = !tokenExpires || isNaN(tokenExpires) || (tokenExpires > 0 && tokenExpires > now);
+        
+        console.log("[Researchopia] Checking login state:", 
+                   "isLoggedIn=" + isLoggedIn, 
+                   "userEmail=" + userEmail, 
+                   "tokenValid=" + tokenValid, 
+                   "tokenExpires=" + tokenExpires, 
+                   "now=" + now);
+        
+        if (isLoggedIn && userEmail && tokenValid) {
+          // 显示已登录状态
+          const loginContainer = document.getElementById("login-form-section");
+          const loggedInContainer = document.getElementById("logged-in-section");
+          
+          if (loginContainer && loggedInContainer) {
+            loginContainer.style.display = "none";
+            loggedInContainer.style.display = "block";
+            
+            // 更新用户信息显示
+            const userNameDisplay = document.getElementById("user-name-display");
+            const userEmailDisplay = document.getElementById("user-email-display");
+            const loginTimeDisplay = document.getElementById("login-time-display");
+            
+            if (userNameDisplay) {
+              const safeUserName = userName || (userEmail ? userEmail.split("@")[0] : "用户");
+              userNameDisplay.textContent = safeUserName;
+            }
+            if (userEmailDisplay) {
+              userEmailDisplay.textContent = userEmail;
+            }
+            if (loginTimeDisplay) {
+              const loginDate = new Date(loginTime);
+              loginTimeDisplay.textContent = loginDate.toLocaleString('zh-CN');
+            }
+            
+            debugLog("[Researchopia] Login state restored");
+          }
+        } else if (isLoggedIn && (!tokenValid)) {
+          // Token过期，清除登录状态
+          debugLog("[Researchopia] Token expired, clearing login state");
+          this.clearLoginState();
+        }
+      }
+    } catch (error) {
+      debugLog("[Researchopia] Error checking login state:", error);
+    }
+  },
+
+  // 清除登录状态
+  clearLoginState: function() {
+    try {
+      if (typeof Zotero !== 'undefined' && Zotero.Prefs) {
+        Zotero.Prefs.clear("extensions.researchopia.userEmail");
+        Zotero.Prefs.clear("extensions.researchopia.isLoggedIn");
+        Zotero.Prefs.clear("extensions.researchopia.loginTime");
+        Zotero.Prefs.clear("extensions.researchopia.userName");
+        Zotero.Prefs.clear("extensions.researchopia.userId");
+        Zotero.Prefs.clear("extensions.researchopia.accessToken");
+        Zotero.Prefs.clear("extensions.researchopia.tokenExpires");
+        
+        debugLog("[Researchopia] Login state cleared");
+      }
+      
+      // 恢复登录界面显示
+      const loginContainer = document.getElementById("login-form-section");
+      const loggedInContainer = document.getElementById("logged-in-section");
+      
+      if (loginContainer && loggedInContainer) {
+        loginContainer.style.display = "block";
+        loggedInContainer.style.display = "none";
+      }
+      
+      // 清空输入框
+      const emailInput = document.getElementById("email-input");
+      const passwordInput = document.getElementById("password-input");
+      if (emailInput) emailInput.value = "";
+      if (passwordInput) passwordInput.value = "";
+      
+    } catch (error) {
+      debugLog("[Researchopia] Error clearing login state:", error);
+    }
+  },
+
+  // 获取当前选中的论文项目
+  getCurrentItem: function() {
+    try {
+      if (typeof Zotero !== 'undefined' && Zotero.getActiveZoteroPane) {
+        const zoteroPane = Zotero.getActiveZoteroPane();
+        if (zoteroPane) {
+          const selectedItems = zoteroPane.getSelectedItems();
+          if (selectedItems && selectedItems.length > 0) {
+            return selectedItems[0];
+          }
+        }
+      }
+      return null;
+    } catch (error) {
+      debugLog("[Researchopia] Error getting current item:", error);
+      return null;
+    }
+  },
+
+  // 获取指定论文的所有标注
+  getItemAnnotations: async function(item) {
+    try {
+      if (!item) return [];
+
+      debugLog("[Researchopia] Getting annotations for item:", item.getField('title'));      // 获取附件
+      const attachments = await item.getAttachments();
+      let allAnnotations = [];
+      
+      for (let attachmentID of attachments) {
+        const attachment = Zotero.Items.get(attachmentID);
+        if (attachment && attachment.isPDFAttachment()) {
+          // 获取此附件的所有标注
+          const annotations = attachment.getAnnotations();
+          for (let annotationID of annotations) {
+            const annotation = Zotero.Items.get(annotationID);
+            if (annotation) {
+              // 收集标注的详细信息
+              const annotationData = {
+                id: annotation.id,
+                key: annotation.key,
+                type: annotation.annotationType,
+                text: annotation.annotationText || '',
+                comment: annotation.annotationComment || '',
+                color: annotation.annotationColor || '',
+                pageLabel: annotation.annotationPageLabel || '',
+                position: annotation.annotationPosition,
+                sortIndex: annotation.annotationSortIndex,
+                dateAdded: annotation.dateAdded,
+                dateModified: annotation.dateModified,
+                tags: annotation.getTags().map(tag => tag.tag),
+                attachmentTitle: attachment.getField('title'),
+                attachmentID: attachment.id
+              };
+              allAnnotations.push(annotationData);
+            }
+          }
+        }
+      }
+      
+      // 按页码和位置排序
+      allAnnotations.sort((a, b) => {
+        if (a.pageLabel !== b.pageLabel) {
+          return (parseInt(a.pageLabel) || 0) - (parseInt(b.pageLabel) || 0);
+        }
+        return (a.sortIndex || 0) - (b.sortIndex || 0);
+      });
+      
+      debugLog(`[Researchopia] Found ${allAnnotations.length} annotations`);
+      return allAnnotations;
+      
+    } catch (error) {
+      console.error("[Researchopia] Error getting annotations:", error);
+      return [];
+    }
+  },
+
+  // 从Supabase获取标注的共享状态
+  getAnnotationShareStatus: async function(annotationKey) {
+    try {
+      const accessToken = Zotero.Prefs.get("extensions.researchopia.accessToken", "");
+      if (!accessToken) return null;
+      
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/annotations?annotation_key=eq.${annotationKey}&select=*`, {
+        method: 'GET',
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        return data.length > 0 ? data[0] : null;
+      }
+      
+      return null;
+    } catch (error) {
+      console.error("[Researchopia] Error getting annotation share status:", error);
+      return null;
+    }
+  },
+
+  // 更新标注的共享状态到Supabase
+  updateAnnotationShareStatus: async function(annotation, isShared, isAnonymous = false) {
+    try {
+      const accessToken = Zotero.Prefs.get("extensions.researchopia.accessToken", "");
+      const userEmail = Zotero.Prefs.get("extensions.researchopia.userEmail", "");
+      
+      if (!accessToken || !userEmail) {
+        throw new Error("请先登录");
+      }
+      
+      const annotationData = {
+        annotation_key: annotation.key,
+        user_email: userEmail,
+        is_shared: isShared,
+        is_anonymous: isAnonymous,
+        annotation_type: annotation.type,
+        annotation_text: annotation.text || '',
+        annotation_comment: annotation.comment || '',
+        annotation_color: annotation.color || '',
+        page_label: annotation.pageLabel || '',
+        position_data: JSON.stringify(annotation.position || {}),
+        tags: annotation.tags || [],
+        date_created: new Date().toISOString(),
+        date_modified: new Date().toISOString()
+      };
+      
+      // 检查是否已存在
+      const existing = await this.getAnnotationShareStatus(annotation.key);
+      let response;
+      
+      if (existing) {
+        // 更新现有记录
+        response = await fetch(`${SUPABASE_URL}/rest/v1/annotations?annotation_key=eq.${annotation.key}`, {
+          method: 'PATCH',
+          headers: {
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            is_shared: isShared,
+            is_anonymous: isAnonymous,
+            date_modified: new Date().toISOString()
+          })
+        });
+      } else if (isShared) {
+        // 创建新记录（只有在要共享时才创建）
+        response = await fetch(`${SUPABASE_URL}/rest/v1/annotations`, {
+          method: 'POST',
+          headers: {
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(annotationData)
+        });
+      }
+      
+      if (response && !response.ok) {
+        throw new Error(`数据库操作失败: ${response.status}`);
+      }
+      
+      return true;
+    } catch (error) {
+      console.error("[Researchopia] Error updating annotation share status:", error);
+      throw error;
+    }
   }
 };
 
-// Initialize when DOM is ready
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => ResearchopiaPreferences.init());
-} else {
-  ResearchopiaPreferences.init();
+// Event handler functions
+function onTestConnection() {
+  console.log("[Researchopia] Test connection button clicked");
+  
+  const btn = document.getElementById("test-connection-btn");
+  if (!btn) {
+    console.error("[Researchopia] Test connection button not found");
+    return;
+  }
+  
+  researchopiaPrefs.setButtonLoading(btn, true);
+  researchopiaPrefs.showMessage("正在测试与Supabase的连接...", "info");
+  
+  researchopiaPrefs.testSupabaseConnection().then(result => {
+    if (result.success) {
+      researchopiaPrefs.showMessage(`连接成功！响应时间: ${result.responseTime}ms`, "success");
+    } else {
+      researchopiaPrefs.showMessage(`连接失败: ${result.error}`, "error");
+    }
+    researchopiaPrefs.setButtonLoading(btn, false);
+  }).catch(error => {
+    console.error("[Researchopia] Test connection error:", error);
+    researchopiaPrefs.showMessage("测试连接时发生错误", "error");
+    researchopiaPrefs.setButtonLoading(btn, false);
+  });
 }
+
+function onLogin() {
+  console.log("[Researchopia] Login button clicked");
+  
+  const emailInput = document.getElementById("email-input");
+  const passwordInput = document.getElementById("password-input");
+  const loginBtn = document.getElementById("login-btn");
+  
+  if (!emailInput || !passwordInput) {
+    console.log("[Researchopia] Input elements not found");
+    researchopiaPrefs.showMessage("找不到输入框", "error");
+    return;
+  }
+  
+  const email = emailInput.value.trim();
+  const password = passwordInput.value;
+  
+  console.log("[Researchopia] Login values:", { email, passwordLength: password ? password.length : 0 });
+  
+  if (!email || !password) {
+    console.log("[Researchopia] Missing email or password");
+    researchopiaPrefs.showMessage("请输入邮箱和密码", "error");
+    return;
+  }
+  
+  console.log("[Researchopia] Setting button loading and calling testLogin");
+  researchopiaPrefs.setButtonLoading(loginBtn, true);
+  researchopiaPrefs.showMessage("正在登录...", "info");
+  
+  console.log("[Researchopia] About to call testLogin with email:", email);
+  researchopiaPrefs.testLogin(email, password).then(result => {
+    console.log("[Researchopia] testLogin resolved with result:", result.success);
+    if (result.success) {
+      researchopiaPrefs.showMessage("登录成功！", "success");
+      // 先清空旧状态再保存新状态
+      researchopiaPrefs.clearLoginState();
+      // 保存登录信息
+      researchopiaPrefs.saveLoginState(result.data, email);
+      // 显示登录状态
+      researchopiaPrefs.showLoggedInState(result.data.user, email);
+    } else {
+      researchopiaPrefs.showMessage(`登录失败: ${result.error}`, "error");
+    }
+    researchopiaPrefs.setButtonLoading(loginBtn, false);
+  }).catch(error => {
+    console.error("[Researchopia] Login error:", error);
+    researchopiaPrefs.showMessage("登录时发生错误", "error");
+    researchopiaPrefs.setButtonLoading(loginBtn, false);
+  });
+}
+
+// onSignup function removed - users should register on website
+
+// 处理外部链接
+function openExternalLink(url) {
+  try {
+    if (typeof Components !== 'undefined' && Components.classes) {
+      // Zotero 7/8 方式
+      const externalLinkSvc = Components.classes["@mozilla.org/uriloader/external-protocol-service;1"]
+        .getService(Components.interfaces.nsIExternalProtocolService);
+      const ioService = Components.classes["@mozilla.org/network/io-service;1"]
+        .getService(Components.interfaces.nsIIOService);
+      const uri = ioService.newURI(url, null, null);
+      externalLinkSvc.loadURI(uri);
+    } else if (typeof Zotero !== 'undefined' && Zotero.launchURL) {
+      // 备选方式
+      Zotero.launchURL(url);
+    } else if (typeof window !== 'undefined' && window.open) {
+      // 最后备选
+      window.open(url, '_blank');
+    }
+    debugLog("[Researchopia] Opened external link:", url);
+  } catch (error) {
+    debugLog("[Researchopia] Error opening external link:", error);
+  }
+}
+
+// 登出按钮事件处理
+function onLogout() {
+  console.log("[Researchopia] Logout button clicked");
+  
+  researchopiaPrefs.clearLoginState();
+  researchopiaPrefs.showMessage("已成功登出", "success");
+}
+
+// 检查状态按钮事件处理  
+function onCheckStatus() {
+  console.log("[Researchopia] Check status button clicked");
+  
+  const btn = document.getElementById("check-status-btn");
+  researchopiaPrefs.setButtonLoading(btn, true);
+  
+  // 重新检查登录状态
+  setTimeout(() => {
+    researchopiaPrefs.checkLoginState();
+    researchopiaPrefs.showMessage("状态检查完成", "info");
+    researchopiaPrefs.setButtonLoading(btn, false);
+  }, 500);
+}
+
+// 同步数据按钮事件处理
+function onSync() {
+  console.log("[Researchopia] Sync button clicked");
+  
+  const btn = document.getElementById("sync-btn");
+  researchopiaPrefs.setButtonLoading(btn, true);
+  
+  // 模拟同步操作
+  setTimeout(() => {
+    researchopiaPrefs.showMessage("数据同步功能开发中", "info");
+    researchopiaPrefs.setButtonLoading(btn, false);
+  }, 1000);
+}
+
+// Ensure functions are globally accessible - CRITICAL for Zotero 8
+// Multiple strategies for maximum compatibility
+function ensureGlobalAccess() {
+  try {
+    // Strategy 1: window object
+    if (typeof window !== 'undefined') {
+      window.onTestConnection = onTestConnection;
+      window.onLogin = onLogin;
+      window.onLogout = onLogout;
+      window.onCheckStatus = onCheckStatus;
+      window.onSync = onSync;
+      window.openExternalLink = openExternalLink;
+
+      window.researchopiaPrefs = researchopiaPrefs;
+      debugLog("[Researchopia] Functions assigned to window object");
+    }
+  } catch (e) {
+    debugLog("[Researchopia] Error assigning to window:", e);
+  }
+  
+  try {
+    // Strategy 2: globalThis
+    globalThis.onTestConnection = onTestConnection;
+    globalThis.onLogin = onLogin;
+    globalThis.onLogout = onLogout;
+    globalThis.onCheckStatus = onCheckStatus;
+    globalThis.onSync = onSync;
+    globalThis.openExternalLink = openExternalLink;
+
+    globalThis.researchopiaPrefs = researchopiaPrefs;
+    debugLog("[Researchopia] Functions assigned to globalThis");
+  } catch (e) {
+    debugLog("[Researchopia] Error assigning to globalThis:", e);
+  }
+  
+  try {
+    // Strategy 3: this context
+    this.onTestConnection = onTestConnection;
+    this.onLogin = onLogin;
+    this.onLogout = onLogout;
+    this.onCheckStatus = onCheckStatus;
+    this.onSync = onSync;
+    this.openExternalLink = openExternalLink;
+
+    this.researchopiaPrefs = researchopiaPrefs;
+    debugLog("[Researchopia] Functions assigned to this context");
+  } catch (e) {
+    debugLog("[Researchopia] Error assigning to this:", e);
+  }
+}
+
+// Initialize immediately
+ensureGlobalAccess();
+
+// Also try on DOMContentLoaded
+if (typeof document !== 'undefined') {
+  if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    ensureGlobalAccess();
+    // 检查登录状态
+    setTimeout(() => researchopiaPrefs.checkLoginState(), 200);
+  } else {
+    document.addEventListener('DOMContentLoaded', () => {
+      ensureGlobalAccess();
+      // 检查登录状态
+      setTimeout(() => researchopiaPrefs.checkLoginState(), 200);
+    });
+  }
+}
+
+// Fallback timeout
+setTimeout(ensureGlobalAccess, 100);
+
+
+// 延迟检查登录状态
+setTimeout(() => researchopiaPrefs.checkLoginState(), 500);
+
+debugLog("[Researchopia] Preferences script initialization complete");
+debugLog("[Researchopia] Function types:", {
+  onTestConnection: typeof onTestConnection,
+  onLogin: typeof onLogin,
+  onLogout: typeof onLogout,
+  onCheckStatus: typeof onCheckStatus,
+  onSync: typeof onSync,
+
+  windowOnTestConnection: typeof (window && window.onTestConnection),
+  globalThisOnTestConnection: typeof globalThis.onTestConnection
+});

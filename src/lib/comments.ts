@@ -233,7 +233,8 @@ export async function voteOnComment(
 export async function addComment(
   paperId: string,
   userId: string,
-  content: string
+  content: string,
+  isAnonymous: boolean = false // 🆕 匿名参数
 ): Promise<boolean> {
   try {
     if (MockAuthService.shouldUseMockAuth()) {
@@ -265,7 +266,8 @@ export async function addComment(
       .insert({
         paper_id: paperId,
         user_id: userId,
-        content: content.trim()
+        content: content.trim(),
+        is_anonymous: isAnonymous // 🆕 插入匿名标志
       })
 
     if (error) throw error

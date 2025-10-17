@@ -1,420 +1,355 @@
+/**
+ * 标注管理模块
+ * 负责标注的同步、共享、管理等功能
+ */
+
+import { logger } from "../utils/logger";
+import { SupabaseManager, SupabaseAnnotation } from "./supabase";
 import { AuthManager } from "./auth";
-import { SupabaseAPI, DatabaseAnnotation } from "../api/supabase";
-import { DataTransform, ZoteroAnnotation, EnrichedAnnotation } from "../utils/dataTransform";
-import { QualityScoringEngine, QualityMetrics } from "./qualityScoring";
 
-// Enable strict mode for Zotero 8 compatibility
-"use strict";
-
-export interface SharedAnnotation extends EnrichedAnnotation {
-  qualityMetrics?: QualityMetrics;
+export interface ZoteroAnnotation {
+  id: number;
+  key: string;
+  type: string;
+  text: string;
+  comment: string;
+  color: string;
+  pageLabel: string;
+  sortIndex: string;
+  position: any;
+  tags: any[];
+  dateModified: string;
+  parentItemID: number;
+  // Supabase状态
+  supabaseId?: string;
+  visibility?: 'private' | 'shared' | 'public';
+  showAuthorName?: boolean;
+  synced?: boolean;
 }
 
 export class AnnotationManager {
-  private static initialized: boolean = false;
-  
-  static async initialize() {
-    if (this.initialized) return;
+  private static instance: AnnotationManager | null = null;
+  private isInitialized = false;
+  private supabaseManager: SupabaseManager;
+  private annotationsCache: Map<number, ZoteroAnnotation[]> = new Map();
+
+  private constructor() {
+    this.supabaseManager = new SupabaseManager();
+  }
+
+  public static getInstance(): AnnotationManager {
+    if (!AnnotationManager.instance) {
+      AnnotationManager.instance = new AnnotationManager();
+    }
+    return AnnotationManager.instance;
+  }
+
+  public static async initialize(): Promise<void> {
+    const instance = AnnotationManager.getInstance();
+    if (instance.isInitialized) {
+      return;
+    }
+
+    logger.log("[AnnotationManager] Initializing...");
     
     try {
-      ztoolkit.log("AnnotationManager initializing...");
-
-      // Initialize Supabase API
-      const supabaseClient = AuthManager.getSupabaseClient();
-      if (supabaseClient) {
-        SupabaseAPI.initialize(supabaseClient);
-      }
-      
-      this.initialized = true;
-      ztoolkit.log("AnnotationManager initialized successfully");
+      // 初始化标注管理器
+      instance.isInitialized = true;
+      logger.log("[AnnotationManager] Initialized successfully");
     } catch (error) {
-      ztoolkit.log("AnnotationManager initialization failed:", error);
+      logger.error("[AnnotationManager] Initialization error:", error);
       throw error;
     }
   }
 
-  static cleanup() {
-    this.initialized = false;
-    ztoolkit.log("AnnotationManager cleanup completed");
-  }
-
   /**
-   * Share annotations for given item IDs (batch operation)
+   * 从Zotero item中提取所有标注
    */
-  static async shareAnnotations(itemIds: Array<string | number>): Promise<boolean> {
-    if (!AuthManager.isLoggedIn()) {
-      ztoolkit.log("User not logged in");
-      return false;
-    }
-
-    try {
-      const results = await Promise.all(
-        itemIds.map(id => this.uploadAnnotations(Number(id)))
-      );
-      
-      const successCount = results.filter(Boolean).length;
-      ztoolkit.log(`Shared annotations for ${successCount}/${itemIds.length} items`);
-      
-      return successCount > 0;
-    } catch (error) {
-      ztoolkit.log("Error sharing annotations:", error);
-      return false;
-    }
-  }
-
-  static async extractLocalAnnotations(itemID: number): Promise<ZoteroAnnotation[]> {
-    try {
-      const item = Zotero.Items.get(itemID);
-      if (!item || !item.isRegularItem()) return [];
-
-      // Use Zotero 8 compatible annotation fetching
-      const annotations = await item.getAnnotations();
-      const extractedAnnotations: ZoteroAnnotation[] = [];
-
-      for (const annotation of annotations) {
-        try {
-          const annotationData: ZoteroAnnotation = {
-            text: annotation.annotationText || "",
-            comment: annotation.annotationComment || "",
-            page: annotation.annotationPageLabel || "",
-            position: this.parseAnnotationPosition(annotation.annotationPosition),
-            type: annotation.annotationType || "highlight",
-            color: annotation.annotationColor || "#ffff00",
-            created: annotation.dateAdded || new Date(),
-            tags: annotation.getTags?.() || [],
-            sortIndex: annotation.annotationSortIndex || 0,
-          };
-          extractedAnnotations.push(annotationData);
-        } catch (error) {
-          ztoolkit.log(`Error processing annotation ${annotation.id}:`, error);
-        }
-      }
-
-      return extractedAnnotations;
-    } catch (error) {
-      ztoolkit.log("Error extracting annotations:", error);
-      return [];
-    }
-  }
-
-  private static parseAnnotationPosition(position: any): any {
-    if (!position) return null;
+  public static async getItemAnnotations(item: any): Promise<ZoteroAnnotation[]> {
+    const instance = AnnotationManager.getInstance();
     
     try {
-      // Handle different position formats from Zotero 8
-      if (typeof position === 'string') {
-        return JSON.parse(position);
-      }
-      return position;
-    } catch {
-      return null;
-    }
-  }
-
-  static async uploadAnnotations(itemID: number): Promise<boolean> {
-    if (!AuthManager.isLoggedIn()) {
-      ztoolkit.log("User not logged in");
-      return false;
-    }
-
-    try {
-      const item = Zotero.Items.get(itemID);
-      if (!item || !item.isRegularItem()) return false;
-
-      const doi = item.getField("DOI");
-      if (!doi) {
-        ztoolkit.log("Item has no DOI");
-        return false;
-      }
-
-      const annotations = await this.extractLocalAnnotations(itemID);
-      if (annotations.length === 0) {
-        ztoolkit.log("No annotations to upload");
-        return true;
-      }
-
-      const user = AuthManager.getCurrentUser();
-      if (!user) return false;
-
-      let uploadedCount = 0;
-      let failedCount = 0;
-
-      // Upload annotations one by one to handle errors gracefully
-      for (const annotation of annotations) {
-        try {
-          const dbAnnotation = DataTransform.zoteroToDatabase(
-            annotation,
-            doi,
-            user.id,
-            user.email || "Anonymous"
-          );
-
-          const result = await SupabaseAPI.createAnnotation(dbAnnotation);
-          if (result) {
-            uploadedCount++;
-          } else {
-            failedCount++;
+      logger.log("[AnnotationManager] Getting annotations for item:", item.id);
+      
+      // 暂时禁用缓存以调试
+      // if (instance.annotationsCache.has(item.id)) {
+      //   logger.log("[AnnotationManager] Using cached annotations");
+      //   return instance.annotationsCache.get(item.id)!;
+      // }
+      instance.annotationsCache.delete(item.id); // 强制清除缓存
+      
+      const annotations: ZoteroAnnotation[] = [];
+      
+      // 获取所有附件
+      const attachmentIDs = item.getAttachments();
+      logger.log("[AnnotationManager] Found attachments:", attachmentIDs.length);
+      
+      for (const attachmentID of attachmentIDs) {
+        const attachment = Zotero.Items.get(attachmentID);
+        if (!attachment) {
+          logger.log("[AnnotationManager] Attachment not found:", attachmentID);
+          continue;
+        }
+        
+        logger.log("[AnnotationManager] Checking attachment:", attachmentID, "isPDF?", attachment.isPDFAttachment?.());
+        
+        // 获取该附件的所有标注(不管是不是PDF,先都试试)
+        const annotationIDs = attachment.getAnnotations?.() || [];
+        logger.log("[AnnotationManager] Found annotations in attachment:", annotationIDs.length);
+        
+        // attachment.getAnnotations()在Zotero 7/8中返回的是annotation对象数组,而不是ID数组
+        for (const annotation of annotationIDs) {
+          if (!annotation) {
+            logger.log("[AnnotationManager] ⚠️ Skipping null annotation");
+            continue;
           }
-        } catch (error) {
-          ztoolkit.log(`Failed to upload annotation:`, error);
-          failedCount++;
+          
+          try {
+            // 直接从annotation对象构建ZoteroAnnotation
+            const zoteroAnn: ZoteroAnnotation = {
+              id: annotation.id || 0, // 如果没有id,使用0作为占位
+              key: annotation.key || '',
+              type: annotation.annotationType || 'highlight',
+              text: annotation.annotationText || '',
+              comment: annotation.annotationComment || '',
+              color: annotation.annotationColor || '#ffd400',
+              pageLabel: annotation.annotationPageLabel || '',
+              sortIndex: annotation.annotationSortIndex || '',
+              position: typeof annotation.annotationPosition === 'string' 
+                ? JSON.parse(annotation.annotationPosition) 
+                : (annotation.annotationPosition || {}),
+              tags: annotation.tags || [],
+              dateModified: annotation.dateModified || new Date().toISOString(),
+              parentItemID: item.id,
+              visibility: 'private',
+              showAuthorName: true,
+              synced: false
+            };
+            
+            logger.log("[AnnotationManager] ✓ Added annotation:", zoteroAnn.key, "text:", zoteroAnn.text.substring(0, 30));
+            annotations.push(zoteroAnn);
+          } catch (error) {
+            logger.error("[AnnotationManager] ❌ Error processing annotation:", error);
+          }
         }
       }
-
-      ztoolkit.log(`Upload complete: ${uploadedCount} successful, ${failedCount} failed`);
-      return failedCount === 0;
+      
+      // 按页码和位置排序
+      annotations.sort((a, b) => {
+        const pageA = parseInt(a.pageLabel) || 0;
+        const pageB = parseInt(b.pageLabel) || 0;
+        if (pageA !== pageB) return pageA - pageB;
+        return a.sortIndex.localeCompare(b.sortIndex);
+      });
+      
+      // 缓存结果
+      instance.annotationsCache.set(item.id, annotations);
+      
+      logger.log("[AnnotationManager] Total annotations found:", annotations.length);
+      return annotations;
+      
     } catch (error) {
-      ztoolkit.log("Error uploading annotations:", error);
+      logger.error("[AnnotationManager] Error getting annotations:", error);
+      return [];
+    }
+  }
+
+  /**
+   * 从Supabase同步标注状态
+   */
+  public static async syncAnnotationsWithSupabase(
+    itemAnnotations: ZoteroAnnotation[],
+    documentId: string,
+    userId: string
+  ): Promise<ZoteroAnnotation[]> {
+    const instance = AnnotationManager.getInstance();
+    
+    try {
+      logger.log("[AnnotationManager] Syncing with Supabase...");
+      
+      // 获取该文档的用户标注
+      const supabaseAnnotations = await instance.supabaseManager.getAnnotationsForDocument(
+        documentId,
+        userId
+      );
+      
+      logger.log("[AnnotationManager] Supabase annotations:", supabaseAnnotations.length);
+      
+      // 创建key到supabase annotation的映射
+      const supabaseMap = new Map<string, SupabaseAnnotation>();
+      supabaseAnnotations.forEach(ann => {
+        if (ann.original_id) {
+          supabaseMap.set(ann.original_id, ann);
+        }
+      });
+      
+      // 更新本地标注的状态
+      const updatedAnnotations = itemAnnotations.map(ann => {
+        const supabaseAnn = supabaseMap.get(ann.key);
+        if (supabaseAnn) {
+          return {
+            ...ann,
+            supabaseId: supabaseAnn.id,
+            visibility: supabaseAnn.visibility,
+            showAuthorName: supabaseAnn.show_author_name,
+            synced: true
+          };
+        }
+        return ann;
+      });
+      
+      return updatedAnnotations;
+      
+    } catch (error) {
+      logger.error("[AnnotationManager] Error syncing with Supabase:", error);
+      return itemAnnotations;
+    }
+  }
+
+  /**
+   * 更新单个标注的共享状态
+   */
+  public static async updateAnnotationSharing(
+    annotation: ZoteroAnnotation,
+    documentId: string,
+    userId: string,
+    visibility: 'private' | 'shared' | 'public',
+    showAuthorName: boolean
+  ): Promise<boolean> {
+    const instance = AnnotationManager.getInstance();
+    
+    try {
+      logger.log("[AnnotationManager] Updating annotation sharing:", annotation.key);
+      
+      if (annotation.supabaseId) {
+        // 更新现有标注
+        await instance.supabaseManager.updateAnnotationSharing(
+          annotation.supabaseId,
+          visibility,
+          showAuthorName
+        );
+      } else {
+        // 创建新标注
+        const newAnnotation = await instance.supabaseManager.createAnnotation({
+          document_id: documentId,
+          user_id: userId,
+          type: annotation.type,
+          content: annotation.text,
+          comment: annotation.comment,
+          color: annotation.color,
+          position: annotation.position,
+          tags: annotation.tags.map((t: any) => t.tag || t),
+          visibility: visibility,
+          show_author_name: showAuthorName,
+          platform: 'zotero',
+          original_id: annotation.key,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        });
+        
+        annotation.supabaseId = newAnnotation.id;
+      }
+      
+      // 更新本地状态
+      annotation.visibility = visibility;
+      annotation.showAuthorName = showAuthorName;
+      annotation.synced = true;
+      
+      logger.log("[AnnotationManager] Annotation sharing updated successfully");
+      return true;
+      
+    } catch (error) {
+      logger.error("[AnnotationManager] Error updating annotation sharing:", error);
       return false;
     }
   }
 
-  static async fetchSharedAnnotations(doi: string): Promise<SharedAnnotation[]> {
+  /**
+   * 批量更新标注共享状态
+   */
+  public static async batchUpdateAnnotationSharing(
+    annotations: ZoteroAnnotation[],
+    documentId: string,
+    userId: string,
+    visibility: 'private' | 'shared' | 'public',
+    showAuthorName: boolean
+  ): Promise<{ success: number; failed: number }> {
+    const instance = AnnotationManager.getInstance();
+    
     try {
-      // Get basic annotations
-      const annotations = await SupabaseAPI.getAnnotationsByDOI(doi);
-      if (annotations.length === 0) return [];
-
-      // Enrich with social data
-      const enrichedAnnotations: SharedAnnotation[] = [];
-      const currentUser = AuthManager.getCurrentUser();
-
-      for (const annotation of annotations) {
+      logger.log("[AnnotationManager] Batch updating annotations:", annotations.length);
+      
+      let success = 0;
+      let failed = 0;
+      
+      // 分离已同步和未同步的标注
+      const syncedAnnotations = annotations.filter(ann => ann.supabaseId);
+      const unsyncedAnnotations = annotations.filter(ann => !ann.supabaseId);
+      
+      // 批量更新已同步的标注
+      if (syncedAnnotations.length > 0) {
+        const ids = syncedAnnotations.map(ann => ann.supabaseId!);
         try {
-          // Get likes and comments count
-          const likes = await SupabaseAPI.getAnnotationLikes(annotation.id);
-          const comments = await SupabaseAPI.getAnnotationComments(annotation.id);
-
-          // Check if current user liked this annotation
-          const isLiked = currentUser ? likes.some(like => like.user_id === currentUser.id) : false;
-
-          // Check if current user follows the author
-          const isFollowingAuthor = currentUser && currentUser.id !== annotation.user_id ?
-            await SupabaseAPI.isFollowing(annotation.user_id) : false;
-
-          const enriched = DataTransform.databaseToDisplay(
-            annotation,
-            likes.length,
-            comments.length,
-            isLiked,
-            isFollowingAuthor
+          await instance.supabaseManager.batchUpdateAnnotationSharing(
+            ids,
+            visibility,
+            showAuthorName
           );
-
-          enrichedAnnotations.push(enriched);
+          success += syncedAnnotations.length;
+          
+          // 更新本地状态
+          syncedAnnotations.forEach(ann => {
+            ann.visibility = visibility;
+            ann.showAuthorName = showAuthorName;
+          });
         } catch (error) {
-          ztoolkit.log(`Error processing annotation ${annotation.id}:`, error);
-        }
-      }
-
-      // Calculate quality scores and sort
-      const qualityScores = await QualityScoringEngine.calculateBatchQualityScores(enrichedAnnotations);
-
-      // Update annotations with quality metrics
-      enrichedAnnotations.forEach(annotation => {
-        const metrics = qualityScores.get(annotation.id);
-        if (metrics) {
-          annotation.qualityMetrics = metrics;
-          annotation.quality_score = metrics.totalScore;
-        }
-      });
-
-      // Sort by quality score (high quality first)
-      return QualityScoringEngine.sortByQuality(enrichedAnnotations, qualityScores);
-    } catch (error) {
-      ztoolkit.log("Error fetching annotations:", error);
-      return [];
-    }
-  }
-
-  static async likeAnnotation(annotationId: string): Promise<boolean> {
-    if (!AuthManager.isLoggedIn()) return false;
-    try {
-      return await SupabaseAPI.likeAnnotation(annotationId);
-    } catch (error) {
-      ztoolkit.log("Error liking annotation:", error);
-      return false;
-    }
-  }
-
-  static async unlikeAnnotation(annotationId: string): Promise<boolean> {
-    if (!AuthManager.isLoggedIn()) return false;
-    try {
-      return await SupabaseAPI.unlikeAnnotation(annotationId);
-    } catch (error) {
-      ztoolkit.log("Error unliking annotation:", error);
-      return false;
-    }
-  }
-
-  static async addComment(annotationId: string, comment: string): Promise<boolean> {
-    if (!AuthManager.isLoggedIn()) return false;
-    try {
-      const result = await SupabaseAPI.addComment(annotationId, comment);
-      return result !== null;
-    } catch (error) {
-      ztoolkit.log("Error adding comment:", error);
-      return false;
-    }
-  }
-
-  static async followUser(userId: string): Promise<boolean> {
-    if (!AuthManager.isLoggedIn()) return false;
-    try {
-      return await SupabaseAPI.followUser(userId);
-    } catch (error) {
-      ztoolkit.log("Error following user:", error);
-      return false;
-    }
-  }
-
-  static async unfollowUser(userId: string): Promise<boolean> {
-    if (!AuthManager.isLoggedIn()) return false;
-    try {
-      return await SupabaseAPI.unfollowUser(userId);
-    } catch (error) {
-      ztoolkit.log("Error unfollowing user:", error);
-      return false;
-    }
-  }
-
-  static async getAnnotationComments(annotationId: string) {
-    try {
-      return await SupabaseAPI.getAnnotationComments(annotationId);
-    } catch (error) {
-      ztoolkit.log("Error getting comments:", error);
-      return [];
-    }
-  }
-
-  static async searchAnnotations(
-    doi: string,
-    searchText?: string,
-    filters?: {
-      minQualityScore?: number;
-      hasComments?: boolean;
-      hasLikes?: boolean;
-      authorIds?: string[];
-    }
-  ): Promise<SharedAnnotation[]> {
-    try {
-      const annotations = await this.fetchSharedAnnotations(doi);
-
-      if (!searchText && !filters) {
-        return annotations;
-      }
-
-      return DataTransform.filterAnnotations(annotations, {
-        searchText,
-        ...filters,
-      });
-    } catch (error) {
-      ztoolkit.log("Error searching annotations:", error);
-      return [];
-    }
-  }
-
-  static async handleItemChange(ids: Array<string | number>, extraData: any) {
-    try {
-      // Handle annotation changes - could trigger UI updates
-      ztoolkit.log("Item changed:", ids, extraData);
-      
-      // If items are modified, we might want to refresh shared annotations
-      // This is where we'd trigger UI updates for item pane or reader
-      
-    } catch (error) {
-      ztoolkit.log("Error handling item change:", error);
-    }
-  }
-
-  /**
-   * Get current item annotations (for UI display)
-   */
-  static async getCurrentItemAnnotations(): Promise<ZoteroAnnotation[]> {
-    // This method should return annotations for the currently selected item
-    // We can use the current item from UIManager or get it from Zotero
-    try {
-      const items = Zotero.getActiveZoteroPane().getSelectedItems();
-      if (items.length === 0) return [];
-      
-      const item = items[0];
-      if (item.isNote() || item.isAttachment()) {
-        const parentItem = item.getParent();
-        if (parentItem) {
-          return await this.extractLocalAnnotations(parentItem.id);
+          logger.error("[AnnotationManager] Error batch updating synced annotations:", error);
+          failed += syncedAnnotations.length;
         }
       }
       
-      return await this.extractLocalAnnotations(item.id);
+      // 逐个创建未同步的标注
+      for (const ann of unsyncedAnnotations) {
+        const result = await AnnotationManager.updateAnnotationSharing(
+          ann,
+          documentId,
+          userId,
+          visibility,
+          showAuthorName
+        );
+        if (result) {
+          success++;
+        } else {
+          failed++;
+        }
+      }
+      
+      logger.log("[AnnotationManager] Batch update completed:", { success, failed });
+      return { success, failed };
+      
     } catch (error) {
-      ztoolkit.log("Error getting current item annotations:", error);
-      return [];
+      logger.error("[AnnotationManager] Error in batch update:", error);
+      return { success: 0, failed: annotations.length };
     }
   }
 
   /**
-   * Toggle like status for annotation
+   * 清除缓存
    */
-  static async toggleLike(annotationId: string): Promise<boolean> {
-    try {
-      const currentUser = AuthManager.getCurrentUser();
-      if (!currentUser) return false;
-      
-      // For now, just toggle between like and unlike
-      // We can check current status later when SupabaseAPI has the method
-      return await this.likeAnnotation(annotationId);
-    } catch (error) {
-      ztoolkit.log("Error toggling like:", error);
-      return false;
+  public static clearCache(itemId?: number): void {
+    const instance = AnnotationManager.getInstance();
+    if (itemId) {
+      instance.annotationsCache.delete(itemId);
+    } else {
+      instance.annotationsCache.clear();
     }
   }
 
-  /**
-   * Get comments for annotation
-   */
-  static async getComments(annotationId: string) {
-    try {
-      return await this.getAnnotationComments(annotationId);
-    } catch (error) {
-      ztoolkit.log("Error getting comments:", error);
-      return [];
-    }
-  }
-
-  /**
-   * Get annotations for precise tracking (paragraph/sentence level)
-   */
-  static async getAnnotationsForPosition(doi: string, position: any): Promise<SharedAnnotation[]> {
-    try {
-      const allAnnotations = await this.fetchSharedAnnotations(doi);
-      
-      // Filter annotations by position/range
-      return allAnnotations.filter(annotation => {
-        if (!annotation.position || !position) return false;
-        return this.positionIntersects(annotation.position, position);
-      });
-    } catch (error) {
-      ztoolkit.log("Error getting position annotations:", error);
-      return [];
-    }
-  }
-
-  private static positionIntersects(annotationPos: any, targetPos: any): boolean {
-    // Implement position intersection logic
-    // This would be used for precise paragraph/sentence tracking
-    try {
-      if (!annotationPos || !targetPos) return false;
-      
-      // Simple range intersection check
-      if (annotationPos.pageIndex !== targetPos.pageIndex) return false;
-      
-      const aStart = annotationPos.rects?.[0]?.y || 0;
-      const aEnd = annotationPos.rects?.[annotationPos.rects.length - 1]?.y || 0;
-      const tStart = targetPos.y || 0;
-      const tEnd = targetPos.y || 0;
-      
-      return !(aEnd < tStart || tEnd < aStart);
-    } catch {
-      return false;
-    }
+  public static cleanup(): void {
+    const instance = AnnotationManager.getInstance();
+    instance.annotationsCache.clear();
+    instance.isInitialized = false;
+    AnnotationManager.instance = null;
+    logger.log("[AnnotationManager] Cleanup completed");
   }
 }

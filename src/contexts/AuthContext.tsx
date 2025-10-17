@@ -145,23 +145,61 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const handleAuthUser = async (authUser: SupabaseUser) => {
     if (!mountedRef.current) return
 
-    const appUser: User = {
+    // 先用默认role创建用户对象,立即更新UI
+    const tempUser: User = {
       id: authUser.id,
       email: authUser.email || '',
       username: authUser.user_metadata?.username || authUser.email?.split('@')[0] || 'User',
-      role: authUser.email === 'admin@test.edu.cn' ? 'admin' : 'user',
+      role: 'user',  // 临时默认值
       created_at: authUser.created_at,
       updated_at: authUser.updated_at || authUser.created_at,
       avatar_url: authUser.user_metadata?.avatar_url
     }
 
-    console.log('🔄 Setting authenticated user:', appUser.email)
+    console.log('🔄 Setting authenticated user (temp):', tempUser.email, 'with role:', tempUser.role)
     
-    // 原子性地更新所有认证状态
-    setUser(appUser)
+    // 立即更新认证状态,不阻塞UI
+    setUser(tempUser)
     setIsAuthenticated(true)
     
-    // 异步获取用户资料，但不阻塞认证状态
+    // 🆕 异步获取真实role,不阻塞登录流程
+    const fetchRole = async () => {
+      try {
+        if (supabase) {
+          console.log('🔍 Fetching user role from database for:', authUser.id)
+          const { data: userData, error: roleError } = await supabase
+            .from('users')
+            .select('role')
+            .eq('id', authUser.id)
+            .single()
+          
+          if (roleError) {
+            console.error('❌ Error fetching user role:', roleError)
+          } else if (userData && userData.role) {
+            console.log('✅ User role fetched from database:', userData.role)
+            
+            // 更新user对象的role
+            if (mountedRef.current) {
+              const updatedUser: User = {
+                ...tempUser,
+                role: userData.role
+              }
+              console.log('🔄 Updating user with role:', userData.role)
+              setUser(updatedUser)
+            }
+          } else {
+            console.warn('⚠️ No role found in database, keeping default')
+          }
+        }
+      } catch (error) {
+        console.error('❌ Failed to fetch user role:', error)
+      }
+    }
+    
+    // 异步获取role
+    fetchRole()
+    
+    // 异步获取用户资料
     setTimeout(() => {
       fetchProfile(authUser.id)
     }, 100)

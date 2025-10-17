@@ -1,37 +1,89 @@
 import { BasicTool } from "zotero-plugin-toolkit";
 import Addon from "./addon";
 import { config } from "../package.json";
+import { logger } from "./utils/logger";
 
-// Enable strict mode for Zotero 8 compatibility
-"use strict";
+// Import and initialize core modules to ensure they're included in build
+// Note: Some modules are not yet implemented
 
 const basicTool = new BasicTool();
 
-// Initialize the addon only once
-if (!basicTool.getGlobal("Zotero")[config.addonInstance]) {
-  // Create global addon instance
-  _globalThis.addon = new Addon();
-  
-  // Define global ztoolkit getter
-  defineGlobal("ztoolkit", () => {
-    return _globalThis.addon.data.ztoolkit;
-  });
+// 设置全局logger，让其他模块也可以使用
+(globalThis as any).logger = logger;
 
-  // Register addon instance on Zotero object
-  (Zotero as any)[config.addonInstance] = addon;
+// 在Zotero 8环境中，ChromeUtils.import已经被移除，提供兼容层
+try {
+  const chromeUtils = (globalThis as any).ChromeUtils;
+  if (chromeUtils && typeof chromeUtils.importESModule === "function") {
+    const shimmedImport = chromeUtils.import;
+    if (typeof shimmedImport !== "function" || !(shimmedImport as any).__usesESModuleShim) {
+      chromeUtils.import = ((moduleUrl: string, options?: Record<string, unknown>) => {
+        const finalOptions = options && Object.keys(options).length > 0
+          ? options
+          : { global: "contextual" };
+        return chromeUtils.importESModule(moduleUrl, finalOptions);
+      }) as typeof chromeUtils.importESModule;
+      (chromeUtils.import as any).__usesESModuleShim = true;
+      logger.log("[Index] Applied ChromeUtils.import ESModule shim");
+    }
+  }
+} catch (error) {
+  logger.warn("[Index] Failed to patch ChromeUtils.import", error);
+}
+
+// Get correct context - in bootstrap environment, script runs in ctx where ctx._globalThis = ctx
+// We need to check if the current global context has the _globalThis self-reference
+const ctx = (() => {
+  // In bootstrap context, the current execution context should have _globalThis property
+  // that points to itself
+  if ((globalThis as any)._globalThis === globalThis) {
+    return globalThis;
+  }
   
-  // Log successful initialization
-  console.log(`${config.addonName} initialized successfully`);
+  // If not found on globalThis, but we're clearly in Zotero environment,
+  // then we're still in the bootstrap context
+  if (typeof Services !== 'undefined' && typeof Zotero !== 'undefined') {
+    return globalThis;
+  }
+  
+  return globalThis;
+})();
+
+logger.log("[Index] Script loading...");
+logger.log("[Index] config.addonInstance:", config.addonInstance);
+logger.log("[Index] basicTool.getGlobal(Zotero):", typeof basicTool.getGlobal("Zotero"));
+logger.log("[Index] Checking existing instance:", !!basicTool.getGlobal("Zotero")[config.addonInstance]);
+
+if (!basicTool.getGlobal("Zotero")[config.addonInstance]) {
+  logger.log("[Index] Creating new addon instance...");
+  
+  // Create addon instance and store it directly
+  const addonInstance = new Addon();
+  ctx.addon = addonInstance;
+  
+  // Define global accessors with direct references to avoid recursion
+  defineGlobal("ztoolkit", () => {
+    return addonInstance.data.ztoolkit;
+  });
+  defineGlobal("addon", () => {
+    return addonInstance;
+  });
+  
+  logger.log("[Index] Setting Zotero[config.addonInstance]...");
+  Zotero[config.addonInstance] = addonInstance;
+  logger.log("[Index] Addon instance created and registered");
+  
+  // Preference panes are now registered only in bootstrap.js
+} else {
+  logger.log("[Index] Addon instance already exists");
 }
 
 function defineGlobal(name: Parameters<BasicTool["getGlobal"]>[0]): void;
 function defineGlobal(name: string, getter: () => any): void;
 function defineGlobal(name: string, getter?: () => any) {
-  Object.defineProperty(_globalThis, name, {
+  Object.defineProperty(ctx, name, {
     get() {
       return getter ? getter() : basicTool.getGlobal(name);
     },
-    configurable: true,
-    enumerable: true,
   });
 }

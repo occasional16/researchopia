@@ -1,8 +1,11 @@
+<!-- Researchopia 偏好设置面板 - XUL/XHTML 片段 -->
+<!-- 根据 Zotero 文档，偏好面板应该是片段，不需要 <?xml> 声明和根窗口元素 -->
 <linkset>
-  <html:link rel="localization" href="researchopia-preferences.ftl" />
-  <html:link rel="stylesheet" href="preferences.css" />
+  <html:link rel="stylesheet" href="preferences.css" xmlns:html="http://www.w3.org/1999/xhtml"/>
 </linkset>
-<vbox data-researchopia="true" onload="setTimeout(() => { if (typeof ResearchopiaPreferences !== 'undefined') ResearchopiaPreferences.init(); }, 100)">
+
+<!-- Scripts are loaded via preferences.js file -->
+<vbox data-researchopia="true">
   <groupbox>
     <label><html:h2>🔬 Researchopia - Academic Annotation Sharing</html:h2></label>
     <html:p class="description">Share and discover academic annotations with researchers worldwide</html:p>
@@ -11,108 +14,144 @@
     <groupbox>
       <label><html:h3>👤 Account</html:h3></label>
 
-      <!-- Login Section -->
-      <html:div id="login-section" class="auth-section">
-        <html:div class="form-group">
-          <html:label for="researchopia-email">Email:</html:label>
-          <html:input type="email" id="researchopia-email" placeholder="Enter your email" />
+      <!-- 登录容器 - 直接显示登录界面 -->
+      <html:div id="researchopia-login-container">
+        <!-- 登录表单 -->
+        <html:div class="login-form" id="login-form-section">
+          <html:h3>连接到 Researchopia</html:h3>
+          <html:p class="login-description">登录以分享和访问社区标注</html:p>
+          <html:div class="form-group" style="display: flex; align-items: center; gap: 8px;">
+            <html:label for="email-input">邮箱地址:</html:label>
+            <html:input type="email" id="email-input" placeholder="your.email@example.com" />
+            <html:a href="javascript:void(0)" onclick="openExternalLink('https://www.researchopia.com/')" id="create-account" style="flex-shrink: 0; color: var(--accent-blue); text-decoration: none; font-size: 12px; white-space: nowrap;">创建账户</html:a>
+          </html:div>
+          <html:div class="form-group" style="display: flex; align-items: center; gap: 8px;">
+            <html:label for="password-input">密码:</html:label>
+            <html:input type="password" id="password-input" placeholder="请输入您的密码" />
+            <html:a href="javascript:void(0)" onclick="openExternalLink('https://www.researchopia.com/')" id="forgot-password" style="flex-shrink: 0; color: var(--accent-blue); text-decoration: none; font-size: 12px; white-space: nowrap;">忘记密码</html:a>
+          </html:div>
+          <html:div class="form-actions">
+            <html:button id="test-connection-btn" class="researchopia-btn secondary" onclick="onTestConnection()">
+              <html:span class="btn-text">测试连接</html:span>
+              <html:span class="btn-loading" style="display: none;">检测中...</html:span>
+            </html:button>
+            <html:button id="login-btn" class="researchopia-btn primary" onclick="onLogin()">
+              <html:span class="btn-text">登录</html:span>
+              <html:span class="btn-loading" style="display: none;">登录中...</html:span>
+            </html:button>
+          </html:div>
+          <html:div id="login-message" class="message"></html:div>
         </html:div>
-        <html:div class="form-group">
-          <html:label for="researchopia-password">Password:</html:label>
-          <html:input type="password" id="researchopia-password" placeholder="Enter your password" />
-        </html:div>
-        <html:div class="form-group">
-          <html:button id="researchopia-login-btn" class="primary-button">Login</html:button>
-          <html:button id="researchopia-register-btn" class="secondary-button">Register</html:button>
-          <html:button id="researchopia-test-connection-btn" class="test-button">Test Connection</html:button>
+        
+        <!-- 已登录状态 -->
+        <html:div class="logged-in-status" id="logged-in-section" style="display: none;">
+          <html:h3>已连接到 Researchopia</html:h3>
+          <html:div class="user-info">
+            <html:div class="user-details">
+              <html:div class="user-name">
+                <html:strong>用户名: </html:strong>
+                <html:span id="user-name-display">--</html:span>
+              </html:div>
+              <html:div class="user-email">
+                <html:strong>邮箱: </html:strong>
+                <html:span id="user-email-display">--</html:span>
+              </html:div>
+              <html:div class="login-time">
+                <html:strong>登录时间: </html:strong>
+                <html:span id="login-time-display">--</html:span>
+              </html:div>
+            </html:div>
+            <html:div class="user-actions">
+              <html:button id="check-status-btn" class="researchopia-btn secondary" onclick="onCheckStatus()">
+                <html:span class="btn-text">检测登录状态</html:span>
+                <html:span class="btn-loading" style="display: none;">检测中...</html:span>
+              </html:button>
+              <html:button id="logout-btn" class="researchopia-btn danger" onclick="onLogout()">
+                <html:span class="btn-text">登出</html:span>
+                <html:span class="btn-loading" style="display: none;">登出中...</html:span>
+              </html:button>
+              <html:button id="sync-btn" class="researchopia-btn" onclick="onSync()">
+                <html:span class="btn-text">同步数据</html:span>
+                <html:span class="btn-loading" style="display: none;">同步中...</html:span>
+              </html:button>
+            </html:div>
+          </html:div>
+          <html:div id="status-message" class="message"></html:div>
         </html:div>
       </html:div>
-
-      <!-- Logout Section -->
-      <html:div id="logout-section" class="auth-section" style="display: none;">
-        <html:div class="user-info">
-          <html:p id="user-email-display">Logged in as: <html:span id="current-user-email"></html:span></html:p>
-          <html:p id="login-time-display">Login time: <html:span id="current-login-time"></html:span></html:p>
-        </html:div>
-        <html:div class="form-group">
-          <html:button id="researchopia-logout-btn" class="danger-button">Logout</html:button>
-          <html:button id="researchopia-refresh-btn" class="secondary-button">Refresh Status</html:button>
-        </html:div>
-      </html:div>
-
-      <!-- Status Display -->
-      <html:div id="auth-status" class="status-message info">Please log in to access shared annotations</html:div>
     </groupbox>
 
-    <!-- Features Section -->
+    <!-- 标注功能部分 -->
     <groupbox>
-      <label><html:h3>📝 Annotation Features</html:h3></label>
+      <label><html:h3>📝 标注功能</html:h3></label>
       <html:div class="form-group">
         <html:label class="checkbox-label">
           <html:input type="checkbox" id="auto-upload-annotations" />
-          <html:span>Automatically upload new annotations</html:span>
-          <html:small>New annotations will be shared immediately when created</html:small>
+          <html:span>自动上传新标注</html:span>
+          <html:small>创建新标注时立即分享</html:small>
         </html:label>
       </html:div>
       <html:div class="form-group">
         <html:label class="checkbox-label">
           <html:input type="checkbox" id="show-notifications" />
-          <html:span>Show notification messages</html:span>
-          <html:small>Display status messages for uploads, downloads, and errors</html:small>
+          <html:span>显示通知消息</html:span>
+          <html:small>显示上传、下载和错误的状态消息</html:small>
         </html:label>
       </html:div>
       <html:div class="form-group">
         <html:label class="checkbox-label">
           <html:input type="checkbox" id="enable-precise-tracking" />
-          <html:span>Enable precise annotation tracking</html:span>
-          <html:small>Track annotations at paragraph and sentence level (experimental)</html:small>
+          <html:span>启用精确标注跟踪</html:span>
+          <html:small>在段落和句子级别跟踪标注（实验性功能）</html:small>
         </html:label>
       </html:div>
     </groupbox>
 
-    <!-- Privacy Section -->
+    <!-- 隐私设置部分 -->
     <groupbox>
-      <label><html:h3>🔒 Privacy Settings</html:h3></label>
+      <label><html:h3>🔒 隐私设置</html:h3></label>
       <html:div class="form-group">
-        <html:label for="default-visibility">Default annotation visibility:</html:label>
+        <html:label for="default-visibility">默认标注可见性:</html:label>
         <html:select id="default-visibility">
-          <html:option value="public">Public - Visible to all users</html:option>
-          <html:option value="followers">Followers only</html:option>
-          <html:option value="private">Private - Only visible to me</html:option>
+          <html:option value="public">公开 - 所有用户可见</html:option>
+          <html:option value="followers">仅关注者</html:option>
+          <html:option value="private">私人 - 仅我可见</html:option>
         </html:select>
       </html:div>
       <html:div class="form-group">
         <html:label class="checkbox-label">
           <html:input type="checkbox" id="allow-anonymous-view" />
-          <html:span>Allow anonymous users to view my public annotations</html:span>
+          <html:span>允许匿名用户查看我的公开标注</html:span>
         </html:label>
       </html:div>
     </groupbox>
 
-    <!-- Display Section -->
+    <!-- 显示选项部分 -->
     <groupbox>
-      <label><html:h3>🎨 Display Options</html:h3></label>
+      <label><html:h3>🎨 显示选项</html:h3></label>
       <html:div class="form-group">
-        <html:label for="annotation-display-mode">Annotation display mode:</html:label>
+        <html:label for="annotation-display-mode">标注显示模式:</html:label>
         <html:select id="annotation-display-mode">
-          <html:option value="inline">Inline with text</html:option>
-          <html:option value="sidebar">Sidebar panel</html:option>
-          <html:option value="popup">Popup on hover</html:option>
+          <html:option value="inline">内嵌文本</html:option>
+          <html:option value="sidebar">侧边栏面板</html:option>
+          <html:option value="popup">悬停弹出</html:option>
         </html:select>
       </html:div>
       <html:div class="form-group">
-        <html:label for="max-annotations-per-page">Max annotations per page:</html:label>
+        <html:label for="max-annotations-per-page">每页最大标注数:</html:label>
         <html:input type="number" id="max-annotations-per-page" min="5" max="100" value="20" />
       </html:div>
     </groupbox>
 
-    <!-- About Section -->
+
+
+    <!-- 关于部分 -->
     <groupbox>
-      <label><html:h3>ℹ️ About</html:h3></label>
+      <label><html:h3>ℹ️ 关于</html:h3></label>
       <html:div class="about-info">
-        <html:p><strong>Version:</strong> 0.1.1</html:p>
-        <html:p><strong>Compatible with:</strong> Zotero 8 beta</html:p>
-        <html:p><strong>Support:</strong> <html:a href="https://github.com/occasional15/researchopia/issues">GitHub Issues</html:a></html:p>
+        <html:p><strong>版本:</strong> 0.2.0</html:p>
+        <html:p><strong>兼容:</strong> Zotero 8 beta</html:p>
+        <html:p><strong>支持:</strong> <html:a href="https://github.com/occasional15/researchopia/issues">GitHub Issues</html:a></html:p>
         <html:div class="stats-container" id="user-stats" style="display: none;">
           <html:h4>Your Statistics</html:h4>
           <html:div class="stats-grid">

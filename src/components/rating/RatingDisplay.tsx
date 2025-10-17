@@ -111,7 +111,10 @@ export default function RatingDisplay({ ratings, showAdvanced = true }: RatingDi
                   <User size={16} className="text-gray-600" />
                 </div>
                 <span className="font-medium text-gray-900">
-                  {rating.users?.username || '匿名用户'}
+                  {/* 🆕 处理匿名显示 */}
+                  {rating.is_anonymous || !rating.show_username 
+                    ? '匿名学者' 
+                    : (rating.users?.username || '匿名用户')}
                 </span>
               </div>
               <span className="text-sm text-gray-500">

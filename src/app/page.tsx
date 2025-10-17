@@ -148,7 +148,7 @@ export default function HomePage() {
             return null
           }).catch(() => null),
 
-          fetch('/api/papers/recent-comments?limit=5', {
+          fetch('/api/papers/paginated?sortBy=recent_comments&limit=5&page=1', {
             headers: { 'Content-Type': 'application/json' },
             cache: 'force-cache',
             next: { revalidate: 180 } // 3分钟缓存
@@ -157,7 +157,7 @@ export default function HomePage() {
               const text = await res.text()
               if (text) {
                 const data = JSON.parse(text)
-                return data.success ? data.data : null
+                return data.data || null
               }
             }
             return null
@@ -199,7 +199,27 @@ export default function HomePage() {
 
         // 处理评论数据
         if (commentsResponse.status === 'fulfilled' && commentsResponse.value && commentsResponse.value.length > 0) {
-          setRecentComments(commentsResponse.value)
+          // 转换paginated API数据格式为expected格式
+          const transformedComments = commentsResponse.value
+            .filter((paper: any) => paper.comment_count > 0) // 只显示有评论的论文
+            .map((paper: any) => ({
+              id: paper.id,
+              title: paper.title,
+              authors: paper.authors,
+              doi: paper.doi,
+              journal: paper.journal,
+              created_at: paper.created_at,
+              latest_comment: {
+                id: `mock-${paper.id}`,
+                content: '查看详情以阅读最新评论...',
+                created_at: paper.latest_comment_time ? new Date(paper.latest_comment_time).toISOString() : paper.created_at,
+                user: { username: '论文作者' }
+              },
+              comment_count: paper.comment_count,
+              rating_count: paper.rating_count,
+              average_rating: paper.average_rating
+            }))
+          setRecentComments(transformedComments.slice(0, 5))
         } else {
           // 如果没有真实评论数据，设置为空数组而不是模拟数据
           setRecentComments([])
@@ -688,36 +708,6 @@ export default function HomePage() {
 
       {/* 网络优化组件 */}
       <NetworkOptimizer />
-
-      {/* 开发环境调试面板 */}
-      {process.env.NODE_ENV === 'development' && (
-        <div className="bg-gray-100 border border-gray-300 rounded-lg p-4 mt-8">
-          <h3 className="text-lg font-semibold text-gray-800 mb-3">🔧 访问统计调试信息</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-            <div>
-              <span className="font-medium text-gray-600">总访问量:</span>
-              <span className="ml-2 text-blue-600 font-bold">{stats.totalVisits}</span>
-            </div>
-            <div>
-              <span className="font-medium text-gray-600">今日访问:</span>
-              <span className="ml-2 text-green-600 font-bold">{stats.todayVisits}</span>
-            </div>
-            <div>
-              <span className="font-medium text-gray-600">论文数量:</span>
-              <span className="ml-2 text-purple-600 font-bold">{stats.totalPapers}</span>
-            </div>
-            <div>
-              <span className="font-medium text-gray-600">用户数量:</span>
-              <span className="ml-2 text-orange-600 font-bold">{stats.totalUsers}</span>
-            </div>
-          </div>
-          <div className="mt-3 text-xs text-gray-500">
-            <p>• 访问统计每60秒自动刷新</p>
-            <p>• 每次页面加载会记录一次访问</p>
-            <p>• 数据来源：Supabase realtime_counters 表</p>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

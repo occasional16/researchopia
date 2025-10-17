@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Heart, Calendar, ExternalLink, Star, Users } from 'lucide-react'
 import { getUserFavorites, removeFromFavorites, type PaperWithFavorite } from '@/lib/favorites'
+import { getPaperRoute } from '@/utils/paperRoutes'
 import { useAuth } from '@/contexts/AuthContext'
 
 export default function UserFavorites() {
@@ -97,7 +98,7 @@ export default function UserFavorites() {
               <div className="flex-1">
                 <div className="flex items-center space-x-2 mb-2">
                   <Link
-                    href={`/papers/${paper.id}`}
+                    href={getPaperRoute(paper).href}
                     className="text-lg font-medium text-gray-900 hover:text-blue-600 transition-colors"
                   >
                     {paper.title}

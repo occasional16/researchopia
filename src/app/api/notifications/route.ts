@@ -76,6 +76,13 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       notifications,
       unread_count: unreadCount || 0
+    }, {
+      headers: {
+        // 缓存策略: 用户特定数据,较短缓存时间
+        'Cache-Control': 'private, max-age=60, stale-while-revalidate=180',
+        // Vary头确保不同用户不会获取到缓存的其他用户数据
+        'Vary': 'Authorization'
+      }
     })
   } catch (error: any) {
     console.error('Get notifications error:', error)

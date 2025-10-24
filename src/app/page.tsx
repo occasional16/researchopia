@@ -10,7 +10,7 @@ import { useSmartSearch } from '@/hooks/useSmartSearch'
 import { useAuthenticatedFetch } from '@/hooks/useAuthenticatedFetch'
 import NetworkOptimizer from '@/components/NetworkOptimizer'
 import AnnouncementForm from '@/components/AnnouncementForm'
-import { deduplicatedFetch } from '@/utils/requestDeduplicator'
+import { deduplicatedFetch, clearRequestCache } from '@/utils/requestDeduplicator'
 
 // 日期格式化工具函数（避免hydration错误）
 function formatDate(dateString: string): string {
@@ -159,10 +159,8 @@ export default function HomePage() {
           }).catch(() => null),
 
           fetch('/api/announcements', {
-            headers: { 
-              'Content-Type': 'application/json',
-              'Cache-Control': 'max-age=300' // 5分钟客户端缓存
-            }
+            headers: { 'Content-Type': 'application/json' },
+            cache: 'no-store' // 禁用浏览器缓存,总是获取最新数据
           }).then(async res => {
             if (res.ok) {
               const text = await res.text()
@@ -289,9 +287,15 @@ export default function HomePage() {
   // 刷新公告数据
   const refreshAnnouncements = async () => {
     try {
+      // 清除announcements API的所有缓存(包括浏览器和requestDeduplicator)
+      clearRequestCache('/api/announcements')
+      
       const response = await fetch('/api/announcements', {
-        headers: { 'Content-Type': 'application/json' },
-        cache: 'no-store'
+        headers: { 
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache' // 强制服务端重新获取
+        },
+        cache: 'no-store' // 禁用浏览器缓存
       })
       const data = await response.json()
       if (data.success && data.data) {

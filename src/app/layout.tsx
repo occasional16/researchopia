@@ -1,22 +1,12 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { AuthProvider } from "@/contexts/AuthContext";
-import { AdminProvider } from "@/contexts/AdminContext";
-import { LanguageProvider } from "@/contexts/LanguageContext";
 import Navbar from "@/components/layout/Navbar";
 import { DevPerformanceMonitor } from "@/components/ui/PerformanceMonitor";
 import SafeWrapper from "@/components/SafeWrapper";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
-import { QueryProvider } from "@/components/providers/QueryProvider";
-import dynamic from 'next/dynamic';
-
-// 动态导入 ReCaptchaProvider，禁用 SSR
-const ReCaptchaProvider = dynamic(
-  () => import("@/components/auth/ReCaptchaProvider"),
-  { ssr: false }
-);
+import ClientProviders from "@/components/providers/ClientProviders";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -114,25 +104,17 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-50`}
       >
-        <QueryProvider>
-          <ReCaptchaProvider>
-            <LanguageProvider>
-              <AuthProvider>
-                <AdminProvider>
-                  <SafeWrapper>
-                    <div className="min-h-screen">
-                      <Navbar />
-                      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                        {children}
-                      </main>
-                      <DevPerformanceMonitor />
-                    </div>
-                  </SafeWrapper>
-                </AdminProvider>
-              </AuthProvider>
-            </LanguageProvider>
-          </ReCaptchaProvider>
-        </QueryProvider>
+        <ClientProviders>
+          <SafeWrapper>
+            <div className="min-h-screen">
+              <Navbar />
+              <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                {children}
+              </main>
+              <DevPerformanceMonitor />
+            </div>
+          </SafeWrapper>
+        </ClientProviders>
         <SpeedInsights />
         <Analytics />
       </body>

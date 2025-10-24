@@ -187,9 +187,9 @@ export default function UserProfilePage() {
   }
 
   const tabs = [
-    { id: 'overview', name: '概览', icon: BarChart3 },
-    { id: 'papers', name: '论文相关', icon: BookOpen },
-    { id: 'annotations', name: 'Zotero标注相关', icon: FileText },
+    { id: 'overview', name: '概览', icon: BarChart3, count: undefined as number | undefined },
+    { id: 'papers', name: '论文相关', icon: BookOpen, count: (stats.total_favorites + stats.total_ratings + stats.total_comments) || undefined },
+    { id: 'annotations', name: 'Zotero标注相关', icon: FileText, count: (annotations.length + annotationComments.length) || undefined },
   ]
 
   return (

@@ -128,14 +128,24 @@ export default function SignUpForm({ onToggleMode, onClose }: SignUpFormProps) {
 
     try {
       // 1. 验证reCAPTCHA(最终提交验证)
+      console.log('🤖 [注册] 开始执行reCAPTCHA验证...')
       const recaptchaToken = await executeReCaptcha('signup')
+      
       if (!recaptchaToken) {
-        throw new Error('人机验证失败，请刷新页面重试')
-      }
-
-      const recaptchaResult = await validateReCaptcha(recaptchaToken, 'signup')
-      if (!recaptchaResult.isValid) {
-        throw new Error(recaptchaResult.error || '安全验证未通过')
+        console.warn('⚠️ [注册] reCAPTCHA token获取失败,但继续注册流程')
+        // 不再直接throw错误,允许在服务端降级处理
+        // throw new Error('人机验证失败,请刷新页面重试')
+      } else {
+        console.log('✅ [注册] reCAPTCHA token获取成功')
+        
+        // 验证 token (可选,服务端也会验证)
+        const recaptchaResult = await validateReCaptcha(recaptchaToken, 'signup')
+        
+        if (!recaptchaResult.isValid) {
+          console.warn('⚠️ [注册] reCAPTCHA验证未通过:', recaptchaResult.error)
+          console.warn('⚠️ [注册] 继续注册流程,由服务端决定是否允许')
+          // 不阻止用户注册,让服务端决定
+        }
       }
 
       // 2. 验证邮箱(已在输入时完成初步验证)

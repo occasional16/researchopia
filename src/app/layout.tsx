@@ -10,7 +10,13 @@ import SafeWrapper from "@/components/SafeWrapper";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
 import { QueryProvider } from "@/components/providers/QueryProvider";
-import ReCaptchaProvider from "@/components/auth/ReCaptchaProvider";
+import dynamic from 'next/dynamic';
+
+// 动态导入 ReCaptchaProvider，禁用 SSR
+const ReCaptchaProvider = dynamic(
+  () => import("@/components/auth/ReCaptchaProvider"),
+  { ssr: false }
+);
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

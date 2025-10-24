@@ -124,9 +124,9 @@ export async function GET(request: NextRequest) {
             source: 'supabase'
           }, {
             headers: {
-              // 公告数据变化不频繁,使用较长缓存时间
-              'Cache-Control': 'public, s-maxage=1800, max-age=600, stale-while-revalidate=3600',
-              'CDN-Cache-Control': 'public, s-maxage=3600'
+              // 公告数据由管理员动态管理,需要较短缓存以快速更新
+              'Cache-Control': 'public, s-maxage=60, max-age=30, stale-while-revalidate=300',
+              'CDN-Cache-Control': 'public, s-maxage=120' // CDN缓存2分钟
             }
           })
         }

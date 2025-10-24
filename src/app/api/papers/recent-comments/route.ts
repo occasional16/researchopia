@@ -106,7 +106,8 @@ export async function GET(request: NextRequest) {
         data: mockRecentComments.slice(0, limit)
       }, {
         headers: {
-          'Cache-Control': 'public, max-age=300',
+          'Cache-Control': 'public, s-maxage=600, max-age=300, stale-while-revalidate=1800',
+          'CDN-Cache-Control': 'public, s-maxage=1200'
         }
       })
     }
@@ -200,7 +201,9 @@ export async function GET(request: NextRequest) {
         data: result
       }, {
         headers: {
-          'Cache-Control': 'public, max-age=300',
+          // 优化缓存策略: 延长缓存时间并添加后台重验证
+          'Cache-Control': 'public, s-maxage=600, max-age=300, stale-while-revalidate=1800',
+          'CDN-Cache-Control': 'public, s-maxage=1200'
         }
       })
 
@@ -217,7 +220,8 @@ export async function GET(request: NextRequest) {
         data: sortedMockData
       }, {
         headers: {
-          'Cache-Control': 'public, max-age=60',
+          'Cache-Control': 'public, s-maxage=300, max-age=180, stale-while-revalidate=900',
+          'CDN-Cache-Control': 'public, s-maxage=600'
         }
       })
     }
@@ -235,7 +239,8 @@ export async function GET(request: NextRequest) {
       data: fallbackData
     }, {
       headers: {
-        'Cache-Control': 'public, max-age=60',
+        'Cache-Control': 'public, s-maxage=300, max-age=180, stale-while-revalidate=900',
+        'CDN-Cache-Control': 'public, s-maxage=600'
       }
     })
   }

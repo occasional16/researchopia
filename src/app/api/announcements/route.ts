@@ -122,6 +122,12 @@ export async function GET(request: NextRequest) {
             success: true,
             data: data,
             source: 'supabase'
+          }, {
+            headers: {
+              // 公告数据变化不频繁,使用较长缓存时间
+              'Cache-Control': 'public, s-maxage=1800, max-age=600, stale-while-revalidate=3600',
+              'CDN-Cache-Control': 'public, s-maxage=3600'
+            }
           })
         }
 
@@ -151,6 +157,11 @@ export async function GET(request: NextRequest) {
       success: true,
       data: filteredAnnouncements,
       source: 'fallback'
+    }, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=1800, max-age=600, stale-while-revalidate=3600',
+        'CDN-Cache-Control': 'public, s-maxage=3600'
+      }
     })
   } catch (error) {
     console.error('Error in GET /api/announcements:', error)

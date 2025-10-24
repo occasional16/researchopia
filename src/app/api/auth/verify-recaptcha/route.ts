@@ -22,19 +22,30 @@ export async function POST(request: NextRequest) {
       }, { status: 500 })
     }
 
-    // 检查是否为测试密钥
-    const isTestKey = secretKey === '6Lcco9MrAAAAAE_RcXECKqmAg2dj2SWza7_aGWp1' ||
-                     siteKey === '6Lcco9MrAAAAAKtxnQLg6qoy9Ndj0Jb_a7j1bk6E'
+    // 检查是否为测试密钥(Google提供的通用测试密钥)
+    const isGoogleTestKey = 
+      secretKey === '6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe' || // Google官方测试secret
+      siteKey === '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI'    // Google官方测试site key
+    
+    // 检查是否为我们自己的测试密钥(可能只在localhost有效)
+    const isLocalTestKey = secretKey === '6Lcco9MrAAAAAE_RcXECKqmAg2dj2SWza7_aGWp1' ||
+                           siteKey === '6Lcco9MrAAAAAKtxnQLg6qoy9Ndj0Jb_a7j1bk6E'
 
-    if (isTestKey) {
-      console.warn('Using test reCAPTCHA keys - this may not work in production')
-      // 在测试环境中，我们可以模拟成功的验证
+    if (isGoogleTestKey) {
+      console.warn('⚠️ 使用Google官方测试密钥 - 所有请求都会通过验证')
       return NextResponse.json({
         success: true,
         score: 0.9,
         message: '测试环境验证通过',
         isTest: true
       })
+    }
+
+    if (isLocalTestKey) {
+      console.warn('⚠️ 使用自定义测试密钥 - 可能仅在localhost有效')
+      console.warn(`⚠️ 当前请求来自: ${request.headers.get('host')}`)
+      console.warn(`⚠️ 如果在生产环境失败,请访问 https://www.google.com/recaptcha/admin 注册新密钥`)
+      // 继续执行真实验证,不直接返回成功
     }
 
     // 验证reCAPTCHA token
@@ -61,10 +72,25 @@ export async function POST(request: NextRequest) {
 
     if (!verifyResult.success) {
       console.error('❌ [verify-recaptcha] reCAPTCHA verification failed:', verifyResult['error-codes'])
+      console.error('❌ [verify-recaptcha] 完整响应:', JSON.stringify(verifyResult))
+      
+      // 提供更友好的错误信息
+      let errorMessage = '人机验证失败，请重试'
+      const errorCodes = verifyResult['error-codes'] || []
+      
+      if (errorCodes.includes('invalid-input-secret')) {
+        errorMessage = 'reCAPTCHA密钥配置错误，请联系管理员'
+        console.error('❌ RECAPTCHA_SECRET_KEY 配置错误!')
+      } else if (errorCodes.includes('invalid-input-response')) {
+        errorMessage = '验证token无效，请刷新页面重试'
+      } else if (errorCodes.includes('timeout-or-duplicate')) {
+        errorMessage = '验证已过期或重复使用，请重新验证'
+      }
+      
       return NextResponse.json({
         success: false,
-        message: '人机验证失败，请重试',
-        errors: verifyResult['error-codes']
+        message: errorMessage,
+        errors: errorCodes
       }, { status: 400 })
     }
 

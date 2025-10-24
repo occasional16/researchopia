@@ -10,6 +10,7 @@ import { useSmartSearch } from '@/hooks/useSmartSearch'
 import { useAuthenticatedFetch } from '@/hooks/useAuthenticatedFetch'
 import NetworkOptimizer from '@/components/NetworkOptimizer'
 import AnnouncementForm from '@/components/AnnouncementForm'
+import { deduplicatedFetch } from '@/utils/requestDeduplicator'
 
 // 日期格式化工具函数（避免hydration错误）
 function formatDate(dateString: string): string {
@@ -133,24 +134,13 @@ export default function HomePage() {
         // 先记录访问，再加载数据，避免状态被覆盖
         await trackVisit()
 
-        // 并行加载统计数据、评论数据和公告数据，提高性能
-        // 使用 Promise.all 替代 Promise.allSettled 以便更好地处理错误
+        // 并行加载统计数据、评论数据和公告数据,使用请求去重工具
         const [statsResponse, commentsResponse, announcementsResponse] = await Promise.allSettled([
-          fetch('/api/site/statistics', {
-            headers: { 
-              'Content-Type': 'application/json',
-              'Cache-Control': 'max-age=300' // 客户端也使用5分钟缓存
-            }
-          }).then(async res => {
-            if (res.ok) {
-              const text = await res.text()
-              if (text) {
-                const data = JSON.parse(text)
-                return data.success ? data.data : null
-              }
-            }
-            return null
-          }).catch(() => null),
+          deduplicatedFetch('/api/site/statistics', {
+            headers: { 'Content-Type': 'application/json' }
+          }, 1000, 300000) // 1秒去重,5分钟缓存
+            .then(data => data.success ? data.data : null)
+            .catch(() => null),
 
           fetch('/api/papers/recent-comments?limit=5', {
             headers: { 
@@ -244,26 +234,18 @@ export default function HomePage() {
     // 定时刷新统计数据（每5分钟）- 从60秒优化为300秒
     const interval = setInterval(async () => {
       try {
-        const res = await fetch('/api/site/statistics', { 
-          headers: { 
-            'Content-Type': 'application/json',
-            'Cache-Control': 'max-age=300' // 客户端使用Cache-Control而非next选项
-          }
-        })
-        if (res.ok) {
-          const text = await res.text()
-          if (text) {
-            const data = JSON.parse(text)
-            if (data.success && data.data) {
-              setStats((prev) => ({
-                ...prev,
-                totalPapers: data.data.totalPapers ?? prev.totalPapers,
-                totalUsers: data.data.totalUsers ?? prev.totalUsers,
-                totalVisits: data.data.totalVisits ?? prev.totalVisits,
-                todayVisits: data.data.todayVisits ?? prev.todayVisits,
-              }))
-            }
-          }
+        const data = await deduplicatedFetch('/api/site/statistics', {
+          headers: { 'Content-Type': 'application/json' }
+        }, 1000, 300000) // 1秒去重,5分钟缓存
+        
+        if (data.success && data.data) {
+          setStats((prev) => ({
+            ...prev,
+            totalPapers: data.data.totalPapers ?? prev.totalPapers,
+            totalUsers: data.data.totalUsers ?? prev.totalUsers,
+            totalVisits: data.data.totalVisits ?? prev.totalVisits,
+            todayVisits: data.data.todayVisits ?? prev.todayVisits,
+          }))
         }
       } catch {}
     }, 300000) // 60000ms -> 300000ms (1分钟 -> 5分钟)

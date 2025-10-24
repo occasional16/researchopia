@@ -438,10 +438,6 @@ export default function SignUpForm({ onToggleMode, onClose }: SignUpFormProps) {
           </div>
           <div className="mt-2 space-y-1 text-xs text-blue-600">
             <div className="flex items-center space-x-2">
-              <Shield className="h-3 w-3 text-blue-500" />
-              <span>1. Google reCAPTCHA 人机验证（邮箱验证时自动执行）</span>
-            </div>
-            <div className="flex items-center space-x-2">
               {emailValidation?.isEducational ? (
                 <CheckCircle className="h-3 w-3 text-green-500" />
               ) : emailValidation && !emailValidation.isEducational ? (
@@ -449,20 +445,21 @@ export default function SignUpForm({ onToggleMode, onClose }: SignUpFormProps) {
               ) : (
                 <div className="h-3 w-3 rounded-full border border-gray-300" />
               )}
-              <span>2. 教育邮箱验证</span>
+              <span>1. 教育邮箱验证</span>
             </div>
             <div className="flex items-center space-x-2">
               {emailValidation?.isDeliverable ? (
                 <CheckCircle className="h-3 w-3 text-green-500" />
-              ) : emailValidation && emailValidation.isEducational && !emailValidation.isDeliverable ? (
+              ) : emailValidation && emailValidation.isEducational && emailValidation.isDeliverable === false ? (
                 <XCircle className="h-3 w-3 text-red-500" />
               ) : (
                 <div className="h-3 w-3 rounded-full border border-gray-300" />
               )}
-              <span>3. 邮箱可投递性检查</span>
-              {emailValidation?.error && (
-                <span className="text-xs text-red-500">({emailValidation.error})</span>
-              )}
+              <span>2. 邮箱可投递性检查</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Shield className="h-3 w-3 text-blue-500" />
+              <span>3. Google reCAPTCHA 人机验证（提交时自动执行）</span>
             </div>
           </div>
         </div>

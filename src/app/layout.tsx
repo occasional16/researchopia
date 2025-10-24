@@ -8,6 +8,8 @@ import Navbar from "@/components/layout/Navbar";
 import { DevPerformanceMonitor } from "@/components/ui/PerformanceMonitor";
 import SafeWrapper from "@/components/SafeWrapper";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { Analytics } from "@vercel/analytics/react";
+import { QueryProvider } from "@/components/providers/QueryProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -98,26 +100,32 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/logo-main.svg" />
         <meta name="theme-color" content="#7c3aed" />
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+        {/* DNS预解析和预连接，优化外部资源加载 */}
+        <link rel="dns-prefetch" href={process.env.NEXT_PUBLIC_SUPABASE_URL || ''} />
+        <link rel="preconnect" href={process.env.NEXT_PUBLIC_SUPABASE_URL || ''} />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-50`}
       >
-        <LanguageProvider>
-          <AuthProvider>
-            <AdminProvider>
-              <SafeWrapper>
-                <div className="min-h-screen">
-                  <Navbar />
-                  <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                    {children}
-                  </main>
-                  <DevPerformanceMonitor />
-                </div>
-              </SafeWrapper>
-            </AdminProvider>
-          </AuthProvider>
-        </LanguageProvider>
+        <QueryProvider>
+          <LanguageProvider>
+            <AuthProvider>
+              <AdminProvider>
+                <SafeWrapper>
+                  <div className="min-h-screen">
+                    <Navbar />
+                    <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                      {children}
+                    </main>
+                    <DevPerformanceMonitor />
+                  </div>
+                </SafeWrapper>
+              </AdminProvider>
+            </AuthProvider>
+          </LanguageProvider>
+        </QueryProvider>
         <SpeedInsights />
+        <Analytics />
       </body>
     </html>
   );

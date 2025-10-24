@@ -134,11 +134,13 @@ export default function HomePage() {
         await trackVisit()
 
         // 并行加载统计数据、评论数据和公告数据，提高性能
+        // 使用 Promise.all 替代 Promise.allSettled 以便更好地处理错误
         const [statsResponse, commentsResponse, announcementsResponse] = await Promise.allSettled([
           fetch('/api/site/statistics', {
-            headers: { 'Content-Type': 'application/json' },
-            cache: 'force-cache',
-            next: { revalidate: 300 } // 5分钟缓存
+            headers: { 
+              'Content-Type': 'application/json',
+              'Cache-Control': 'max-age=300' // 客户端也使用5分钟缓存
+            }
           }).then(async res => {
             if (res.ok) {
               const text = await res.text()
@@ -151,9 +153,10 @@ export default function HomePage() {
           }).catch(() => null),
 
           fetch('/api/papers/recent-comments?limit=5', {
-            headers: { 'Content-Type': 'application/json' },
-            cache: 'force-cache',
-            next: { revalidate: 180 } // 3分钟缓存
+            headers: { 
+              'Content-Type': 'application/json',
+              'Cache-Control': 'max-age=180' // 3分钟客户端缓存
+            }
           }).then(async res => {
             if (res.ok) {
               const text = await res.text()
@@ -166,9 +169,10 @@ export default function HomePage() {
           }).catch(() => null),
 
           fetch('/api/announcements', {
-            headers: { 'Content-Type': 'application/json' },
-            cache: 'force-cache',
-            next: { revalidate: 300 } // 5分钟缓存
+            headers: { 
+              'Content-Type': 'application/json',
+              'Cache-Control': 'max-age=300' // 5分钟客户端缓存
+            }
           }).then(async res => {
             if (res.ok) {
               const text = await res.text()
@@ -237,10 +241,15 @@ export default function HomePage() {
 
     loadData()
 
-    // 定时刷新统计数据（每60秒）
+    // 定时刷新统计数据（每5分钟）- 从60秒优化为300秒
     const interval = setInterval(async () => {
       try {
-        const res = await fetch('/api/site/statistics', { headers: { 'Content-Type': 'application/json' }, cache: 'no-store' })
+        const res = await fetch('/api/site/statistics', { 
+          headers: { 
+            'Content-Type': 'application/json',
+            'Cache-Control': 'max-age=300' // 客户端使用Cache-Control而非next选项
+          }
+        })
         if (res.ok) {
           const text = await res.text()
           if (text) {
@@ -257,7 +266,7 @@ export default function HomePage() {
           }
         }
       } catch {}
-    }, 60000)
+    }, 300000) // 60000ms -> 300000ms (1分钟 -> 5分钟)
 
     return () => clearInterval(interval)
   }, [])

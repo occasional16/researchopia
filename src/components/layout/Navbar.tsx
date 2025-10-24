@@ -76,8 +76,8 @@ export default function Navbar() {
     }
 
     loadUnreadCount()
-    // 每30秒刷新一次
-    const interval = setInterval(loadUnreadCount, 30000)
+    // 优化：改为5分钟刷新一次，减少Edge Requests
+    const interval = setInterval(loadUnreadCount, 300000) // 5分钟
     return () => clearInterval(interval)
   }, [userState.isLoggedIn])
 

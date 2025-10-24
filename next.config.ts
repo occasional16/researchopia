@@ -14,6 +14,12 @@ const nextConfig: NextConfig = {
         hostname: '**',
       },
     ],
+    // 启用图片优化
+    minimumCacheTTL: 60 * 60 * 24 * 30, // 30天
+    // 设备尺寸断点
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
+    // 图片尺寸断点
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
   },
 
   // 压缩配置
@@ -57,11 +63,6 @@ const nextConfig: NextConfig = {
             key: 'Referrer-Policy',
             value: 'strict-origin-when-cross-origin',
           },
-          // 启用更好的缓存策略
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
-          },
         ],
       },
       {
@@ -69,7 +70,7 @@ const nextConfig: NextConfig = {
         headers: [
           {
             key: 'Cache-Control',
-            value: 'public, max-age=300, s-maxage=300, stale-while-revalidate=600',
+            value: 'public, max-age=600, s-maxage=1200, stale-while-revalidate=1800',
           },
           // 注意：不要强制声明 Content-Encoding，交由框架自动处理压缩
           // 如果手动设置 gzip 而未实际压缩，会导致浏览器解码失败（TypeError: Failed to fetch）
@@ -77,11 +78,21 @@ const nextConfig: NextConfig = {
       },
       // 静态资源长期缓存
       {
-        source: '/(.*)\\.(ico|png|jpg|jpeg|gif|webp|svg|css|js)',
+        source: '/(.*)\\.(ico|png|jpg|jpeg|gif|webp|svg|css|js|woff|woff2|ttf|eot)',
         headers: [
           {
             key: 'Cache-Control',
             value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+      // HTML页面使用短期缓存
+      {
+        source: '/((?!api|_next/static|_next/image).*)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=0, must-revalidate',
           },
         ],
       },

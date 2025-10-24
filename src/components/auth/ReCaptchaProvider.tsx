@@ -23,10 +23,16 @@ export default function ReCaptchaProvider({ children }: ReCaptchaProviderProps) 
     <GoogleReCaptchaProvider
       reCaptchaKey={siteKey}
       scriptProps={{
-        async: false,
-        defer: false,
+        async: true, // Google推荐异步加载
+        defer: true, // 延迟执行
         appendTo: 'head',
         nonce: undefined,
+      }}
+      container={{
+        parameters: {
+          badge: 'bottomright', // 显示reCAPTCHA徽章
+          theme: 'light',
+        }
       }}
     >
       {children}

@@ -23,7 +23,7 @@ export function createPaperInfoSection(doc: Document): HTMLElement {
 
   const infoHTML = `
     <div style="display: flex; flex-direction: column; gap: 12px;">
-      <div id="paper-title" data-researchopia-role="paper-title" style="font-weight: 700; font-size: 16px; color: #1f2937; line-height: 1.5;">
+      <div id="paper-title" data-researchopia-role="paper-title" style="font-weight: 600; font-size: 14px; color: #1f2937; line-height: 1.5;">
         请选择一篇文献
       </div>
       <div id="paper-metadata" data-researchopia-role="paper-metadata" style="display: flex; flex-direction: column; gap: 8px; font-size: 13px;">
@@ -104,6 +104,123 @@ export function createPaperInfoSection(doc: Document): HTMLElement {
 }
 
 /**
+ * 更新用户信息栏内容
+ */
+async function updateUserInfoBarContent(bar: HTMLElement, doc: Document): Promise<void> {
+  // 清空现有内容
+  bar.innerHTML = '';
+  bar.style.cssText = `
+    padding: 12px 16px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 10px;
+    margin-bottom: 12px;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+  `;
+
+  const isLoggedIn = await AuthManager.isLoggedIn();
+
+  if (isLoggedIn) {
+    const currentUser = AuthManager.getCurrentUser();
+    const username = currentUser?.username || '用户';
+
+    // 创建用户信息区域（单行布局）
+    const userInfoDiv = doc.createElement('div');
+    userInfoDiv.style.cssText = 'display: flex; align-items: center; gap: 10px;';
+
+    // 头像
+    const avatarDiv = doc.createElement('div');
+    avatarDiv.style.cssText = 'width: 32px; height: 32px; border-radius: 50%; background: white; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #667eea; font-size: 14px; flex-shrink: 0;';
+    avatarDiv.textContent = username.charAt(0).toUpperCase();
+
+    // 用户名和状态
+    const userTextDiv = doc.createElement('div');
+    userTextDiv.style.cssText = 'flex: 1; min-width: 0;';
+
+    const usernameDiv = doc.createElement('div');
+    usernameDiv.style.cssText = 'color: white; font-weight: 600; font-size: 13px;';
+    usernameDiv.textContent = `@${username}`;
+
+    const statusDiv = doc.createElement('div');
+    statusDiv.style.cssText = 'color: rgba(255, 255, 255, 0.8); font-size: 11px;';
+    statusDiv.textContent = '已登录';
+
+    userTextDiv.appendChild(usernameDiv);
+    userTextDiv.appendChild(statusDiv);
+
+    // 主页按钮
+    const profileBtn = doc.createElement('button');
+    profileBtn.id = 'btn-view-profile';
+    profileBtn.style.cssText = 'padding: 6px 12px; background: rgba(255, 255, 255, 0.2); color: white; border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: 600; transition: all 0.2s; white-space: nowrap; flex-shrink: 0;';
+    profileBtn.textContent = '🏠 个人主页';
+
+    // 主页按钮事件
+    const webUrl = 'http://localhost:3000';
+    profileBtn.addEventListener('mouseenter', () => {
+      profileBtn.style.background = 'rgba(255, 255, 255, 0.3)';
+      profileBtn.style.transform = 'scale(1.05)';
+    });
+    profileBtn.addEventListener('mouseleave', () => {
+      profileBtn.style.background = 'rgba(255, 255, 255, 0.2)';
+      profileBtn.style.transform = 'scale(1)';
+    });
+    profileBtn.addEventListener('click', () => {
+      const url = `${webUrl}/profile/${username}`;
+      (Zotero as any).launchURL(url);
+    });
+
+    // 组装布局
+    userInfoDiv.appendChild(avatarDiv);
+    userInfoDiv.appendChild(userTextDiv);
+    userInfoDiv.appendChild(profileBtn);
+    bar.appendChild(userInfoDiv);
+  } else {
+    bar.innerHTML = `
+      <div style="color: white; font-size: 13px; font-weight: 500;">
+        👋 请先登录以使用完整功能
+      </div>
+    `;
+  }
+}
+
+/**
+ * 创建用户信息栏
+ */
+export async function createUserInfoBar(doc: Document): Promise<HTMLElement> {
+  const bar = doc.createElement('div');
+  bar.id = 'researchopia-user-info';
+  
+  // 初始化内容
+  await updateUserInfoBarContent(bar, doc);
+  
+  // 监听登出和登录事件,自动更新UI
+  const win = (Zotero as any).getMainWindow();
+  if (win) {
+    const handleLogout = async () => {
+      // 延迟一点以确保prefs已清除
+      setTimeout(async () => {
+        await updateUserInfoBarContent(bar, doc);
+      }, 100);
+    };
+    
+    const handleLogin = async () => {
+      // 延迟一点以确保session已保存
+      setTimeout(async () => {
+        await updateUserInfoBarContent(bar, doc);
+      }, 100);
+    };
+    
+    win.document.addEventListener('researchopia:logout', handleLogout);
+    win.document.addEventListener('researchopia:login', handleLogin);
+    
+    // 保存清理函数以便后续使用
+    (bar as any)._logoutHandler = handleLogout;
+    (bar as any)._loginHandler = handleLogin;
+  }
+  
+  return bar;
+}
+
+/**
  * 创建功能按钮区域
  */
 export function createButtonsSection(
@@ -119,16 +236,25 @@ export function createButtonsSection(
     margin-bottom: 16px;
   `;
 
-  // 创建四个功能按钮，带图标和颜色
+  // 创建五个功能按钮，带图标和颜色
   const buttons = [
     {
-      id: 'btn-quick-search',
-      text: '快捷搜索',
-      icon: '🔍',
-      mode: 'quick-search' as ViewMode,
+      id: 'btn-reading-session',
+      text: '文献共读',
+      icon: '📖',
+      mode: 'reading-session' as ViewMode,
       disabled: false,
-      color: '#10b981',
-      hoverColor: '#059669'
+      color: '#ec4899',
+      hoverColor: '#db2777'
+    },    
+    {
+      id: 'btn-paper-evaluation',
+      text: '论文评价',
+      icon: '⭐',
+      mode: 'paper-evaluation' as ViewMode,
+      disabled: false,
+      color: '#f97316',
+      hoverColor: '#ea580c'
     },
     {
       id: 'btn-my-annotations',
@@ -147,16 +273,16 @@ export function createButtonsSection(
       disabled: false,
       color: '#8b5cf6',
       hoverColor: '#7c3aed'
-    },
+    },    
     {
-      id: 'btn-paper-evaluation',
-      text: '论文评价',
-      icon: '⭐',
-      mode: 'paper-evaluation' as ViewMode,
+      id: 'btn-quick-search',
+      text: '快捷搜索',
+      icon: '🔍',
+      mode: 'quick-search' as ViewMode,
       disabled: false,
-      color: '#f97316',
-      hoverColor: '#ea580c'
-    }
+      color: '#10b981',
+      hoverColor: '#059669'
+    }    
   ];
 
   buttons.forEach(btn => {

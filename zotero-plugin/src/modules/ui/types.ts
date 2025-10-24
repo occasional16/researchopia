@@ -1,6 +1,6 @@
 import type { SupabaseManager } from "../supabase";
 
-export type ViewMode = "none" | "my-annotations" | "shared-annotations" | "paper-evaluation" | "quick-search";
+export type ViewMode = "none" | "my-annotations" | "shared-annotations" | "paper-evaluation" | "quick-search" | "reading-session";
 
 export type BatchDisplayFilter = "all" | "quality" | "recent" | "following" | "toggle-native" | "clear";
 

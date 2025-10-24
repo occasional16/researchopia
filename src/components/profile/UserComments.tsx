@@ -6,25 +6,39 @@ import { MessageCircle, Trash2, Calendar, ExternalLink, ThumbsUp, ThumbsDown } f
 import { getUserComments, deleteUserComment, type UserCommentWithPaper } from '@/lib/userActivity'
 import { useAuth } from '@/contexts/AuthContext'
 
-export default function UserComments() {
-  const { user } = useAuth()
+interface UserCommentsProps {
+  username?: string
+}
+
+export default function UserComments({ username }: UserCommentsProps = {}) {
+  const { user, getAccessToken } = useAuth()
   const [comments, setComments] = useState<UserCommentWithPaper[]>([])
   const [loading, setLoading] = useState(true)
   const [deleting, setDeleting] = useState<string | null>(null)
 
+  const isCurrentUser = !username || (user && user.username === username)
+
   useEffect(() => {
-    if (user) {
-      loadComments()
-    }
-  }, [user])
+    loadComments()
+  }, [user, username])
 
   const loadComments = async () => {
-    if (!user) return
-    
     try {
       setLoading(true)
-      const data = await getUserComments(user.id)
-      setComments(data)
+
+      if (username) {
+        const accessToken = await getAccessToken()
+        const response = await fetch(`/api/users/${username}/comments?limit=100`, {
+          headers: accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {}
+        })
+        if (response.ok) {
+          const data = await response.json()
+          setComments(data.comments || [])
+        }
+      } else if (user) {
+        const data = await getUserComments(user.id)
+        setComments(data)
+      }
     } catch (error) {
       console.error('Error loading comments:', error)
     } finally {

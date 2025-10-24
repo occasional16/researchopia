@@ -66,7 +66,7 @@ export default function SignUpForm({ onToggleMode, onClose }: SignUpFormProps) {
     }
   }, [])
 
-  // 增强的邮箱验证
+  // 增强的邮箱验证(包含reCAPTCHA检查)
   const validateEmailWithDelay = useCallback(async (email: string) => {
     if (!email.trim()) {
       setEmailValidation(null)
@@ -74,19 +74,59 @@ export default function SignUpForm({ onToggleMode, onClose }: SignUpFormProps) {
     }
 
     setEmailValidating(true)
+    console.log('🔍 开始邮箱验证流程:', email)
 
     try {
+      // 1. 先验证reCAPTCHA
+      console.log('🤖 步骤1: 执行reCAPTCHA验证...')
+      const recaptchaToken = await executeReCaptcha('email_validation')
+      
+      if (!recaptchaToken) {
+        console.error('❌ reCAPTCHA token获取失败')
+        setEmailValidation({
+          isValid: false,
+          isEducational: false,
+          isDeliverable: false,
+          error: 'reCAPTCHA验证失败,请刷新页面重试'
+        })
+        setEmailValidating(false)
+        return
+      }
+
+      console.log('✅ reCAPTCHA token获取成功:', recaptchaToken.substring(0, 20) + '...')
+
+      console.log('🔐 步骤2: 验证reCAPTCHA token...')
+      const recaptchaResult = await validateReCaptcha(recaptchaToken, 'email_validation')
+      
+      if (!recaptchaResult.isValid) {
+        console.error('❌ reCAPTCHA验证未通过:', recaptchaResult.error)
+        setEmailValidation({
+          isValid: false,
+          isEducational: false,
+          isDeliverable: false,
+          error: `安全验证未通过: ${recaptchaResult.error || '请刷新页面重试'}`
+        })
+        setEmailValidating(false)
+        return
+      }
+
+      console.log('✅ reCAPTCHA验证通过')
+
+      // 2. reCAPTCHA通过后再进行邮箱验证
+      console.log('📧 步骤3: 验证教育邮箱...')
       const validation = await validateEmailEnhanced(email)
+      console.log('✅ 邮箱验证完成:', validation)
       setEmailValidation(validation)
     } catch (error) {
-      console.error('Email validation error:', error)
+      console.error('❌ Email validation error:', error)
       // 降级到基础验证
+      console.warn('⚠️ 降级到基础邮箱验证')
       const basicValidation = validateEducationalEmail(email)
       setEmailValidation(basicValidation)
     } finally {
       setEmailValidating(false)
     }
-  }, [])
+  }, [executeReCaptcha])
 
   // 用户名输入防抖
   useEffect(() => {
@@ -122,7 +162,7 @@ export default function SignUpForm({ onToggleMode, onClose }: SignUpFormProps) {
     setError('')
 
     try {
-      // 1. 验证reCAPTCHA
+      // 1. 验证reCAPTCHA(最终提交验证)
       const recaptchaToken = await executeReCaptcha('signup')
       if (!recaptchaToken) {
         throw new Error('人机验证失败，请刷新页面重试')
@@ -133,7 +173,7 @@ export default function SignUpForm({ onToggleMode, onClose }: SignUpFormProps) {
         throw new Error(recaptchaResult.error || '安全验证未通过')
       }
 
-      // 2. 验证邮箱
+      // 2. 验证邮箱(已在输入时完成初步验证)
       if (!emailValidation || !emailValidation.isValid) {
         throw new Error('请输入有效的教育邮箱')
       }
@@ -419,9 +459,13 @@ export default function SignUpForm({ onToggleMode, onClose }: SignUpFormProps) {
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
           <div className="flex items-center space-x-2 text-sm text-blue-700">
             <Shield className="h-4 w-4" />
-            <span className="font-medium">安全验证</span>
+            <span className="font-medium">安全验证步骤</span>
           </div>
           <div className="mt-2 space-y-1 text-xs text-blue-600">
+            <div className="flex items-center space-x-2">
+              <Shield className="h-3 w-3 text-blue-500" />
+              <span>1. Google reCAPTCHA 人机验证（邮箱验证时自动执行）</span>
+            </div>
             <div className="flex items-center space-x-2">
               {emailValidation?.isEducational ? (
                 <CheckCircle className="h-3 w-3 text-green-500" />
@@ -430,7 +474,7 @@ export default function SignUpForm({ onToggleMode, onClose }: SignUpFormProps) {
               ) : (
                 <div className="h-3 w-3 rounded-full border border-gray-300" />
               )}
-              <span>教育邮箱验证</span>
+              <span>2. 教育邮箱验证</span>
             </div>
             <div className="flex items-center space-x-2">
               {emailValidation?.isDeliverable ? (
@@ -440,14 +484,10 @@ export default function SignUpForm({ onToggleMode, onClose }: SignUpFormProps) {
               ) : (
                 <div className="h-3 w-3 rounded-full border border-gray-300" />
               )}
-              <span>邮箱可投递性检查</span>
+              <span>3. 邮箱可投递性检查</span>
               {emailValidation?.error && (
                 <span className="text-xs text-red-500">({emailValidation.error})</span>
               )}
-            </div>
-            <div className="flex items-center space-x-2">
-              <Shield className="h-3 w-3 text-blue-500" />
-              <span>Google reCAPTCHA 人机验证（提交时自动验证）</span>
             </div>
           </div>
         </div>

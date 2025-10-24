@@ -35,6 +35,7 @@ export async function GET(request: NextRequest) {
       // 并行执行查询，使用超时控制
       const statsPromise = Promise.all([
         supabase.from('papers').select('*', { count: 'exact', head: true }),
+        // 统计 public.users 中的所有用户
         supabase.from('users').select('*', { count: 'exact', head: true }),
         // 查询新的访问计数器表
         supabase.from('visit_counters').select('counter_type, counter_value, last_updated')

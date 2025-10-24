@@ -11,7 +11,9 @@ import { MyAnnotationsView } from "./ui/myAnnotationsView";
 import { SharedAnnotationsView } from "./ui/sharedAnnotationsView";
 import { PaperEvaluationView } from "./ui/paperEvaluationView";
 import { QuickSearchView } from "./ui/quickSearchView";
-import { createPaperInfoSection, createButtonsSection, createContentSection } from "./ui/components";
+import { ProfilePreviewView } from "./ui/profilePreviewView";
+import { ReadingSessionView } from "./ui/readingSessionView";
+import { createPaperInfoSection, createButtonsSection, createContentSection, createUserInfoBar } from "./ui/components";
 import type {
   BaseViewContext,
   PanelElements,
@@ -28,6 +30,8 @@ export class UIManager {
   private readonly myAnnotationsView: MyAnnotationsView;
   private readonly sharedAnnotationsView: SharedAnnotationsView;
   private readonly paperEvaluationView: PaperEvaluationView;
+  private readonly profilePreviewView: ProfilePreviewView;
+  private readonly readingSessionView: ReadingSessionView;
   private currentItem: any = null;
   private currentViewMode: ViewMode = 'none';
   private panelId = 'researchopia-panel';
@@ -43,7 +47,9 @@ export class UIManager {
     this.myAnnotationsView = new MyAnnotationsView(this.viewContext);
     this.sharedAnnotationsView = new SharedAnnotationsView(this.viewContext);
     this.paperEvaluationView = new PaperEvaluationView(this.viewContext);
+    this.profilePreviewView = new ProfilePreviewView(this.viewContext);
     this.quickSearchView = new QuickSearchView();
+    this.readingSessionView = new ReadingSessionView(this.viewContext);
   }
 
   private createViewContext(): BaseViewContext {
@@ -154,6 +160,17 @@ export class UIManager {
         this.clearAllCardHighlights();
       });
 
+      // 监听个人主页预览事件
+      win.document.addEventListener('researchopia:show-profile-preview', async (event: any) => {
+        const username = event.detail?.username;
+        if (!username) {
+          logger.warn("[UIManager] ⚠️ No username in profile preview event");
+          return;
+        }
+        logger.log("[UIManager] 👤 Received show-profile-preview event:", username);
+        await this.showProfilePreview(username);
+      });
+
       logger.log("[UIManager] ✅ Annotation click listener setup complete");
     } catch (error) {
       logger.error("[UIManager] ❌ Error setting up annotation click listener:", error);
@@ -239,30 +256,142 @@ export class UIManager {
         l10nID: "researchopia-section-sidenav",
         icon: "chrome://researchopia/content/icons/icon20.svg"
       },
-      onRender: ({ doc, body, item, editable, tabType }: any) => {
+      onRender: async ({ doc, body, item, editable, tabType }: any) => {
         logger.log("[UIManager] onRender called with item:", item?.id, "tabType:", tabType);
-        
+
+        // ✨ 自定义collapsible-section的head部分，使用MutationObserver保证持久性
+        try {
+          const collapsibleSection = body.closest('collapsible-section');
+          if (collapsibleSection) {
+            // 创建自定义元素的函数
+            const createTitleAddon = () => {
+              const head = collapsibleSection.querySelector('.head');
+              const titleBox = head?.querySelector('.title-box');
+              const titleSpan = titleBox?.querySelector('.title');
+              
+              if (head && titleSpan) {
+                // 检查是否已经自定义过(通过检查版本号span是否存在)
+                if (titleSpan.querySelector('.researchopia-version')) {
+                  return false; // 已经存在,不重复添加
+                }
+                
+                // 清空title并重新构建内容
+                titleSpan.textContent = '';
+                
+                // 插件名
+                const nameSpan = doc.createElement('span');
+                nameSpan.textContent = '研学港 Researchopia';
+                titleSpan.appendChild(nameSpan);
+                
+                // 版本号(紧跟插件名)
+                const versionSpan = doc.createElement('span');
+                versionSpan.className = 'researchopia-version';
+                versionSpan.style.cssText = `
+                  color: var(--fill-secondary); 
+                  font-size: inherit; 
+                  font-weight: 600;
+                  margin-left: 4px;
+                `;
+                versionSpan.textContent = 'v0.2.0';
+                titleSpan.appendChild(versionSpan);
+
+                // 官网按钮添加到head右侧 - 在twisty按钮之前
+                if (!head.querySelector('.researchopia-website-btn')) {
+                  const websiteBtn = doc.createElement('button');
+                  websiteBtn.className = 'researchopia-website-btn';
+                  websiteBtn.style.cssText = `
+                    padding: 3px 8px;
+                    background: transparent;
+                    color: var(--fill-secondary);
+                    border: none;
+                    border-radius: 3px;
+                    cursor: pointer;
+                    font-size: inherit;
+                    font-weight: 600;
+                    transition: all 0.2s;
+                    white-space: nowrap;
+                    margin-right: 4px;
+                  `;
+                  websiteBtn.textContent = '🌐 官网';
+                  websiteBtn.title = 'Visit Researchopia Website';
+                  websiteBtn.addEventListener('mouseenter', () => {
+                    websiteBtn.style.background = 'var(--fill-quinary)';
+                  });
+                  websiteBtn.addEventListener('mouseleave', () => {
+                    websiteBtn.style.background = 'transparent';
+                  });
+                  websiteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation(); // 防止触发section折叠
+                    (Zotero as any).launchURL('https://www.researchopia.com/');
+                  });
+                  
+                  // 将按钮插入到twisty之前
+                  const twisty = head.querySelector('.twisty');
+                  if (twisty) {
+                    head.insertBefore(websiteBtn, twisty);
+                  } else {
+                    head.appendChild(websiteBtn);
+                  }
+                }
+                
+                logger.log("[UIManager] ✅ Title bar customized");
+                return true;
+              }
+              return false;
+            };
+
+            // 初次创建
+            createTitleAddon();
+
+            // 使用MutationObserver监听title变化并重新添加
+            const head = collapsibleSection.querySelector('.head');
+            if (head) {
+              const observer = new (doc.defaultView as any).MutationObserver(() => {
+                // 检查自定义元素是否还存在
+                const titleSpan = collapsibleSection.querySelector('.title');
+                const hasVersion = titleSpan?.querySelector('.researchopia-version');
+                const hasWebsiteBtn = head.querySelector('.researchopia-website-btn');
+                
+                // 如果版本号或官网按钮消失,重新添加
+                if (!hasVersion || !hasWebsiteBtn) {
+                  logger.log("[UIManager] 🔄 Title customization lost, re-adding...");
+                  createTitleAddon();
+                }
+              });
+              
+              observer.observe(head, {
+                childList: true,
+                subtree: true
+              });
+
+              logger.log("[UIManager] 👀 MutationObserver attached to monitor title bar");
+            }
+          }
+        } catch (error) {
+          logger.error("[UIManager] ❌ Failed to customize title bar:", error);
+        }
+
         // 检查容器是否已有内容
         const hasContent = body.children.length > 0;
         logger.log("[UIManager] Container hasContent:", hasContent);
-        
+
         // 只在容器为空时渲染面板UI结构
         if (!hasContent) {
-          this.renderPanel(doc, body);
+          await this.renderPanel(doc, body);
           logger.log("[UIManager] ✅ Panel rendered, panelDocument updated to:", doc?.location?.href || "unknown");
         } else {
           // 容器已有内容，只更新document引用
           this.panelDocument = doc;
           logger.log("[UIManager] ⏭️ Panel already exists, skipped re-rendering, panelDocument updated to:", doc?.location?.href || "unknown");
         }
-        
+
         // 保存item ID到document的映射
         let targetItem = this.getCorrectItem(item, tabType);
         if (targetItem && targetItem.id) {
           this.itemDocuments.set(targetItem.id, doc);
           logger.log("[UIManager] 💾 Saved document for item:", targetItem.id);
         }
-        
+
         // 🔧 关键修复：传递正确的doc参数给handleItemChange
         // 确保使用onRender提供的最新document更新面板内容
         if (targetItem) {
@@ -274,13 +403,13 @@ export class UIManager {
         logger.log("[UIManager] onItemChange called with item:", item?.id, "tabType:", tabType);
         // 允许在所有tab中显示
         setEnabled(true);
-        
+
         // 更新当前的panelDocument引用(这是关键!)
         if (doc) {
           this.panelDocument = doc;
           logger.log("[UIManager] Updated panelDocument in onItemChange");
         }
-        
+
         // 获取正确的item并更新
         const targetItem = this.getCorrectItem(item, tabType);
         if (targetItem && doc) {
@@ -290,7 +419,7 @@ export class UIManager {
             // 保存attachment ID -> doc
             this.itemDocuments.set(targetItem.id, doc);
             logger.log("[UIManager] 💾 Updated document mapping for attachment:", targetItem.id);
-            
+
             // 如果有父条目,也保存父条目ID -> doc
             const parentItemID = targetItem.parentItemID;
             if (parentItemID) {
@@ -302,7 +431,7 @@ export class UIManager {
             this.itemDocuments.set(targetItem.id, doc);
             logger.log("[UIManager] 💾 Updated document mapping for item:", targetItem.id);
           }
-          
+
           this.handleItemChange(targetItem);
         }
       },
@@ -317,7 +446,7 @@ export class UIManager {
   /**
    * 渲染面板主体
    */
-  private renderPanel(doc: Document, container: HTMLElement): void {
+  private async renderPanel(doc: Document, container: HTMLElement): Promise<void> {
     logger.log("[UIManager] 🎨 Rendering panel...");
 
     // 保存document引用
@@ -339,6 +468,10 @@ export class UIManager {
       background: var(--material-background);
       min-height: 400px;
     `;
+
+    // 用户信息栏
+    const userInfoBar = await createUserInfoBar(doc);
+    mainContainer.appendChild(userInfoBar);
 
     // 论文信息区域
     const paperInfoSection = createPaperInfoSection(doc);
@@ -364,7 +497,7 @@ export class UIManager {
    */
   private getCorrectItem(item: any, tabType: string): any {
     logger.log("[UIManager] Getting correct item for tabType:", tabType, "item:", item?.id);
-    
+
     // 如果在reader tab中,尝试从reader获取PDF附件item
     if (tabType === 'reader') {
       try {
@@ -372,31 +505,31 @@ export class UIManager {
         if (win && win.Zotero_Tabs) {
           const selectedID = win.Zotero_Tabs.selectedID;
           logger.log("[UIManager] Selected tab ID:", selectedID);
-          
+
           // 尝试多种方式获取tab对象
           let selectedTab: any = null;
-          
+
           // 方法1: 如果_tabs是Map
           if (win.Zotero_Tabs._tabs && typeof win.Zotero_Tabs._tabs.get === 'function') {
             selectedTab = win.Zotero_Tabs._tabs.get(selectedID);
             logger.log("[UIManager] Got tab via Map.get():", !!selectedTab);
           }
-          
+
           // 方法2: 如果_tabs是数组
           if (!selectedTab && Array.isArray(win.Zotero_Tabs._tabs)) {
             selectedTab = win.Zotero_Tabs._tabs.find((t: any) => t.id === selectedID);
             logger.log("[UIManager] Got tab via Array.find():", !!selectedTab);
           }
-          
+
           // 方法3: 使用_tabs.values()迭代
           if (!selectedTab && win.Zotero_Tabs._tabs && typeof win.Zotero_Tabs._tabs.values === 'function') {
             const tabs = Array.from(win.Zotero_Tabs._tabs.values());
             selectedTab = tabs.find((t: any) => t.id === selectedID);
             logger.log("[UIManager] Got tab via values() iteration:", !!selectedTab);
           }
-          
+
           logger.log("[UIManager] Selected tab:", selectedTab);
-          
+
           if (selectedTab && selectedTab.type === 'reader' && selectedTab.data?.itemID) {
             const readerItem = Zotero.Items.get(selectedTab.data.itemID);
             logger.log("[UIManager] Got PDF attachment from reader tab:", readerItem?.id);
@@ -412,7 +545,7 @@ export class UIManager {
         }
       }
     }
-    
+
     // 否则使用传入的item
     return item;
   }
@@ -489,14 +622,14 @@ export class UIManager {
    */
   private updatePaperInfo(item: any, targetDoc?: Document, attempt = 0): void {
     const paperInfo = this.extractPaperInfo(item);
-    
+
     logger.log("[UIManager] Updating paper info:", paperInfo);
 
     // 使用传入的document或默认panelDocument
     const doc = targetDoc || this.panelDocument;
     logger.log("[UIManager] 🔍 Document source:", targetDoc ? "parameter" : "panelDocument");
     logger.log("[UIManager] 🔍 Document URL:", doc?.location?.href || "unknown");
-    
+
     if (!doc) {
       logger.error("[UIManager] Panel document not available");
       return;
@@ -778,11 +911,24 @@ export class UIManager {
     logger.log("[UIManager] currentItemId saved:", this.currentItemId);
 
     try {
-      // 检查是否已登录
-      const isLoggedIn = await AuthManager.isLoggedIn();
-      if (!isLoggedIn) {
-        this.showMessage('请先登录以使用此功能', 'warning');
-        return;
+      // 功能权限控制: 只有"快捷搜索"可以无登录使用,其他功能需要登录
+      const requiresLogin = mode !== 'quick-search';
+      
+      if (requiresLogin) {
+        const isLoggedIn = await AuthManager.isLoggedIn();
+        if (!isLoggedIn) {
+          this.showMessage('此功能需要登录，请先在偏好设置中登录', 'warning');
+          // 打开偏好设置窗口
+          try {
+            const win = (Zotero as any).getMainWindow();
+            if (win && win.openPreferences) {
+              win.openPreferences('researchopia-preferences');
+            }
+          } catch (e) {
+            logger.error("[UIManager] ❌ Error opening preferences:", e);
+          }
+          return;
+        }
       }
 
       // 检查是否有选中的item
@@ -791,10 +937,22 @@ export class UIManager {
         return;
       }
 
+      // 对于需要登录的功能,自动确保论文已注册到数据库
+      if (requiresLogin) {
+        const { PaperRegistry } = await import('./paperRegistry');
+        const registrationResult = await PaperRegistry.ensurePaperRegistered(this.currentItem);
+        if (!registrationResult.success) {
+          logger.warn("[UIManager] ⚠️ Paper auto-registration failed:", registrationResult.error);
+          // 不阻止功能使用,只记录警告
+        } else {
+          logger.log("[UIManager] ✅ Paper registered in database");
+        }
+      }
+
       // 保存点击时的状态快照
       const clickedItemId = this.currentItemId;
       const clickedItem = this.currentItem;
-      
+
       // 🔍 记录当前tab类型
       const zoteroPane = (Zotero as any).getActiveZoteroPane();
       if (zoteroPane && zoteroPane.tabs) {
@@ -802,7 +960,7 @@ export class UIManager {
         const selectedTabInfo = zoteroPane.tabs._getTab(selectedTab);
         logger.log("[UIManager] 📑 Button clicked in tab:", selectedTab, "type:", selectedTabInfo?.type);
       }
-      
+
       this.currentViewMode = mode;
 
       let targetDoc: Document | undefined;
@@ -841,18 +999,18 @@ export class UIManager {
 
       const contentSection = panelInfo.contentSection;
       logger.log("[UIManager] Content section found:", !!contentSection);
-      
+
       if (contentSection) {
         logger.log("[UIManager] Content section parent:", contentSection.parentElement?.tagName);
         logger.log("[UIManager] Content section visible:", contentSection.offsetParent !== null);
         logger.log("[UIManager] Content section current children:", contentSection.childElementCount);
       }
-      
+
       if (!contentSection) {
         logger.error("[UIManager] Content section not found in panel document");
         return;
       }
-      
+
       // 🔍 检查当前paper-title的值
       const paperTitleElement = panelInfo.titleElement;
       logger.log("[UIManager] 📋 Current paper-title element found:", !!paperTitleElement);
@@ -863,7 +1021,7 @@ export class UIManager {
         logger.log("[UIManager] 📋 Title element visibility:", computedStyle?.visibility);
         logger.log("[UIManager] 📋 Title element opacity:", computedStyle?.opacity);
       }
-      
+
       // 检查整个paper-info section的状态
       const paperInfoSection = panelInfo.paperInfoSection;
       if (paperInfoSection) {
@@ -871,7 +1029,7 @@ export class UIManager {
         logger.log("[UIManager] 📋 Paper-info section display:", computedStyle?.display);
         logger.log("[UIManager] 📋 Paper-info section visibility:", computedStyle?.visibility);
       }
-      
+
       logger.log("[UIManager] ✅ Found content section, clearing and rendering...");
 
       // 提取论文信息
@@ -910,8 +1068,12 @@ export class UIManager {
             await this.quickSearchView.render(contentSection, paperInfo);
             logger.log("[UIManager] ✅ Quick search rendered");
             break;
+          case 'reading-session':
+            await this.readingSessionView.render();
+            logger.log("[UIManager] ✅ Reading session rendered");
+            break;
         }
-        
+
         // 渲染完成后检查item是否仍然是当前的
         if (this.currentItemId !== clickedItemId) {
           logger.warn("[UIManager] ⚠️ Item changed after rendering completed. Clearing stale content.");
@@ -926,17 +1088,17 @@ export class UIManager {
           `;
         } else {
           logger.log("[UIManager] ✅ Rendering completed for item:", clickedItemId);
-          
+
           if (panelInfo.root) {
             panelInfo.root.style.visibility = 'visible';
             logger.log("[UIManager] 🎨 Set main container visibility to visible after rendering");
           }
-          
+
           if (panelInfo.paperInfoSection) {
             panelInfo.paperInfoSection.style.visibility = 'visible';
             logger.log("[UIManager] 🎨 Set paper-info section visibility to visible after rendering");
           }
-          
+
           const paperTitleAfter = panelInfo.titleElement;
           logger.log("[UIManager] 📋 After render - paper-title element found:", !!paperTitleAfter);
           if (paperTitleAfter) {
@@ -1014,7 +1176,7 @@ export class UIManager {
       progressWindow.addDescription(message);
       progressWindow.show();
       progressWindow.startCloseTimer(3000);
-      
+
       logger.log(`[UIManager] Message shown: ${message}`);
     } catch (error) {
       logger.error("[UIManager] Error showing message:", error);
@@ -1074,7 +1236,7 @@ export class UIManager {
         // 尝试打开PDF
         logger.log('[UIManager] Reader not found, trying to open PDF...');
         const opened = await this.openPDFReader(this.currentItem);
-        
+
         if (opened) {
           // 等待reader初始化
           await new Promise(resolve => setTimeout(resolve, 1000));
@@ -1127,7 +1289,7 @@ export class UIManager {
     try {
       // 获取PDF附件
       const attachmentIDs = item.getAttachments();
-      
+
       for (const attachmentID of attachmentIDs) {
         const attachment = Zotero.Items.get(attachmentID);
         if (attachment && attachment.isPDFAttachment?.()) {
@@ -1149,6 +1311,108 @@ export class UIManager {
       return false;
     }
   }
+
+  /**
+   * 显示个人主页预览
+   */
+  private async showProfilePreview(username: string): Promise<void> {
+    try {
+      logger.log('[UIManager] 👤 Showing profile preview for:', username);
+
+      // 获取用户资料
+      const profile = await this.profilePreviewView.fetchProfile(username);
+      if (!profile) {
+        this.showMessage('获取用户资料失败', 'error');
+        return;
+      }
+
+      // 创建模态对话框
+      const win = (Zotero as any).getMainWindow();
+      if (!win) {
+        logger.warn('[UIManager] ⚠️ Main window not available');
+        return;
+      }
+
+      // 创建对话框容器
+      const dialog = win.document.createElement('div');
+      dialog.id = 'researchopia-profile-preview-dialog';
+      dialog.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+      `;
+
+      // 创建对话框内容
+      const dialogContent = win.document.createElement('div');
+      dialogContent.style.cssText = `
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        max-width: 500px;
+        width: 90%;
+        max-height: 80vh;
+        overflow-y: auto;
+        position: relative;
+      `;
+
+      // 添加关闭按钮
+      const closeBtn = win.document.createElement('button');
+      closeBtn.textContent = '×';
+      closeBtn.style.cssText = `
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        width: 32px;
+        height: 32px;
+        border: none;
+        background: #f3f4f6;
+        color: #374151;
+        font-size: 24px;
+        line-height: 1;
+        border-radius: 50%;
+        cursor: pointer;
+        z-index: 1;
+        transition: all 0.2s;
+      `;
+      closeBtn.addEventListener('mouseenter', () => {
+        closeBtn.style.background = '#e5e7eb';
+      });
+      closeBtn.addEventListener('mouseleave', () => {
+        closeBtn.style.background = '#f3f4f6';
+      });
+      closeBtn.addEventListener('click', () => {
+        dialog.remove();
+      });
+
+      dialogContent.appendChild(closeBtn);
+
+      // 渲染个人主页预览
+      this.profilePreviewView.render(dialogContent, profile);
+
+      dialog.appendChild(dialogContent);
+      win.document.body.appendChild(dialog);
+
+      // 点击背景关闭
+      dialog.addEventListener('click', (e) => {
+        if (e.target === dialog) {
+          dialog.remove();
+        }
+      });
+
+      logger.log('[UIManager] ✅ Profile preview shown');
+    } catch (error) {
+      logger.error('[UIManager] ❌ Error showing profile preview:', error);
+      this.showMessage('显示个人主页预览失败', 'error');
+    }
+  }
+
 
 
 

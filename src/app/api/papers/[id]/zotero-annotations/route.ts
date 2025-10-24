@@ -89,27 +89,32 @@ export async function GET(
     }
 
     // 格式化返回数据
-    const formattedAnnotations = (annotations || []).map(ann => ({
-      annotation_id: ann.id,
-      document_id: ann.document_id,
-      user_id: ann.user_id,
-      type: ann.type,
-      content: ann.content,
-      comment: ann.comment,
-      color: ann.color,
-      position: ann.position,
-      tags: ann.tags,
-      visibility: ann.visibility,
-      likes_count: ann.likes_count || 0,
-      comments_count: ann.comments_count || 0,
-      created_at: ann.created_at,
-      platform: ann.platform,
-      quality_score: ann.quality_score,
-      helpfulness_score: ann.helpfulness_score,
-      display_name: ann.show_author_name === false ? '匿名用户' : (ann.users?.username || '未知用户'),
-      username: ann.show_author_name === false ? null : ann.users?.username,
-      user_avatar: ann.show_author_name === false ? null : ann.users?.avatar_url
-    }))
+    const formattedAnnotations = (annotations || []).map(ann => {
+      // 处理 users 可能是数组的情况
+      const user = Array.isArray(ann.users) ? ann.users[0] : ann.users;
+      
+      return {
+        annotation_id: ann.id,
+        document_id: ann.document_id,
+        user_id: ann.user_id,
+        type: ann.type,
+        content: ann.content,
+        comment: ann.comment,
+        color: ann.color,
+        position: ann.position,
+        tags: ann.tags,
+        visibility: ann.visibility,
+        likes_count: ann.likes_count || 0,
+        comments_count: ann.comments_count || 0,
+        created_at: ann.created_at,
+        platform: ann.platform,
+        quality_score: ann.quality_score,
+        helpfulness_score: ann.helpfulness_score,
+        display_name: ann.show_author_name === false ? '匿名用户' : (user?.username || '未知用户'),
+        username: ann.show_author_name === false ? null : user?.username,
+        user_avatar: ann.show_author_name === false ? null : user?.avatar_url
+      };
+    })
 
     return NextResponse.json({
       annotations: formattedAnnotations,

@@ -482,22 +482,13 @@ export class QuickSearchView {
 
   /**
    * 打开外部URL
-   * 使用Components API在默认浏览器中打开链接
+   * 使用Zotero.launchURL避免浏览器选择弹窗
    */
   private openExternalURL(url: string): void {
     try {
-      // 使用Components API打开外部链接（Zotero 7/8方式）
-      if (typeof Components !== 'undefined' && (Components as any).classes) {
-        const externalLinkSvc = (Components as any).classes["@mozilla.org/uriloader/external-protocol-service;1"]
-          .getService((Components as any).interfaces.nsIExternalProtocolService);
-        const ioService = (Components as any).classes["@mozilla.org/network/io-service;1"]
-          .getService((Components as any).interfaces.nsIIOService);
-        const uri = ioService.newURI(url, null, null);
-        externalLinkSvc.loadURI(uri);
-        logger.log("[QuickSearchView] Opened URL via Components API:", url);
-      } else {
-        logger.warn("[QuickSearchView] Components API not available");
-      }
+      // 使用Zotero的官方API打开外部链接，避免弹窗
+      (Zotero as any).launchURL(url);
+      logger.log("[QuickSearchView] Opened URL via Zotero.launchURL:", url);
     } catch (error) {
       logger.error("[QuickSearchView] Error opening external URL:", error);
     }

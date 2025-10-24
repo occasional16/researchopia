@@ -7,9 +7,10 @@ import { createClient } from '@supabase/supabase-js';
  */
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id: commentId } = await params;
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
     const supabase = createClient(supabaseUrl, supabaseKey);
@@ -24,7 +25,7 @@ export async function PATCH(
     }
 
     const token = authHeader.split(' ')[1];
-    
+
     // 🔑 创建带auth header的客户端(用于RLS策略)
     const supabaseWithAuth = createClient(supabaseUrl, supabaseKey, {
       global: {
@@ -33,7 +34,7 @@ export async function PATCH(
         }
       }
     });
-    
+
     const { data: { user }, error: authError } = await supabaseWithAuth.auth.getUser();
     if (authError || !user) {
       return NextResponse.json(
@@ -41,8 +42,6 @@ export async function PATCH(
         { status: 401 }
       );
     }
-
-    const commentId = params.id;
     
     // 解析请求体
     const body = await request.json();
@@ -127,9 +126,10 @@ export async function PATCH(
  */
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id: commentId } = await params;
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
     const supabase = createClient(supabaseUrl, supabaseKey);
@@ -144,7 +144,7 @@ export async function DELETE(
     }
 
     const token = authHeader.split(' ')[1];
-    
+
     // 🔑 创建带auth header的客户端(用于RLS策略)
     const supabaseWithAuth = createClient(supabaseUrl, supabaseKey, {
       global: {
@@ -153,7 +153,7 @@ export async function DELETE(
         }
       }
     });
-    
+
     const { data: { user }, error: authError } = await supabaseWithAuth.auth.getUser();
     if (authError || !user) {
       return NextResponse.json(
@@ -161,8 +161,6 @@ export async function DELETE(
         { status: 401 }
       );
     }
-
-    const commentId = params.id;
 
     // 获取用户角色
     const { data: userData, error: userError } = await supabaseWithAuth

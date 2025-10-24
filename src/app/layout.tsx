@@ -7,6 +7,7 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 import Navbar from "@/components/layout/Navbar";
 import { DevPerformanceMonitor } from "@/components/ui/PerformanceMonitor";
 import SafeWrapper from "@/components/SafeWrapper";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -116,6 +117,7 @@ export default function RootLayout({
             </AdminProvider>
           </AuthProvider>
         </LanguageProvider>
+        <SpeedInsights />
       </body>
     </html>
   );

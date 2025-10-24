@@ -92,9 +92,11 @@ export default function HomePage() {
   })
   const [recentComments, setRecentComments] = useState<RecentComment[]>([])
   const [announcements, setAnnouncements] = useState<Announcement[]>([])
+  const [currentAnnouncement, setCurrentAnnouncement] = useState<Announcement | null>(null)
   const [loading, setLoading] = useState(true)
   const [dataError, setDataError] = useState<string | null>(null)
   const [showAnnouncementForm, setShowAnnouncementForm] = useState(false)
+  const [showAnnouncementHistory, setShowAnnouncementHistory] = useState(false)
   const [editingAnnouncement, setEditingAnnouncement] = useState<Announcement | null>(null)
 
   // 访问跟踪函数
@@ -148,7 +150,7 @@ export default function HomePage() {
             return null
           }).catch(() => null),
 
-          fetch('/api/papers/paginated?sortBy=recent_comments&limit=5&page=1', {
+          fetch('/api/papers/recent-comments?limit=5', {
             headers: { 'Content-Type': 'application/json' },
             cache: 'force-cache',
             next: { revalidate: 180 } // 3分钟缓存
@@ -157,13 +159,13 @@ export default function HomePage() {
               const text = await res.text()
               if (text) {
                 const data = JSON.parse(text)
-                return data.data || null
+                return data.success ? data.data : null
               }
             }
             return null
           }).catch(() => null),
 
-          fetch('/api/announcements?active=true', {
+          fetch('/api/announcements', {
             headers: { 'Content-Type': 'application/json' },
             cache: 'force-cache',
             next: { revalidate: 300 } // 5分钟缓存
@@ -199,27 +201,8 @@ export default function HomePage() {
 
         // 处理评论数据
         if (commentsResponse.status === 'fulfilled' && commentsResponse.value && commentsResponse.value.length > 0) {
-          // 转换paginated API数据格式为expected格式
-          const transformedComments = commentsResponse.value
-            .filter((paper: any) => paper.comment_count > 0) // 只显示有评论的论文
-            .map((paper: any) => ({
-              id: paper.id,
-              title: paper.title,
-              authors: paper.authors,
-              doi: paper.doi,
-              journal: paper.journal,
-              created_at: paper.created_at,
-              latest_comment: {
-                id: `mock-${paper.id}`,
-                content: '查看详情以阅读最新评论...',
-                created_at: paper.latest_comment_time ? new Date(paper.latest_comment_time).toISOString() : paper.created_at,
-                user: { username: '论文作者' }
-              },
-              comment_count: paper.comment_count,
-              rating_count: paper.rating_count,
-              average_rating: paper.average_rating
-            }))
-          setRecentComments(transformedComments.slice(0, 5))
+          // recent-comments API 已经返回了完整的评论数据,直接使用
+          setRecentComments(commentsResponse.value)
         } else {
           // 如果没有真实评论数据，设置为空数组而不是模拟数据
           setRecentComments([])
@@ -229,8 +212,11 @@ export default function HomePage() {
         // 处理公告数据
         if (announcementsResponse.status === 'fulfilled' && announcementsResponse.value && announcementsResponse.value.length > 0) {
           setAnnouncements(announcementsResponse.value)
+          // 设置当前公告为最新的一条
+          setCurrentAnnouncement(announcementsResponse.value[0])
         } else {
           setAnnouncements([])
+          setCurrentAnnouncement(null)
         }
 
       } catch (error) {
@@ -309,10 +295,28 @@ export default function HomePage() {
     }
   }, []) // 移除performSmartSearch依赖，避免循环
 
+  // 刷新公告数据
+  const refreshAnnouncements = async () => {
+    try {
+      const response = await fetch('/api/announcements', {
+        headers: { 'Content-Type': 'application/json' },
+        cache: 'no-store'
+      })
+      const data = await response.json()
+      if (data.success && data.data) {
+        setAnnouncements(data.data)
+        setCurrentAnnouncement(data.data[0] || null)
+      }
+    } catch (error) {
+      console.error('Error refreshing announcements:', error)
+    }
+  }
+
   // 处理编辑公告
   const handleEditAnnouncement = (announcement: Announcement) => {
     setEditingAnnouncement(announcement)
     setShowAnnouncementForm(true)
+    setShowAnnouncementHistory(false)
   }
 
   // 处理删除公告
@@ -328,12 +332,8 @@ export default function HomePage() {
 
       const result = await response.json()
       if (result.success) {
-        // 重新加载公告数据
-        const announcementsResponse = await fetch('/api/announcements?active=true')
-        const announcementsData = await announcementsResponse.json()
-        if (announcementsData.success) {
-          setAnnouncements(announcementsData.data)
-        }
+        await refreshAnnouncements()
+        alert('公告已删除')
       } else {
         alert('删除失败: ' + result.message)
       }
@@ -487,86 +487,211 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Stats removed Quick Actions section */}
+        {/* Quick Links 动态流 等待优化后再实现*/}
+        {/* {isAuthenticated && (
+          <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg shadow-lg p-6 text-white">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-xl font-bold mb-2">📰 动态流</h3>
+                <p className="text-white/90">查看你关注的用户的最新学术动态</p>
+              </div>
+              <Link
+                href="/feed"
+                className="px-6 py-3 bg-white text-blue-600 rounded-lg hover:bg-blue-50 transition-all font-semibold shadow-md hover:shadow-lg flex items-center gap-2"
+              >
+                <TrendingUp className="w-5 h-5" />
+                查看动态
+              </Link>
+            </div>
+          </div>
+        )}     */}
 
-      {/* Announcements */}
-      {announcements.length > 0 && (
-        <div className="space-y-4">
-          {announcements.map((announcement) => (
-            <div
-              key={announcement.id}
-              className={`rounded-lg shadow-md border-l-4 p-4 ${
-                announcement.type === 'info' ? 'bg-blue-50 border-blue-400' :
-                announcement.type === 'warning' ? 'bg-yellow-50 border-yellow-400' :
-                announcement.type === 'success' ? 'bg-green-50 border-green-400' :
-                announcement.type === 'error' ? 'bg-red-50 border-red-400' :
-                'bg-gray-50 border-gray-400'
-              }`}
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center">
-                    <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      announcement.type === 'info' ? 'bg-blue-100 text-blue-800' :
-                      announcement.type === 'warning' ? 'bg-yellow-100 text-yellow-800' :
-                      announcement.type === 'success' ? 'bg-green-100 text-green-800' :
-                      announcement.type === 'error' ? 'bg-red-100 text-red-800' :
-                      'bg-gray-100 text-gray-800'
-                    }`}>
-                      📢 公告
-                    </div>
-                    <h3 className="ml-3 text-lg font-semibold text-gray-900">
-                      {announcement.title}
-                    </h3>
+      {/* Current Announcement - 只展示最新一条 */}
+      {currentAnnouncement && (
+        <div
+          className={`rounded-lg shadow-md border-l-4 p-4 ${
+            currentAnnouncement.type === 'info' ? 'bg-blue-50 border-blue-400' :
+            currentAnnouncement.type === 'warning' ? 'bg-yellow-50 border-yellow-400' :
+            currentAnnouncement.type === 'success' ? 'bg-green-50 border-green-400' :
+            currentAnnouncement.type === 'error' ? 'bg-red-50 border-red-400' :
+            'bg-gray-50 border-gray-400'
+          }`}
+        >
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                    currentAnnouncement.type === 'info' ? 'bg-blue-100 text-blue-800' :
+                    currentAnnouncement.type === 'warning' ? 'bg-yellow-100 text-yellow-800' :
+                    currentAnnouncement.type === 'success' ? 'bg-green-100 text-green-800' :
+                    currentAnnouncement.type === 'error' ? 'bg-red-100 text-red-800' :
+                    'bg-gray-100 text-gray-800'
+                  }`}>
+                    📢 最新公告
                   </div>
-                  <div className="mt-2 text-gray-700 whitespace-pre-wrap">
-                    {announcement.content}
-                  </div>
-                  <div className="mt-3 flex justify-between items-center">
-                    <div className="text-sm text-gray-500">
-                      发布时间: {formatDate(announcement.created_at)}
-                      {announcement.created_by && (
-                        <span className="ml-4">发布者: {announcement.created_by}</span>
-                      )}
-                    </div>
-                    {profile && profile.role === 'admin' && (
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={() => handleEditAnnouncement(announcement)}
-                          className="text-blue-600 hover:text-blue-800 text-sm"
-                        >
-                          编辑
-                        </button>
-                        <button
-                          onClick={() => handleDeleteAnnouncement(announcement.id)}
-                          className="text-red-600 hover:text-red-800 text-sm"
-                        >
-                          删除
-                        </button>
-                      </div>
-                    )}
-                  </div>
+                  <h3 className="ml-3 text-lg font-semibold text-gray-900">
+                    {currentAnnouncement.title}
+                  </h3>
                 </div>
+                {/* 查看历史按钮 */}
+                {announcements.length > 1 && (
+                  <button
+                    onClick={() => setShowAnnouncementHistory(!showAnnouncementHistory)}
+                    className="text-sm text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1"
+                  >
+                    📜 查看历史公告 ({announcements.length - 1})
+                  </button>
+                )}
+              </div>
+              <div className="mt-2 text-gray-700 whitespace-pre-wrap">
+                {currentAnnouncement.content}
+              </div>
+              <div className="mt-3 flex justify-between items-center">
+                <div className="text-sm text-gray-500">
+                  发布时间: {formatDate(currentAnnouncement.created_at)}
+                  {currentAnnouncement.created_by && (
+                    <span className="ml-4">发布者: {currentAnnouncement.created_by}</span>
+                  )}
+                </div>
+                {profile && profile.role === 'admin' && (
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => handleEditAnnouncement(currentAnnouncement)}
+                      className="px-3 py-1 text-sm text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded transition-colors"
+                    >
+                      ✏️ 编辑
+                    </button>
+                    <button
+                      onClick={() => handleDeleteAnnouncement(currentAnnouncement.id)}
+                      className="px-3 py-1 text-sm text-red-600 hover:text-red-800 hover:bg-red-100 rounded transition-colors"
+                    >
+                      🗑️ 删除
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
-          ))}
+          </div>
         </div>
       )}
 
-      {/* Admin Announcement Form */}
+      {/* Announcement History Modal */}
+      {showAnnouncementHistory && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[80vh] overflow-hidden flex flex-col">
+            <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+              <h2 className="text-xl font-semibold text-gray-900">📜 公告历史记录</h2>
+              <button
+                onClick={() => setShowAnnouncementHistory(false)}
+                className="text-gray-400 hover:text-gray-600 text-2xl leading-none"
+              >
+                ×
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-6">
+              <div className="space-y-4">
+                {announcements.map((announcement, index) => (
+                  <div
+                    key={announcement.id}
+                    className={`rounded-lg border-l-4 p-4 ${
+                      announcement.type === 'info' ? 'bg-blue-50 border-blue-400' :
+                      announcement.type === 'warning' ? 'bg-yellow-50 border-yellow-400' :
+                      announcement.type === 'success' ? 'bg-green-50 border-green-400' :
+                      announcement.type === 'error' ? 'bg-red-50 border-red-400' :
+                      'bg-gray-50 border-gray-400'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center">
+                          <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            announcement.type === 'info' ? 'bg-blue-100 text-blue-800' :
+                            announcement.type === 'warning' ? 'bg-yellow-100 text-yellow-800' :
+                            announcement.type === 'success' ? 'bg-green-100 text-green-800' :
+                            announcement.type === 'error' ? 'bg-red-100 text-red-800' :
+                            'bg-gray-100 text-gray-800'
+                          }`}>
+                            {index === 0 ? '📢 最新' : `#${index + 1}`}
+                          </div>
+                          <h3 className="ml-3 text-lg font-semibold text-gray-900">
+                            {announcement.title}
+                          </h3>
+                        </div>
+                        <div className="mt-2 text-gray-700 whitespace-pre-wrap">
+                          {announcement.content}
+                        </div>
+                        <div className="mt-3 flex justify-between items-center">
+                          <div className="text-sm text-gray-500">
+                            发布时间: {formatDate(announcement.created_at)}
+                            {announcement.created_by && (
+                              <span className="ml-4">发布者: {announcement.created_by}</span>
+                            )}
+                          </div>
+                          {profile && profile.role === 'admin' && (
+                            <div className="flex space-x-2">
+                              <button
+                                onClick={() => handleEditAnnouncement(announcement)}
+                                className="px-3 py-1 text-sm text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded transition-colors"
+                              >
+                                ✏️ 编辑
+                              </button>
+                              <button
+                                onClick={() => handleDeleteAnnouncement(announcement.id)}
+                                className="px-3 py-1 text-sm text-red-600 hover:text-red-800 hover:bg-red-100 rounded transition-colors"
+                              >
+                                🗑️ 删除
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
+              <button
+                onClick={() => setShowAnnouncementHistory(false)}
+                className="w-full px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+              >
+                关闭
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Admin Announcement Management */}
       {profile && profile.role === 'admin' && (
         <div className="bg-white rounded-lg shadow">
           <div className="px-6 py-4 border-b border-gray-200">
             <div className="flex justify-between items-center">
               <h2 className="text-xl font-semibold text-gray-900">
-                📢 管理员公告
+                管理员 - 公告管理
               </h2>
-              <button
-                onClick={() => setShowAnnouncementForm(!showAnnouncementForm)}
-                className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                {showAnnouncementForm ? '取消' : '发布公告'}
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    setEditingAnnouncement(null)
+                    setShowAnnouncementForm(!showAnnouncementForm)
+                    setShowAnnouncementHistory(false)
+                  }}
+                  className="inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors"
+                >
+                  {showAnnouncementForm ? '❌ 取消' : '➕ 新建公告'}
+                </button>
+                <button
+                  onClick={() => {
+                    setShowAnnouncementHistory(!showAnnouncementHistory)
+                    setShowAnnouncementForm(false)
+                  }}
+                  className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  📜 历史管理 ({announcements.length})
+                </button>
+              </div>
             </div>
           </div>
 
@@ -574,11 +699,11 @@ export default function HomePage() {
             <div className="px-6 py-4">
               <AnnouncementForm
                 editingAnnouncement={editingAnnouncement}
-                onSuccess={() => {
+                onSuccess={async () => {
                   setShowAnnouncementForm(false)
                   setEditingAnnouncement(null)
-                  // 重新加载公告数据
-                  window.location.reload()
+                  await refreshAnnouncements()
+                  alert(editingAnnouncement ? '公告已更新' : '公告已发布')
                 }}
                 onCancel={() => {
                   setShowAnnouncementForm(false)

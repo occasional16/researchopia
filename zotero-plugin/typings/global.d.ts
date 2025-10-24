@@ -74,6 +74,10 @@ declare global {
     io: {
       newURI(url: string, charset: string | null, baseURI: any): any;
     };
+    prompt: {
+      confirm(parent: any, title: string, message: string): boolean;
+      prompt(parent: any, title: string, message: string, value: { value: string }, checkLabel: string | null, checkValue: { value: boolean } | null): boolean;
+    };
   };
 
   var Components: {

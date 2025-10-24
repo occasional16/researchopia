@@ -170,6 +170,41 @@ export class AuthManager {
       
       await instance.saveSession();
       logger.log("[AuthManager] ✅ Sign in successful for:", email, "with role:", userRole);
+      
+      // 触发登录事件,通知UI更新
+      try {
+        const win = (Zotero as any).getMainWindow();
+        if (win && win.document) {
+          const event = win.document.createEvent('CustomEvent');
+          event.initCustomEvent('researchopia:login', true, false, { user: instance.user });
+          win.document.dispatchEvent(event);
+          logger.log("[AuthManager] 📢 Login event dispatched on main window");
+          
+          // 通知所有打开的窗口
+          const windowMediator = Components.classes["@mozilla.org/appshell/window-mediator;1"]
+            .getService(Components.interfaces.nsIWindowMediator);
+          const enumerator = windowMediator.getEnumerator(null);
+          
+          while (enumerator.hasMoreElements()) {
+            try {
+              const w = enumerator.getNext();
+              if (w && w.document) {
+                const evt = w.document.createEvent('CustomEvent');
+                evt.initCustomEvent('researchopia:login', true, false, { user: instance.user });
+                w.document.dispatchEvent(evt);
+                logger.log("[AuthManager] 📢 Login event dispatched on window:", w.location?.href);
+              }
+            } catch (winError) {
+              logger.error("[AuthManager] ⚠️ Error dispatching to window:", winError instanceof Error ? winError.message : String(winError));
+            }
+          }
+        } else {
+          logger.warn("[AuthManager] ⚠️ Main window or document not available for event dispatch");
+        }
+      } catch (eventError) {
+        logger.error("[AuthManager] ❌ Error dispatching login event:", eventError instanceof Error ? eventError.message : String(eventError));
+      }
+      
       return { success: true, user: instance.user };
       
     } catch (error) {
@@ -230,6 +265,17 @@ export class AuthManager {
     
     try {
       logger.log("[AuthManager] 🚪 Signing out user");
+      
+      // 通知 ReadingSessionManager 用户即将登出
+      try {
+        const { ReadingSessionManager } = await import('./readingSessionManager');
+        const sessionMgr = ReadingSessionManager.getInstance();
+        if (sessionMgr.isInSession()) {
+          await sessionMgr.handleUserLogout();
+        }
+      } catch (sessionError) {
+        logger.error("[AuthManager] Error handling session logout:", sessionError);
+      }
       
       // 如果有有效的会话，向 Supabase 发送登出请求
       if (instance.session?.access_token && instance.supabase) {
@@ -481,6 +527,41 @@ export class AuthManager {
       Zotero.Prefs.clear('extensions.researchopia.userName');
       Zotero.Prefs.clear('extensions.researchopia.tokenExpires');
       Zotero.Prefs.clear('extensions.researchopia.loginTime');
+      
+      // 触发登出事件,通知UI更新
+      try {
+        const win = (Zotero as any).getMainWindow();
+        if (win && win.document) {
+          // 使用 document.createEvent 代替 CustomEvent (兼容 Firefox/Zotero)
+          const event = win.document.createEvent('CustomEvent');
+          event.initCustomEvent('researchopia:logout', true, false, null);
+          win.document.dispatchEvent(event);
+          logger.log("[AuthManager] 📢 Logout event dispatched on main window");
+          
+          // 通知所有打开的窗口 (包括偏好设置窗口)
+          const windowMediator = Components.classes["@mozilla.org/appshell/window-mediator;1"]
+            .getService(Components.interfaces.nsIWindowMediator);
+          const enumerator = windowMediator.getEnumerator(null);
+          
+          while (enumerator.hasMoreElements()) {
+            try {
+              const w = enumerator.getNext();
+              if (w && w.document) {
+                const evt = w.document.createEvent('CustomEvent');
+                evt.initCustomEvent('researchopia:logout', true, false, null);
+                w.document.dispatchEvent(evt);
+                logger.log("[AuthManager] 📢 Logout event dispatched on window:", w.location?.href);
+              }
+            } catch (winError) {
+              logger.error("[AuthManager] ⚠️ Error dispatching to window:", winError instanceof Error ? winError.message : String(winError));
+            }
+          }
+        } else {
+          logger.warn("[AuthManager] ⚠️ Main window or document not available for event dispatch");
+        }
+      } catch (eventError) {
+        logger.error("[AuthManager] ❌ Error dispatching logout event:", eventError instanceof Error ? eventError.message : String(eventError));
+      }
       
       logger.log("[AuthManager] 🧹 Session cleared");
     } catch (error) {

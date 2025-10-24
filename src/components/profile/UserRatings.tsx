@@ -6,25 +6,39 @@ import { Star, Trash2, Calendar, ExternalLink } from 'lucide-react'
 import { getUserRatings, deleteUserRating, type UserRatingWithPaper } from '@/lib/userActivity'
 import { useAuth } from '@/contexts/AuthContext'
 
-export default function UserRatings() {
-  const { user } = useAuth()
+interface UserRatingsProps {
+  username?: string
+}
+
+export default function UserRatings({ username }: UserRatingsProps = {}) {
+  const { user, getAccessToken } = useAuth()
   const [ratings, setRatings] = useState<UserRatingWithPaper[]>([])
   const [loading, setLoading] = useState(true)
   const [deleting, setDeleting] = useState<string | null>(null)
 
+  const isCurrentUser = !username || (user && user.username === username)
+
   useEffect(() => {
-    if (user) {
-      loadRatings()
-    }
-  }, [user])
+    loadRatings()
+  }, [user, username])
 
   const loadRatings = async () => {
-    if (!user) return
-    
     try {
       setLoading(true)
-      const data = await getUserRatings(user.id)
-      setRatings(data)
+
+      if (username) {
+        const accessToken = await getAccessToken()
+        const response = await fetch(`/api/users/${username}/ratings?limit=100`, {
+          headers: accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {}
+        })
+        if (response.ok) {
+          const data = await response.json()
+          setRatings(data.ratings || [])
+        }
+      } else if (user) {
+        const data = await getUserRatings(user.id)
+        setRatings(data)
+      }
     } catch (error) {
       console.error('Error loading ratings:', error)
     } finally {

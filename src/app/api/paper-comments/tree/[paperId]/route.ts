@@ -7,14 +7,13 @@ import { createClient } from '@supabase/supabase-js';
  */
 export async function GET(
   request: Request,
-  { params }: { params: { paperId: string } }
+  { params }: { params: Promise<{ paperId: string }> }
 ) {
   try {
+    const { paperId } = await params;
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
     const supabase = createClient(supabaseUrl, supabaseKey);
-
-    const paperId = params.paperId;
 
     // 调用数据库函数获取评论树
     const { data: commentTree, error } = await supabase

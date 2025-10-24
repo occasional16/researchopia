@@ -30,6 +30,7 @@ interface AuthContextType {
   setUser: (user: User | null) => void
   fetchProfile: (userId: string, force?: boolean) => Promise<void>
   refreshSession: () => Promise<void>
+  getAccessToken: () => Promise<string | null>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -123,10 +124,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // 刷新会话
   const refreshSession = async () => {
     if (!supabase) return
-    
+
     try {
       const { data: { session }, error } = await supabase.auth.refreshSession()
-      
+
       if (error) {
         console.error('❌ Session refresh failed:', error)
         return
@@ -138,6 +139,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     } catch (error) {
       console.error('❌ Session refresh error:', error)
+    }
+  }
+
+  // 获取访问令牌
+  const getAccessToken = async (): Promise<string | null> => {
+    if (!supabase) return null
+
+    try {
+      const { data: { session }, error } = await supabase.auth.getSession()
+
+      if (error) {
+        console.error('❌ Failed to get session:', error)
+        return null
+      }
+
+      return session?.access_token || null
+    } catch (error) {
+      console.error('❌ Get access token error:', error)
+      return null
     }
   }
 
@@ -537,7 +557,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setProfile,
     setUser,
     fetchProfile,
-    refreshSession
+    refreshSession,
+    getAccessToken
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

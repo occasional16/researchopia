@@ -3,18 +3,19 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Search, User, LogOut, Plus, UserCircle, Settings, Shield, Book } from 'lucide-react'
+import { User, LogOut, UserCircle, Shield, Book, Bell } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useLanguage } from '@/contexts/LanguageContext'
 import AuthModal from '@/components/auth/AuthModal'
 import LanguageSwitcher from '@/components/ui/LanguageSwitcher'
 
 export default function Navbar() {
-  const { user, profile, signOut, isAuthenticated, loading } = useAuth()
+  const { user, profile, signOut, isAuthenticated, loading, getAccessToken } = useAuth()
   const { t } = useLanguage()
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login')
   const [showUserMenu, setShowUserMenu] = useState(false)
+  const [unreadCount, setUnreadCount] = useState(0)
 
   // 调试日志
   useEffect(() => {
@@ -47,6 +48,38 @@ export default function Navbar() {
       window.removeEventListener('showAuthModal', handleShowAuthModal as EventListener)
     }
   }, [])
+
+  // 加载未读通知数量
+  useEffect(() => {
+    if (!userState.isLoggedIn) {
+      setUnreadCount(0)
+      return
+    }
+
+    const loadUnreadCount = async () => {
+      try {
+        const accessToken = await getAccessToken()
+        if (!accessToken) return
+
+        const response = await fetch('/api/notifications?limit=1&is_read=false', {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`
+          }
+        })
+        if (response.ok) {
+          const data = await response.json()
+          setUnreadCount(data.unread_count || 0)
+        }
+      } catch (error) {
+        console.error('Error loading unread count:', error)
+      }
+    }
+
+    loadUnreadCount()
+    // 每30秒刷新一次
+    const interval = setInterval(loadUnreadCount, 30000)
+    return () => clearInterval(interval)
+  }, [userState.isLoggedIn])
 
   const handleAuthClick = useCallback((mode: 'login' | 'signup') => {
     setAuthMode(mode)
@@ -121,6 +154,19 @@ export default function Navbar() {
               
               {userState.isLoggedIn ? (
                 <>
+                  {/* 通知图标 */}
+                  <Link
+                    href="/notifications"
+                    className="relative p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                  >
+                    <Bell className="w-5 h-5 text-gray-600" />
+                    {unreadCount > 0 && (
+                      <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
+                        {unreadCount > 99 ? '99+' : unreadCount}
+                      </span>
+                    )}
+                  </Link>
+
                   <div className="relative">
                     <button
                       onClick={() => setShowUserMenu(!showUserMenu)}

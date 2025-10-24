@@ -30,11 +30,14 @@
             <html:input type="password" id="password-input" placeholder="请输入您的密码" />
             <html:a href="javascript:void(0)" onclick="openExternalLink('https://www.researchopia.com/')" id="forgot-password" style="flex-shrink: 0; color: var(--accent-blue); text-decoration: none; font-size: 12px; white-space: nowrap;">忘记密码</html:a>
           </html:div>
+          <html:div class="form-group">
+            <html:label class="checkbox-label">
+              <html:input type="checkbox" id="remember-credentials" />
+              <html:span>记住账号密码</html:span>
+              <html:small>下次登录自动填充账号和密码</html:small>
+            </html:label>
+          </html:div>
           <html:div class="form-actions">
-            <html:button id="test-connection-btn" class="researchopia-btn secondary" onclick="onTestConnection()">
-              <html:span class="btn-text">测试连接</html:span>
-              <html:span class="btn-loading" style="display: none;">检测中...</html:span>
-            </html:button>
             <html:button id="login-btn" class="researchopia-btn primary" onclick="onLogin()">
               <html:span class="btn-text">登录</html:span>
               <html:span class="btn-loading" style="display: none;">登录中...</html:span>
@@ -62,17 +65,9 @@
               </html:div>
             </html:div>
             <html:div class="user-actions">
-              <html:button id="check-status-btn" class="researchopia-btn secondary" onclick="onCheckStatus()">
-                <html:span class="btn-text">检测登录状态</html:span>
-                <html:span class="btn-loading" style="display: none;">检测中...</html:span>
-              </html:button>
               <html:button id="logout-btn" class="researchopia-btn danger" onclick="onLogout()">
                 <html:span class="btn-text">登出</html:span>
                 <html:span class="btn-loading" style="display: none;">登出中...</html:span>
-              </html:button>
-              <html:button id="sync-btn" class="researchopia-btn" onclick="onSync()">
-                <html:span class="btn-text">同步数据</html:span>
-                <html:span class="btn-loading" style="display: none;">同步中...</html:span>
               </html:button>
             </html:div>
           </html:div>

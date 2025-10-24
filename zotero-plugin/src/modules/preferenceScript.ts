@@ -127,10 +127,12 @@ function bindLoggedInEvents(doc: Document) {
   // Add logout event listener
   const logoutBtn = doc.getElementById("logout-btn");
   logoutBtn?.addEventListener("click", async () => {
-    if (confirm("确定要退出登录吗？")) {
+    if (confirm("确定要退出登录吗？这将清除已保存的账号密码。")) {
       setButtonLoading(logoutBtn, true);
       try {
         await AuthManager.signOut();
+        // 清除保存的凭证
+        clearSavedCredentials();
         updateLoginStatus(doc);
         const statusMessage = doc.getElementById("status-message");
         if (statusMessage) {
@@ -180,48 +182,24 @@ function bindLoggedInEvents(doc: Document) {
 function bindLoginFormEvents(doc: Document) {
   logger.log("[Researchopia] 🔧 bindLoginFormEvents called");
   
+  // 加载保存的账号密码
+  loadSavedCredentials(doc);
+  
   // Add login event listeners
-  const testConnectionBtn = doc.getElementById("test-connection-btn");
   const loginBtn = doc.getElementById("login-btn");
   const signupBtn = doc.getElementById("signup-btn");
   const forgotPasswordLink = doc.getElementById("forgot-password");
 
   logger.log("[Researchopia] 🔧 Found buttons:", {
-    testConnection: !!testConnectionBtn,
     login: !!loginBtn,
     signup: !!signupBtn,
     forgotPassword: !!forgotPasswordLink
   });
 
-  // Connection test event listener
-  testConnectionBtn?.addEventListener("click", async () => {
-    logger.log("[Researchopia] 🔧 Test connection button clicked");
-    setButtonLoading(testConnectionBtn, true);
-    showMessage(doc, "正在测试与Supabase的连接...", "info");
-
-    try {
-      logger.log("[Researchopia] 🔧 Calling AuthManager.testConnection...");
-      const result = await AuthManager.testConnection();
-      logger.log("[Researchopia] 🔧 Test connection result:", result);
-      
-      if (result.success) {
-        const responseTime = result.responseTime || 0;
-        showMessage(doc, `✅ 连接成功！响应时间: ${responseTime}ms`, "success");
-      } else {
-        showMessage(doc, `❌ 连接失败: ${result.error}`, "error");
-      }
-    } catch (error) {
-      logger.error("[Researchopia] ❌ Connection test error:", error);
-      showMessage(doc, "❌ 连接测试时发生错误", "error");
-    } finally {
-      setButtonLoading(testConnectionBtn, false);
-    }
-  });
-
   loginBtn?.addEventListener("click", async () => {
     const email = (doc.getElementById("email-input") as HTMLInputElement)?.value.trim();
     const password = (doc.getElementById("password-input") as HTMLInputElement)?.value;
-    const rememberMe = (doc.getElementById("remember-me") as HTMLInputElement)?.checked;
+    const rememberCredentials = (doc.getElementById("remember-credentials") as HTMLInputElement)?.checked;
 
     if (!email || !password) {
       showMessage(doc, "请输入邮箱和密码", "error");
@@ -239,9 +217,13 @@ function bindLoginFormEvents(doc: Document) {
     try {
       const result = await AuthManager.signIn(email, password);
       if (result.success) {
-        if (rememberMe) {
-          setPref("rememberLogin", true);
+        // 保存或清除凭证
+        if (rememberCredentials) {
+          saveCredentials(email, password);
+        } else {
+          clearSavedCredentials();
         }
+        
         showMessage(doc, "✅ 登录成功！正在加载用户信息...", "success");
         
         // 延迟一秒让用户看到成功消息，然后更新界面
@@ -447,4 +429,77 @@ function getSignupErrorMessage(error: string): string {
   }
   
   return `注册失败: ${error}`;
+}
+
+// 简单的加密/解密函数 (仅用于混淆，不是真正的安全加密)
+function simpleEncrypt(text: string): string {
+  // 使用Base64编码并添加简单的字符替换
+  const encoded = btoa(text);
+  return encoded.split('').reverse().join('');
+}
+
+function simpleDecrypt(text: string): string {
+  try {
+    const decoded = text.split('').reverse().join('');
+    return atob(decoded);
+  } catch (e) {
+    return '';
+  }
+}
+
+// 保存凭证到偏好设置
+function saveCredentials(email: string, password: string): void {
+  try {
+    logger.log("[Researchopia] 🔧 saveCredentials called with email:", email);
+    setPref("savedEmail", email);
+    setPref("savedPassword", simpleEncrypt(password));
+    setPref("rememberCredentials", true);
+    logger.log("[Researchopia] ✅ 凭证已保存");
+  } catch (error) {
+    logger.error("[Researchopia] 保存凭证失败:", error);
+  }
+}
+
+// 加载保存的凭证
+function loadSavedCredentials(doc: Document): void {
+  try {
+    logger.log("[Researchopia] 🔧 loadSavedCredentials called");
+    const rememberCredentials = getPref("rememberCredentials") as boolean;
+    logger.log("[Researchopia] 🔧 rememberCredentials:", rememberCredentials);
+    
+    if (rememberCredentials) {
+      const savedEmail = getPref("savedEmail") as string;
+      const savedPassword = getPref("savedPassword") as string;
+      
+      logger.log("[Researchopia] 🔧 savedEmail:", savedEmail, "savedPassword:", !!savedPassword);
+      
+      if (savedEmail && savedPassword) {
+        const emailInput = doc.getElementById("email-input") as HTMLInputElement;
+        const passwordInput = doc.getElementById("password-input") as HTMLInputElement;
+        const rememberCheckbox = doc.getElementById("remember-credentials") as HTMLInputElement;
+        
+        logger.log("[Researchopia] 🔧 Found inputs:", { emailInput: !!emailInput, passwordInput: !!passwordInput, rememberCheckbox: !!rememberCheckbox });
+        
+        if (emailInput) emailInput.value = savedEmail;
+        if (passwordInput) passwordInput.value = simpleDecrypt(savedPassword);
+        if (rememberCheckbox) rememberCheckbox.checked = true;
+        
+        logger.log("[Researchopia] ✅ 凭证已加载");
+      }
+    }
+  } catch (error) {
+    logger.error("[Researchopia] 加载凭证失败:", error);
+  }
+}
+
+// 清除保存的凭证
+function clearSavedCredentials(): void {
+  try {
+    setPref("savedEmail", "");
+    setPref("savedPassword", "");
+    setPref("rememberCredentials", false);
+    logger.log("[Researchopia] 凭证已清除");
+  } catch (error) {
+    logger.error("[Researchopia] 清除凭证失败:", error);
+  }
 }

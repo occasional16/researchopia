@@ -11,6 +11,9 @@ declare namespace _ZoteroTypes {
       "showNotifications": boolean;
       "userEmail": string;
       "isLoggedIn": boolean;
+      "rememberCredentials": boolean;
+      "savedEmail": string;
+      "savedPassword": string;
     };
   }
 }

@@ -296,6 +296,9 @@ var researchopiaPrefs = {
   // 检查并恢复登录状态
   checkLoginState: function() {
     try {
+      // 加载保存的凭证
+      this.loadSavedCredentials();
+      
       if (typeof Zotero !== 'undefined' && Zotero.Prefs) {
         const isLoggedIn = Zotero.Prefs.get("extensions.researchopia.isLoggedIn", false);
         const userEmail = Zotero.Prefs.get("extensions.researchopia.userEmail", "");
@@ -400,14 +403,105 @@ var researchopiaPrefs = {
         loggedInContainer.style.display = "none";
       }
       
-      // 清空输入框
-      const emailInput = document.getElementById("email-input");
-      const passwordInput = document.getElementById("password-input");
-      if (emailInput) emailInput.value = "";
-      if (passwordInput) passwordInput.value = "";
+      // 根据rememberCredentials决定是清空输入框还是重新加载凭证
+      const rememberCredentials = Zotero.Prefs.get("extensions.researchopia.rememberCredentials", true);
+      if (!rememberCredentials) {
+        // 用户未勾选记住密码,清空输入框
+        const emailInput = document.getElementById("email-input");
+        const passwordInput = document.getElementById("password-input");
+        const rememberCheckbox = document.getElementById("remember-credentials");
+        
+        if (emailInput) emailInput.value = "";
+        if (passwordInput) passwordInput.value = "";
+        if (rememberCheckbox) rememberCheckbox.checked = false;
+        
+        debugLog("[Researchopia] 输入框已清空(用户未勾选记住密码)");
+      } else {
+        // 用户勾选了记住密码,重新加载凭证
+        this.loadSavedCredentials();
+        debugLog("[Researchopia] 凭证已重新加载(用户勾选了记住密码)");
+      }
       
     } catch (error) {
       debugLog("[Researchopia] Error clearing login state:", error);
+    }
+  },
+
+  // 简单的加密/解密函数(仅用于混淆)
+  simpleEncrypt: function(text) {
+    try {
+      const encoded = btoa(text);
+      return encoded.split('').reverse().join('');
+    } catch (e) {
+      return text;
+    }
+  },
+
+  simpleDecrypt: function(text) {
+    try {
+      const decoded = text.split('').reverse().join('');
+      return atob(decoded);
+    } catch (e) {
+      return '';
+    }
+  },
+
+  // 保存凭证
+  saveCredentials: function(email, password) {
+    try {
+      if (typeof Zotero !== 'undefined' && Zotero.Prefs) {
+        Zotero.Prefs.set("extensions.researchopia.savedEmail", email, true);
+        Zotero.Prefs.set("extensions.researchopia.savedPassword", this.simpleEncrypt(password), true);
+        Zotero.Prefs.set("extensions.researchopia.rememberCredentials", true, true);
+        console.log("[Researchopia] ✅ 凭证已保存");
+      }
+    } catch (error) {
+      console.error("[Researchopia] 保存凭证失败:", error);
+    }
+  },
+
+  // 加载保存的凭证
+  loadSavedCredentials: function() {
+    try {
+      if (typeof Zotero !== 'undefined' && Zotero.Prefs) {
+        const rememberCredentials = Zotero.Prefs.get("extensions.researchopia.rememberCredentials", true);
+        console.log("[Researchopia] 🔧 rememberCredentials:", rememberCredentials);
+        
+        if (rememberCredentials) {
+          const savedEmail = Zotero.Prefs.get("extensions.researchopia.savedEmail", true);
+          const savedPassword = Zotero.Prefs.get("extensions.researchopia.savedPassword", true);
+          
+          console.log("[Researchopia] 🔧 savedEmail:", savedEmail, "savedPassword:", !!savedPassword);
+          
+          if (savedEmail && savedPassword) {
+            const emailInput = document.getElementById("email-input");
+            const passwordInput = document.getElementById("password-input");
+            const rememberCheckbox = document.getElementById("remember-credentials");
+            
+            if (emailInput) emailInput.value = savedEmail;
+            if (passwordInput) passwordInput.value = this.simpleDecrypt(savedPassword);
+            if (rememberCheckbox) rememberCheckbox.checked = true;
+            
+            console.log("[Researchopia] ✅ 凭证已加载");
+          }
+        }
+      }
+    } catch (error) {
+      console.error("[Researchopia] 加载凭证失败:", error);
+    }
+  },
+
+  // 清除保存的凭证(包括标志)
+  clearSavedCredentials: function() {
+    try {
+      if (typeof Zotero !== 'undefined' && Zotero.Prefs) {
+        Zotero.Prefs.set("extensions.researchopia.savedEmail", "", true);
+        Zotero.Prefs.set("extensions.researchopia.savedPassword", "", true);
+        Zotero.Prefs.set("extensions.researchopia.rememberCredentials", false, true);
+        console.log("[Researchopia] 🧹 凭证已清除");
+      }
+    } catch (error) {
+      console.error("[Researchopia] 清除凭证失败:", error);
     }
   },
 
@@ -585,38 +679,13 @@ var researchopiaPrefs = {
 };
 
 // Event handler functions
-function onTestConnection() {
-  console.log("[Researchopia] Test connection button clicked");
-  
-  const btn = document.getElementById("test-connection-btn");
-  if (!btn) {
-    console.error("[Researchopia] Test connection button not found");
-    return;
-  }
-  
-  researchopiaPrefs.setButtonLoading(btn, true);
-  researchopiaPrefs.showMessage("正在测试与Supabase的连接...", "info");
-  
-  researchopiaPrefs.testSupabaseConnection().then(result => {
-    if (result.success) {
-      researchopiaPrefs.showMessage(`连接成功！响应时间: ${result.responseTime}ms`, "success");
-    } else {
-      researchopiaPrefs.showMessage(`连接失败: ${result.error}`, "error");
-    }
-    researchopiaPrefs.setButtonLoading(btn, false);
-  }).catch(error => {
-    console.error("[Researchopia] Test connection error:", error);
-    researchopiaPrefs.showMessage("测试连接时发生错误", "error");
-    researchopiaPrefs.setButtonLoading(btn, false);
-  });
-}
-
 function onLogin() {
   console.log("[Researchopia] Login button clicked");
   
   const emailInput = document.getElementById("email-input");
   const passwordInput = document.getElementById("password-input");
   const loginBtn = document.getElementById("login-btn");
+  const rememberCheckbox = document.getElementById("remember-credentials");
   
   if (!emailInput || !passwordInput) {
     console.log("[Researchopia] Input elements not found");
@@ -626,8 +695,9 @@ function onLogin() {
   
   const email = emailInput.value.trim();
   const password = passwordInput.value;
+  const rememberCredentials = rememberCheckbox ? rememberCheckbox.checked : false;
   
-  console.log("[Researchopia] Login values:", { email, passwordLength: password ? password.length : 0 });
+  console.log("[Researchopia] Login values:", { email, passwordLength: password ? password.length : 0, remember: rememberCredentials });
   
   if (!email || !password) {
     console.log("[Researchopia] Missing email or password");
@@ -648,6 +718,14 @@ function onLogin() {
       researchopiaPrefs.clearLoginState();
       // 保存登录信息
       researchopiaPrefs.saveLoginState(result.data, email);
+      
+      // 保存或清除凭证
+      if (rememberCredentials) {
+        researchopiaPrefs.saveCredentials(email, password);
+      } else {
+        researchopiaPrefs.clearSavedCredentials();
+      }
+      
       // 显示登录状态
       researchopiaPrefs.showLoggedInState(result.data.user, email);
     } else {
@@ -688,40 +766,50 @@ function openExternalLink(url) {
 }
 
 // 登出按钮事件处理
-function onLogout() {
+async function onLogout() {
   console.log("[Researchopia] Logout button clicked");
   
-  researchopiaPrefs.clearLoginState();
-  researchopiaPrefs.showMessage("已成功登出", "success");
+  try {
+    // 直接调用AuthManager.signOut()
+    if (typeof Zotero !== 'undefined' && Zotero.Researchopia && Zotero.Researchopia.authManager) {
+      console.log("[Researchopia] Calling AuthManager.signOut()...");
+      await Zotero.Researchopia.authManager.signOut();
+      console.log("[Researchopia] AuthManager.signOut() completed");
+    } else {
+      // 如果AuthManager不可用，降级到直接清理
+      console.log("[Researchopia] AuthManager not available, clearing state directly");
+      researchopiaPrefs.clearLoginState();
+    }
+    // 不清除保存的凭证,用户下次登录时可以继续使用"记住密码"功能
+    researchopiaPrefs.showMessage("已成功登出", "success");
+  } catch (error) {
+    console.error("[Researchopia] Error during logout:", error);
+    researchopiaPrefs.clearLoginState();
+    researchopiaPrefs.showMessage("已成功登出", "success");
+  }
 }
 
-// 检查状态按钮事件处理  
-function onCheckStatus() {
-  console.log("[Researchopia] Check status button clicked");
-  
-  const btn = document.getElementById("check-status-btn");
-  researchopiaPrefs.setButtonLoading(btn, true);
-  
-  // 重新检查登录状态
-  setTimeout(() => {
-    researchopiaPrefs.checkLoginState();
-    researchopiaPrefs.showMessage("状态检查完成", "info");
-    researchopiaPrefs.setButtonLoading(btn, false);
-  }, 500);
-}
-
-// 同步数据按钮事件处理
-function onSync() {
-  console.log("[Researchopia] Sync button clicked");
-  
-  const btn = document.getElementById("sync-btn");
-  researchopiaPrefs.setButtonLoading(btn, true);
-  
-  // 模拟同步操作
-  setTimeout(() => {
-    researchopiaPrefs.showMessage("数据同步功能开发中", "info");
-    researchopiaPrefs.setButtonLoading(btn, false);
-  }, 1000);
+// 监听登出事件，更新偏好设置UI
+function setupLogoutEventListener() {
+  try {
+    if (typeof document !== 'undefined') {
+      document.addEventListener('researchopia:logout', () => {
+        console.log("[Researchopia] Received logout event in preferences");
+        // 更新UI显示为未登录状态
+        researchopiaPrefs.clearLoginState();
+      });
+      
+      document.addEventListener('researchopia:login', () => {
+        console.log("[Researchopia] Received login event in preferences");
+        // 更新UI显示为已登录状态
+        researchopiaPrefs.checkLoginState();
+      });
+      
+      console.log("[Researchopia] Login/Logout event listeners registered in preferences");
+    }
+  } catch (error) {
+    console.error("[Researchopia] Error setting up event listeners:", error);
+  }
 }
 
 // Ensure functions are globally accessible - CRITICAL for Zotero 8
@@ -730,11 +818,8 @@ function ensureGlobalAccess() {
   try {
     // Strategy 1: window object
     if (typeof window !== 'undefined') {
-      window.onTestConnection = onTestConnection;
       window.onLogin = onLogin;
       window.onLogout = onLogout;
-      window.onCheckStatus = onCheckStatus;
-      window.onSync = onSync;
       window.openExternalLink = openExternalLink;
 
       window.researchopiaPrefs = researchopiaPrefs;
@@ -746,11 +831,8 @@ function ensureGlobalAccess() {
   
   try {
     // Strategy 2: globalThis
-    globalThis.onTestConnection = onTestConnection;
     globalThis.onLogin = onLogin;
     globalThis.onLogout = onLogout;
-    globalThis.onCheckStatus = onCheckStatus;
-    globalThis.onSync = onSync;
     globalThis.openExternalLink = openExternalLink;
 
     globalThis.researchopiaPrefs = researchopiaPrefs;
@@ -761,11 +843,8 @@ function ensureGlobalAccess() {
   
   try {
     // Strategy 3: this context
-    this.onTestConnection = onTestConnection;
     this.onLogin = onLogin;
     this.onLogout = onLogout;
-    this.onCheckStatus = onCheckStatus;
-    this.onSync = onSync;
     this.openExternalLink = openExternalLink;
 
     this.researchopiaPrefs = researchopiaPrefs;
@@ -777,16 +856,19 @@ function ensureGlobalAccess() {
 
 // Initialize immediately
 ensureGlobalAccess();
+setupLogoutEventListener();
 
 // Also try on DOMContentLoaded
 if (typeof document !== 'undefined') {
   if (document.readyState === 'complete' || document.readyState === 'interactive') {
     ensureGlobalAccess();
+    setupLogoutEventListener();
     // 检查登录状态
     setTimeout(() => researchopiaPrefs.checkLoginState(), 200);
   } else {
     document.addEventListener('DOMContentLoaded', () => {
       ensureGlobalAccess();
+      setupLogoutEventListener();
       // 检查登录状态
       setTimeout(() => researchopiaPrefs.checkLoginState(), 200);
     });
@@ -794,7 +876,10 @@ if (typeof document !== 'undefined') {
 }
 
 // Fallback timeout
-setTimeout(ensureGlobalAccess, 100);
+setTimeout(() => {
+  ensureGlobalAccess();
+  setupLogoutEventListener();
+}, 100);
 
 
 // 延迟检查登录状态
@@ -802,12 +887,8 @@ setTimeout(() => researchopiaPrefs.checkLoginState(), 500);
 
 debugLog("[Researchopia] Preferences script initialization complete");
 debugLog("[Researchopia] Function types:", {
-  onTestConnection: typeof onTestConnection,
   onLogin: typeof onLogin,
   onLogout: typeof onLogout,
-  onCheckStatus: typeof onCheckStatus,
-  onSync: typeof onSync,
-
-  windowOnTestConnection: typeof (window && window.onTestConnection),
-  globalThisOnTestConnection: typeof globalThis.onTestConnection
+  windowOnLogin: typeof (window && window.onLogin),
+  globalThisOnLogin: typeof globalThis.onLogin
 });

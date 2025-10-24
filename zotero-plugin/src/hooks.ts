@@ -193,6 +193,46 @@ async function onMainWindowUnload(win: Window): Promise<void> {
       }
     }
     
+    // Clean up Reading Session before window closes
+    try {
+      const { ReadingSessionManager } = require("./modules/readingSessionManager");
+      const { getCurrentUser, getToken } = require("./utils/auth");
+      const sessionMgr = ReadingSessionManager.getInstance();
+      
+      if (sessionMgr.isInSession()) {
+        const session = sessionMgr.getCurrentSession();
+        const user = getCurrentUser();
+        const token = getToken();
+        
+        if (session && user && token) {
+          // 使用同步 XMLHttpRequest 删除标注
+          try {
+            const xhr = new XMLHttpRequest();
+            const url = `https://obozmybpjxiuqhugjwnz.supabase.co/rest/v1/session_annotations?session_id=eq.${session.id}&user_id=eq.${user.id}`;
+            xhr.open('DELETE', url, false); // false = 同步模式
+            xhr.setRequestHeader('apikey', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9ib3pteWJwanhpdXFodWdqd256Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzk4NzEwODAsImV4cCI6MjA1NTQ0NzA4MH0.SrqoAjnvyYfvZmtSJ7quvODM3JbIqIb7FbcZ-PnT8D8');
+            xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+            xhr.send();
+            
+            if (xhr.status >= 200 && xhr.status < 300) {
+              logger.log("[Researchopia] ✅ WindowUnload: 已同步删除用户标注");
+            } else {
+              logger.error("[Researchopia] ❌ WindowUnload: 删除标注失败:", xhr.status);
+            }
+          } catch (xhrError) {
+            logger.error("[Researchopia] WindowUnload XMLHttpRequest错误:", xhrError);
+          }
+          
+          // 异步清理其他资源
+          sessionMgr.leaveSession().catch((error: any) => {
+            logger.error("[Researchopia] WindowUnload leaveSession error:", error);
+          });
+        }
+      }
+    } catch (sessionError) {
+      logger.error("[Researchopia] WindowUnload session cleanup error:", sessionError);
+    }
+    
     // Close any open dialogs
     if (addon?.data.dialog?.window) {
       addon.data.dialog.window.close();
@@ -227,6 +267,49 @@ function onShutdown(): void {
     // Close dialogs
     if (addon) {
       addon.data.dialog?.window?.close();
+    }
+    
+    // Clean up Reading Session Manager - 处理用户关闭软件
+    try {
+      // 同步导入
+      const { ReadingSessionManager } = require("./modules/readingSessionManager");
+      const { getCurrentUser, getToken } = require("./utils/auth");
+      const sessionMgr = ReadingSessionManager.getInstance();
+      
+      if (sessionMgr.isInSession()) {
+        const session = sessionMgr.getCurrentSession();
+        const user = getCurrentUser();
+        const token = getToken();
+        
+        if (session && user && token) {
+          // 使用同步 XMLHttpRequest 删除标注
+          try {
+            const xhr = new XMLHttpRequest();
+            const url = `https://obozmybpjxiuqhugjwnz.supabase.co/rest/v1/session_annotations?session_id=eq.${session.id}&user_id=eq.${user.id}`;
+            xhr.open('DELETE', url, false); // false = 同步模式
+            xhr.setRequestHeader('apikey', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9ib3pteWJwanhpdXFodWdqd256Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzk4NzEwODAsImV4cCI6MjA1NTQ0NzA4MH0.SrqoAjnvyYfvZmtSJ7quvODM3JbIqIb7FbcZ-PnT8D8');
+            xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+            xhr.send();
+            
+            if (xhr.status >= 200 && xhr.status < 300) {
+              logger.log("[Researchopia] ✅ 已同步删除用户标注");
+            } else {
+              logger.error("[Researchopia] ❌ 删除标注失败:", xhr.status, xhr.statusText);
+            }
+          } catch (xhrError) {
+            logger.error("[Researchopia] XMLHttpRequest错误:", xhrError);
+          }
+          
+          // 然后异步调用完整的leaveSession清理其他资源
+          sessionMgr.leaveSession().catch((error: any) => {
+            logger.error("[Researchopia] Error in leaveSession:", error);
+          });
+        }
+      }
+    } catch (error) {
+      if (ztoolkit) {
+        ztoolkit.log("Reading session cleanup error:", error);
+      }
     }
     
     // Clean up UI Manager

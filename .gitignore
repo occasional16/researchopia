@@ -4,10 +4,12 @@
 /.augment/*
 /.github/*
 /.codebuddy/*
+/.vscode/*
 
 # dev
 /Debug/*
 /docs/*
+zotero-plugin/docs/*
 
 # dependencies
 /node_modules

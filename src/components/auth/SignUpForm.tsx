@@ -66,7 +66,7 @@ export default function SignUpForm({ onToggleMode, onClose }: SignUpFormProps) {
     }
   }, [])
 
-  // 增强的邮箱验证(包含reCAPTCHA检查)
+  // 增强的邮箱验证(移除实时reCAPTCHA检查,只在提交时验证)
   const validateEmailWithDelay = useCallback(async (email: string) => {
     if (!email.trim()) {
       setEmailValidation(null)
@@ -77,43 +77,8 @@ export default function SignUpForm({ onToggleMode, onClose }: SignUpFormProps) {
     console.log('🔍 开始邮箱验证流程:', email)
 
     try {
-      // 1. 先验证reCAPTCHA
-      console.log('🤖 步骤1: 执行reCAPTCHA验证...')
-      const recaptchaToken = await executeReCaptcha('email_validation')
-      
-      if (!recaptchaToken) {
-        console.error('❌ reCAPTCHA token获取失败')
-        setEmailValidation({
-          isValid: false,
-          isEducational: false,
-          isDeliverable: false,
-          error: 'reCAPTCHA验证失败,请刷新页面重试'
-        })
-        setEmailValidating(false)
-        return
-      }
-
-      console.log('✅ reCAPTCHA token获取成功:', recaptchaToken.substring(0, 20) + '...')
-
-      console.log('🔐 步骤2: 验证reCAPTCHA token...')
-      const recaptchaResult = await validateReCaptcha(recaptchaToken, 'email_validation')
-      
-      if (!recaptchaResult.isValid) {
-        console.error('❌ reCAPTCHA验证未通过:', recaptchaResult.error)
-        setEmailValidation({
-          isValid: false,
-          isEducational: false,
-          isDeliverable: false,
-          error: `安全验证未通过: ${recaptchaResult.error || '请刷新页面重试'}`
-        })
-        setEmailValidating(false)
-        return
-      }
-
-      console.log('✅ reCAPTCHA验证通过')
-
-      // 2. reCAPTCHA通过后再进行邮箱验证
-      console.log('📧 步骤3: 验证教育邮箱...')
+      // 直接进行邮箱格式和教育性验证,跳过reCAPTCHA(减少API调用)
+      console.log('📧 验证教育邮箱格式...')
       const validation = await validateEmailEnhanced(email)
       console.log('✅ 邮箱验证完成:', validation)
       setEmailValidation(validation)

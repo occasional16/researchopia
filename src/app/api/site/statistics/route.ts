@@ -86,7 +86,8 @@ export async function GET(request: NextRequest) {
         }
       }, {
         headers: {
-          'Cache-Control': 'public, max-age=60',
+          'Cache-Control': 'public, s-maxage=300, max-age=300, stale-while-revalidate=600',
+          'CDN-Cache-Control': 'public, s-maxage=600',
         }
       })
       
@@ -104,7 +105,8 @@ export async function GET(request: NextRequest) {
         }
       }, {
         headers: {
-          'Cache-Control': 'public, max-age=60',
+          'Cache-Control': 'public, s-maxage=300, max-age=300, stale-while-revalidate=600',
+          'CDN-Cache-Control': 'public, s-maxage=600',
         }
       })
     }
@@ -112,7 +114,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Error in statistics API:', error)
     
-    // 最终后备数据，确保页面能够加载
+    // 最终后备数据,确保页面能够加载
     return NextResponse.json({
       success: true,
       data: {
@@ -123,7 +125,8 @@ export async function GET(request: NextRequest) {
       }
     }, {
       headers: {
-        'Cache-Control': 'public, max-age=60',
+        'Cache-Control': 'public, s-maxage=300, max-age=300, stale-while-revalidate=600',
+        'CDN-Cache-Control': 'public, s-maxage=600',
       }
     })
   }

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-// 模拟数据 - 按最新评论时间排序（最新在前）
+// 模拟数据 - 按最新评论时间排序(最新在前)
 const mockRecentComments = [
   {
     id: 4,
@@ -14,6 +14,7 @@ const mockRecentComments = [
       id: 104,
       content: "AI在个性化学习方面的应用很有前景，但需要关注数据隐私问题。建议在算法设计中加入更多隐私保护机制。",
       created_at: "2025-01-15T14:45:00Z", // 最新评论
+      is_anonymous: false,
       user: { username: "教育技术专家" }
     },
     comment_count: 8,
@@ -31,6 +32,7 @@ const mockRecentComments = [
       id: 102,
       content: "实验设计严谨，结果具有很高的实用价值，特别是在诊断准确性方面的提升显著。对比实验很全面。",
       created_at: "2025-01-14T09:15:00Z", // 第二新评论
+      is_anonymous: true,
       user: { username: "医学影像专家" }
     },
     comment_count: 15,
@@ -48,6 +50,7 @@ const mockRecentComments = [
       id: 103,
       content: "对量子算法的分析很透彻，但在实际应用中还需要考虑更多工程因素和成本问题。",
       created_at: "2025-01-13T11:20:00Z", // 第三新评论
+      is_anonymous: false,
       user: { username: "量子研究员" }
     },
     comment_count: 9,
@@ -65,6 +68,7 @@ const mockRecentComments = [
       id: 105,
       content: "Transformer架构的改进很有创新性，在多语言处理上的表现令人印象深刻。",
       created_at: "2025-01-12T16:30:00Z", // 第四新评论
+      is_anonymous: true,
       user: { username: "NLP研究者" }
     },
     comment_count: 12,
@@ -82,6 +86,7 @@ const mockRecentComments = [
       id: 106,
       content: "对太阳能电池效率提升的分析很详细，但希望能看到更多关于成本效益的讨论。",
       created_at: "2025-01-11T13:20:00Z", // 第五新评论
+      is_anonymous: false,
       user: { username: "能源工程师" }
     },
     comment_count: 6,
@@ -128,6 +133,7 @@ export async function GET(request: NextRequest) {
           content,
           created_at,
           paper_id,
+          is_anonymous,
           papers!inner (
             id,
             title,
@@ -187,6 +193,7 @@ export async function GET(request: NextRequest) {
               id: comment.id,
               content: comment.content,
               created_at: comment.created_at,
+              is_anonymous: comment.is_anonymous || false,
               user: comment.users
             },
             comment_count: commentCountResult.count || 0,

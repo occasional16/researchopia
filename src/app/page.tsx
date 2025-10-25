@@ -51,6 +51,7 @@ interface RecentComment {
     id: string
     content: string
     created_at: string
+    is_anonymous?: boolean
     user: {
       username: string
     } | null
@@ -756,7 +757,11 @@ export default function HomePage() {
                         </p>
                         <div className="flex items-center justify-between mt-3 text-xs text-gray-500">
                           <span>
-                            评论者：<span className="font-medium">{comment.latest_comment.user?.username || '匿名用户'}</span>
+                            评论者：<span className="font-medium">
+                              {comment.latest_comment.is_anonymous 
+                                ? '匿名用户' 
+                                : (comment.latest_comment.user?.username || '匿名用户')}
+                            </span>
                           </span>
                           <span>
                             {formatDate(comment.latest_comment.created_at)}

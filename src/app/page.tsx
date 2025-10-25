@@ -869,29 +869,29 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Welcome Message for New Users */}
-      {!isAuthenticated && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-blue-900 mb-2">
-            {t('auth.welcome', '欢迎来到研学港！')}
-          </h3>
-          <p className="text-blue-700 mb-4">
-            {t('auth.welcomeDesc', '研学港是新一代学术评价与研学社区平台，研学并进，智慧共享。您可以：')}
-          </p>
-          <ul className="text-blue-700 space-y-1 mb-4">
-            <li>• 浏览和搜索最新的学术论文</li>
-            <li>• 为论文提供专业评分和评论</li>
-            <li>• 与全球研究者交流学术见解</li>
-            <li>• 构建您的个人研学档案</li>
-          </ul>
+      {/* Welcome Message for All Users */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+        <h3 className="text-lg font-semibold text-blue-900 mb-2">
+          {t('auth.welcome', '欢迎来到研学港！')}
+        </h3>
+        <p className="text-blue-700 mb-4">
+          {t('auth.welcomeDesc', '研学港是新一代学术评价与研学社区平台，研学并进，智慧共享。您可以：')}
+        </p>
+        <ul className="text-blue-700 space-y-1 mb-4">
+          <li>• 浏览和搜索最新的学术论文</li>
+          <li>• 为论文提供专业评分和评论</li>
+          <li>• 与全球研究者交流学术见解</li>
+          <li>• 构建您的个人研学档案</li>
+        </ul>
+        {!isAuthenticated && (
           <button
             onClick={() => window.dispatchEvent(new CustomEvent('showAuthModal', { detail: { mode: 'signup' } }))}
             className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
             {t('auth.joinNow', '立即注册，开始研学之旅')}
           </button>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* 网络优化组件 */}
       <NetworkOptimizer />

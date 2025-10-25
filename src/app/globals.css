@@ -100,3 +100,8 @@ body {
   0%, 100% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
 }
+
+/* 隐藏 reCAPTCHA 徽章 */
+.grecaptcha-badge {
+  visibility: hidden !important;
+}

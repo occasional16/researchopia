@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { User, LogOut, UserCircle, Shield, Book, Bell } from 'lucide-react'
+import { User, LogOut, UserCircle, Shield, Book, Bell, Menu } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useLanguage } from '@/contexts/LanguageContext'
 import AuthModal from '@/components/auth/AuthModal'
@@ -15,6 +15,7 @@ export default function Navbar() {
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login')
   const [showUserMenu, setShowUserMenu] = useState(false)
+  const [showMobileMenu, setShowMobileMenu] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
 
   // 调试日志
@@ -160,8 +161,10 @@ export default function Navbar() {
                 <span>PDF阅读器</span>
               </Link>*/}
               
-              {/* 语言切换器 */}
-              <LanguageSwitcher variant="compact" position="navbar" />
+              {/* 语言切换器 - 仅桌面端 */}
+              <div className="hidden md:block">
+                <LanguageSwitcher variant="compact" position="navbar" />
+              </div>
               
               {userState.isLoggedIn ? (
                 <>
@@ -178,6 +181,43 @@ export default function Navbar() {
                     )}
                   </Link> */}
 
+                  {/* 移动端汉堡菜单 (仅学术导航、用户指南、语言切换) */}
+                  <div className="md:hidden relative">
+                    <button
+                      onClick={() => setShowMobileMenu(!showMobileMenu)}
+                      className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                    >
+                      <Menu className="w-5 h-5 text-gray-700" />
+                    </button>
+                    {showMobileMenu && (
+                      <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border py-1 z-50">
+                        <Link
+                          href="/academic-navigation"
+                          className="flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          onClick={() => setShowMobileMenu(false)}
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <span>{t('nav.academicNav', '学术导航')}</span>
+                        </Link>
+                        <Link
+                          href="/guide"
+                          className="flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          onClick={() => setShowMobileMenu(false)}
+                        >
+                          <Book className="w-4 h-4" />
+                          <span>{t('nav.guide', '用户指南')}</span>
+                        </Link>
+                        <div className="border-t border-gray-100 my-1"></div>
+                        <div className="px-4 py-2">
+                          <LanguageSwitcher variant="compact" position="navbar" />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 用户菜单下拉 (所有屏幕) */}
                   <div className="relative">
                     <button
                       onClick={() => setShowUserMenu(!showUserMenu)}
@@ -228,6 +268,38 @@ export default function Navbar() {
                 </>
               ) : (
                 <div className="flex items-center space-x-3">
+                  {/* 移动端菜单按钮 (未登录用户) */}
+                  <div className="md:hidden relative">
+                    <button
+                      onClick={() => setShowMobileMenu(!showMobileMenu)}
+                      className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                    >
+                      <Menu className="w-5 h-5 text-gray-700" />
+                    </button>
+                    {showMobileMenu && (
+                      <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border py-1 z-50">
+                        <Link
+                          href="/academic-navigation"
+                          className="flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          onClick={() => setShowMobileMenu(false)}
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <span>{t('nav.academicNav', '学术导航')}</span>
+                        </Link>
+                        <Link
+                          href="/guide"
+                          className="flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          onClick={() => setShowMobileMenu(false)}
+                        >
+                          <Book className="w-4 h-4" />
+                          <span>{t('nav.guide', '用户指南')}</span>
+                        </Link>
+                      </div>
+                    )}
+                  </div>
+                  
                   <button
                     onClick={() => handleAuthClick('login')}
                     className="px-4 py-2 text-gray-700 hover:text-gray-900 transition-colors"

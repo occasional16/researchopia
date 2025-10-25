@@ -744,9 +744,9 @@ export default function AcademicNavigationPage() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex flex-col lg:flex-row gap-6">
+        <div className="flex flex-col md:flex-row gap-6">
           {/* Left Sidebar - Category Navigation (Desktop) */}
-          <div className="hidden lg:block w-64 flex-shrink-0">
+          <div className="hidden md:block w-64 flex-shrink-0">
             <div className="sticky top-24 space-y-2">
               <h3 className="text-lg font-semibold text-gray-900 mb-4 px-2">分类导航</h3>
               <button
@@ -796,7 +796,7 @@ export default function AcademicNavigationPage() {
           </div>
 
           {/* Mobile Category Navigation */}
-          <div className="lg:hidden w-full mb-6">
+          <div className="md:hidden w-full mb-6">
             <div className="bg-white rounded-lg shadow-sm border p-4">
               <h3 className="text-lg font-semibold text-gray-900 mb-3">分类导航</h3>
               <div className="space-y-2">

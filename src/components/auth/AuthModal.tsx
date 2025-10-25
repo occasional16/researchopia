@@ -44,6 +44,29 @@ export default function AuthModal({ isOpen, onClose, initialMode = 'login' }: Au
               <SignUpForm onToggleMode={toggleMode} onClose={onClose} />
             )}
           </div>
+
+          {/* reCAPTCHA 说明 */}
+          <div className="px-6 pb-4 text-xs text-gray-500 text-center">
+            本网站受 reCAPTCHA 保护，适用 Google{' '}
+            <a 
+              href="https://policies.google.com/privacy" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:underline"
+            >
+              隐私政策
+            </a>
+            {' '}和{' '}
+            <a 
+              href="https://policies.google.com/terms" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:underline"
+            >
+              服务条款
+            </a>
+            。
+          </div>
         </div>
       </div>
     </ReCaptchaProvider>

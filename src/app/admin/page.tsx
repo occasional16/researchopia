@@ -21,7 +21,8 @@ export default function AdminPage() {
   const [refreshingDOI, setRefreshingDOI] = useState<string | null>(null)
 
   useEffect(() => {
-    if (loading) return
+    // 等待认证和profile加载完成
+    if (loading || (user && !profile)) return
 
     if (!user) {
       router.push('/')
@@ -153,6 +154,34 @@ export default function AdminPage() {
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">管理员控制台</h1>
         <p className="text-gray-600">管理论文条目，纠错和维护数据质量</p>
+      </div>
+
+      {/* 快捷导航 */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <a 
+          href="/admin/visit-stats" 
+          className="bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg p-6 shadow-md hover:shadow-lg transition-all"
+        >
+          <div className="flex items-center gap-3">
+            <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+            <div>
+              <h3 className="text-lg font-semibold">访问统计</h3>
+              <p className="text-sm opacity-90">查看每日访问数据</p>
+            </div>
+          </div>
+        </a>
+        
+        <div className="bg-white rounded-lg p-6 shadow-sm border">
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">论文管理</h3>
+          <p className="text-sm text-gray-600">当前页面功能</p>
+        </div>
+        
+        <div className="bg-gray-100 rounded-lg p-6 shadow-sm border border-gray-200">
+          <h3 className="text-lg font-semibold text-gray-700 mb-2">更多功能</h3>
+          <p className="text-sm text-gray-500">敬请期待...</p>
+        </div>
       </div>
 
       {/* 统计信息 */}

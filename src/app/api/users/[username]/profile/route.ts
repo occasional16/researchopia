@@ -121,15 +121,17 @@ export async function GET(
       show_email: isOwner ? user.show_email : null,
       show_institution: isOwner ? user.show_institution : null,
       
-      // 统计信息
-      stats: stats || {
-        papers_count: 0,
-        annotations_count: 0,
-        comments_count: 0,
-        ratings_count: 0,
-        favorites_count: 0,
-        followers_count: user.followers_count || 0,
-        following_count: user.following_count || 0
+      // 统计信息 - 确保所有字段都有默认值
+      stats: {
+        papers_count: stats?.papers_count ?? 0,
+        annotations_count: stats?.annotations_count ?? 0,
+        comments_count: stats?.comments_count ?? 0,
+        ratings_count: stats?.ratings_count ?? 0,
+        favorites_count: stats?.favorites_count ?? 0,
+        followers_count: stats?.followers_count ?? user.followers_count ?? 0,
+        following_count: stats?.following_count ?? user.following_count ?? 0,
+        avg_rating: stats?.avg_rating ?? 0,
+        quality_annotations_count: stats?.quality_annotations_count ?? 0
       },
       
       // 关系状态

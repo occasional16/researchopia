@@ -261,7 +261,12 @@ export function formatResearchFields(fields: string[]): string {
 /**
  * 格式化统计数字
  */
-export function formatStatNumber(num: number): string {
+export function formatStatNumber(num: number | undefined | null): string {
+  // 处理未定义或null的情况
+  if (num === undefined || num === null || isNaN(num)) {
+    return '0'
+  }
+  
   if (num >= 1000000) {
     return (num / 1000000).toFixed(1) + 'M'
   }

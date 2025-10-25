@@ -5,6 +5,7 @@ import { Star, User, BarChart3, TrendingUp, Info } from 'lucide-react'
 import type { Rating, User as UserType } from '@/lib/supabase'
 import { calculateAverageRating } from '@/lib/database'
 import RatingAnalyticsDisplay from './RatingAnalyticsDisplay'
+import { UserDisplay } from '@/components/user'
 
 interface RatingWithUser extends Rating {
   users?: UserType
@@ -106,17 +107,13 @@ export default function RatingDisplay({ ratings, showAdvanced = true }: RatingDi
         {ratings.map((rating) => (
           <div key={rating.id} className="bg-white border rounded-lg p-4">
             <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
-                  <User size={16} className="text-gray-600" />
-                </div>
-                <span className="font-medium text-gray-900">
-                  {/* 🆕 处理匿名显示 */}
-                  {rating.is_anonymous || !rating.show_username 
-                    ? '匿名学者' 
-                    : (rating.users?.username || '匿名用户')}
-                </span>
-              </div>
+              <UserDisplay
+                username={rating.users?.username || 'anonymous'}
+                avatarUrl={rating.users?.avatar_url}
+                isAnonymous={rating.is_anonymous || !rating.show_username}
+                avatarSize="sm"
+                showHoverCard={!rating.is_anonymous && rating.show_username}
+              />
               <span className="text-sm text-gray-500">
                 {new Date(rating.created_at).toLocaleDateString('zh-CN')}
               </span>

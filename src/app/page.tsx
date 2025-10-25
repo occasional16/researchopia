@@ -8,6 +8,7 @@ import { useLanguage } from '@/contexts/LanguageContext'
 import BrandLogo from '@/components/ui/BrandLogo'
 import { useSmartSearch } from '@/hooks/useSmartSearch'
 import { useAuthenticatedFetch } from '@/hooks/useAuthenticatedFetch'
+import { useScrollRestoration } from '@/hooks/useScrollRestoration'
 import NetworkOptimizer from '@/components/NetworkOptimizer'
 import AnnouncementForm from '@/components/AnnouncementForm'
 import { deduplicatedFetch, clearRequestCache } from '@/utils/requestDeduplicator'
@@ -76,6 +77,10 @@ export default function HomePage() {
   const { profile, isAuthenticated } = useAuth()
   const { t } = useLanguage()
   const authenticatedFetch = useAuthenticatedFetch()
+  
+  // 保持滚动位置
+  useScrollRestoration()
+  
   const [searchQuery, setSearchQuery] = useState('')
   const {
     searchStatus,
@@ -128,12 +133,44 @@ export default function HomePage() {
 
   useEffect(() => {
     const loadData = async () => {
-      setLoading(true)
+      // 先尝试从localStorage恢复缓存数据,立即显示
+      try {
+        const cachedStats = localStorage.getItem('homepageStats')
+        const cachedComments = localStorage.getItem('homepageComments')
+        const cachedAnnouncements = localStorage.getItem('homepageAnnouncements')
+        
+        if (cachedStats) {
+          const parsed = JSON.parse(cachedStats)
+          // 检查缓存是否过期(5分钟)
+          if (Date.now() - parsed.timestamp < 300000) {
+            setStats(parsed.data)
+            setLoading(false) // 立即显示缓存数据
+          }
+        }
+        
+        if (cachedComments) {
+          const parsed = JSON.parse(cachedComments)
+          if (Date.now() - parsed.timestamp < 300000) {
+            setRecentComments(parsed.data)
+          }
+        }
+        
+        if (cachedAnnouncements) {
+          const parsed = JSON.parse(cachedAnnouncements)
+          if (Date.now() - parsed.timestamp < 60000) { // 公告1分钟缓存
+            setAnnouncements(parsed.data)
+            setCurrentAnnouncement(parsed.data[0] || null)
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to load cache:', e)
+      }
+
       setDataError(null)
 
       try {
-        // 先记录访问，再加载数据，避免状态被覆盖
-        await trackVisit()
+        // 在后台记录访问,不阻塞数据加载
+        trackVisit().catch(() => {}) // 静默失败
 
         // 并行加载统计数据、评论数据和公告数据,使用请求去重工具
         const [statsResponse, commentsResponse, announcementsResponse] = await Promise.allSettled([
@@ -176,53 +213,78 @@ export default function HomePage() {
 
         // 处理统计数据
         if (statsResponse.status === 'fulfilled' && statsResponse.value) {
-          setStats({
+          const statsData = {
             totalPapers: statsResponse.value.totalPapers || 0,
             totalUsers: statsResponse.value.totalUsers || 0,
             totalVisits: statsResponse.value.totalVisits || 0,
             todayVisits: statsResponse.value.todayVisits || 0
-          })
+          }
+          setStats(statsData)
+          // 缓存到localStorage
+          localStorage.setItem('homepageStats', JSON.stringify({
+            data: statsData,
+            timestamp: Date.now()
+          }))
         } else {
-          // 使用合理的默认值
-          setStats({
-            totalPapers: 125,
-            totalUsers: 45,
-            todayVisits: 28,
-            totalVisits: 2340
-          })
+          // 如果没有缓存且API失败，使用默认值
+          if (!localStorage.getItem('homepageStats')) {
+            setStats({
+              totalPapers: 125,
+              totalUsers: 45,
+              todayVisits: 28,
+              totalVisits: 2340
+            })
+          }
         }
 
         // 处理评论数据
         if (commentsResponse.status === 'fulfilled' && commentsResponse.value && commentsResponse.value.length > 0) {
-          // recent-comments API 已经返回了完整的评论数据,直接使用
           setRecentComments(commentsResponse.value)
+          // 缓存到localStorage
+          localStorage.setItem('homepageComments', JSON.stringify({
+            data: commentsResponse.value,
+            timestamp: Date.now()
+          }))
         } else {
-          // 如果没有真实评论数据，设置为空数组而不是模拟数据
-          setRecentComments([])
+          // 如果没有缓存且API失败，设置空数组
+          if (!localStorage.getItem('homepageComments')) {
+            setRecentComments([])
+          }
           console.info('No recent comments available or API not configured')
         }
 
         // 处理公告数据
         if (announcementsResponse.status === 'fulfilled' && announcementsResponse.value && announcementsResponse.value.length > 0) {
           setAnnouncements(announcementsResponse.value)
-          // 设置当前公告为最新的一条
           setCurrentAnnouncement(announcementsResponse.value[0])
+          // 缓存到localStorage
+          localStorage.setItem('homepageAnnouncements', JSON.stringify({
+            data: announcementsResponse.value,
+            timestamp: Date.now()
+          }))
         } else {
-          setAnnouncements([])
-          setCurrentAnnouncement(null)
+          // 如果没有缓存且API失败，设置空数组
+          if (!localStorage.getItem('homepageAnnouncements')) {
+            setAnnouncements([])
+            setCurrentAnnouncement(null)
+          }
         }
 
       } catch (error) {
         console.error('Failed to initialize page:', error)
         setDataError('数据加载失败，请稍后重试')
-        // 设置默认值
-        setStats({
-          totalPapers: 50,
-          totalUsers: 20,
-          totalVisits: 1200,
-          todayVisits: 25
-        })
-        setRecentComments([])
+        // 只在没有缓存数据时设置默认值
+        if (!localStorage.getItem('homepageStats')) {
+          setStats({
+            totalPapers: 50,
+            totalUsers: 20,
+            totalVisits: 1200,
+            todayVisits: 25
+          })
+        }
+        if (!localStorage.getItem('homepageComments')) {
+          setRecentComments([])
+        }
       } finally {
         setLoading(false)
       }

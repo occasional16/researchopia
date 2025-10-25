@@ -744,7 +744,7 @@ export default function AcademicNavigationPage() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex gap-6">
+        <div className="flex flex-col lg:flex-row gap-6">
           {/* Left Sidebar - Category Navigation (Desktop) */}
           <div className="hidden lg:block w-64 flex-shrink-0">
             <div className="sticky top-24 space-y-2">
@@ -758,14 +758,29 @@ export default function AcademicNavigationPage() {
                 }`}
               >
                 <Globe className="h-5 w-5 mr-3 flex-shrink-0" />
-                <span className="text-left text-sm">全部分类</span>
+                <span className="text-left text-sm break-words">全部分类</span>
               </button>
               {categories.map(([key, category]: [string, Category]) => {
                 const Icon = category.icon
                 return (
                   <button
                     key={key}
-                    onClick={() => setActiveCategory(activeCategory === key ? null : key)}
+                    onClick={() => {
+                      // If clicking the same category, toggle it off
+                      if (activeCategory === key) {
+                        setActiveCategory(null)
+                      } else {
+                        // Clear filter first to ensure all sections are rendered
+                        setActiveCategory(null)
+                        // Then scroll to the target section after a brief delay
+                        setTimeout(() => {
+                          const element = document.getElementById(key)
+                          if (element) {
+                            element.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                          }
+                        }, 100)
+                      }
+                    }}
                     className={`w-full flex items-center px-4 py-3 rounded-lg transition-all ${
                       activeCategory === key
                         ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-md'
@@ -773,7 +788,7 @@ export default function AcademicNavigationPage() {
                     }`}
                   >
                     <Icon className="h-5 w-5 mr-3 flex-shrink-0" />
-                    <span className="text-left text-sm">{category.title}</span>
+                    <span className="text-left text-sm break-words">{category.title}</span>
                   </button>
                 )
               })}
@@ -784,32 +799,47 @@ export default function AcademicNavigationPage() {
           <div className="lg:hidden w-full mb-6">
             <div className="bg-white rounded-lg shadow-sm border p-4">
               <h3 className="text-lg font-semibold text-gray-900 mb-3">分类导航</h3>
-              <div className="flex flex-wrap gap-2">
+              <div className="space-y-2">
                 <button
                   onClick={() => setActiveCategory(null)}
-                  className={`flex items-center px-3 py-2 rounded-lg text-sm whitespace-nowrap transition-colors ${
+                  className={`w-full flex items-center px-4 py-3 rounded-lg text-sm transition-all ${
                     activeCategory === null
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-md'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
                   }`}
                 >
-                  <Globe className="h-4 w-4 mr-2" />
-                  全部
+                  <Globe className="h-5 w-5 mr-3 flex-shrink-0" />
+                  <span className="text-left break-words">全部分类</span>
                 </button>
                 {categories.map(([key, category]: [string, Category]) => {
                   const Icon = category.icon
                   return (
                     <button
                       key={key}
-                      onClick={() => setActiveCategory(activeCategory === key ? null : key)}
-                      className={`flex items-center px-3 py-2 rounded-lg text-sm whitespace-nowrap transition-colors ${
+                      onClick={() => {
+                        // If clicking the same category, toggle it off
+                        if (activeCategory === key) {
+                          setActiveCategory(null)
+                        } else {
+                          // Clear filter first to ensure all sections are rendered
+                          setActiveCategory(null)
+                          // Then scroll to the target section after a brief delay
+                          setTimeout(() => {
+                            const element = document.getElementById(key)
+                            if (element) {
+                              element.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                            }
+                          }, 100)
+                        }
+                      }}
+                      className={`w-full flex items-center px-4 py-3 rounded-lg text-sm transition-all ${
                         activeCategory === key
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-md'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
                       }`}
                     >
-                      <Icon className="h-4 w-4 mr-2" />
-                      {category.title}
+                      <Icon className="h-5 w-5 mr-3 flex-shrink-0" />
+                      <span className="text-left break-words">{category.title}</span>
                     </button>
                   )
                 })}

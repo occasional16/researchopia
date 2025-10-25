@@ -14,6 +14,7 @@ import ZoteroAnnotations from '@/components/papers/ZoteroAnnotations'
 import QuickSearch from '@/components/papers/QuickSearch'
 import PaperReports from '@/components/papers/PaperReports'
 import ReportsVisibilityInfo from '@/components/papers/ReportsVisibilityInfo'
+import { useScrollRestoration } from '@/hooks/useScrollRestoration'
 import type { Paper, Rating, Comment, User } from '@/lib/supabase'
 
 interface PaperWithDetails extends Paper {
@@ -25,6 +26,8 @@ export default function PaperDetailPage() {
   const params = useParams()
   const paperId = params.id as string
   const { isAdminMode, loading: adminLoading } = useAdmin()
+  
+  useScrollRestoration()
   
   const [paper, setPaper] = useState<PaperWithDetails | null>(null)
   const [loading, setLoading] = useState(true)

@@ -149,7 +149,7 @@ export default function Navbar() {
                 <span>{t('nav.guide', '用户指南')}</span>
               </Link>
               
-              {/* PDF演示链接 */}
+              {/* PDF演示链接；暂不开放 */}
               {/*<Link
                 href="/pdf-demo"
                 className="hidden md:flex items-center space-x-1 px-3 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
@@ -165,8 +165,8 @@ export default function Navbar() {
               
               {userState.isLoggedIn ? (
                 <>
-                  {/* 通知图标 */}
-                  <Link
+                  {/* 通知图标；暂不开放 */}
+                  {/* <Link
                     href="/notifications"
                     className="relative p-2 rounded-lg hover:bg-gray-100 transition-colors"
                   >
@@ -176,7 +176,7 @@ export default function Navbar() {
                         {unreadCount > 99 ? '99+' : unreadCount}
                       </span>
                     )}
-                  </Link>
+                  </Link> */}
 
                   <div className="relative">
                     <button

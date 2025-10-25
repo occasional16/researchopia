@@ -5,6 +5,7 @@ import { MessageSquare, Heart, User, Eye, ChevronDown, ChevronUp, Bookmark } fro
 import NestedCommentTree from '@/components/NestedCommentTree'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext' // 🆕 导入useAuth
+import { UserDisplay } from '@/components/user'
 
 interface Comment {
   id: string
@@ -509,10 +510,13 @@ export default function ZoteroAnnotations({ paperId, paperTitle, paperDOI }: Zot
                   {/* Annotation Footer */}
                   <div className="flex items-center justify-between text-xs text-gray-500">
                     <div className="flex items-center space-x-4">
-                      <div className="flex items-center space-x-1">
-                        <User className="w-3 h-3" />
-                        <span>{annotation.display_name}</span>
-                      </div>
+                      <UserDisplay
+                        username={annotation.username || 'zotero_user'}
+                        avatarUrl={annotation.user_avatar}
+                        isAnonymous={false}
+                        avatarSize="xs"
+                        showHoverCard={!!annotation.username}
+                      />
                       <span className="text-purple-600 font-medium">
                         Zotero
                       </span>

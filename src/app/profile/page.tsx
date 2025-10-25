@@ -13,6 +13,7 @@ import UserRatings from '@/components/profile/UserRatings'
 import UserComments from '@/components/profile/UserComments'
 import UserFavorites from '@/components/profile/UserFavorites'
 import AccountManagement from '@/components/profile/AccountManagement'
+import { useScrollRestoration } from '@/hooks/useScrollRestoration'
 
 /**
  * /profile 页面 - 个人中心
@@ -26,6 +27,10 @@ export default function ProfilePage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { user, profile, loading: authLoading, getAccessToken } = useAuth()
+  
+  // 保持滚动位置
+  useScrollRestoration()
+  
   const [activeTab, setActiveTab] = useState('overview')
   const [papersSubTab, setPapersSubTab] = useState<'favorites' | 'ratings' | 'comments'>('favorites')
   const [annotationsSubTab, setAnnotationsSubTab] = useState<'shared' | 'comments'>('shared')

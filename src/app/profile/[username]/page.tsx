@@ -15,6 +15,7 @@ import FollowButton from '@/components/FollowButton'
 import UserRatings from '@/components/profile/UserRatings'
 import UserComments from '@/components/profile/UserComments'
 import UserFavorites from '@/components/profile/UserFavorites'
+import { useScrollRestoration } from '@/hooks/useScrollRestoration'
 
 /**
  * /profile/[username] 页面 - 个人学术主页（公开）
@@ -30,6 +31,9 @@ export default function UserProfilePage() {
   const router = useRouter()
   const { user, getAccessToken } = useAuth()
   const username = params.username as string
+
+  // 保持滚动位置
+  useScrollRestoration()
 
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
@@ -52,7 +56,7 @@ export default function UserProfilePage() {
 
   useEffect(() => {
     loadProfile()
-  }, [username, user])
+  }, [username]) // 只依赖username，不依赖user
 
   const loadProfile = async () => {
     try {

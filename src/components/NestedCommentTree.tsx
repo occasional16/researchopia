@@ -1,6 +1,8 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
+import { useState } from 'react'
+import { MessageCircle, Edit, Trash2 } from 'lucide-react'
+import { UserDisplay } from '@/components/user'
 
 // 简单的时间格式化函数
 function formatTimeAgo(dateString: string): string {
@@ -145,36 +147,19 @@ function CommentNode({
     >
       {/* 评论头部 */}
       <div className="flex items-start gap-3">
-        {/* 头像 - 🆕 匿名时显示默认头像 */}
-        <div className="flex-shrink-0">
-          {comment.is_anonymous || !comment.avatar_url ? (
-            <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-sm text-gray-500">
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-              </svg>
-            </div>
-          ) : (
-            <img
-              src={comment.avatar_url}
-              alt={comment.username || '用户'}
-              className="w-8 h-8 rounded-full"
-            />
-          )}
-        </div>
+        {/* 使用 UserDisplay 组件 */}
+        <UserDisplay
+          username={comment.username || 'anonymous'}
+          avatarUrl={comment.avatar_url}
+          isAnonymous={comment.is_anonymous}
+          avatarSize="sm"
+          showHoverCard={!comment.is_anonymous}
+        />
 
         {/* 评论内容 */}
         <div className="flex-1 min-w-0">
-          {/* 用户名和时间 - 🆕 匿名时显示"匿名用户" */}
+          {/* 时间和回复数 */}
           <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
-            <span className={`font-medium ${comment.is_anonymous ? 'text-gray-500' : 'text-gray-900'}`}>
-              {comment.is_anonymous ? '匿名用户' : (comment.username || '匿名用户')}
-            </span>
-            {comment.is_anonymous && (
-              <svg className="w-3.5 h-3.5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-              </svg>
-            )}
-            <span>·</span>
             <span>{formatTimeAgo(comment.created_at)}</span>
             {comment.reply_count > 0 && (
               <>

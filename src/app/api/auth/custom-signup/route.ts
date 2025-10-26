@@ -42,6 +42,44 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       console.error('❌ Custom signup error:', error)
+      
+      // 如果用户已存在，查询其验证状态
+      if (error.message?.includes('already been registered') || 
+          error.message?.includes('already exists') ||
+          error.message?.includes('User already registered')) {
+        // 查询用户信息
+        const { data: users } = await supabaseAdmin.auth.admin.listUsers()
+        const existingUser = users?.users?.find(u => u.email?.toLowerCase() === email.toLowerCase())
+        
+        if (existingUser) {
+          if (!existingUser.email_confirmed_at) {
+            // 用户存在但未验证，允许重新发送
+            console.log('📧 User exists but not verified, allowing resend verification email')
+            
+            // 更新用户名（如果提供了新的）
+            if (username && existingUser.user_metadata?.username !== username) {
+              await supabaseAdmin.auth.admin.updateUserById(existingUser.id, {
+                user_metadata: {
+                  username,
+                  full_name: username
+                }
+              })
+            }
+            
+            return NextResponse.json({
+              data: { user: existingUser },
+              error: null,
+              resend: true // 标记为重新发送
+            })
+          } else {
+            // 用户已验证
+            return NextResponse.json({
+              error: '该邮箱已被注册并验证，请直接登录'
+            }, { status: 400 })
+          }
+        }
+      }
+      
       return NextResponse.json({
         error: error.message || '注册失败'
       }, { status: 400 })

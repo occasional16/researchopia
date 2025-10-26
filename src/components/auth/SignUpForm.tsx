@@ -30,9 +30,52 @@ export default function SignUpForm({ onToggleMode, onClose }: SignUpFormProps) {
   } | null>(null)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [resendLoading, setResendLoading] = useState(false)
+  const [resendMessage, setResendMessage] = useState('')
+  const [resendCooldown, setResendCooldown] = useState(0)
 
   const { signUp } = useAuth()
   const { executeReCaptcha } = useReCaptcha()
+
+  // 冷却计时器
+  useEffect(() => {
+    if (resendCooldown > 0) {
+      const timer = setTimeout(() => {
+        setResendCooldown(resendCooldown - 1)
+      }, 1000)
+      return () => clearTimeout(timer)
+    }
+  }, [resendCooldown])
+
+  // 重新发送验证邮件
+  const handleResendVerification = async () => {
+    if (!email || resendCooldown > 0) return
+
+    setResendLoading(true)
+    setResendMessage('')
+    setError('')
+
+    try {
+      const response = await fetch('/api/auth/resend-verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      })
+
+      const result = await response.json()
+
+      if (response.ok) {
+        setResendMessage('✅ ' + (result.message || '验证邮件已发送'))
+        setResendCooldown(60) // 60秒冷却
+      } else {
+        setResendMessage('❌ ' + (result.error || '发送失败'))
+      }
+    } catch (error) {
+      setResendMessage('❌ 网络错误，请重试')
+    } finally {
+      setResendLoading(false)
+    }
+  }
 
   // 防抖检查用户名
   const checkUsername = useCallback(async (username: string) => {
@@ -369,6 +412,38 @@ export default function SignUpForm({ onToggleMode, onClose }: SignUpFormProps) {
           <p className="text-xs text-gray-500 mt-1">
             仅支持教育机构邮箱注册（.edu.cn、.edu、.ac.uk等）
           </p>
+
+          {/* 重新发送验证邮件 */}
+          <div className="mt-2 flex items-center justify-between">
+            <button
+              type="button"
+              onClick={handleResendVerification}
+              disabled={!email || resendLoading || resendCooldown > 0}
+              className="text-xs text-blue-600 hover:text-blue-500 disabled:text-gray-400 disabled:cursor-not-allowed"
+            >
+              {resendLoading ? (
+                <span className="flex items-center">
+                  <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                  发送中...
+                </span>
+              ) : resendCooldown > 0 ? (
+                `${resendCooldown}秒后可重新发送`
+              ) : (
+                '已注册但未收到验证邮件？点击重新发送'
+              )}
+            </button>
+          </div>
+
+          {/* 重新发送结果提示 */}
+          {resendMessage && (
+            <div className={`mt-2 text-xs p-2 rounded ${
+              resendMessage.startsWith('✅') 
+                ? 'bg-green-50 text-green-700 border border-green-200' 
+                : 'bg-red-50 text-red-700 border border-red-200'
+            }`}>
+              {resendMessage}
+            </div>
+          )}
         </div>
 
         <div>

@@ -301,7 +301,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error(registrationResult.error || '注册失败')
       }
 
-      const { data, error } = registrationResult
+      const { data, error, resend } = registrationResult
+      
+      // 如果是重新发送验证邮件的情况
+      if (resend) {
+        console.log('📧 Resending verification email for existing unverified user')
+      }
       
       if (error) {
         console.error('❌ Sign up error:', error)
@@ -345,19 +350,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
             if (emailResult.success) {
               console.log('✅ Custom verification email sent successfully')
-              throw new Error('注册成功！我们已向您的邮箱发送验证链接，请查收并点击验证。')
+              const message = resend 
+                ? '验证邮件已重新发送！请检查您的邮箱（包括垃圾邮件文件夹）并点击验证链接。'
+                : '注册成功！我们已向您的邮箱发送验证链接，请查收并点击验证。'
+              throw new Error(message)
             } else if (emailResult.fallback) {
               // 如果自定义邮件服务不可用，使用Supabase默认服务
               console.log('📧 Falling back to Supabase email service')
-              throw new Error('注册成功！请检查您的邮箱并点击验证链接完成注册。')
+              throw new Error('注册成功！邮件服务暂时不可用，我们会尽快处理。请稍后查看您的邮箱或联系管理员。')
             } else {
               console.warn('Custom email service failed:', emailResult.error)
-              throw new Error('注册成功！请检查您的邮箱并点击验证链接完成注册。')
+              // 提供更详细的错误信息
+              const errorMsg = resend
+                ? `验证邮件发送失败（${emailResult.error}）。请稍后重试或联系管理员。`
+                : `注册成功但邮件发送失败（${emailResult.error}）。请稍后重试发送验证邮件或联系管理员。`
+              throw new Error(errorMsg)
             }
-          } catch (emailError) {
+          } catch (emailError: any) {
             console.error('Custom email service error:', emailError)
-            // 仍然显示成功消息，因为用户已经注册成功
-            throw new Error('注册成功！请检查您的邮箱并点击验证链接完成注册。')
+            // 区分是预期的成功消息还是真正的错误
+            if (emailError.message?.includes('注册成功') || emailError.message?.includes('验证邮件')) {
+              throw emailError // 重新抛出成功/提示消息
+            }
+            // 真正的错误
+            throw new Error('注册成功但邮件服务异常，请稍后重试或联系管理员')
           }
         }
 

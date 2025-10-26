@@ -20,7 +20,8 @@
     "zotero:fix": "cd zotero-plugin && bash quick-fix.sh",
     "zotero:fix:win": "cd zotero-plugin && quick-fix.bat",
     "zotero:test": "cd zotero-plugin && bash test-simple.sh",
-    "zotero:package": "cd zotero-plugin && zip -r researchopia-enhanced.xpi ."
+    "zotero:package": "cd zotero-plugin && zip -r researchopia-enhanced.xpi .",
+    "check-email": "node scripts/check-email-config.js"
   },
   "dependencies": {
     "@supabase/auth-ui-react": "^0.4.7",

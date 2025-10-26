@@ -51,9 +51,20 @@ class EmailService {
       }
     }
 
+    // Log configuration status (without exposing sensitive data)
+    console.log('📧 Email Service Configuration:', {
+      host: config.host,
+      port: config.port,
+      secure: config.secure,
+      user: config.auth.user,
+      passConfigured: !!config.auth.pass && config.auth.pass !== 'your_sendgrid_api_key',
+      from: config.from.email
+    })
+
     // Check if SMTP is configured
     if (!config.auth.pass || config.auth.pass === 'your_sendgrid_api_key') {
-      console.warn('SMTP not configured, email service will not be available')
+      console.warn('⚠️ SMTP not configured properly, email service will not be available')
+      console.warn('⚠️ Please set SMTP_PASS environment variable with your SendGrid API key')
       return
     }
 

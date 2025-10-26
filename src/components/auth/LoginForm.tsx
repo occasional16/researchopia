@@ -18,40 +18,8 @@ export default function LoginForm({ onToggleMode, onClose }: LoginFormProps) {
   const [showForgotPassword, setShowForgotPassword] = useState(false)
   const [forgotPasswordLoading, setForgotPasswordLoading] = useState(false)
   const [forgotPasswordMessage, setForgotPasswordMessage] = useState('')
-  const [resendVerificationLoading, setResendVerificationLoading] = useState(false)
 
   const { signIn } = useAuth()
-
-  const handleResendVerification = async () => {
-    if (!email) {
-      setError('请先输入邮箱地址')
-      return
-    }
-
-    setResendVerificationLoading(true)
-    setError('')
-    setForgotPasswordMessage('')
-
-    try {
-      const response = await fetch('/api/auth/resend-verification', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email })
-      })
-
-      const result = await response.json()
-
-      if (response.ok) {
-        setForgotPasswordMessage(result.message || '验证邮件已发送')
-      } else {
-        setError(result.error || '发送失败')
-      }
-    } catch (error) {
-      setError('网络错误，请重试')
-    } finally {
-      setResendVerificationLoading(false)
-    }
-  }
 
   const handleForgotPassword = async () => {
     if (!email) {
@@ -157,12 +125,12 @@ export default function LoginForm({ onToggleMode, onClose }: LoginFormProps) {
           </div>
         </div>
 
-        {/* 忘记密码/重新发送验证邮件区域 */}
+        {/* 忘记密码区域 */}
         {showForgotPassword && (
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-            <h4 className="text-sm font-medium text-blue-900 mb-2">账户帮助</h4>
+            <h4 className="text-sm font-medium text-blue-900 mb-2">重置密码</h4>
             <p className="text-xs text-blue-700 mb-3">
-              选择您需要的帮助
+              输入您的注册邮箱，我们将发送密码重置链接
             </p>
 
             {forgotPasswordMessage && (
@@ -185,22 +153,6 @@ export default function LoginForm({ onToggleMode, onClose }: LoginFormProps) {
                   </>
                 ) : (
                   '发送密码重置邮件'
-                )}
-              </button>
-              
-              <button
-                type="button"
-                onClick={handleResendVerification}
-                disabled={resendVerificationLoading || !email}
-                className="w-full bg-green-600 text-white py-2 px-3 rounded text-sm hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-              >
-                {resendVerificationLoading ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                    发送中...
-                  </>
-                ) : (
-                  '重新发送验证邮件'
                 )}
               </button>
               

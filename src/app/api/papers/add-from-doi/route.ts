@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { fetchPaperByDOI } from '@/lib/crossref'
+import { fetchPaperFromArxiv, isArxivIdentifier } from '@/lib/arxiv'
 
 export async function POST(request: NextRequest) {
   try {
@@ -64,13 +65,32 @@ export async function POST(request: NextRequest) {
     }
 
     // 从CrossRef获取论文信息
-    const crossRefData = await fetchPaperByDOI(doi)
+    console.log('🔍 Fetching paper metadata for DOI:', doi)
+    let crossRefData = await fetchPaperByDOI(doi)
+    
+    // 如果 CrossRef 没有找到，尝试 arXiv
+    if (!crossRefData && isArxivIdentifier(doi)) {
+      console.log('🔄 CrossRef未找到，尝试从arXiv获取...')
+      const arxivData = await fetchPaperFromArxiv(doi)
+      
+      if (arxivData) {
+        crossRefData = arxivData
+        console.log('✅ Paper metadata fetched from arXiv:', arxivData.title)
+      }
+    }
     
     if (!crossRefData) {
+      console.error('❌ Failed to fetch paper from CrossRef and arXiv:', doi)
       return NextResponse.json({ 
-        error: '无法从CrossRef获取论文信息，请检查DOI是否正确' 
+        error: '无法获取论文信息',
+        details: isArxivIdentifier(doi) 
+          ? 'DOI在CrossRef和arXiv数据库中均未找到。请检查DOI是否正确。'
+          : 'DOI在CrossRef数据库中未找到。如果是arXiv论文，请使用包含"arXiv"的DOI格式（如：10.48550/arXiv.XXXX.XXXXX）。',
+        suggestion: '请检查DOI是否正确，或尝试直接输入论文标题进行搜索。'
       }, { status: 404 })
     }
+
+    console.log('✅ Paper metadata fetched:', crossRefData.title)
 
     // 准备论文数据
     const newPaper = {

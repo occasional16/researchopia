@@ -108,9 +108,43 @@ export function useSmartSearch(): UseSmartSearchReturn {
       })
 
       if (!addResponse.ok) {
-        const errorData = await addResponse.json()
+        let errorData: any = {}
+        try {
+          errorData = await addResponse.json()
+        } catch (parseError) {
+          console.error('❌ [智能搜索] 无法解析错误响应:', parseError)
+          errorData = { 
+            error: `服务器返回错误 (${addResponse.status})`,
+            details: '无法解析服务器响应，请查看控制台了解详情'
+          }
+        }
+        
         console.error('❌ [智能搜索] 添加论文失败:', errorData)
-        throw new Error(errorData.error || '无法获取论文信息')
+        
+        // 跳转到搜索页面，显示错误信息
+        setSearchStatus('redirecting')
+        setProcessingMessage('🔍 论文未找到，正在跳转到搜索页面...')
+        
+        // 构建错误消息
+        let errorMessage = errorData.error || '无法获取论文信息'
+        if (errorData.details) {
+          errorMessage += ' ' + errorData.details
+        }
+        if (errorData.suggestion) {
+          errorMessage += ' ' + errorData.suggestion
+        }
+        
+        setTimeout(() => {
+          if (typeof window !== 'undefined') {
+            // 跳转到搜索页面，带上DOI作为搜索关键词和错误消息
+            const params = new URLSearchParams({
+              q: doi,
+              error: errorMessage
+            })
+            window.location.href = `/search?${params.toString()}`
+          }
+        }, 1000)
+        return
       }
 
       const result = await addResponse.json()

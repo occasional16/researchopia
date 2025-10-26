@@ -45,8 +45,11 @@ export async function fetchPaperByDOI(doi: string): Promise<PaperMetadata | null
     const cleanDOI = doi.trim().replace(/^https?:\/\/(dx\.)?doi\.org\//, '')
     
     if (!isValidDOI(cleanDOI)) {
-      throw new Error('Invalid DOI format')
+      console.error('❌ Invalid DOI format:', cleanDOI)
+      return null
     }
+
+    console.log('📡 Fetching paper from CrossRef:', cleanDOI)
 
     const response = await fetch(`https://api.crossref.org/works/${cleanDOI}`, {
       headers: {
@@ -57,13 +60,18 @@ export async function fetchPaperByDOI(doi: string): Promise<PaperMetadata | null
 
     if (!response.ok) {
       if (response.status === 404) {
-        throw new Error('DOI not found')
+        console.error('❌ DOI not found in CrossRef:', cleanDOI)
+        // 不抛出错误，返回 null 让调用者处理
+        return null
       }
-      throw new Error(`CrossRef API error: ${response.status}`)
+      console.error(`❌ CrossRef API error: ${response.status}`)
+      return null
     }
 
     const data: CrossRefResponse = await response.json()
     const work = data.message
+
+    console.log('✅ Paper found in CrossRef:', work.title?.[0])
 
     // Extract and format the data
     const metadata: PaperMetadata = {
@@ -79,8 +87,9 @@ export async function fetchPaperByDOI(doi: string): Promise<PaperMetadata | null
 
     return metadata
   } catch (error) {
-    console.error('Error fetching paper from CrossRef:', error)
-    throw error
+    console.error('❌ Error fetching paper from CrossRef:', error)
+    // 不抛出错误，返回 null
+    return null
   }
 }
 

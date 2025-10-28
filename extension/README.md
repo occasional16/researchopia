@@ -163,7 +163,7 @@ chrome.storage.sync.set({
 
 ## 版本历史
 
-### v0.1.0 (当前版本)
+### v0.1.1 (当前版本)
 - ✅ 初始版本发布
 - ✅ 实现DOI自动检测功能
 - ✅ 实现悬浮拖拽图标
@@ -184,4 +184,4 @@ chrome.storage.sync.set({
 
 ---
 
-**研学并进，智慧共享** | Researchopia Browser Extension v0.1.0
+**研学并进，智慧共享** | Researchopia Browser Extension v0.1.1

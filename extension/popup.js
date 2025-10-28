@@ -4,12 +4,14 @@ class PopupManager {
     this.currentTab = null;
     this.detectedDOI = null;
     this.isFloating = false;
+    this.isSidebarOpen = false; // 新增：侧边栏开关状态
     this.init();
   }
 
   async init() {
     await this.getCurrentTab();
     await this.loadSettings();
+    await this.checkSidebarState(); // 新增：检查侧边栏状态
     this.setupEventListeners();
     this.updateUI();
     this.detectDOI();
@@ -33,6 +35,25 @@ class PopupManager {
       console.error('Failed to load settings:', error);
       this.isFloating = false;
       this.researchopiaUrl = 'https://www.researchopia.com';
+    }
+  }
+
+  // 新增：检查当前标签页的侧边栏状态
+  async checkSidebarState() {
+    if (!this.currentTab || !this.currentTab.id) {
+      this.isSidebarOpen = false;
+      return;
+    }
+
+    try {
+      const key = `panelOpen_${this.currentTab.id}`;
+      const store = chrome.storage?.session || chrome.storage.local;
+      const result = await store.get([key]);
+      this.isSidebarOpen = result[key] === true;
+      console.log(`🔍 侧边栏状态检查: ${this.isSidebarOpen ? '已打开' : '已关闭'}`);
+    } catch (error) {
+      console.warn('检查侧边栏状态失败:', error);
+      this.isSidebarOpen = false;
     }
   }
 
@@ -63,6 +84,12 @@ class PopupManager {
     document.getElementById('searchBtn').addEventListener('click', () => {
       console.log('🔍 搜索按钮被点击');
       this.searchInResearchopia();
+    });
+
+    // 复制DOI按钮
+    document.getElementById('copyDOI')?.addEventListener('click', () => {
+      console.log('📋 复制DOI按钮被点击');
+      this.copyDOI();
     });
 
     // 打开侧边栏
@@ -135,6 +162,15 @@ class PopupManager {
     const floatText = document.getElementById('floatText');
     floatText.textContent = this.isFloating ? '隐藏浮动图标' : '显示浮动图标';
 
+    // 更新侧边栏按钮文字
+    const sidebarBtn = document.getElementById('openSidebar');
+    if (sidebarBtn) {
+      const sidebarText = sidebarBtn.querySelector('span:last-child');
+      if (sidebarText) {
+        sidebarText.textContent = this.isSidebarOpen ? '关闭研学港侧边栏' : '打开研学港侧边栏';
+      }
+    }
+
     // 更新网站链接
     const websiteLink = document.getElementById('openWebsite');
     websiteLink.href = this.researchopiaUrl;
@@ -170,6 +206,35 @@ class PopupManager {
     doiValue.textContent = doi;
     doiInfo.classList.remove('hidden');
     searchBtn.classList.remove('hidden');
+  }
+
+  async copyDOI() {
+    if (!this.detectedDOI) return;
+
+    try {
+      await navigator.clipboard.writeText(this.detectedDOI);
+      
+      // 视觉反馈
+      const copyBtn = document.getElementById('copyDOI');
+      copyBtn.classList.add('copied');
+      
+      // 临时改变图标为勾选
+      const originalHTML = copyBtn.innerHTML;
+      copyBtn.innerHTML = `
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+      `;
+      
+      setTimeout(() => {
+        copyBtn.classList.remove('copied');
+        copyBtn.innerHTML = originalHTML;
+      }, 1500);
+      
+      console.log('✅ DOI已复制:', this.detectedDOI);
+    } catch (error) {
+      console.error('❌ 复制DOI失败:', error);
+    }
   }
 
   async toggleFloatingIcon() {
@@ -222,48 +287,89 @@ class PopupManager {
   }
 
   async openSidebar() {
-    console.log('📖 尝试打开侧边栏...');
+    console.log('📖 尝试切换侧边栏...');
     
     try {
-      if (this.currentTab) {
-        console.log('📤 发送打开侧边栏消息到background script');
-        // 首先尝试使用Chrome原生侧边栏API
+      if (!this.currentTab || !this.currentTab.id) {
+        console.warn('⚠️ 当前标签页不存在');
+        return false;
+      }
+
+      console.log(`📤 当前状态: ${this.isSidebarOpen ? '打开' : '关闭'}`);
+      
+      if (this.isSidebarOpen) {
+        // 关闭侧边栏:通过background
         const response = await chrome.runtime.sendMessage({
-          action: 'openSidePanel',
+          action: 'toggleSidePanel',
           doi: this.detectedDOI,
           url: this.currentTab.url
         });
         
-        console.log('📨 Background script响应:', response);
-        
         if (response && response.success) {
-          console.log('✅ 原生侧边栏打开成功');
+          this.isSidebarOpen = false;
+          console.log('✅ 侧边栏已关闭');
+          this.updateUI();
           return true;
-        } else {
-          console.log('⚠️ 原生侧边栏打开失败，尝试备用方案');
-          // 备用方案：向content script发送消息
-          try {
-            const contentResponse = await chrome.tabs.sendMessage(this.currentTab.id, {
-              action: 'openSidebar',
-              doi: this.detectedDOI,
-              researchopiaUrl: this.researchopiaUrl
-            });
-            console.log('📨 Content script响应:', contentResponse);
-            return contentResponse && contentResponse.success;
-          } catch (contentError) {
-            console.error('📨 Content script消息发送失败:', contentError);
-            return false;
-          }
         }
       } else {
-        console.warn('⚠️ 当前标签页不存在');
-        return false;
+        // 打开侧边栏:直接在popup中调用(保持用户手势)
+        console.log('🚪 在popup中直接打开侧边栏...');
+        
+        try {
+          // 先设置选项
+          await chrome.sidePanel.setOptions({
+            tabId: this.currentTab.id,
+            path: 'sidebar.html',
+            enabled: true
+          });
+          
+          // 直接打开(在用户手势上下文中)
+          await chrome.sidePanel.open({ 
+            tabId: this.currentTab.id 
+          });
+          
+          console.log('✅ 侧边栏打开成功');
+          
+          // 通知background更新状态
+          chrome.runtime.sendMessage({
+            action: 'updatePanelState',
+            tabId: this.currentTab.id,
+            isOpen: true,
+            doi: this.detectedDOI,
+            url: this.currentTab.url
+          }).catch(() => {});
+          
+          this.isSidebarOpen = true;
+          this.updateUI();
+          
+          // 延迟关闭popup
+          setTimeout(() => window.close(), 300);
+          return true;
+          
+        } catch (error) {
+          console.error('❌ 直接打开侧边栏失败:', error);
+          
+          // 回退:尝试通过background
+          const response = await chrome.runtime.sendMessage({
+            action: 'toggleSidePanel',
+            doi: this.detectedDOI,
+            url: this.currentTab.url
+          });
+          
+          if (response && response.success) {
+            this.isSidebarOpen = true;
+            this.updateUI();
+            setTimeout(() => window.close(), 300);
+            return true;
+          }
+        }
       }
       
-      // 关闭弹窗
-      window.close();
+      console.error('❌ 侧边栏切换失败');
+      return false;
+      
     } catch (error) {
-      console.error('❌ 打开侧边栏时发生错误:', error);
+      console.error('❌ 切换侧边栏时发生错误:', error);
       return false;
     }
   }

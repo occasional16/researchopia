@@ -36,25 +36,16 @@ class ResearchopiaBackground {
       return true;
     });
 
-    // 工具栏图标点击
-    chrome.action.onClicked.addListener((tab) => {
-      this.handleActionClick(tab);
-    });
+    // ❌ 移除工具栏图标点击监听器
+    // 让 manifest.json 中的 default_popup 自动打开弹窗
   }
 
   async handleInstall() {
     console.log('🧩 研学港扩展已安装');
 
-    // 点击扩展图标打开侧边栏
-    if (chrome.sidePanel && chrome.sidePanel.setPanelBehavior) {
-      try {
-        await chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
-        console.log('✅ 设置：点击扩展图标打开侧边栏');
-      } catch (e) {
-        console.warn('⚠️ setPanelBehavior 失败:', e);
-      }
-    }
-
+    // ❌ 移除：不再设置点击扩展图标打开侧边栏
+    // 让 manifest.json 中的 default_popup 生效
+    
     // 默认设置
     try {
       await chrome.storage.sync.set({
@@ -81,37 +72,46 @@ class ResearchopiaBackground {
   }
 
   async handleMessage(request, sender, sendResponse) {
-    const tab = sender.tab;
+    let tab = sender.tab;
     const action = request?.action;
+
+    // 如果是从popup发送的消息,tab会是undefined,需要获取当前活动标签页
+    if (!tab && ['toggleSidePanel', 'openSidebar'].includes(action)) {
+      try {
+        const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        tab = activeTab;
+        console.log('📋 从popup调用,获取活动标签页:', tab?.id);
+      } catch (error) {
+        console.error('❌ 获取活动标签页失败:', error);
+      }
+    }
 
     try {
       switch (action) {
         case 'floatingIconClicked':
         case 'openSidePanel': {
-          this.handleFloatingOpen(tab, request.doi, request.url)
-            .then((ok) => sendResponse({ success: ok }))
-            .catch((err) => sendResponse({ success: false, error: err?.message || String(err) }));
+          // 必须同步调用以保持用户手势上下文
+          const result = await this.handleFloatingOpen(tab, request.doi, request.url);
+          sendResponse({ success: result });
           return true;
         }
 
         case 'toggleSidePanel': {
-          this.toggleSidePanel(tab, request.doi, request.url)
-            .then((ok) => sendResponse({ success: ok }))
-            .catch((err) => sendResponse({ success: false, error: err?.message || String(err) }));
+          // 必须同步调用以保持用户手势上下文
+          const result = await this.toggleSidePanel(tab, request.doi, request.url);
+          sendResponse({ success: result });
           return true;
         }
 
         case 'triggerSidePanelFromFloating': {
-          this.handleFloatingOpen(tab, request.doi, request.url)
-            .then((ok) => sendResponse({ success: ok }))
-            .catch((err) => sendResponse({ success: false, error: err?.message || String(err) }));
+          const result = await this.handleFloatingOpen(tab, request.doi, request.url);
+          sendResponse({ success: result });
           return true;
         }
 
         case 'openSidebar': {
-          this.openSidebar()
-            .then(() => sendResponse({ success: true }))
-            .catch((err) => sendResponse({ success: false, error: err?.message || String(err) }));
+          await this.openSidebar();
+          sendResponse({ success: true });
           return true;
         }
 
@@ -136,6 +136,34 @@ class ResearchopiaBackground {
           return true;
         }
 
+        case 'updatePanelState': {
+          // 从popup直接打开后更新状态
+          const tabId = request.tabId;
+          const isOpen = request.isOpen;
+          
+          if (tabId && isOpen !== undefined) {
+            this.panelState.set(tabId, isOpen);
+            
+            const key = `panelOpen_${tabId}`;
+            const store = chrome.storage?.session || chrome.storage.local;
+            store.set({ [key]: isOpen }).catch(() => {});
+            
+            // 保存DOI信息
+            if (isOpen && request.doi) {
+              chrome.storage.sync.set({
+                doiFromContentScript: request.doi,
+                currentPageUrl: request.url,
+                lastClickTime: Date.now()
+              }).catch(() => {});
+            }
+            
+            console.log(`✅ 面板状态已更新: tabId=${tabId}, isOpen=${isOpen}`);
+          }
+          
+          sendResponse({ success: true });
+          return true;
+        }
+
         default: {
           sendResponse({ success: false, error: 'Unknown action' });
           return true;
@@ -148,9 +176,7 @@ class ResearchopiaBackground {
     }
   }
 
-  async handleActionClick(tab) {
-    try { await this.openSidebar(); } catch (e) { console.warn('⚠️ 打开侧边栏失败（action）:', e); }
-  }
+  // ❌ 移除 handleActionClick 方法（已不需要）
 
   // 浮标触发打开：先 open，后异步存储
   async handleFloatingOpen(tab, doi, url) {
@@ -198,52 +224,92 @@ class ResearchopiaBackground {
     await chrome.sidePanel.open({ tabId: activeTab.id });
   }
 
-  // 切换侧边栏（先 open 后存储；关闭用 enabled:false）
+  // 切换侧边栏(优化:先同步操作open/close,后异步存储)
   async toggleSidePanel(tab, doi, url) {
+    console.log('🔄 toggleSidePanel 被调用, tab:', tab?.id, 'doi:', doi);
+    
     try {
-      if (!tab || !tab.id) return false;
+      if (!tab || !tab.id) {
+        console.error('❌ toggleSidePanel: tab或tab.id不存在');
+        return false;
+      }
 
       const key = `panelOpen_${tab.id}`;
       const store = chrome.storage?.session || chrome.storage.local;
-      const isOpenMemory = this.panelState.get(tab.id) === true;
+      
+      // 快速检查当前状态(不await,使用缓存)
+      let isOpen = this.panelState.get(tab.id) === true;
+      console.log(`🔄 当前状态(内存): ${isOpen ? '打开' : '关闭'} -> ${isOpen ? '关闭' : '打开'}`);
 
-      if (isOpenMemory) {
-        // 已打开 -> 关闭
-        try { await chrome.sidePanel?.setOptions?.({ tabId: tab.id, enabled: false }); } catch (e) { console.warn('setOptions(enabled:false) 失败:', e); }
+      if (isOpen) {
+        // 已打开 -> 关闭(立即执行,不延迟)
+        console.log('🚪 立即关闭侧边栏...');
+        try { 
+          chrome.sidePanel?.setOptions?.({ tabId: tab.id, enabled: false }); 
+          console.log('✅ 侧边栏已设置为禁用');
+        } catch (e) { 
+          console.warn('⚠️ setOptions(enabled:false) 失败:', e); 
+        }
+        
+        // 异步更新状态
         this.panelState.set(tab.id, false);
-        try { await store.set({ [key]: false }); } catch {}
-        try { await chrome.action.setBadgeText({ text: '', tabId: tab.id }); } catch {}
-        // 通知该标签页内容脚本显示关闭提示
-        try { await chrome.tabs.sendMessage(tab.id, { action: 'panelClosed' }); } catch {}
+        store.set({ [key]: false }).catch(() => {});
+        chrome.action.setBadgeText({ text: '', tabId: tab.id }).catch(() => {});
+        chrome.tabs.sendMessage(tab.id, { action: 'panelClosed' }).catch(() => {});
+        
+        console.log('✅ 侧边栏已关闭');
         return true;
       }
 
-      // 未打开 -> 打开：先 setOptions（不 await），再 open（保持用户手势）
-      try { chrome.sidePanel?.setOptions?.({ tabId: tab.id, path: 'sidebar.html', enabled: true }).catch(() => {}); } catch {}
+      // 未打开 -> 打开(立即执行chrome.sidePanel.open,保持用户手势)
+      console.log('🚪 立即打开侧边栏...');
+      
+      // 1. 先setOptions(同步,不await)
+      try { 
+        chrome.sidePanel?.setOptions?.({ tabId: tab.id, path: 'sidebar.html', enabled: true });
+      } catch (e) {
+        console.warn('⚠️ setOptions 失败:', e);
+      }
+      
+      // 2. 立即open(在用户手势上下文中)
       await chrome.sidePanel.open({ tabId: tab.id });
+      console.log('✅ chrome.sidePanel.open 成功');
 
-      // 记录状态
+      // 3. 异步更新状态(不阻塞)
       this.panelState.set(tab.id, true);
-      try { await store.set({ [key]: true }); } catch {}
-      if (doi) { try { await chrome.storage.sync.set({ doiFromContentScript: doi, currentPageUrl: url, lastClickTime: Date.now() }); } catch {} }
+      store.set({ [key]: true }).catch(() => {});
+      
+      if (doi) { 
+        chrome.storage.sync.set({ 
+          doiFromContentScript: doi, 
+          currentPageUrl: url, 
+          lastClickTime: Date.now() 
+        }).catch(() => {}); 
+        console.log('✅ DOI已存储:', doi);
+      }
 
-      // 反馈徽章
-      try {
-        await chrome.action.setBadgeText({ text: '✅', tabId: tab.id });
-        await chrome.action.setBadgeBackgroundColor({ color: '#10b981', tabId: tab.id });
-        setTimeout(async () => { try { await chrome.action.setBadgeText({ text: '', tabId: tab.id }); } catch {} }, 1200);
-      } catch {}
+      // 4. 徽章反馈(异步)
+      chrome.action.setBadgeText({ text: '✅', tabId: tab.id }).catch(() => {});
+      chrome.action.setBadgeBackgroundColor({ color: '#10b981', tabId: tab.id }).catch(() => {});
+      setTimeout(() => { 
+        chrome.action.setBadgeText({ text: '', tabId: tab.id }).catch(() => {}); 
+      }, 1200);
 
+      console.log('✅ 侧边栏打开流程完成');
       return true;
+      
     } catch (error) {
-      console.warn('toggleSidePanel 打开失败，尝试回退:', error);
+      console.error('❌ toggleSidePanel 失败:', error);
+      
+      // 简单回退:只尝试open,不做复杂操作
       try {
-        try { chrome.sidePanel?.setOptions?.({ tabId: tab.id, path: 'sidebar.html', enabled: true }).catch(() => {}); } catch {}
+        chrome.sidePanel?.setOptions?.({ tabId: tab.id, path: 'sidebar.html', enabled: true });
         await chrome.sidePanel.open({ tabId: tab.id });
         this.panelState.set(tab.id, true);
+        console.log('✅ 回退成功');
         return true;
       } catch (e2) {
-        console.error('回退也失败:', e2);
+        console.error('❌ 回退也失败:', e2);
         return false;
       }
     }

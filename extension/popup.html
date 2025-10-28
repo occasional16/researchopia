@@ -147,6 +147,33 @@
       display: none;
     }
 
+    .copy-btn {
+      padding: 6px;
+      background: rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 6px;
+      color: white;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .copy-btn:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: scale(1.05);
+    }
+
+    .copy-btn:active {
+      transform: scale(0.95);
+    }
+
+    .copy-btn.copied {
+      background: rgba(34, 197, 94, 0.3);
+      border-color: rgba(34, 197, 94, 0.5);
+    }
+
     .footer {
       margin-top: 16px;
       text-align: center;
@@ -159,7 +186,7 @@
   <div class="header">
     <div class="logo">研</div>
     <div class="title">研学港 Researchopia</div>
-    <div class="subtitle">智能学术搜索助手</div>
+    <div class="subtitle">版本 v0.1.1 | 研学并进，智慧共享</div>
   </div>
 
   <div class="status">
@@ -175,7 +202,15 @@
 
   <div id="doiInfo" class="doi-info hidden">
     <div class="doi-label">检测到的DOI：</div>
-    <div id="doiValue" class="doi-value"></div>
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <div id="doiValue" class="doi-value" style="flex: 1;"></div>
+      <button id="copyDOI" class="copy-btn" title="复制DOI">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+        </svg>
+      </button>
+    </div>
   </div>
 
   <div class="actions">
@@ -201,7 +236,7 @@
   </div>
 
   <div class="footer">
-    版本 v0.1.0 | 研学并进，智慧共享
+    版本 v0.1.1 | 研学并进，智慧共享
   </div>
 
   <script src="popup.js"></script>

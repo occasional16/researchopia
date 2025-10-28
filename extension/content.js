@@ -23,11 +23,49 @@ class ResearchopiaContentScript {
     }
   }
 
-  startup() {
+  async startup() {
     console.log('📄 页面加载完成，开始检测DOI和创建界面');
     this.detectDOI();
+    await this.loadSettings(); // 加载设置
     this.createFloatingIcon();
     this.setupMessageListener();
+  }
+
+  // 加载保存的设置
+  async loadSettings() {
+    try {
+      const result = await chrome.storage.sync.get(['floatingEnabled', 'iconPosition']);
+      this.floatingEnabled = result.floatingEnabled !== false; // 默认为true
+      this.savedPosition = result.iconPosition || null;
+      console.log('📦 已加载设置:', { 
+        floatingEnabled: this.floatingEnabled, 
+        savedPosition: this.savedPosition 
+      });
+    } catch (error) {
+      console.error('❌ 加载设置失败:', error);
+      this.floatingEnabled = true;
+      this.savedPosition = null;
+    }
+  }
+
+  // 保存图标位置
+  async saveIconPosition() {
+    if (!this.floatingIcon) return;
+    
+    const rect = this.floatingIcon.getBoundingClientRect();
+    const position = {
+      left: this.floatingIcon.style.left,
+      right: this.floatingIcon.style.right,
+      top: this.floatingIcon.style.top,
+      timestamp: Date.now()
+    };
+    
+    try {
+      await chrome.storage.sync.set({ iconPosition: position });
+      console.log('💾 图标位置已保存:', position);
+    } catch (error) {
+      console.error('❌ 保存位置失败:', error);
+    }
   }
 
   // DOI检测方法
@@ -131,6 +169,12 @@ class ResearchopiaContentScript {
   createFloatingIcon() {
     console.log('🎨 开始创建浮动图标...');
     
+    // 检查是否应该显示图标
+    if (!this.floatingEnabled) {
+      console.log('🙈 浮动图标已被用户禁用，跳过创建');
+      return null;
+    }
+    
     // 移除已存在的图标
     const existing = document.getElementById('researchopia-floating-icon');
     if (existing) {
@@ -154,8 +198,16 @@ class ResearchopiaContentScript {
     // 应用样式
     this.applyIconStyles();
     
-  // 设置初始位置：右上角（按需可持久化位置）
-  this.setIconPosition('right', 20, 20);
+    // 恢复保存的位置，或使用默认位置
+    if (this.savedPosition) {
+      console.log('🔄 恢复保存的位置:', this.savedPosition);
+      this.floatingIcon.style.left = this.savedPosition.left || 'auto';
+      this.floatingIcon.style.right = this.savedPosition.right || 'auto';
+      this.floatingIcon.style.top = this.savedPosition.top || '20px';
+    } else {
+      // 默认位置：右上角
+      this.setIconPosition('right', 20, 20);
+    }
     
     // 绑定事件
     this.bindIconEvents();
@@ -364,10 +416,12 @@ class ResearchopiaContentScript {
         // 边缘吸附逻辑
         this.snapToEdge();
         
+        // 保存位置
+        this.saveIconPosition();
+        
         // 恢复过渡效果
         this.floatingIcon.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
         
-  // 降噪：移除拖拽结束日志
         this.isDragging = false;
       } else {
         // 如果没有进入拖拽模式且时间短，认为是点击
@@ -476,33 +530,6 @@ class ResearchopiaContentScript {
     setTimeout(() => tooltip.remove(), 2000);
   }
 
-  // 无 DOI 的轻量提示（不遮挡屏幕，不阻断操作）
-  showNoDOISoftHint() {
-    const hint = document.createElement('div');
-    hint.textContent = '未检测到DOI，已为您打开侧边栏主页';
-    hint.style.cssText = `
-      position: fixed;
-      top: 16px;
-      right: 16px;
-      background: rgba(17,24,39,.92);
-      color: #fff;
-      padding: 8px 12px;
-      border-radius: 8px;
-      font-size: 12px;
-      z-index: 2147483647;
-      box-shadow: 0 4px 12px rgba(0,0,0,.25);
-      pointer-events: none;
-      opacity: 0;
-      transition: opacity .2s ease;
-    `;
-    document.body.appendChild(hint);
-    requestAnimationFrame(() => { hint.style.opacity = '1'; });
-    setTimeout(() => {
-      hint.style.opacity = '0';
-      setTimeout(() => hint.remove(), 200);
-    }, 2000);
-  }
-
   // 打开侧边栏 - 使用 background 代理实现
   async openSidebar() {
     console.log('📖 尝试打开侧边栏，DOI:', this.detectedDOI);
@@ -564,9 +591,19 @@ class ResearchopiaContentScript {
       switch (request.action) {
         case 'toggleFloating':  // 修复：匹配popup发送的消息
         case 'toggleFloatingIcon':  // 保持兼容性
-          this.toggleFloatingIcon();
-          sendResponse({ success: true });
-          break;
+          // 如果消息中包含 enabled 参数，直接设置状态
+          if (typeof request.enabled !== 'undefined') {
+            this.setFloatingIconVisibility(request.enabled).then(() => {
+              sendResponse({ success: true });
+            });
+            return true; // 保持消息通道开启
+          } else {
+            // 否则切换状态
+            this.toggleFloatingIcon().then(() => {
+              sendResponse({ success: true });
+            });
+            return true; // 保持消息通道开启
+          }
         
         case 'getCurrentDOI':
           // 提供当前检测到的 DOI 给侧边栏或其他页面
@@ -596,46 +633,53 @@ class ResearchopiaContentScript {
   }
 
   // 切换浮动图标显示/隐藏
-  toggleFloatingIcon() {
+  async toggleFloatingIcon() {
     console.log('🔄 切换浮动图标显示状态');
     
     if (!this.floatingIcon) {
-      console.log('📍 创建浮动图标');
+      console.log('📍 图标不存在，创建并显示');
+      this.floatingEnabled = true;
+      await chrome.storage.sync.set({ floatingEnabled: true });
       this.createFloatingIcon();
       return true;
     }
     
     const isVisible = this.floatingIcon.style.display !== 'none';
     this.floatingIcon.style.display = isVisible ? 'none' : 'flex';
+    this.floatingEnabled = !isVisible;
+    
+    // 保存显示状态
+    await chrome.storage.sync.set({ floatingEnabled: this.floatingEnabled });
     
     console.log(isVisible ? '🙈 隐藏浮动图标' : '👁️ 显示浮动图标');
+    console.log('💾 显示状态已保存:', this.floatingEnabled);
+    
     return !isVisible;
   }
 
-  showClosedToast() {
-    const hint = document.createElement('div');
-    hint.textContent = '侧边栏已关闭';
-    hint.style.cssText = `
-      position: fixed;
-      top: 16px;
-      right: 16px;
-      background: rgba(17,24,39,.92);
-      color: #fff;
-      padding: 8px 12px;
-      border-radius: 8px;
-      font-size: 12px;
-      z-index: 2147483647;
-      box-shadow: 0 4px 12px rgba(0,0,0,.25);
-      pointer-events: none;
-      opacity: 0;
-      transition: opacity .2s ease;
-    `;
-    document.body.appendChild(hint);
-    requestAnimationFrame(() => { hint.style.opacity = '1'; });
-    setTimeout(() => {
-      hint.style.opacity = '0';
-      setTimeout(() => hint.remove(), 200);
-    }, 1000);
+  // 设置浮动图标显示/隐藏（指定状态）
+  async setFloatingIconVisibility(enabled) {
+    console.log('🔧 设置浮动图标显示状态:', enabled);
+    
+    this.floatingEnabled = enabled;
+    
+    if (enabled) {
+      // 显示图标
+      if (!this.floatingIcon) {
+        this.createFloatingIcon();
+      } else {
+        this.floatingIcon.style.display = 'flex';
+      }
+    } else {
+      // 隐藏图标
+      if (this.floatingIcon) {
+        this.floatingIcon.style.display = 'none';
+      }
+    }
+    
+    // 保存显示状态
+    await chrome.storage.sync.set({ floatingEnabled: enabled });
+    console.log('💾 显示状态已保存:', enabled);
   }
 }
 

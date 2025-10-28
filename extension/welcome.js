@@ -1,8 +1,13 @@
 // welcome.js - 欢迎页面脚本
 
-// 检查服务器连接状态
+// 检查服务器连接状态（可选功能，如果页面中有对应元素）
 async function checkServerStatus() {
   const serverStatus = document.getElementById('serverStatus');
+  
+  if (!serverStatus) {
+    console.log('⚠️ 服务器状态指示器元素不存在，跳过检查');
+    return;
+  }
   
   try {
     const response = await fetch('http://localhost:3000', { 
@@ -24,8 +29,6 @@ function testExtension(e) {
   
   // 打开一个测试页面
   const testUrls = [
-    'https://www.nature.com/articles/s41467-025-62625-w',
-    'https://arxiv.org/abs/2101.00001',
     'https://doi.org/10.1038/s41467-025-62625-w'
   ];
   

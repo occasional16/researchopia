@@ -71,6 +71,18 @@ export function matchesSearch(annotation: any, query: string): boolean {
   return false;
 }
 
+/**
+ * HTML字符转义
+ */
+export function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 export function formatDate(dateString: string): string {
   const date = new Date(dateString);
   const now = new Date();
@@ -175,7 +187,9 @@ export function resolveAnnotationDisplayName(annotation: any): string {
     return ANONYMOUS_FALLBACK;
   }
 
+  // API返回的字段是 user 而不是 users
   const candidates = [
+    extractUsernameLike(annotation?.user),
     extractUsernameLike(annotation?.users),
     annotation?.author_username,
     annotation?.username,

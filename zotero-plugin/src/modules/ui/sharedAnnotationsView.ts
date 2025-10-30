@@ -10,13 +10,18 @@ import {
   createToggleSwitch
 } from "./helpers";
 import { logger } from "../../utils/logger";
+import { UserHoverCardManager } from "./userHoverCard";
+import { containerPadding } from "./styles";
+import { deduplicateAnnotations, createBatchDisplayToolbar, type BatchDisplayFilter as UtilBatchDisplayFilter } from "./annotationUtils";
 
 export class SharedAnnotationsView {
   private cachedSharedAnnotations: any[] | null = null;
   private cachedSharedAnnotationsDocumentId: string | null = null;
   private scrollToAnnotationListener: ((event: CustomEvent) => void) | null = null;
+  private userHoverCardManager: UserHoverCardManager;
 
   constructor(private readonly context: BaseViewContext) {
+    this.userHoverCardManager = new UserHoverCardManager(context);
     // 监听来自PDF Reader Manager的滚动请求
     try {
       this.setupScrollToAnnotationListener();
@@ -55,6 +60,13 @@ export class SharedAnnotationsView {
     } catch (error) {
       logger.error("[SharedAnnotationsView] Error in setupScrollToAnnotationListener:", error);
     }
+  }
+
+  /**
+   * 清理资源
+   */
+  public cleanup(): void {
+    this.userHoverCardManager.cleanup();
   }
 
   /**
@@ -173,6 +185,20 @@ export class SharedAnnotationsView {
 
     if (isFirstRender) {
       container.innerHTML = "";
+      
+      // 重置容器样式,确保布局一致
+      container.style.cssText = `
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        padding: ${containerPadding.view};
+        overflow-y: auto;
+        overflow-x: hidden;
+        box-sizing: border-box;
+        background: #f9fafb;
+        border-radius: 10px;
+        box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+      `;
 
       searchBox = createSearchBox(doc, (query) => {
         this.render(container, query);
@@ -308,7 +334,7 @@ export class SharedAnnotationsView {
     container.style.flexDirection = "column";
     container.style.gap = "12px";
 
-    const uniqueAnnotations = this.deduplicateAnnotations(annotations);
+    const uniqueAnnotations = deduplicateAnnotations(annotations);
     logger.log(
       `[SharedAnnotationsView] Deduplicated ${annotations.length} annotations to ${uniqueAnnotations.length}`
     );
@@ -363,21 +389,6 @@ export class SharedAnnotationsView {
 
     container.appendChild(listContainer);
     logger.log("[SharedAnnotationsView] Shared annotations rendering complete!", uniqueAnnotations.length);
-  }
-
-  private deduplicateAnnotations(annotations: any[]): any[] {
-    const seen = new Set<string>();
-    const unique: any[] = [];
-
-    for (const annotation of annotations) {
-      const key = annotation.original_id || annotation.id;
-      if (!seen.has(key)) {
-        seen.add(key);
-        unique.push(annotation);
-      }
-    }
-
-    return unique;
   }
 
   private createFilterBar(doc: Document): HTMLElement {
@@ -523,13 +534,28 @@ export class SharedAnnotationsView {
     const userInfo = doc.createElement("div");
     userInfo.style.cssText = "display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--fill-secondary);";
 
-  const displayName = resolveAnnotationDisplayName(annotation);
+    const displayName = resolveAnnotationDisplayName(annotation);
+    // API返回的字段名是 user 而不是 users
+    const username = annotation.user?.username || annotation.users?.username || annotation.username || '';
+    const isAnonymous = !annotation.show_author_name;
 
-    userInfo.innerHTML = `
-      <span style="font-weight: 500;">${displayName}</span>
-      <span style="color: var(--fill-tertiary);">·</span>
-      <span style="color: var(--fill-tertiary);">${formatDate(annotation.created_at)}</span>
-    `;
+    const userElement = this.userHoverCardManager.createUserElement(
+      doc,
+      username,
+      displayName,
+      { isAnonymous, clickable: !isAnonymous }
+    );
+    userInfo.appendChild(userElement);
+
+    const separator = doc.createElement("span");
+    separator.style.color = "var(--fill-tertiary)";
+    separator.textContent = "·";
+    userInfo.appendChild(separator);
+
+    const timeSpan = doc.createElement("span");
+    timeSpan.style.color = "var(--fill-tertiary)";
+    timeSpan.textContent = formatDate(annotation.created_at);
+    userInfo.appendChild(timeSpan);
 
     headerDiv.appendChild(userInfo);
     card.appendChild(headerDiv);
@@ -871,17 +897,45 @@ export class SharedAnnotationsView {
     userInfo.style.cssText =
       "color: var(--fill-secondary); display: flex; gap: 6px; align-items: center; font-size: 11px;";
 
-  const { name: userName, isAnonymous } = resolveCommentDisplayInfo(comment);
-    const userNameColor = isAnonymous ? "var(--fill-secondary)" : "var(--fill-primary)";
+    const { name: userName, isAnonymous } = resolveCommentDisplayInfo(comment);
+    const username = comment.user?.username || comment.username || '';
     const replyCount = comment.reply_count || comment.children?.length || 0;
 
-    userInfo.innerHTML = `
-      <strong style="color: ${userNameColor};">${userName}</strong>
-      ${isAnonymous ? '<span style="color: var(--fill-quaternary); font-size: 10px;">🔒</span>' : ""}
-      <span style="color: var(--fill-quaternary);">·</span>
-      <span>${formatDate(comment.created_at)}</span>
-      ${replyCount > 0 ? `<span style="color: var(--accent-blue);">· ${replyCount} 回复</span>` : ""}
-    `;
+    const userElement = this.userHoverCardManager.createUserElement(
+      doc,
+      username,
+      userName,
+      { isAnonymous, clickable: !isAnonymous }
+    );
+    userInfo.appendChild(userElement);
+
+    if (isAnonymous) {
+      const lockIcon = doc.createElement("span");
+      lockIcon.style.cssText = "color: var(--fill-quaternary); font-size: 10px;";
+      lockIcon.textContent = "🔒";
+      userInfo.appendChild(lockIcon);
+    }
+
+    const sep1 = doc.createElement("span");
+    sep1.style.color = "var(--fill-quaternary)";
+    sep1.textContent = "·";
+    userInfo.appendChild(sep1);
+
+    const timeSpan = doc.createElement("span");
+    timeSpan.textContent = formatDate(comment.created_at);
+    userInfo.appendChild(timeSpan);
+
+    if (replyCount > 0) {
+      const sep2 = doc.createElement("span");
+      sep2.style.color = "var(--accent-blue)";
+      sep2.textContent = "·";
+      userInfo.appendChild(sep2);
+
+      const replySpan = doc.createElement("span");
+      replySpan.style.color = "var(--accent-blue)";
+      replySpan.textContent = ` ${replyCount} 回复`;
+      userInfo.appendChild(replySpan);
+    }
 
     header.appendChild(userInfo);
 
@@ -1426,114 +1480,17 @@ export class SharedAnnotationsView {
   }
 
   private createBatchDisplayToolbar(doc: Document): HTMLElement {
-    const toolbar = doc.createElement("div");
-    toolbar.id = "batch-display-toolbar";
-    toolbar.style.cssText = `
-      padding: 14px 16px;
-      background: #ffffff;
-      border-radius: 10px;
-      margin: 0 0 16px 0;
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      align-items: center;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-      border: 1px solid #e5e7eb;
-    `;
-
-    const label = doc.createElement("span");
-    label.textContent = "📍 批量显示:";
-    label.style.cssText = `
-      color: #1f2937;
-      font-weight: 700;
-      font-size: 14px;
-      margin-right: 6px;
-      line-height: 1;
-      display: flex;
-      align-items: center;
-    `;
-
-    const buttons = [
-      {
-        id: "show-all",
-        text: "全部显示",
-        icon: "🌐",
-        filter: "all" as BatchDisplayFilter
+    // 使用统一的工具栏创建函数
+    const toolbar = createBatchDisplayToolbar(
+      doc,
+      async (filter: UtilBatchDisplayFilter) => {
+        await this.handleBatchDisplay(filter as BatchDisplayFilter);
       },
       {
-        id: "show-following",
-        text: "关注用户",
-        icon: "👥",
-        filter: "following" as BatchDisplayFilter
-      },
-      {
-        id: "toggle-native",
-        text: "隐藏我的标注",
-        icon: "👁️",
-        filter: "toggle-native" as BatchDisplayFilter,
-        style: "special"
-      },
-      {
-        id: "clear-all",
-        text: "清除显示",
-        icon: "🚫",
-        filter: "clear" as BatchDisplayFilter,
-        style: "danger"
+        showFollowingButton: true,
+        toggleNativeText: "隐藏我的标注"
       }
-    ];
-
-    toolbar.appendChild(label);
-
-    buttons.forEach((btn) => {
-      const button = doc.createElement("button");
-      button.id = btn.id;
-      button.innerHTML = `${btn.icon} ${btn.text}`;
-      button.setAttribute("data-filter", btn.filter);
-
-      const isDanger = btn.style === "danger";
-      const isSpecial = btn.style === "special";
-      const btnColor = isDanger ? "#ef4444" : isSpecial ? "#0891b2" : "#3b82f6";
-
-      button.style.cssText = `
-        padding: 8px 16px;
-        background: #ffffff;
-        color: ${btnColor};
-        border: 2px solid ${btnColor};
-        border-radius: 8px;
-        cursor: pointer;
-        font-size: 13px;
-        font-weight: 600;
-        transition: all 0.2s;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        box-sizing: border-box;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        height: 38px;
-      `;
-
-      button.addEventListener("mouseenter", () => {
-        button.style.background = btnColor;
-        button.style.color = "#ffffff";
-        button.style.transform = "translateY(-2px)";
-        button.style.boxShadow = `0 4px 12px ${btnColor}40`;
-      });
-
-      button.addEventListener("mouseleave", () => {
-        button.style.background = "#ffffff";
-        button.style.color = btnColor;
-        button.style.transform = "translateY(0)";
-        button.style.boxShadow = "none";
-      });
-
-      button.addEventListener("click", async () => {
-        await this.handleBatchDisplay(btn.filter);
-      });
-
-      toolbar.appendChild(button);
-    });
+    );
 
     // 异步更新"隐藏我的标注"按钮的文字（根据实际状态）
     this.updateToggleNativeButtonText(doc);

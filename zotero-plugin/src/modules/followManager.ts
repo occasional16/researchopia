@@ -1,4 +1,5 @@
 import { config } from '../../package.json'
+import { envConfig } from '../config/env'
 import { AuthManager } from './auth'
 
 /**
@@ -6,7 +7,9 @@ import { AuthManager } from './auth'
  * 处理用户关注相关的操作
  */
 export class FollowManager {
-  private static webUrl = 'https://researchopia.vercel.app'
+  private static get webUrl(): string {
+    return envConfig.apiBaseUrl;
+  }
 
   /**
    * 获取访问令牌

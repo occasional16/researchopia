@@ -40,7 +40,8 @@ class PDFCollaborationServer {
     const allowedOrigins = [
       'http://localhost:3000',
       'http://127.0.0.1:3000',
-      'https://researchopia.vercel.app'
+      'https://www.researchopia.com',
+      'https://researchopia.vercel.app' // 保留vercel作为备用域名
     ];
     
     return allowedOrigins.includes(info.origin) || process.env.NODE_ENV === 'development';

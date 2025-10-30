@@ -882,13 +882,173 @@ setTimeout(() => {
 }, 100);
 
 
+// ============= 环境切换相关函数 =============
+
+// 初始化环境切换UI
+function initializeEnvironmentSwitcher() {
+  try {
+    if (typeof Zotero === 'undefined' || !Zotero.Prefs) return;
+    
+    const useDevCheckbox = document.getElementById('use-dev-environment');
+    const customApiInput = document.getElementById('custom-api-url');
+    const currentApiDisplay = document.getElementById('current-api-display');
+    
+    // 读取当前设置
+    const savedApiUrl = Zotero.Prefs.get('extensions.researchopia.apiBaseUrl', true);
+    const isDevEnv = savedApiUrl === 'http://localhost:3000';
+    
+    // 设置复选框状态
+    if (useDevCheckbox) {
+      useDevCheckbox.checked = isDevEnv;
+      
+      // 监听复选框变化
+      useDevCheckbox.addEventListener('change', function() {
+        if (this.checked) {
+          // 切换到开发环境
+          Zotero.Prefs.set('extensions.researchopia.apiBaseUrl', 'http://localhost:3000', true);
+          if (customApiInput) customApiInput.value = '';
+          updateCurrentApiDisplay();
+          researchopiaPrefs.showMessage('✅ 已切换到开发环境 (localhost:3000)', 'success');
+        } else {
+          // 切换到生产环境
+          Zotero.Prefs.set('extensions.researchopia.apiBaseUrl', 'https://www.researchopia.com', true);
+          if (customApiInput) customApiInput.value = '';
+          updateCurrentApiDisplay();
+          researchopiaPrefs.showMessage('✅ 已切换到生产环境 (researchopia.com)', 'success');
+        }
+      });
+    }
+    
+    // 设置自定义API输入框值
+    if (customApiInput && savedApiUrl && savedApiUrl !== 'http://localhost:3000' && savedApiUrl !== 'https://www.researchopia.com') {
+      customApiInput.value = savedApiUrl;
+    }
+    
+    // 监听自定义API输入框变化
+    if (customApiInput) {
+      customApiInput.addEventListener('blur', function() {
+        const customUrl = this.value.trim();
+        if (customUrl) {
+          Zotero.Prefs.set('extensions.researchopia.apiBaseUrl', customUrl, true);
+          if (useDevCheckbox) useDevCheckbox.checked = false;
+          updateCurrentApiDisplay();
+          researchopiaPrefs.showMessage('✅ 已设置自定义 API 地址', 'success');
+        }
+      });
+    }
+    
+    // 初始显示当前API
+    updateCurrentApiDisplay();
+    
+  } catch (error) {
+    debugLog('[Researchopia] Error initializing environment switcher:', error);
+  }
+}
+
+// 更新当前API地址显示
+function updateCurrentApiDisplay() {
+  try {
+    if (typeof Zotero === 'undefined' || !Zotero.Prefs) return;
+    
+    const currentApiDisplay = document.getElementById('current-api-display');
+    if (currentApiDisplay) {
+      const currentApi = Zotero.Prefs.get('extensions.researchopia.apiBaseUrl', true) || 'https://www.researchopia.com';
+      currentApiDisplay.textContent = `当前使用: ${currentApi}`;
+      currentApiDisplay.style.color = currentApi.includes('localhost') ? '#f97316' : '#10b981';
+      currentApiDisplay.style.fontWeight = '500';
+    }
+  } catch (error) {
+    debugLog('[Researchopia] Error updating API display:', error);
+  }
+}
+
+// 初始化实验性功能开关
+function initExperimentalFeatures() {
+  try {
+    if (typeof Zotero === 'undefined' || !Zotero.Prefs) return;
+    
+    const experimentalCheckbox = document.getElementById('enable-experimental-features');
+    
+    // 读取当前设置
+    const isEnabled = Zotero.Prefs.get('extensions.researchopia.enableExperimentalFeatures', false);
+    
+    // 设置复选框状态
+    if (experimentalCheckbox) {
+      experimentalCheckbox.checked = isEnabled;
+      
+      // 监听复选框变化
+      experimentalCheckbox.addEventListener('change', function() {
+        Zotero.Prefs.set('extensions.researchopia.enableExperimentalFeatures', this.checked);
+        if (this.checked) {
+          researchopiaPrefs.showMessage('✅ 已开放实验性功能(文献共读和共享标注)', 'success');
+        } else {
+          researchopiaPrefs.showMessage('ℹ️ 已关闭实验性功能', 'info');
+        }
+      });
+    }
+  } catch (error) {
+    debugLog('[Researchopia] Error initializing experimental features:', error);
+  }
+}
+
+// 重置API地址按钮处理
+function onResetApiUrl() {
+  try {
+    if (typeof Zotero === 'undefined' || !Zotero.Prefs) return;
+    
+    // 重置为生产环境
+    Zotero.Prefs.set('extensions.researchopia.apiBaseUrl', 'https://www.researchopia.com', true);
+    
+    const useDevCheckbox = document.getElementById('use-dev-environment');
+    const customApiInput = document.getElementById('custom-api-url');
+    
+    if (useDevCheckbox) useDevCheckbox.checked = false;
+    if (customApiInput) customApiInput.value = '';
+    
+    updateCurrentApiDisplay();
+    researchopiaPrefs.showMessage('✅ API 地址已重置为生产环境', 'success');
+    
+  } catch (error) {
+    debugLog('[Researchopia] Error resetting API URL:', error);
+    researchopiaPrefs.showMessage('重置失败', 'error');
+  }
+}
+
+// 确保环境切换函数全局可访问
+function ensureEnvironmentFunctionsGlobal() {
+  try {
+    if (typeof window !== 'undefined') {
+      window.onResetApiUrl = onResetApiUrl;
+      window.initializeEnvironmentSwitcher = initializeEnvironmentSwitcher;
+      window.updateCurrentApiDisplay = updateCurrentApiDisplay;
+    }
+    globalThis.onResetApiUrl = onResetApiUrl;
+    globalThis.initializeEnvironmentSwitcher = initializeEnvironmentSwitcher;
+    globalThis.updateCurrentApiDisplay = updateCurrentApiDisplay;
+  } catch (e) {
+    debugLog('[Researchopia] Error making environment functions global:', e);
+  }
+}
+
+// 立即执行
+ensureEnvironmentFunctionsGlobal();
+
+// ============= 初始化 =============
+
 // 延迟检查登录状态
 setTimeout(() => researchopiaPrefs.checkLoginState(), 500);
+
+// 延迟初始化环境切换器和实验性功能
+setTimeout(() => {
+  initializeEnvironmentSwitcher();
+  initExperimentalFeatures();
+}, 600);
 
 debugLog("[Researchopia] Preferences script initialization complete");
 debugLog("[Researchopia] Function types:", {
   onLogin: typeof onLogin,
   onLogout: typeof onLogout,
+  onResetApiUrl: typeof onResetApiUrl,
   windowOnLogin: typeof (window && window.onLogin),
   globalThisOnLogin: typeof globalThis.onLogin
 });

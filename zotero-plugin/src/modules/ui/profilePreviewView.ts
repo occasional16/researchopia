@@ -4,6 +4,7 @@
  */
 
 import { logger } from "../../utils/logger";
+import { envConfig } from "../../config/env";
 import { AuthManager } from "../auth";
 import type { BaseViewContext } from "./types";
 
@@ -34,11 +35,13 @@ export interface UserProfile {
 
 export class ProfilePreviewView {
   private context: BaseViewContext
-  private webUrl: string
 
   constructor(context: BaseViewContext) {
     this.context = context
-    this.webUrl = 'https://researchopia.vercel.app'
+  }
+  
+  private get webUrl(): string {
+    return envConfig.apiBaseUrl;
   }
 
   /**

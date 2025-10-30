@@ -5,6 +5,7 @@
  */
 
 import { logger } from "../utils/logger";
+import { envConfig } from "../config/env";
 import { AuthManager } from "./auth";
 import { SupabaseManager } from "./supabase";
 import { MyAnnotationsView } from "./ui/myAnnotationsView";
@@ -12,7 +13,9 @@ import { SharedAnnotationsView } from "./ui/sharedAnnotationsView";
 import { PaperEvaluationView } from "./ui/paperEvaluationView";
 import { QuickSearchView } from "./ui/quickSearchView";
 import { ProfilePreviewView } from "./ui/profilePreviewView";
-import { ReadingSessionView } from "./ui/readingSessionView";
+import { ReadingSessionHubView } from "./ui/readingSessionHubView";
+import { containerPadding } from "./ui/styles";
+import { AnnotationsHubView } from "./ui/annotationsHubView";
 import { createPaperInfoSection, createButtonsSection, createContentSection, createUserInfoBar } from "./ui/components";
 import type {
   BaseViewContext,
@@ -31,7 +34,8 @@ export class UIManager {
   private readonly sharedAnnotationsView: SharedAnnotationsView;
   private readonly paperEvaluationView: PaperEvaluationView;
   private readonly profilePreviewView: ProfilePreviewView;
-  private readonly readingSessionView: ReadingSessionView;
+  private readonly readingSessionHubView: ReadingSessionHubView;
+  private readonly annotationsHubView: AnnotationsHubView;
   private currentItem: any = null;
   private currentViewMode: ViewMode = 'none';
   private panelId = 'researchopia-panel';
@@ -49,7 +53,8 @@ export class UIManager {
     this.paperEvaluationView = new PaperEvaluationView(this.viewContext);
     this.profilePreviewView = new ProfilePreviewView(this.viewContext);
     this.quickSearchView = new QuickSearchView();
-    this.readingSessionView = new ReadingSessionView(this.viewContext);
+    this.readingSessionHubView = new ReadingSessionHubView(this.viewContext);
+    this.annotationsHubView = new AnnotationsHubView(this.viewContext);
   }
 
   private createViewContext(): BaseViewContext {
@@ -94,6 +99,38 @@ export class UIManager {
   private getPanelsForCurrentItem(): PanelElements[] {
     const doc = (this.currentItemId && this.itemDocuments.get(this.currentItemId)) || this.panelDocument;
     return this.getPanelElements(doc);
+  }
+
+  /**
+   * 检查实验性功能是否开启
+   */
+  private isExperimentalFeatureEnabled(): boolean {
+    try {
+      return Zotero.Prefs.get('extensions.researchopia.enableExperimentalFeatures', false) === true;
+    } catch (error) {
+      logger.error("[UIManager] Error checking experimental feature flag:", error);
+      return false;
+    }
+  }
+
+  /**
+   * 显示"即将上线"提示
+   */
+  private showFeatureComingSoonMessage(container: HTMLElement, featureName: string): void {
+    container.innerHTML = `
+      <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 20px; text-align: center;">
+        <div style="font-size: 48px; margin-bottom: 16px;">🚀</div>
+        <div style="font-size: 18px; font-weight: 600; color: var(--fill-primary); margin-bottom: 8px;">
+          ${featureName}功能即将上线
+        </div>
+        <div style="font-size: 14px; color: var(--fill-secondary); margin-bottom: 20px;">
+          我们正在努力开发和测试中,敬请期待!
+        </div>
+        <div style="font-size: 12px; color: var(--fill-tertiary); padding: 12px 20px; background: var(--material-background); border-radius: 8px;">
+          💡 提示: 开发者可以在"偏好设置 → 开发者选项"中开启实验性功能进行测试
+        </div>
+      </div>
+    `;
   }
 
   public static getInstance(): UIManager {
@@ -322,7 +359,7 @@ export class UIManager {
                   });
                   websiteBtn.addEventListener('click', (e) => {
                     e.stopPropagation(); // 防止触发section折叠
-                    (Zotero as any).launchURL('https://www.researchopia.com/');
+                    (Zotero as any).launchURL(envConfig.apiBaseUrl);
                   });
                   
                   // 将按钮插入到twisty之前
@@ -467,6 +504,12 @@ export class UIManager {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       background: var(--material-background);
       min-height: 400px;
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+      box-sizing: border-box;
+      overflow-x: auto;
+      overflow-y: auto;
     `;
 
     // 用户信息栏
@@ -606,12 +649,80 @@ export class UIManager {
       for (const [index, panel] of panels.entries()) {
         if (panel.contentSection) {
           logger.log(`[UIManager] 🔄 Resetting content section for panel ${index}`);
-          // 简单清空内容，让用户重新点击按钮
-          panel.contentSection.innerHTML = `
-            <div style="display: flex; align-items: center; justify-content: center; padding: 40px 20px; text-align: center; color: var(--fill-tertiary); font-size: 13px;">
-              选择上方功能按钮以开始
-            </div>
+          
+          // 创建功能介绍
+          panel.contentSection.innerHTML = '';
+          panel.contentSection.style.cssText = `
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: ${containerPadding.content};
           `;
+          
+          const featuresContainer = itemDoc.createElement('div');
+          featuresContainer.style.cssText = `
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-width: 420px;
+          `;
+          
+          const features = [
+            { icon: '📖', color: '#ec4899', title: '文献共读', desc: '创建或加入共读会话,与他人协同阅读' },
+            { icon: '👥', color: '#8b5cf6', title: '共享标注', desc: '浏览其他用户的标注,管理自己的标注' },
+            { icon: '⭐', color: '#f97316', title: '论文评价', desc: '查看论文评分、评论及学术讨论' }, 
+            { icon: '🔍', color: '#10b981', title: '快捷搜索', desc: '一键搜索相关论文和学术资源' }
+          ];
+          
+          features.forEach(feature => {
+            const featureItem = itemDoc.createElement('div');
+            featureItem.style.cssText = `
+              display: flex;
+              align-items: start;
+              gap: 10px;
+              padding: 12px;
+              background: #ffffff;
+              border-radius: 8px;
+              border-left: 4px solid ${feature.color};
+              box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+              transition: all 0.2s;
+            `;
+            
+            // 添加hover效果
+            featureItem.addEventListener('mouseenter', () => {
+              featureItem.style.transform = 'translateX(4px)';
+              featureItem.style.boxShadow = '0 2px 6px rgba(0, 0, 0, 0.12)';
+            });
+            featureItem.addEventListener('mouseleave', () => {
+              featureItem.style.transform = 'translateX(0)';
+              featureItem.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.08)';
+            });
+            
+            const iconSpan = itemDoc.createElement('span');
+            iconSpan.style.cssText = 'font-size: 20px; flex-shrink: 0;';
+            iconSpan.textContent = feature.icon;
+            
+            const textDiv = itemDoc.createElement('div');
+            textDiv.style.cssText = 'flex: 1;';
+            
+            const titleSpan = itemDoc.createElement('div');
+            titleSpan.style.cssText = `font-weight: 600; color: ${feature.color}; font-size: 13px; margin-bottom: 3px;`;
+            titleSpan.textContent = feature.title;
+            
+            const descSpan = itemDoc.createElement('div');
+            descSpan.style.cssText = 'font-size: 12px; color: #6b7280; line-height: 1.4;';
+            descSpan.textContent = feature.desc;
+            
+            textDiv.appendChild(titleSpan);
+            textDiv.appendChild(descSpan);
+            
+            featureItem.appendChild(iconSpan);
+            featureItem.appendChild(textDiv);
+            
+            featuresContainer.appendChild(featureItem);
+          });
+          
+          panel.contentSection.appendChild(featuresContainer);
         }
       }
     }
@@ -1057,8 +1168,14 @@ export class UIManager {
             logger.log("[UIManager] ✅ My annotations rendered");
             break;
           case 'shared-annotations':
-            await this.renderSharedAnnotations(contentSection);
-            logger.log("[UIManager] ✅ Shared annotations rendered");
+            // 检查实验性功能是否开启
+            if (this.isExperimentalFeatureEnabled()) {
+              // 渲染标注中心Hub视图(包含次级按钮)
+              await this.annotationsHubView.render();
+              logger.log("[UIManager] ✅ Annotations hub rendered");
+            } else {
+              this.showFeatureComingSoonMessage(contentSection, '共享标注');
+            }
             break;
           case 'paper-evaluation':
             await this.paperEvaluationView.render(contentSection, paperInfo);
@@ -1069,8 +1186,13 @@ export class UIManager {
             logger.log("[UIManager] ✅ Quick search rendered");
             break;
           case 'reading-session':
-            await this.readingSessionView.render();
-            logger.log("[UIManager] ✅ Reading session rendered");
+            // 检查实验性功能是否开启
+            if (this.isExperimentalFeatureEnabled()) {
+              await this.readingSessionHubView.render();
+              logger.log("[UIManager] ✅ Reading session hub rendered");
+            } else {
+              this.showFeatureComingSoonMessage(contentSection, '文献共读');
+            }
             break;
         }
 
@@ -1190,6 +1312,8 @@ export class UIManager {
    */
   public cleanup(): void {
     logger.log("[UIManager] 🧹 Cleaning up UI Manager...");
+    this.sharedAnnotationsView.cleanup();
+    this.annotationsHubView.cleanup();
     this.currentItem = null;
     this.currentViewMode = 'none';
   }

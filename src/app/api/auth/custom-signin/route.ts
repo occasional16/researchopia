@@ -58,10 +58,42 @@ export async function POST(request: NextRequest) {
       }, { status: 500 })
     }
 
-    console.log('✅ Custom signin successful:', data.user.id)
+    // 获取用户详细信息(username, role等)
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('username, role, avatar_url')
+      .eq('id', data.user.id)
+      .single()
+
+    if (userError) {
+      console.error('⚠️ Get user data error:', userError)
+      console.error('⚠️ User ID:', data.user.id)
+    }
+
+    console.log('✅ Custom signin successful for user:', data.user.id)
+    console.log('📊 User data from users table:', JSON.stringify(userData, null, 2))
+    console.log('📊 Final username:', userData?.username || data.user.email?.split('@')[0])
+
+    // 合并用户信息 - 将自定义字段放入user_metadata以符合Supabase标准
+    const enrichedData = {
+      user: {
+        ...data.user,
+        user_metadata: {
+          ...data.user.user_metadata,
+          username: userData?.username || data.user.email?.split('@')[0],
+          role: userData?.role || 'user',
+          avatar_url: userData?.avatar_url
+        },
+        // 同时在顶层也保留一份,用于插件等直接访问
+        username: userData?.username || data.user.email?.split('@')[0],
+        role: userData?.role || 'user',
+        avatar_url: userData?.avatar_url
+      },
+      session: data.session
+    }
 
     return NextResponse.json({
-      data,
+      data: enrichedData,
       error: null
     })
 

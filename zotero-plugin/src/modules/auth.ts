@@ -84,92 +84,56 @@ export class AuthManager {
     try {
       logger.log("[AuthManager] 🔐 Signing in user:", email);
       
-      if (!instance.supabase) {
-        throw new Error("Supabase not initialized");
-      }
+      // 使用主网站的登录API(与网站使用相同接口)
+      const { apiPost } = await import('../utils/apiClient');
+      const { envConfig } = await import('../config/env');
+      logger.log("[AuthManager] 🌐 Using API base URL:", envConfig.apiBaseUrl);
+      const response = await apiPost('/api/auth/custom-signin', { email, password }, { requireAuth: false });
       
-      // 使用 Supabase Auth API 进行登录
-      const response = await instance.supabase.makeRequest('/auth/v1/token?grant_type=password', {
-        method: 'POST',
-        body: JSON.stringify({
-          email,
-          password
-        })
-      });
-      
-      const data = await response.json();
-      
-      if (!response.ok) {
-        logger.error("[AuthManager] Sign in failed:", data);
+      // custom-signin返回格式: { data, error }
+      if (response.error || !response.data) {
+        logger.error("[AuthManager] Sign in failed:", response.error);
         return { 
           success: false, 
-          error: data.error_description || data.message || '登录失败，请检查邮箱和密码'
+          error: response.error || '登录失败，请检查邮箱和密码'
         };
       }
       
-      // 保存会话信息
-      // 注意: 将expires_in延长为30天(2592000秒)以支持长期登录
-      const expiresIn = data.expires_in || 3600; // 默认1小时
-      const extendedExpiresIn = Math.max(expiresIn, 2592000); // 至少30天
+      const { user, session } = response.data;
       
+      // 调试: 打印返回的用户数据
+      logger.log("[AuthManager] 📥 Received user data:", JSON.stringify(user, null, 2));
+      
+      // 保存会话信息
       instance.session = {
-        access_token: data.access_token,
-        refresh_token: data.refresh_token,
-        expires_at: Date.now() + (extendedExpiresIn * 1000),
-        expires_in: extendedExpiresIn,
-        token_type: data.token_type
+        access_token: session.access_token,
+        refresh_token: session.refresh_token,
+        expires_at: session.expires_at ? session.expires_at * 1000 : Date.now() + (session.expires_in * 1000),
+        expires_in: session.expires_in,
+        token_type: session.token_type
       };
       
-      // 获取用户角色和用户名
-      let userRole = 'user'; // 默认角色
-      let username = ''; // 用户名
-      try {
-        logger.log("[AuthManager] 🔍 Fetching user role and username for user ID:", data.user.id);
-        const roleResponse = await instance.supabase.makeRequest(`/rest/v1/users?id=eq.${data.user.id}&select=role,username`, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${data.access_token}`
-          }
-        });
-        
-        if (!roleResponse.ok) {
-          logger.error("[AuthManager] ❌ User data fetch failed with status:", roleResponse.status);
-          const errorText = await roleResponse.text();
-          logger.error("[AuthManager] ❌ User data fetch error:", errorText);
-        } else {
-          const userData = await roleResponse.json();
-          logger.log("[AuthManager] 📥 User data received:", JSON.stringify(userData));
-          
-          if (userData && userData.length > 0) {
-            if (userData[0].role) {
-              userRole = userData[0].role;
-              logger.log("[AuthManager] ✅ User role set to:", userRole);
-            }
-            if (userData[0].username) {
-              username = userData[0].username;
-              logger.log("[AuthManager] ✅ Username set to:", username);
-            }
-          } else {
-            logger.log("[AuthManager] ⚠️ No user data found in response, using defaults");
-          }
-        }
-      } catch (error) {
-        logger.error("[AuthManager] ❌ Failed to fetch user data:", error);
-      }
+      logger.log("[AuthManager] 🔐 Token will expire at:", new Date(instance.session.expires_at).toLocaleString());
       
-      // 保存用户信息(包含角色和用户名)
+      // 保存用户信息
+      // 优先从user_metadata读取(符合Supabase标准),否则从顶层读取(向后兼容)
+      const username = user.user_metadata?.username || user.username || user.email?.split('@')[0];
+      const role = user.user_metadata?.role || user.role || 'user';
+      const avatar_url = user.user_metadata?.avatar_url || user.avatar_url;
+      
       instance.user = {
-        id: data.user.id,
-        email: data.user.email,
-        username: username, // 🆕 添加username字段
-        created_at: data.user.created_at,
-        email_confirmed_at: data.user.email_confirmed_at,
-        last_sign_in_at: new Date().toISOString(),
-        role: userRole
+        id: user.id,
+        email: user.email,
+        username: username,
+        created_at: user.created_at,
+        email_confirmed_at: user.email_confirmed_at,
+        last_sign_in_at: user.last_sign_in_at || new Date().toISOString(),
+        role: role,
+        avatar_url: avatar_url
       };
       
       await instance.saveSession();
-      logger.log("[AuthManager] ✅ Sign in successful for:", email, "with role:", userRole);
+      logger.log("[AuthManager] ✅ Sign in successful for:", email, "with username:", instance.user.username, "role:", instance.user.role);
       
       // 触发登录事件,通知UI更新
       try {
@@ -216,39 +180,30 @@ export class AuthManager {
     }
   }
 
-  public static async signUp(email: string, password: string): Promise<{ success: boolean; error?: string; user?: any }> {
-    const instance = AuthManager.getInstance();
-    
+  public static async signUp(email: string, password: string, username?: string): Promise<{ success: boolean; error?: string; user?: any }> {
     try {
       logger.log("[AuthManager] 📝 Signing up user:", email);
       
-      if (!instance.supabase) {
-        throw new Error("Supabase not initialized");
-      }
+      // 使用API代理进行注册
+      const { apiPost } = await import('../utils/apiClient');
+      const response = await apiPost('/api/proxy/auth/register', { 
+        email, 
+        password, 
+        username: username || email.split('@')[0]
+      }, { requireAuth: false });
       
-      // 使用 Supabase Auth API 进行注册
-      const response = await instance.supabase.makeRequest('/auth/v1/signup', {
-        method: 'POST',
-        body: JSON.stringify({
-          email,
-          password
-        })
-      });
-      
-      const data = await response.json();
-      
-      if (!response.ok) {
-        logger.error("[AuthManager] Sign up failed:", data);
+      if (!response.success || !response.data) {
+        logger.error("[AuthManager] Sign up failed:", response.error);
         return { 
           success: false, 
-          error: data.error_description || data.message || '注册失败，请重试'
+          error: response.error || '注册失败，请重试'
         };
       }
       
       logger.log("[AuthManager] ✅ Sign up successful for:", email);
       return { 
         success: true, 
-        user: data.user
+        user: response.data.user
       };
       
     } catch (error) {
@@ -277,20 +232,8 @@ export class AuthManager {
         logger.error("[AuthManager] Error handling session logout:", sessionError);
       }
       
-      // 如果有有效的会话，向 Supabase 发送登出请求
-      if (instance.session?.access_token && instance.supabase) {
-        try {
-          await instance.supabase.makeRequest('/auth/v1/logout', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${instance.session.access_token}`
-            }
-          });
-        } catch (logoutError) {
-          logger.error("[AuthManager] Remote logout failed:", logoutError);
-          // 即使远程登出失败，也要清除本地会话
-        }
-      }
+      // Supabase登出不需要服务器API,直接清除本地会话即可
+      // (Supabase会自动处理token失效)
       
       instance.user = null;
       instance.session = null;
@@ -504,9 +447,21 @@ export class AuthManager {
           saved_at: new Date().toISOString()
         };
         
+        // 保存到AuthManager自己的存储位置
         Zotero.Prefs.set('extensions.zotero.researchopia.user', JSON.stringify(userWithTimestamp), true);
         Zotero.Prefs.set('extensions.zotero.researchopia.session', JSON.stringify(sessionWithTimestamp), true);
-        logger.log("[AuthManager] 💾 Session saved for user:", this.user.email);
+        
+        // 同时保存到preferences.js格式(用于UI和兼容性)
+        const savedUsername = this.user.username || this.user.email.split("@")[0];
+        Zotero.Prefs.set("extensions.researchopia.isLoggedIn", true);
+        Zotero.Prefs.set("extensions.researchopia.userEmail", this.user.email);
+        Zotero.Prefs.set("extensions.researchopia.userId", this.user.id);
+        Zotero.Prefs.set("extensions.researchopia.userName", savedUsername);
+        Zotero.Prefs.set("extensions.researchopia.accessToken", this.session.access_token);
+        Zotero.Prefs.set("extensions.researchopia.tokenExpires", this.session.expires_at.toString());
+        Zotero.Prefs.set("extensions.researchopia.loginTime", new Date().toISOString());
+        
+        logger.log("[AuthManager] 💾 Session saved for user:", this.user.email, "username:", savedUsername, "expires at:", new Date(this.session.expires_at).toLocaleString());
       }
     } catch (error) {
       logger.error("[AuthManager] ❌ Error saving session:", error);
@@ -614,50 +569,51 @@ export class AuthManager {
    */
   public async refreshSession(): Promise<boolean> {
     try {
-      if (!this.session?.refresh_token || !this.supabase) {
-        logger.error("[AuthManager] No refresh_token available");
+      if (!this.session?.refresh_token) {
+        logger.error("[AuthManager] ❌ No refresh_token available");
         return false;
+      }
+      
+      if (!this.supabase) {
+        logger.error("[AuthManager] ❌ Supabase not initialized");
+        await this.initializeSupabase();
       }
       
       logger.log("[AuthManager] 🔄 Refreshing session token...");
       
-      const response = await this.supabase.makeRequest('/auth/v1/token?grant_type=refresh_token', {
-        method: 'POST',
-        body: JSON.stringify({
-          refresh_token: this.session.refresh_token
-        })
-      });
+      // 使用API代理刷新token
+      const { apiPost } = await import('../utils/apiClient');
+      const response = await apiPost('/api/proxy/auth/refresh', {
+        refresh_token: this.session.refresh_token
+      }, { requireAuth: false });
       
-      const data = await response.json();
-      
-      if (!response.ok) {
-        logger.error("[AuthManager] ❌ Token refresh failed:", data);
+      if (!response.success || !response.data) {
+        logger.error("[AuthManager] ❌ Token refresh failed:", response.error);
         return false;
       }
       
-      // 更新会话信息
-      const expiresIn = data.expires_in || 3600;
-      const extendedExpiresIn = Math.max(expiresIn, 2592000); // 至少30天
+      const { session, user } = response.data;
       
+      // 更新会话信息
       this.session = {
-        access_token: data.access_token,
-        refresh_token: data.refresh_token || this.session.refresh_token, // 保留旧的refresh_token以防万一
-        expires_at: Date.now() + (extendedExpiresIn * 1000),
-        expires_in: extendedExpiresIn,
-        token_type: data.token_type
+        access_token: session.access_token,
+        refresh_token: session.refresh_token || this.session.refresh_token,
+        expires_at: session.expires_at ? session.expires_at * 1000 : Date.now() + (session.expires_in * 1000),
+        expires_in: session.expires_in,
+        token_type: session.token_type
       };
       
       // 更新用户信息
-      if (data.user) {
+      if (user) {
         this.user = {
           ...this.user,
-          ...data.user,
+          ...user,
           last_refresh_at: new Date().toISOString()
         };
       }
       
       await this.saveSession();
-      logger.log("[AuthManager] ✅ Session refreshed successfully");
+      logger.log("[AuthManager] ✅ Session refreshed successfully, new expires_at:", new Date(this.session.expires_at).toLocaleString());
       return true;
       
     } catch (error) {

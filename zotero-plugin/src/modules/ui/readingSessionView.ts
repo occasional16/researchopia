@@ -1,25 +1,45 @@
 /**
  * 文献共读会话视图
- * 负责渲染共读会话管理界面
+ * 负责渲染共读会话管理界面(二级页面)
  */
 
 import { logger } from "../../utils/logger";
 import { ReadingSessionManager, type ReadingSession, type SessionMember, type SessionAnnotation } from "../readingSessionManager";
+import { SessionLogManager } from "../sessionLogManager";
 import type { BaseViewContext } from "./types";
-import { formatDate } from "./helpers";
+import { formatDate, escapeHtml } from "./helpers";
 import { AuthManager } from "../auth";
+import { containerPadding } from "./styles";
+import { UserHoverCardManager } from "./userHoverCard";
+import { CurrentSessionHubView } from "./currentSessionHubView";
+import { SessionListView } from "./sessionListView";
+import { SessionPlazaView } from "./sessionPlazaView";
+import { SessionCreateFormView } from "./sessionCreateFormView";
+import { SessionJoinPrivateView } from "./sessionJoinPrivateView";
+import { createBackButton, createButton } from "./uiHelpers";
+import { deduplicateAnnotations, createBatchDisplayToolbar, locateAnnotationInPDF, openPDFReader, type BatchDisplayFilter } from "./annotationUtils";
 
 export class ReadingSessionView {
   private sessionManager = ReadingSessionManager.getInstance();
+  private logManager = SessionLogManager.getInstance();
+  private userHoverCardManager: UserHoverCardManager;
+  private currentSessionHubView: CurrentSessionHubView;
   private currentSessions: ReadingSession[] = [];
   private membersListenerUnsubscribe: (() => void) | null = null;
   private annotationsListenerUnsubscribe: (() => void) | null = null;
   private lastViewBeforeSession: 'plaza' | 'create' | 'join' | 'manage' | null = null; // 记录进入会话前的视图
   private lastFilterType: string = 'others'; // 记录上次的筛选类型
   private selectedMemberIds: Set<string> = new Set(); // 选中的成员ID列表
+  private currentViewLevel: 'list' | 'hub' = 'list'; // 记录当前视图层级(list=会话列表, hub=当前会话Hub)
 
   constructor(private readonly context: BaseViewContext) {
     logger.log("[ReadingSessionView] 📚 Initializing...");
+    
+    // 初始化UserHoverCardManager
+    this.userHoverCardManager = new UserHoverCardManager(context);
+    
+    // 初始化CurrentSessionHubView
+    this.currentSessionHubView = new CurrentSessionHubView(context);
     
     // 注册事件监听器
     this.registerEventListeners();
@@ -56,24 +76,263 @@ export class ReadingSessionView {
         const doc = panel.contentSection.ownerDocument;
         panel.contentSection.innerHTML = '';
         
+        logger.log('[ReadingSessionView] Clearing contentSection, in session:', this.sessionManager.isInSession());
+        
+        // 不修改contentSection样式,保持Zotero原始样式
+        
         // 创建容器
         const container = doc.createElement('div');
         container.style.cssText = `
-          padding: 16px;
+          padding: 0;
+          margin: 0;
           font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+          width: 100%;
+          min-width: 0;
+          max-width: 100%;
+          box-sizing: border-box;
+          overflow-x: auto;
+          overflow-y: auto;
         `;
         panel.contentSection.appendChild(container);
         
-        // 根据是否在会话中显示不同内容
-        if (this.sessionManager.isInSession()) {
-          await this.renderActiveSession(container, doc);
+        // 根据是否在会话中以及用户想要的视图层级显示不同内容
+        if (this.sessionManager.isInSession() && this.currentViewLevel === 'hub') {
+          logger.log('[ReadingSessionView] Rendering current session hub (3rd level)...');
+          // 使用CurrentSessionHubView渲染三级页面
+          await this.renderCurrentSessionHub(container, doc);
         } else {
+          logger.log('[ReadingSessionView] Rendering session list (2nd level)...');
           await this.renderSessionList(container, doc);
         }
       }
     } catch (error) {
       logger.error("[ReadingSessionView] Error rendering:", error);
       this.context.showMessage('渲染失败: ' + (error instanceof Error ? error.message : String(error)), 'error');
+    }
+  }
+
+  /**
+   * 在指定容器中渲染内容(用于Hub视图)
+   */
+  public async renderInContainer(container: HTMLElement): Promise<void> {
+    try {
+      logger.log("[ReadingSessionView] 🎨 Rendering in container...");
+      
+      const doc = container.ownerDocument;
+      container.innerHTML = '';
+      
+      // 创建内容容器
+      const contentContainer = doc.createElement('div');
+      contentContainer.style.cssText = `
+        padding: 0;
+        margin: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        width: 100%;
+        min-width: 0;
+        max-width: 100%;
+        box-sizing: border-box;
+        overflow-x: auto;
+        overflow-y: auto;
+      `;
+      container.appendChild(contentContainer);
+      
+      // 根据是否在会话中显示不同内容
+      if (this.sessionManager.isInSession()) {
+        logger.log('[ReadingSessionView] Rendering active session in container...');
+        await this.renderActiveSession(contentContainer, doc);
+      } else {
+        logger.log('[ReadingSessionView] Rendering session list in container...');
+        await this.renderSessionList(contentContainer, doc);
+      }
+    } catch (error) {
+      logger.error("[ReadingSessionView] Error rendering in container:", error);
+      container.innerHTML = `
+        <div style="padding: 40px; text-align: center; color: #ef4444;">
+          <div>❌ 渲染失败</div>
+          <div style="font-size: 12px; margin-top: 8px;">${
+            error instanceof Error ? error.message : '未知错误'
+          }</div>
+        </div>
+      `;
+    }
+  }
+
+  /**
+   * 渲染当前会话Hub(三级页面,包含"当前会话"和"会话纪要"两个按钮)
+   */
+  private async renderCurrentSessionHub(container: HTMLElement, doc: Document): Promise<void> {
+    try {
+      logger.log("[ReadingSessionView] 🎨 Rendering current session hub...");
+      
+      // 设置CurrentSessionHubView的渲染函数
+      this.currentSessionHubView.setRenderFunctions(
+        // 渲染当前会话内容的函数
+        async (contentContainer) => {
+          await this.renderActiveSessionContent(contentContainer, doc);
+        },
+        // 返回按钮的处理函数
+        async () => {
+          logger.log('[ReadingSessionView] 🔙 Back button clicked, returning to session list');
+          // 设置视图层级为列表
+          this.currentViewLevel = 'list';
+          // 直接渲染会话列表
+          await this.renderSessionList(container, doc);
+        }
+      );
+      
+      // 渲染Hub
+      await this.currentSessionHubView.render(container, doc);
+      
+      logger.log("[ReadingSessionView] ✅ Current session hub rendered");
+    } catch (error) {
+      logger.error("[ReadingSessionView] Error rendering current session hub:", error);
+      container.innerHTML = `
+        <div style="padding: 40px; text-align: center; color: #ef4444;">
+          <div>❌ 渲染失败</div>
+          <div style="font-size: 12px; margin-top: 8px;">${
+            error instanceof Error ? error.message : '未知错误'
+          }</div>
+        </div>
+      `;
+    }
+  }
+
+  /**
+   * 渲染当前会话的内容部分(不包含返回按钮和标题框架)
+   */
+  private async renderActiveSessionContent(container: HTMLElement, doc: Document): Promise<void> {
+    const session = this.sessionManager.getCurrentSession();
+    const member = this.sessionManager.getCurrentMember();
+    
+    if (!session || !member) {
+      container.innerHTML = '<div style="padding: 32px; text-align: center; color: #666;">会话信息加载失败</div>';
+      return;
+    }
+
+    // 清空容器
+    container.innerHTML = '';
+    
+    logger.log('[ReadingSessionView] Container width:', container.offsetWidth, 'clientWidth:', container.clientWidth);
+
+    // 直接使用传入的container,确保宽度正确
+    container.style.cssText = `
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+      box-sizing: border-box;
+      padding: 8px;
+      overflow-x: hidden;
+      overflow-y: auto;
+    `;
+
+    // 会话信息卡片
+    const sessionCard = doc.createElement('div');
+    sessionCard.style.cssText = `
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 16px;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+      overflow: hidden;
+    `;
+
+    // 论文标题
+    const paperTitle = doc.createElement('div');
+    paperTitle.innerHTML = `<strong style="font-size: 16px;">${escapeHtml(session.paper_title)}</strong>`;
+    paperTitle.style.cssText = `
+      margin-bottom: 8px;
+      word-break: break-word;
+      overflow-wrap: break-word;
+    `;
+    sessionCard.appendChild(paperTitle);
+
+    // DOI
+    const doiDiv = doc.createElement('div');
+    doiDiv.textContent = `📄 DOI: ${session.paper_doi}`;
+    doiDiv.style.cssText = `
+      color: #666; 
+      font-size: 13px; 
+      margin-bottom: 8px;
+      word-break: break-all;
+      overflow-wrap: break-word;
+    `;
+    sessionCard.appendChild(doiDiv);
+
+    // 邀请码
+    const inviteCodeDiv = doc.createElement('div');
+    inviteCodeDiv.textContent = `🔑 邀请码: ${session.invite_code}`;
+    inviteCodeDiv.style.cssText = `
+      color: #666; 
+      font-size: 13px; 
+      margin-bottom: 8px;
+      word-break: break-all;
+      overflow-wrap: break-word;
+    `;
+    sessionCard.appendChild(inviteCodeDiv);
+
+    // 创建时间
+    const timeDiv = doc.createElement('div');
+    timeDiv.textContent = `⏱️ 创建时间: ${formatDate(session.created_at)}`;
+    timeDiv.style.cssText = 'color: #666; font-size: 13px;';
+    sessionCard.appendChild(timeDiv);
+
+    container.appendChild(sessionCard);
+
+    // 成员列表
+    await this.renderMembersList(container, doc, session.id);
+
+    // 标注列表
+    await this.renderAnnotationsList(container, doc, session.id);
+
+    // 离开会话按钮
+    const leaveButton = doc.createElement('button');
+    leaveButton.textContent = '离开会话';
+    leaveButton.style.cssText = `
+      padding: 8px 16px;
+      background: #dc3545;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      margin-top: 16px;
+    `;
+    leaveButton.addEventListener('click', async () => {
+      try {
+        await this.sessionManager.leaveSession();
+        this.context.showMessage('已离开会话', 'info');
+        await this.render();
+      } catch (error) {
+        logger.error("[ReadingSessionView] Error leaving session:", error);
+        this.context.showMessage('离开会话失败', 'error');
+      }
+    });
+    container.appendChild(leaveButton);
+  }
+
+  /**
+   * 清理资源
+   */
+  public cleanup(): void {
+    logger.log("[ReadingSessionView] 🧹 Cleaning up...");
+    
+    // 取消成员监听
+    if (this.membersListenerUnsubscribe) {
+      this.membersListenerUnsubscribe();
+      this.membersListenerUnsubscribe = null;
+    }
+    
+    // 取消标注监听
+    if (this.annotationsListenerUnsubscribe) {
+      this.annotationsListenerUnsubscribe();
+      this.annotationsListenerUnsubscribe = null;
+    }
+    
+    // 清理userHoverCardManager
+    if (this.userHoverCardManager) {
+      this.userHoverCardManager.cleanup();
     }
   }
 
@@ -89,35 +348,37 @@ export class ReadingSessionView {
       return;
     }
 
+    // 先清空容器
+    container.innerHTML = '';
+    
+    logger.log('[ReadingSessionView] Container width:', container.offsetWidth, 'clientWidth:', container.clientWidth);
+
     // 页面容器(relative定位用于放置返回按钮)
     const pageContainer = doc.createElement('div');
+    pageContainer.id = 'session-page-container'; // 先设置ID
     pageContainer.style.cssText = `
       position: relative;
-      padding-top: 44px;
+      padding: 44px 12px 16px 12px;
+      width: 100%;
+      box-sizing: border-box;
+      overflow-x: hidden;
+      overflow-y: visible;
     `;
+    
+    // 临时调试:给所有子元素添加边框
+    const debugMode = false; // 设为true可看到每个元素边界
+    if (debugMode) {
+      pageContainer.style.border = '2px solid red';
+    }
 
     // 返回按钮(返回到上一页面，不离开会话)
-    const backButton = this.createBackButton(doc, () => {
-      const panels = this.context.getPanelsForCurrentItem();
-      if (panels && panels.length > 0 && panels[0].contentSection) {
-        // 根据lastViewBeforeSession返回到对应页面
-        switch (this.lastViewBeforeSession) {
-          case 'plaza':
-            this.showPublicSessionsPlaza(panels[0].contentSection, doc, true);
-            break;
-          case 'create':
-            this.showCreateSessionOptions(panels[0].contentSection, doc);
-            break;
-          case 'join':
-            this.showJoinPrivatePage(panels[0].contentSection, doc);
-            break;
-          case 'manage':
-            this.showSessionManagement(panels[0].contentSection, doc);
-            break;
-          default:
-            // 默认返回主页面
-            this.renderSessionList(panels[0].contentSection, doc);
-        }
+    const backButton = createBackButton(doc, async () => {
+      // 返回到进入会话前的页面
+      if (this.lastViewBeforeSession === 'plaza' || this.lastViewBeforeSession === 'manage') {
+        await this.renderSessionList(container, doc);
+      } else {
+        // 默认返回会话列表
+        await this.renderSessionList(container, doc);
       }
     });
     pageContainer.appendChild(backButton);
@@ -140,21 +401,46 @@ export class ReadingSessionView {
       border-radius: 8px;
       padding: 16px;
       margin-bottom: 16px;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+      overflow: hidden;
     `;
 
     // 论文标题
     const paperTitle = doc.createElement('div');
-    paperTitle.style.cssText = 'margin-bottom: 8px;';
+    paperTitle.style.cssText = `
+      margin-bottom: 8px;
+      word-break: break-word;
+      overflow-wrap: break-word;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+    `;
     const titleStrong = doc.createElement('strong');
     titleStrong.textContent = session.paper_title;
-    titleStrong.style.fontSize = '16px';
+    titleStrong.style.cssText = `
+      font-size: 16px;
+      word-break: break-word;
+      overflow-wrap: break-word;
+      display: block;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+    `;
     paperTitle.appendChild(titleStrong);
     sessionCard.appendChild(paperTitle);
 
     // DOI
     const doiDiv = doc.createElement('div');
     doiDiv.textContent = `📄 DOI: ${session.paper_doi}`;
-    doiDiv.style.cssText = 'color: #666; font-size: 13px; margin-bottom: 8px;';
+    doiDiv.style.cssText = `
+      color: #666;
+      font-size: 13px;
+      margin-bottom: 8px;
+      word-break: break-all;
+      overflow-wrap: break-word;
+    `;
     sessionCard.appendChild(doiDiv);
 
     // 邀请码 - 突出显示并可点击复制
@@ -166,6 +452,7 @@ export class ReadingSessionView {
       display: flex;
       align-items: center;
       gap: 8px;
+      flex-wrap: wrap;
     `;
     
     const inviteLabel = doc.createElement('span');
@@ -187,6 +474,10 @@ export class ReadingSessionView {
       cursor: pointer;
       transition: all 0.2s;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     `;
     inviteCodeButton.addEventListener('mouseenter', () => {
       inviteCodeButton.style.transform = 'translateY(-2px)';
@@ -237,6 +528,81 @@ export class ReadingSessionView {
     // 标注列表区域
     await this.renderAnnotationsList(pageContainer, doc, session.id);
 
+    // 会议纪要按钮容器
+    const minutesContainer = doc.createElement('div');
+    minutesContainer.style.cssText = 'position: relative; display: inline-block; margin-top: 16px; margin-right: 12px;';
+    
+    // 会议纪要按钮
+    const minutesButton = doc.createElement('button');
+    minutesButton.id = 'minutes-button';
+    minutesButton.textContent = '📋 会议纪要';
+    minutesButton.style.cssText = `
+      padding: 10px 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 15px;
+      font-weight: 600;
+      box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+      transition: all 0.3s ease;
+      max-width: 100%;
+      box-sizing: border-box;
+    `;
+    minutesButton.addEventListener('mouseenter', () => {
+      minutesButton.style.transform = 'translateY(-2px)';
+      minutesButton.style.boxShadow = '0 4px 12px rgba(102, 126, 234, 0.6)';
+    });
+    minutesButton.addEventListener('mouseleave', () => {
+      minutesButton.style.transform = 'translateY(0)';
+      minutesButton.style.boxShadow = '0 2px 8px rgba(102, 126, 234, 0.4)';
+    });
+    minutesButton.addEventListener('click', async () => {
+      // 标记为已读
+      this.logManager.markAsRead(session.id);
+      // 移除徽章
+      const badge = doc.getElementById('unread-badge');
+      if (badge) badge.remove();
+      // TODO: 会话纪要功能开发中
+      this.context.showMessage('会话纪要功能正在开发中', 'info');
+    });
+    
+    // 未读消息徽章
+    const unreadBadge = doc.createElement('span');
+    unreadBadge.id = 'unread-badge';
+    unreadBadge.style.cssText = `
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      background: #dc3545;
+      color: white;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: bold;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    `;
+    
+    minutesContainer.appendChild(minutesButton);
+    minutesContainer.appendChild(unreadBadge);
+    pageContainer.appendChild(minutesContainer);
+    
+    // 获取未读消息数
+    this.updateUnreadBadge(session.id, doc);
+    
+    // 定时轮询更新未读数(每10秒)
+    if (this.unreadPollingInterval) {
+      clearInterval(this.unreadPollingInterval);
+    }
+    this.unreadPollingInterval = setInterval(async () => {
+      await this.updateUnreadBadge(session.id, doc);
+    }, 10000);
+
     // 离开会话按钮
     const leaveButton = doc.createElement('button');
     leaveButton.textContent = '离开会话';
@@ -249,6 +615,8 @@ export class ReadingSessionView {
       cursor: pointer;
       font-size: 14px;
       margin-top: 16px;
+      max-width: 100%;
+      box-sizing: border-box;
     `;
     leaveButton.addEventListener('click', async () => {
       try {
@@ -298,21 +666,26 @@ export class ReadingSessionView {
       } else {
         const membersList = doc.createElement('div');
         membersList.style.cssText = `
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
+          display: block;
+          width: 100%;
+          max-width: 100%;
+          box-sizing: border-box;
+          overflow: hidden;
         `;
 
         for (const m of members) {
           const memberItem = doc.createElement('div');
           memberItem.style.cssText = `
-            display: flex;
-            align-items: center;
-            gap: 8px;
             padding: 8px 12px;
             background: ${m.is_online ? '#e7f5ff' : '#f1f3f5'};
             border-radius: 6px;
             font-size: 13px;
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
+            overflow: hidden;
+            margin-bottom: 8px;
+            white-space: nowrap;
           `;
 
           const statusDot = doc.createElement('span');
@@ -320,6 +693,8 @@ export class ReadingSessionView {
           statusDot.style.cssText = `
             color: ${m.is_online ? '#28a745' : '#999'};
             font-size: 10px;
+            display: inline-block;
+            margin-right: 4px;
           `;
 
           const statusText = doc.createElement('span');
@@ -327,12 +702,20 @@ export class ReadingSessionView {
           statusText.style.cssText = `
             font-size: 10px;
             color: ${m.is_online ? '#28a745' : '#999'};
-            margin-right: 4px;
+            margin-right: 8px;
+            display: inline-block;
           `;
 
           const nameSpan = doc.createElement('span');
           nameSpan.textContent = m.user_name || m.user_email || '未知用户';
-          nameSpan.style.cssText = 'flex: 1;';
+          nameSpan.style.cssText = `
+            margin-right: 8px;
+            display: inline-block;
+            max-width: 100px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            vertical-align: middle;
+          `;
 
           const roleSpan = doc.createElement('span');
           roleSpan.textContent = m.role === 'host' ? '主持人' : '参与者';
@@ -342,6 +725,8 @@ export class ReadingSessionView {
             border-radius: 4px;
             font-size: 11px;
             color: #000;
+            display: inline-block;
+            margin-right: 8px;
           `;
 
           const pageSpan = doc.createElement('span');
@@ -349,6 +734,7 @@ export class ReadingSessionView {
           pageSpan.style.cssText = `
             color: #666;
             font-size: 11px;
+            display: inline-block;
           `;
 
           memberItem.appendChild(statusDot);
@@ -420,6 +806,9 @@ export class ReadingSessionView {
           display: flex;
           flex-direction: column;
           gap: 8px;
+          width: 100%;
+          max-width: 100%;
+          box-sizing: border-box;
         `;
 
         for (const m of members) {
@@ -432,6 +821,10 @@ export class ReadingSessionView {
             background: ${m.is_online ? '#e7f5ff' : '#f1f3f5'};
             border-radius: 6px;
             font-size: 13px;
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
+            overflow: hidden;
           `;
 
           const statusDot = doc.createElement('span');
@@ -439,6 +832,7 @@ export class ReadingSessionView {
           statusDot.style.cssText = `
             color: ${m.is_online ? '#28a745' : '#999'};
             font-size: 10px;
+            flex-shrink: 0;
           `;
 
           const statusText = doc.createElement('span');
@@ -447,11 +841,18 @@ export class ReadingSessionView {
             font-size: 10px;
             color: ${m.is_online ? '#28a745' : '#999'};
             margin-right: 4px;
+            flex-shrink: 0;
           `;
 
           const nameSpan = doc.createElement('span');
           nameSpan.textContent = m.user_name || m.user_email || '未知用户';
-          nameSpan.style.cssText = 'flex: 1;';
+          nameSpan.style.cssText = `
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+          `;
 
           const roleSpan = doc.createElement('span');
           roleSpan.textContent = m.role === 'host' ? '主持人' : '参与者';
@@ -461,6 +862,8 @@ export class ReadingSessionView {
             border-radius: 4px;
             font-size: 11px;
             color: #000;
+            flex-shrink: 0;
+            white-space: nowrap;
           `;
 
           const pageSpan = doc.createElement('span');
@@ -468,6 +871,8 @@ export class ReadingSessionView {
           pageSpan.style.cssText = `
             color: #666;
             font-size: 11px;
+            flex-shrink: 0;
+            white-space: nowrap;
           `;
 
           memberItem.appendChild(statusDot);
@@ -506,7 +911,7 @@ export class ReadingSessionView {
       annotations = annotations.filter(a => onlineUserIds.has(a.user_id));
       
       // 去重 - 使用id作为唯一标识
-      const uniqueAnnotations = this.deduplicateAnnotations(annotations);
+      const uniqueAnnotations = deduplicateAnnotations(annotations);
       logger.log(`[ReadingSessionView] Deduplicated ${annotations.length} annotations to ${uniqueAnnotations.length} (online users only)`);
       
       // 使用去重后的数据
@@ -552,6 +957,10 @@ export class ReadingSessionView {
         emptyText.style.cssText = 'color: #999; font-size: 14px;';
         annotationsSection.appendChild(emptyText);
       } else {
+        // 批量显示工具栏
+        const batchToolbar = this.createBatchDisplayToolbar(doc);
+        annotationsSection.appendChild(batchToolbar);
+        
         // 筛选排序工具栏
         const toolbar = this.createAnnotationsToolbar(doc, sessionId);
         annotationsSection.appendChild(toolbar);
@@ -560,11 +969,13 @@ export class ReadingSessionView {
         const annotationsList = doc.createElement('div');
         annotationsList.id = 'annotations-list-container';
         annotationsList.style.cssText = `
-          display: flex;
-          flex-direction: column;
-          gap: 12px;
+          display: block;
           max-height: 400px;
           overflow-y: auto;
+          overflow-x: hidden;
+          width: 100%;
+          max-width: 100%;
+          box-sizing: border-box;
         `;
 
         // 默认按最新优先排序
@@ -605,20 +1016,175 @@ export class ReadingSessionView {
   }
 
   /**
-   * 去重标注数据
+   * 创建批量显示工具栏(用于PDF页面上批量显示/隐藏标注)
    */
-  private deduplicateAnnotations(annotations: SessionAnnotation[]): SessionAnnotation[] {
-    const seen = new Set<string>();
-    const unique: SessionAnnotation[] = [];
-
-    for (const annotation of annotations) {
-      if (!seen.has(annotation.id)) {
-        seen.add(annotation.id);
-        unique.push(annotation);
+  private createBatchDisplayToolbar(doc: Document): HTMLElement {
+    // 使用统一的工具栏创建函数，但需要自定义按钮
+    return createBatchDisplayToolbar(
+      doc,
+      async (filter: BatchDisplayFilter) => {
+        // 映射过滤器类型到操作
+        const actionMap: Record<BatchDisplayFilter, string> = {
+          'all': 'show-all',
+          'following': 'show-selected',  // 在共读中对应"选中成员"
+          'toggle-native': 'toggle-native',
+          'clear': 'hide-all'
+        };
+        await this.handleBatchDisplay(actionMap[filter]);
+      },
+      {
+        showFollowingButton: true,
+        followingButtonText: "选中成员",  // 自定义为"选中成员"
+        toggleNativeText: undefined  // 暂不使用toggle-native功能
       }
-    }
+    );
+  }
 
-    return unique;
+  /**
+   * 处理批量显示操作
+   */
+  private async handleBatchDisplay(action: string): Promise<void> {
+    try {
+      logger.log(`[ReadingSessionView] 🎯 Handling batch display action: ${action}`);
+      
+      const panels = this.context.getPanelsForCurrentItem();
+      if (!panels || panels.length === 0) {
+        this.context.showMessage("未找到面板", "error");
+        return;
+      }
+
+      const doc = panels[0].contentSection?.ownerDocument;
+      if (!doc) {
+        this.context.showMessage("未找到文档", "error");
+        return;
+      }
+
+      // 获取当前会话的DOI
+      const session = this.sessionManager.getCurrentSession();
+      if (!session) {
+        this.context.showMessage("未找到当前会话", "error");
+        return;
+      }
+
+      const doi = session.paper_doi;
+      if (!doi) {
+        this.context.showMessage("会话缺少DOI信息", "error");
+        return;
+      }
+
+      // 动态导入PDFReaderManager
+      const { PDFReaderManager } = await import("../pdfReaderManager");
+      const readerManager = PDFReaderManager.getInstance();
+
+      // 查找已打开的PDF阅读器
+      const reader = await readerManager.findOpenReader(doi);
+      if (!reader) {
+        this.context.showMessage("请先打开PDF文件", "warning");
+        return;
+      }
+
+      // 获取会话标注列表
+      const listContainer = doc.getElementById("annotations-list-container");
+      if (!listContainer) {
+        this.context.showMessage("未找到标注列表", "error");
+        return;
+      }
+
+      const annotationCards = listContainer.querySelectorAll("[data-annotation-id]");
+      
+      // 获取所有会话标注
+      const sessionAnnotations = await this.sessionManager.getSessionAnnotations(session.id, 1, 1000);
+      
+      switch (action) {
+        case "show-all":
+          // 显示所有标注
+          logger.log(`[ReadingSessionView] Showing all ${annotationCards.length} annotations`);
+          let showCount = 0;
+          for (const card of Array.from(annotationCards)) {
+            const annotationId = (card as HTMLElement).getAttribute("data-annotation-id");
+            if (annotationId) {
+              const sessionAnnotation = sessionAnnotations.find(a => a.id === annotationId);
+              if (sessionAnnotation) {
+                const sharedAnnotation = this.convertToSharedAnnotation(sessionAnnotation);
+                if (sharedAnnotation) {
+                  await readerManager.highlightAnnotation(reader, sharedAnnotation);
+                  showCount++;
+                }
+              }
+            }
+          }
+          this.context.showMessage(`已在PDF上显示${showCount}个标注`, "info");
+          break;
+
+        case "show-selected":
+          // 显示选中成员的标注
+          const selectedMembers = Array.from(doc.querySelectorAll('[data-member-checkbox]:checked'))
+            .map(cb => (cb as HTMLInputElement).value);
+          
+          if (selectedMembers.length === 0) {
+            this.context.showMessage("请先选择成员", "warning");
+            return;
+          }
+
+          let selectedCount = 0;
+          for (const card of Array.from(annotationCards)) {
+            const userId = (card as HTMLElement).getAttribute("data-user-id");
+            const annotationId = (card as HTMLElement).getAttribute("data-annotation-id");
+            
+            if (userId && selectedMembers.includes(userId) && annotationId) {
+              const sessionAnnotation = sessionAnnotations.find(a => a.id === annotationId);
+              if (sessionAnnotation) {
+                const sharedAnnotation = this.convertToSharedAnnotation(sessionAnnotation);
+                if (sharedAnnotation) {
+                  await readerManager.highlightAnnotation(reader, sharedAnnotation);
+                  selectedCount++;
+                }
+              }
+            }
+          }
+          this.context.showMessage(`已在PDF上显示${selectedCount}个标注`, "info");
+          break;
+
+        case "hide-all":
+          // 隐藏所有标注
+          logger.log("[ReadingSessionView] Hiding all annotations");
+          await readerManager.clearAllHighlights(reader);
+          this.context.showMessage("已清除所有标注显示", "info");
+          break;
+      }
+    } catch (error) {
+      logger.error("[ReadingSessionView] Error handling batch display:", error);
+      this.context.showMessage("操作失败: " + (error instanceof Error ? error.message : String(error)), "error");
+    }
+  }
+
+  /**
+   * 将SessionAnnotation转换为SharedAnnotation格式
+   */
+  private convertToSharedAnnotation(sessionAnnotation: SessionAnnotation): any | null {
+    try {
+      const annotationData = sessionAnnotation.annotation_data;
+      if (!annotationData || !annotationData.position) {
+        logger.warn(`[ReadingSessionView] Invalid annotation data for ${sessionAnnotation.id}`);
+        return null;
+      }
+
+      return {
+        id: sessionAnnotation.id,
+        type: annotationData.type || 'highlight',
+        content: annotationData.text || annotationData.comment || '',
+        comment: annotationData.comment,
+        color: annotationData.color || '#ffd400',
+        position: annotationData.position,
+        username: sessionAnnotation.user_name || sessionAnnotation.user_email,
+        show_author_name: true,
+        created_at: sessionAnnotation.created_at,
+        user_id: sessionAnnotation.user_id
+      };
+    } catch (error) {
+      logger.error(`[ReadingSessionView] Error converting annotation ${sessionAnnotation.id}:`, error);
+      return null;
+    }
   }
 
   /**
@@ -627,12 +1193,14 @@ export class ReadingSessionView {
   private createAnnotationsToolbar(doc: Document, sessionId: string): HTMLElement {
     const toolbar = doc.createElement('div');
     toolbar.style.cssText = `
-      display: flex;
-      gap: 8px;
       margin-bottom: 12px;
       padding: 8px;
       background: #f8f9fa;
       border-radius: 6px;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+      overflow: hidden;
     `;
 
     // 排序选择器
@@ -646,7 +1214,10 @@ export class ReadingSessionView {
       color: #495057;
       font-size: 12px;
       cursor: pointer;
-      flex: 1;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+      margin-bottom: 8px;
     `;
 
     const sortOptions = [
@@ -683,7 +1254,9 @@ export class ReadingSessionView {
       color: #495057;
       font-size: 12px;
       cursor: pointer;
-      flex: 1;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
     `;
     
     const filterOptions = [
@@ -954,26 +1527,35 @@ export class ReadingSessionView {
       const annotationCard = doc.createElement('div');
       annotationCard.setAttribute('data-annotation-id', annotation.id);
       annotationCard.setAttribute('data-page-number', String(annotation.page_number));
+      annotationCard.setAttribute('data-user-id', annotation.user_id || '');
+      
+      // 从annotation_data中提取颜色,如果没有则使用默认黄色
+      const annotationColor = annotation.annotation_data?.color || '#ffd400';
+      
       annotationCard.style.cssText = `
         padding: 12px;
-        background: #fff;
-        border: 1px solid #dee2e6;
-        border-left: 4px solid #0d6efd;
+        background: var(--material-background);
         border-radius: 6px;
-        font-size: 13px;
+        border-left: 4px solid ${annotationColor};
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        transition: transform 0.2s, box-shadow 0.2s;
         cursor: pointer;
-        transition: all 0.2s;
+        margin-bottom: 12px;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+        overflow: hidden;
       `;
 
       // 添加hover效果
       annotationCard.addEventListener('mouseenter', () => {
         annotationCard.style.transform = 'translateY(-2px)';
-        annotationCard.style.boxShadow = '0 4px 8px rgba(0,0,0,0.15)';
+        annotationCard.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
       });
 
       annotationCard.addEventListener('mouseleave', () => {
         annotationCard.style.transform = 'translateY(0)';
-        annotationCard.style.boxShadow = 'none';
+        annotationCard.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
       });
 
       // 点击卡片定位到PDF页面
@@ -981,58 +1563,89 @@ export class ReadingSessionView {
         await this.handleLocateAnnotation(annotation);
       });
 
-      const header = doc.createElement('div');
-      header.style.cssText = `
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 8px;
-        color: #666;
-        font-size: 12px;
+      // 头部区域 - 用户信息和页码
+      const headerDiv = doc.createElement('div');
+      headerDiv.style.cssText = `
+        margin-bottom: 10px;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+        overflow: hidden;
       `;
 
-      const userInfo = doc.createElement('span');
-      userInfo.textContent = `👤 ${annotation.user_name || annotation.user_email || '未知用户'}`;
+      // 用户信息 - 使用UserHoverCardManager
+      const userInfo = doc.createElement('div');
+      userInfo.style.cssText = `
+        font-size: 12px;
+        color: var(--fill-secondary);
+        margin-bottom: 4px;
+        word-break: break-word;
+        overflow-wrap: break-word;
+      `;
+
+      const username = annotation.user_id || '';
+      const displayName = annotation.user_name || annotation.user_email || '未知用户';
       
+      const userElement = this.userHoverCardManager.createUserElement(
+        doc,
+        username,
+        displayName,
+        { isAnonymous: false, clickable: true }
+      );
+      userInfo.appendChild(userElement);
+
+      const separator = doc.createElement('span');
+      separator.style.color = 'var(--fill-tertiary)';
+      separator.textContent = '·';
+      userInfo.appendChild(separator);
+
+      const timeSpan = doc.createElement('span');
+      timeSpan.style.color = 'var(--fill-tertiary)';
+      timeSpan.textContent = formatDate(annotation.created_at);
+      userInfo.appendChild(timeSpan);
+
+      // 页码标签
       const pageInfo = doc.createElement('span');
       pageInfo.textContent = `第 ${annotation.page_number} 页`;
       pageInfo.style.cssText = `
         background: #e7f5ff;
-        padding: 2px 8px;
-        border-radius: 4px;
+        padding: 4px 10px;
+        border-radius: 12px;
         font-weight: 600;
+        font-size: 12px;
         color: #0d6efd;
+        display: inline-block;
       `;
 
-      header.appendChild(userInfo);
-      header.appendChild(pageInfo);
+      headerDiv.appendChild(userInfo);
+      headerDiv.appendChild(pageInfo);
+      annotationCard.appendChild(headerDiv);
 
-      const content = doc.createElement('div');
-      content.style.cssText = `
-        color: #212529;
-        line-height: 1.5;
-        word-break: break-word;
-        margin-bottom: 8px;
-      `;
-      
+      // 标注内容 - 带有背景色
       const annotationText = annotation.annotation_data?.text || 
                             annotation.annotation_data?.comment || 
                             '(无内容)';
-      content.textContent = annotationText;
+      
+      if (annotationText !== '(无内容)') {
+        const contentDiv = doc.createElement('div');
+        contentDiv.style.cssText = `
+          font-size: 13px;
+          line-height: 1.5;
+          color: var(--fill-primary);
+          background: ${annotationColor}20;
+          padding: 8px;
+          border-radius: 3px;
+          word-break: break-word;
+          overflow-wrap: break-word;
+          width: 100%;
+          max-width: 100%;
+          box-sizing: border-box;
+          overflow: hidden;
+        `;
+        contentDiv.textContent = annotationText;
+        annotationCard.appendChild(contentDiv);
+      }
 
-      const timestamp = doc.createElement('div');
-      timestamp.style.cssText = `
-        color: #999;
-        font-size: 11px;
-        display: flex;
-        align-items: center;
-        gap: 4px;
-      `;
-      timestamp.innerHTML = `⏱️ ${formatDate(annotation.created_at)}`;
-
-      annotationCard.appendChild(header);
-      annotationCard.appendChild(content);
-      annotationCard.appendChild(timestamp);
       container.appendChild(annotationCard);
     }
   }
@@ -1226,7 +1839,7 @@ export class ReadingSessionView {
       annotations = annotations.filter(a => onlineUserIds.has(a.user_id));
       
       // 去重
-      annotations = this.deduplicateAnnotations(annotations);
+      annotations = deduplicateAnnotations(annotations);
       logger.log(`[ReadingSessionView] Refreshed and deduplicated to ${annotations.length} annotations (online users only)`);
       
       // 获取当前排序方式和过滤器
@@ -1279,6 +1892,9 @@ export class ReadingSessionView {
   private async renderSessionList(container: HTMLElement, doc: Document): Promise<void> {
     // 先清空容器
     container.innerHTML = '';
+    
+    // 设置统一padding(优化为Zotero窄窗口)
+    container.style.padding = containerPadding.view;
 
     // 标题
     const title = doc.createElement('h2');
@@ -1291,11 +1907,11 @@ export class ReadingSessionView {
     `;
     container.appendChild(title);
 
-    // 主按钮组
+    // 主按钮组(2x2网格布局)
     const mainButtonsContainer = doc.createElement('div');
     mainButtonsContainer.style.cssText = `
-      display: flex;
-      flex-wrap: wrap;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
       gap: 12px;
       margin-bottom: 24px;
     `;
@@ -1330,34 +1946,23 @@ export class ReadingSessionView {
     mainButtonsContainer.appendChild(manageButton);
     container.appendChild(mainButtonsContainer);
 
-    // 会话广场内容区域(不显示返回按钮,不显示筛选框)
+    // 会话广场内容区域(不显示返回按钮)
     const plazaContentContainer = doc.createElement('div');
     plazaContentContainer.id = 'plaza-default-content';
     container.appendChild(plazaContentContainer);
     
-    // 显示会话广场标题
-    const plazaTitle = doc.createElement('h3');
-    plazaTitle.textContent = '会话广场';
-    plazaTitle.style.cssText = `
-      margin: 0 0 16px 0;
-      font-size: 18px;
-      font-weight: 600;
-      color: #333;
-    `;
-    plazaContentContainer.appendChild(plazaTitle);
-
-    // 会话列表容器
-    const sessionsList = doc.createElement('div');
-    sessionsList.id = 'default-plaza-sessions-list';
-    sessionsList.style.cssText = `
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    `;
-    plazaContentContainer.appendChild(sessionsList);
-
-    // 加载公开会话(默认"最新创建")
-    await this.refreshPublicSessions(plazaContentContainer, doc, 'latest', true);
+    // 使用SessionPlazaView渲染会话广场(不显示返回按钮)
+    const plazaView = new SessionPlazaView(
+      this.sessionManager,
+      async () => await this.render(),
+      async (session) => {
+        this.lastViewBeforeSession = 'plaza';
+        this.currentViewLevel = 'hub';
+        this.context.showMessage('已加入会话', 'info');
+        await this.render();
+      }
+    );
+    await plazaView.render(plazaContentContainer, doc, false);
   }
 
   /**
@@ -1367,24 +1972,27 @@ export class ReadingSessionView {
     const button = doc.createElement('button');
     button.textContent = text;
     button.style.cssText = `
-      flex: 1 1 calc(50% - 6px);
-      min-width: 120px;
-      padding: 14px 12px;
+      flex: 1 1 auto;
+      min-width: 0;
+      padding: 14px 8px;
       background: ${bgColor};
       color: white;
       border: none;
       border-radius: 6px;
       cursor: pointer;
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 600;
       transition: all 0.2s;
       text-align: center;
       display: flex;
       align-items: center;
       justify-content: center;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      white-space: normal;
+      word-break: keep-all;
+      overflow-wrap: break-word;
+      box-sizing: border-box;
+      max-width: 100%;
+      line-height: 1.3;
     `;
     button.addEventListener('mouseenter', () => {
       button.style.transform = 'translateY(-2px)';
@@ -1400,892 +2008,91 @@ export class ReadingSessionView {
   /**
    * 创建返回按钮
    */
-  private createBackButton(doc: Document, onClick: () => void): HTMLButtonElement {
-    const button = doc.createElement('button');
-    button.textContent = '← 返回';
-    button.style.cssText = `
-      position: absolute;
-      top: 8px;
-      left: 8px;
-      padding: 6px 14px;
-      background: rgba(108, 117, 125, 0.1);
-      color: #495057;
-      border: 1px solid #dee2e6;
-      border-radius: 20px;
-      cursor: pointer;
-      font-size: 12px;
-      font-weight: 500;
-      transition: all 0.2s;
-      z-index: 10;
-    `;
-    button.addEventListener('mouseenter', () => {
-      button.style.background = 'rgba(108, 117, 125, 0.2)';
-      button.style.borderColor = '#adb5bd';
-    });
-    button.addEventListener('mouseleave', () => {
-      button.style.background = 'rgba(108, 117, 125, 0.1)';
-      button.style.borderColor = '#dee2e6';
-    });
-    button.addEventListener('click', onClick);
-    return button;
-  }
+
 
   /**
    * 显示公开会话广场
    * @param showBackButton 是否显示返回按钮(点击主按钮进入时显示,主页默认展示时不显示)
    */
   private async showPublicSessionsPlaza(container: HTMLElement, doc: Document, showBackButton: boolean = false): Promise<void> {
-    container.innerHTML = '';
-
-    // 页面容器(relative定位用于放置返回按钮)
-    const pageContainer = doc.createElement('div');
-    pageContainer.style.cssText = `
-      position: relative;
-      padding-top: ${showBackButton ? '44px' : '0'};
-    `;
-
-    // 返回按钮(仅在showBackButton为true时显示)
-    if (showBackButton) {
-      const backButton = this.createBackButton(doc, () => {
-        const panels = this.context.getPanelsForCurrentItem();
-        if (panels && panels.length > 0 && panels[0].contentSection) {
-          this.renderSessionList(panels[0].contentSection, doc);
-        }
-      });
-      pageContainer.appendChild(backButton);
-    }
-
-    // 页面标题
-    const title = doc.createElement('h3');
-    title.textContent = '会话广场';
-    title.style.cssText = `
-      margin: 0 0 16px 0;
-      font-size: 18px;
-      font-weight: 600;
-      color: #333;
-    `;
-    pageContainer.appendChild(title);
-
-    // 筛选工具栏
-    const toolbar = doc.createElement('div');
-    toolbar.style.cssText = `
-      display: flex;
-      gap: 12px;
-      margin-bottom: 16px;
-      padding: 12px;
-      background: #f8f9fa;
-      border-radius: 8px;
-    `;
-
-    const filterLabel = doc.createElement('label');
-    filterLabel.textContent = '筛选:';
-    filterLabel.style.cssText = `
-      font-weight: 600;
-      color: #495057;
-      display: flex;
-      align-items: center;
-    `;
-
-    const filterSelect = doc.createElement('select');
-    filterSelect.id = 'plaza-filter-select';
-    filterSelect.style.cssText = `
-      padding: 6px 12px;
-      border: 1px solid #dee2e6;
-      border-radius: 4px;
-      background: white;
-      cursor: pointer;
-      flex: 1;
-    `;
-
-    const filterOptions = [
-      { value: 'latest', label: '⏰ 最新创建' },
-      { value: 'most-members', label: '👥 人数最多' },
-      { value: 'followed-users', label: '⭐ 我关注的用户' },
-    ];
-
-    filterOptions.forEach(opt => {
-      const option = doc.createElement('option');
-      option.value = opt.value;
-      option.textContent = opt.label;
-      filterSelect.appendChild(option);
-    });
-
-    filterSelect.addEventListener('change', () => {
-      this.refreshPublicSessions(pageContainer, doc, filterSelect.value, false);
-    });
-
-    toolbar.appendChild(filterLabel);
-    toolbar.appendChild(filterSelect);
-    pageContainer.appendChild(toolbar);
-
-    // 会话列表容器
-    const sessionsList = doc.createElement('div');
-    sessionsList.id = 'public-sessions-list';
-    sessionsList.style.cssText = `
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    `;
-    pageContainer.appendChild(sessionsList);
-
-    container.appendChild(pageContainer);
-
-    // 加载公开会话
-    await this.refreshPublicSessions(pageContainer, doc, 'latest', false);
-  }
-
-  /**
-   * 刷新公开会话列表
-   * @param isDefaultView 是否是主页默认视图(如果是,使用default-plaza-sessions-list作为ID)
-   */
-  private async refreshPublicSessions(container: HTMLElement, doc: Document, filterType: string, isDefaultView: boolean = false): Promise<void> {
-    const listId = isDefaultView ? 'default-plaza-sessions-list' : 'public-sessions-list';
-    const sessionsList = doc.getElementById(listId) || container;
-    sessionsList.innerHTML = '<p style="text-align: center; color: #666;">加载中...</p>';
-
-    try {
-      // 获取所有公开会话
-      let sessions = await this.sessionManager.getPublicSessions();
-      
-      // 根据筛选条件排序
-      switch (filterType) {
-        case 'latest':
-          // 默认已按created_at降序排序
-          break;
-        case 'most-members':
-          // TODO: 需要添加成员数量字段后才能排序
-          // sessions.sort((a, b) => (b as any).member_count - (a as any).member_count);
-          break;
-        case 'followed-users':
-          // TODO: 需要获取关注用户列表并过滤
-          break;
-      }
-
-      sessionsList.innerHTML = '';
-
-      if (sessions.length === 0) {
-        const emptyText = doc.createElement('p');
-        emptyText.textContent = '暂无公开会话';
-        emptyText.style.cssText = `
-          text-align: center;
-          color: #666;
-          padding: 32px;
-        `;
-        sessionsList.appendChild(emptyText);
-        return;
-      }
-
-      for (const session of sessions) {
-        const sessionCard = this.createPublicSessionCard(session, doc);
-        sessionsList.appendChild(sessionCard);
-      }
-    } catch (error) {
-      logger.error("[ReadingSessionView] Error loading public sessions:", error);
-      sessionsList.innerHTML = '<p style="text-align: center; color: #dc3545; padding: 32px;">加载失败</p>';
-    }
-  }
-
-  /**
-   * 创建公开会话卡片
-   */
-  private createPublicSessionCard(session: ReadingSession, doc: Document): HTMLElement {
-    const card = doc.createElement('div');
-    card.style.cssText = `
-      background: white;
-      border: 1px solid #dee2e6;
-      border-radius: 8px;
-      padding: 16px;
-      cursor: pointer;
-      transition: all 0.2s;
-    `;
-    card.addEventListener('mouseenter', () => {
-      card.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.1)';
-      card.style.borderColor = '#0d6efd';
-    });
-    card.addEventListener('mouseleave', () => {
-      card.style.boxShadow = 'none';
-      card.style.borderColor = '#dee2e6';
-    });
-    card.addEventListener('click', async () => {
-      try {
-        this.lastViewBeforeSession = 'plaza'; // 记录从会话广场进入
-        await this.sessionManager.joinSessionByInviteCode(session.invite_code);
+    const plazaView = new SessionPlazaView(
+      this.sessionManager,
+      async () => await this.render(), // onBack
+      async (session) => { // onSessionJoin
+        this.lastViewBeforeSession = 'plaza';
+        this.currentViewLevel = 'hub';
         this.context.showMessage('已加入会话', 'info');
         await this.render();
-      } catch (error) {
-        logger.error("[ReadingSessionView] Error joining session:", error);
-        this.context.showMessage('加入会话失败', 'error');
       }
-    });
+    );
 
-    card.innerHTML = `
-      <div style="font-weight: 600; font-size: 15px; margin-bottom: 8px; color: #212529;">
-        ${this.escapeHtml(session.paper_title)}
-      </div>
-      <div style="font-size: 13px; color: #6c757d; margin-bottom: 4px;">
-        📄 ${this.escapeHtml(session.paper_doi)}
-      </div>
-      <div style="font-size: 13px; color: #6c757d; margin-bottom: 8px;">
-        👤 主持人: ${this.escapeHtml((session as any).creator_name || '未知')}
-      </div>
-      <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: #6c757d;">
-        <span>⏱️ ${formatDate(session.created_at)}</span>
-        <span style="background: #e7f5ff; padding: 2px 8px; border-radius: 4px; color: #0d6efd; font-weight: 600;">
-          👥 ${(session as any).member_count || 1} 人
-        </span>
-      </div>
-    `;
-
-    return card;
+    await plazaView.render(container, doc, showBackButton);
   }
+
+
 
   /**
    * 显示创建会话选项
    */
   private showCreateSessionOptions(container: HTMLElement, doc: Document): void {
-    container.innerHTML = '';
-
-    // 页面容器(relative定位用于放置返回按钮)
-    const pageContainer = doc.createElement('div');
-    pageContainer.style.cssText = `
-      position: relative;
-      padding-top: 44px;
-    `;
-
-    // 返回按钮
-    const backButton = this.createBackButton(doc, () => {
-      const panels = this.context.getPanelsForCurrentItem();
-      if (panels && panels.length > 0 && panels[0].contentSection) {
-        this.renderSessionList(panels[0].contentSection, doc);
+    const createFormView = new SessionCreateFormView(
+      this.sessionManager,
+      this.context,
+      async () => await this.render(), // onBack
+      async () => { // onCreated
+        this.currentViewLevel = 'hub';
+        await this.render();
       }
-    });
-    pageContainer.appendChild(backButton);
-
-    const title = doc.createElement('h3');
-    title.textContent = '创建会话';
-    title.style.cssText = `
-      margin: 0 0 16px 0;
-      font-size: 18px;
-      font-weight: 600;
-      color: #333;
-    `;
-    pageContainer.appendChild(title);
-
-    const optionsContainer = doc.createElement('div');
-    optionsContainer.style.cssText = `
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 16px;
-    `;
-
-    // 创建公开会话选项
-    const publicOption = this.createSessionTypeOption(
-      doc,
-      '公开会话',
-      '任何人都可以查看和加入',
-      '🌍',
-      '#0d6efd'
     );
-    publicOption.addEventListener('click', async () => {
-      await this.createSessionWithType('public');
-    });
 
-    // 创建私密会话选项
-    const privateOption = this.createSessionTypeOption(
-      doc,
-      '私密会话',
-      '需要邀请码才能加入',
-      '🔒',
-      '#6c757d'
-    );
-    privateOption.addEventListener('click', async () => {
-      await this.createSessionWithType('private');
-    });
-
-    optionsContainer.appendChild(publicOption);
-    optionsContainer.appendChild(privateOption);
-    pageContainer.appendChild(optionsContainer);
-    container.appendChild(pageContainer);
+    createFormView.render(container, doc);
   }
 
-  /**
-   * 创建会话类型选项卡片
-   */
-  private createSessionTypeOption(
-    doc: Document,
-    title: string,
-    description: string,
-    icon: string,
-    color: string
-  ): HTMLElement {
-    const card = doc.createElement('div');
-    card.style.cssText = `
-      background: white;
-      border: 2px solid ${color};
-      border-radius: 12px;
-      padding: 24px;
-      cursor: pointer;
-      transition: all 0.2s;
-      text-align: center;
-    `;
-    card.addEventListener('mouseenter', () => {
-      card.style.transform = 'translateY(-4px)';
-      card.style.boxShadow = `0 8px 16px rgba(0,0,0,0.15)`;
-      card.style.background = color;
-      card.style.color = 'white';
-    });
-    card.addEventListener('mouseleave', () => {
-      card.style.transform = 'translateY(0)';
-      card.style.boxShadow = 'none';
-      card.style.background = 'white';
-      card.style.color = '#212529';
-    });
 
-    card.innerHTML = `
-      <div style="font-size: 48px; margin-bottom: 12px;">${icon}</div>
-      <div style="font-weight: 600; font-size: 16px; margin-bottom: 8px;">${title}</div>
-      <div style="font-size: 13px; opacity: 0.8;">${description}</div>
-    `;
-
-    return card;
-  }
-
-  /**
-   * 创建指定类型的会话
-   */
-  private async createSessionWithType(type: 'public' | 'private'): Promise<void> {
-    try {
-      const item = this.context.getCurrentItem();
-      if (!item) {
-        this.context.showMessage('请先选择一篇文献', 'warning');
-        return;
-      }
-
-      const doi = item.getField('DOI');
-      const title = item.getField('title');
-
-      if (!doi) {
-        this.context.showMessage('当前文献没有DOI，无法创建共读会话', 'warning');
-        return;
-      }
-
-      const session = await this.sessionManager.createSession(doi, title, type, 10);
-      this.context.showMessage(
-        `${type === 'public' ? '公开' : '私密'}会话已创建！邀请码: ${session.inviteCode}`,
-        'info'
-      );
-      await this.render();
-    } catch (error) {
-      logger.error("[ReadingSessionView] Error creating session:", error);
-      const errorMsg = error instanceof Error ? error.message : '未知错误';
-      this.context.showMessage(`创建会话失败: ${errorMsg}`, 'error');
-    }
-  }
 
   /**
    * 显示会话管理页面
    */
   private async showSessionManagement(container: HTMLElement, doc: Document): Promise<void> {
-    container.innerHTML = '';
-
-    // 页面容器(relative定位用于放置返回按钮)
-    const pageContainer = doc.createElement('div');
-    pageContainer.style.cssText = `
-      position: relative;
-      padding-top: 44px;
-    `;
-
-    // 返回按钮
-    const backButton = this.createBackButton(doc, () => {
-      const panels = this.context.getPanelsForCurrentItem();
-      if (panels && panels.length > 0 && panels[0].contentSection) {
-        this.renderSessionList(panels[0].contentSection, doc);
-      }
-    });
-    pageContainer.appendChild(backButton);
-
-    // 页面标题
-    const title = doc.createElement('h3');
-    title.textContent = '会话管理';
-    title.style.cssText = `
-      margin: 0 0 16px 0;
-      font-size: 18px;
-      font-weight: 600;
-      color: #333;
-    `;
-    pageContainer.appendChild(title);
-
-    // 选项卡
-    const tabsContainer = doc.createElement('div');
-    tabsContainer.style.cssText = `
-      display: flex;
-      gap: 12px;
-      margin-bottom: 16px;
-      border-bottom: 2px solid #dee2e6;
-    `;
-
-    const createdTab = this.createTab(doc, '我创建的会话', true);
-    const joinedTab = this.createTab(doc, '我加入的会话', false);
-
-    createdTab.addEventListener('click', () => {
-      this.setActiveTab(createdTab, joinedTab);
-      this.showMyCreatedSessions(container, doc);
-    });
-
-    joinedTab.addEventListener('click', () => {
-      this.setActiveTab(joinedTab, createdTab);
-      this.showMyJoinedSessions(container, doc);
-    });
-
-    tabsContainer.appendChild(createdTab);
-    tabsContainer.appendChild(joinedTab);
-    pageContainer.appendChild(tabsContainer);
-
-    // 内容区域
-    const contentArea = doc.createElement('div');
-    contentArea.id = 'management-content-area';
-    pageContainer.appendChild(contentArea);
-
-    container.appendChild(pageContainer);
-
-    // 默认显示我创建的会话
-    this.showMyCreatedSessions(contentArea, doc);
-  }
-
-  /**
-   * 创建选项卡
-   */
-  private createTab(doc: Document, text: string, isActive: boolean): HTMLElement {
-    const tab = doc.createElement('div');
-    tab.textContent = text;
-    tab.style.cssText = `
-      padding: 12px 20px;
-      cursor: pointer;
-      font-weight: 600;
-      font-size: 14px;
-      color: ${isActive ? '#0d6efd' : '#6c757d'};
-      border-bottom: 3px solid ${isActive ? '#0d6efd' : 'transparent'};
-      transition: all 0.2s;
-    `;
-    tab.setAttribute('data-active', String(isActive));
-
-    tab.addEventListener('mouseenter', () => {
-      if (tab.getAttribute('data-active') !== 'true') {
-        tab.style.color = '#495057';
-      }
-    });
-
-    tab.addEventListener('mouseleave', () => {
-      if (tab.getAttribute('data-active') !== 'true') {
-        tab.style.color = '#6c757d';
-      }
-    });
-
-    return tab;
-  }
-
-  /**
-   * 设置活跃选项卡
-   */
-  private setActiveTab(activeTab: HTMLElement, inactiveTab: HTMLElement): void {
-    activeTab.setAttribute('data-active', 'true');
-    activeTab.style.color = '#0d6efd';
-    activeTab.style.borderBottom = '3px solid #0d6efd';
-
-    inactiveTab.setAttribute('data-active', 'false');
-    inactiveTab.style.color = '#6c757d';
-    inactiveTab.style.borderBottom = '3px solid transparent';
-  }
-
-  /**
-   * 显示我创建的会话
-   */
-  private async showMyCreatedSessions(container: HTMLElement, doc: Document): Promise<void> {
-    const contentArea = doc.getElementById('management-content-area') || container;
-    contentArea.innerHTML = '<p style="text-align: center; color: #666; padding: 16px;">加载中...</p>';
-
-    try {
-      const sessions = await this.sessionManager.getMyCreatedSessions();
-
-      contentArea.innerHTML = '';
-
-      if (sessions.length === 0) {
-        const emptyText = doc.createElement('p');
-        emptyText.textContent = '暂无创建的会话';
-        emptyText.style.cssText = `
-          text-align: center;
-          color: #666;
-          padding: 32px;
-        `;
-        contentArea.appendChild(emptyText);
-        return;
-      }
-
-      const sessionsList = doc.createElement('div');
-      sessionsList.style.cssText = `
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-      `;
-
-      for (const session of sessions) {
-        const sessionCard = this.createManageableSessionCard(session, doc, true);
-        sessionsList.appendChild(sessionCard);
-      }
-
-      contentArea.appendChild(sessionsList);
-    } catch (error) {
-      logger.error("[ReadingSessionView] Error loading created sessions:", error);
-      contentArea.innerHTML = '<p style="text-align: center; color: #dc3545; padding: 32px;">加载失败</p>';
-    }
-  }
-
-  /**
-   * 显示我加入的会话
-   */
-  private async showMyJoinedSessions(container: HTMLElement, doc: Document): Promise<void> {
-    const contentArea = doc.getElementById('management-content-area') || container;
-    contentArea.innerHTML = '<p style="text-align: center; color: #666; padding: 16px;">加载中...</p>';
-
-    try {
-      const sessions = await this.sessionManager.getMyJoinedSessions();
-
-      contentArea.innerHTML = '';
-
-      if (sessions.length === 0) {
-        const emptyText = doc.createElement('p');
-        emptyText.textContent = '暂无加入的会话';
-        emptyText.style.cssText = `
-          text-align: center;
-          color: #666;
-          padding: 32px;
-        `;
-        contentArea.appendChild(emptyText);
-        return;
-      }
-
-      const sessionsList = doc.createElement('div');
-      sessionsList.style.cssText = `
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-      `;
-
-      for (const session of sessions) {
-        const sessionCard = this.createManageableSessionCard(session, doc, false);
-        sessionsList.appendChild(sessionCard);
-      }
-
-      contentArea.appendChild(sessionsList);
-    } catch (error) {
-      logger.error("[ReadingSessionView] Error loading joined sessions:", error);
-      contentArea.innerHTML = '<p style="text-align: center; color: #dc3545; padding: 32px;">加载失败</p>';
-    }
-  }
-
-  /**
-   * 创建可管理的会话卡片
-   */
-  private createManageableSessionCard(session: ReadingSession, doc: Document, isOwner: boolean): HTMLElement {
-    const card = doc.createElement('div');
-    card.style.cssText = `
-      background: white;
-      border: 1px solid #dee2e6;
-      border-radius: 8px;
-      padding: 16px;
-      transition: all 0.2s;
-    `;
-
-    // 会话信息
-    const infoSection = doc.createElement('div');
-    infoSection.style.cssText = `
-      margin-bottom: 12px;
-    `;
-    infoSection.innerHTML = `
-      <div style="font-weight: 600; font-size: 15px; margin-bottom: 8px; color: #212529;">
-        ${this.escapeHtml(session.paper_title)}
-      </div>
-      <div style="font-size: 13px; color: #6c757d; margin-bottom: 4px;">
-        📄 ${this.escapeHtml(session.paper_doi)}
-      </div>
-      ${!isOwner ? `
-        <div style="font-size: 13px; color: #6c757d; margin-bottom: 8px;">
-          👤 主持人: ${this.escapeHtml((session as any).creator_name || '未知')}
-        </div>
-      ` : ''}
-      <div style="font-size: 12px; color: #6c757d;">
-        🔑 ${session.invite_code} | ⏱️ ${formatDate(session.created_at)}
-      </div>
-    `;
-
-    // 管理按钮组
-    const actionsContainer = doc.createElement('div');
-    actionsContainer.style.cssText = `
-      display: flex;
-      gap: 8px;
-      margin-top: 12px;
-      padding-top: 12px;
-      border-top: 1px solid #dee2e6;
-    `;
-
-    // 进入会话按钮
-    const enterButton = this.createActionButton(doc, '进入会话', '#0d6efd');
-    enterButton.addEventListener('click', async () => {
-      try {
-        this.lastViewBeforeSession = 'manage'; // 记录从会话管理进入
-        await this.sessionManager.joinSessionByInviteCode(session.invite_code);
+    // 使用新的SessionListView
+    const sessionListView = new SessionListView(
+      this.sessionManager,
+      async () => await this.render(), // 返回回调
+      async (session) => {
+        // 点击会话卡片回调
+        await this.sessionManager.joinSessionByInviteCode(session.invite_code || '');
+        this.currentViewLevel = 'hub';
         this.context.showMessage('已进入会话', 'info');
         await this.render();
-      } catch (error) {
-        logger.error("[ReadingSessionView] Error entering session:", error);
-        this.context.showMessage('进入会话失败', 'error');
       }
-    });
-    actionsContainer.appendChild(enterButton);
-
-    // 如果是创建者,显示删除按钮
-    if (isOwner) {
-      const deleteButton = this.createActionButton(doc, '删除会话', '#dc3545');
-      deleteButton.addEventListener('click', async () => {
-        // 使用Zotero的Services.prompt.confirm方法
-        const confirmed = Services.prompt.confirm(
-          null,
-          '确认删除会话',
-          '删除会话后，所有成员将被移除，会话中的标注将被清除。此操作无法撤销。'
-        );
-        
-        if (!confirmed) {
-          return;
-        }
-
-        try {
-          await this.sessionManager.deleteSession(session.id);
-          this.context.showMessage('会话已删除', 'info');
-          
-          // 删除成功后刷新"我创建的会话"列表
-          const managementArea = doc.getElementById('management-content-area');
-          if (managementArea) {
-            await this.showMyCreatedSessions(managementArea, doc);
-          }
-        } catch (error) {
-          logger.error('[ReadingSessionView] 删除会话失败:', error);
-          const errorMessage = error instanceof Error ? error.message : '未知错误';
-          this.context.showMessage(`删除失败: ${errorMessage}`, 'error');
-        }
-      });
-      actionsContainer.appendChild(deleteButton);
-    } else {
-      // 如果是参与者,显示退出按钮
-      const leaveButton = this.createActionButton(doc, '退出会话', '#ffc107');
-      leaveButton.style.color = '#000';
-      leaveButton.addEventListener('click', async () => {
-        try {
-          await this.sessionManager.leaveSession();
-          this.context.showMessage('已退出会话', 'info');
-          await this.render();
-        } catch (error) {
-          logger.error("[ReadingSessionView] Error leaving session:", error);
-          this.context.showMessage('退出会话失败', 'error');
-        }
-      });
-      actionsContainer.appendChild(leaveButton);
-    }
-
-    card.appendChild(infoSection);
-    card.appendChild(actionsContainer);
-    return card;
+    );
+    
+    await sessionListView.render(container, doc);
   }
 
-  /**
-   * 创建操作按钮
-   */
-  private createActionButton(doc: Document, text: string, bgColor: string): HTMLButtonElement {
-    const button = doc.createElement('button');
-    button.textContent = text;
-    button.style.cssText = `
-      padding: 6px 12px;
-      background: ${bgColor};
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 13px;
-      font-weight: 500;
-      transition: all 0.2s;
-      flex: 1;
-    `;
-    button.addEventListener('mouseenter', () => {
-      button.style.opacity = '0.85';
-    });
-    button.addEventListener('mouseleave', () => {
-      button.style.opacity = '1';
-    });
-    return button;
-  }
+
+
+
 
   /**
    * 显示加入私密会话页面
    */
   private showJoinPrivatePage(container: HTMLElement, doc: Document): void {
-    container.innerHTML = '';
-
-    // 页面容器(relative定位用于放置返回按钮)
-    const pageContainer = doc.createElement('div');
-    pageContainer.style.cssText = `
-      position: relative;
-      padding-top: 44px;
-    `;
-
-    // 返回按钮
-    const backButton = this.createBackButton(doc, () => {
-      const panels = this.context.getPanelsForCurrentItem();
-      if (panels && panels.length > 0 && panels[0].contentSection) {
-        this.renderSessionList(panels[0].contentSection, doc);
-      }
-    });
-    pageContainer.appendChild(backButton);
-
-    // 页面标题
-    const title = doc.createElement('h3');
-    title.textContent = '加入私密会话';
-    title.style.cssText = `
-      margin: 0 0 16px 0;
-      font-size: 18px;
-      font-weight: 600;
-      color: #333;
-    `;
-    pageContainer.appendChild(title);
-
-    // 输入框容器
-    const inputContainer = doc.createElement('div');
-    inputContainer.style.cssText = `
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      max-width: 400px;
-      margin: 0 auto;
-      padding: 24px;
-      background: #f8f9fa;
-      border-radius: 8px;
-    `;
-
-    // 提示文字
-    const hint = doc.createElement('p');
-    hint.textContent = '请输入邀请码以加入私密会话';
-    hint.style.cssText = `
-      margin: 0;
-      font-size: 14px;
-      color: #6c757d;
-      text-align: center;
-    `;
-    inputContainer.appendChild(hint);
-
-    // 邀请码输入框
-    const input = doc.createElement('input');
-    input.type = 'text';
-    input.placeholder = '请输入邀请码...';
-    input.style.cssText = `
-      padding: 12px;
-      border: 1px solid #dee2e6;
-      border-radius: 6px;
-      font-size: 14px;
-      outline: none;
-      transition: border-color 0.2s;
-    `;
-    input.addEventListener('focus', () => {
-      input.style.borderColor = '#0d6efd';
-    });
-    input.addEventListener('blur', () => {
-      input.style.borderColor = '#dee2e6';
-    });
-    inputContainer.appendChild(input);
-
-    // 加入按钮
-    const joinButton = doc.createElement('button');
-    joinButton.textContent = '加入会话';
-    joinButton.style.cssText = `
-      padding: 12px;
-      background: #0d6efd;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 600;
-      transition: all 0.2s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    `;
-    joinButton.addEventListener('mouseenter', () => {
-      joinButton.style.background = '#0b5ed7';
-      joinButton.style.transform = 'translateY(-1px)';
-    });
-    joinButton.addEventListener('mouseleave', () => {
-      joinButton.style.background = '#0d6efd';
-      joinButton.style.transform = 'translateY(0)';
-    });
-    joinButton.addEventListener('click', async () => {
-      const code = input.value.trim();
-      if (!code) {
-        this.context.showMessage('请输入邀请码', 'error');
-        return;
-      }
-
-      try {
-        this.lastViewBeforeSession = 'join'; // 记录从加入私密会话页面进入
-        await this.sessionManager.joinSessionByInviteCode(code);
-        this.context.showMessage('已加入会话', 'info');
+    const joinPrivateView = new SessionJoinPrivateView(
+      this.sessionManager,
+      async () => await this.render(), // onBack
+      async () => { // onJoined
+        this.lastViewBeforeSession = 'join';
+        this.currentViewLevel = 'hub';
         await this.render();
-      } catch (error) {
-        logger.error('[ReadingSessionView] 加入会话失败:', error);
-        const errorMessage = error instanceof Error ? error.message : '未知错误';
-        this.context.showMessage(`加入会话失败: ${errorMessage}`, 'error');
-      }
-    });
-    inputContainer.appendChild(joinButton);
+      },
+      (msg, type) => this.context.showMessage(msg, type) // showMessage
+    );
 
-    pageContainer.appendChild(inputContainer);
-    container.appendChild(pageContainer);
+    joinPrivateView.render(container, doc);
   }
 
-  /**
-   * 显示加入会话对话框
-   */
-  private async showJoinSessionDialog(): Promise<void> {
-    try {
-      // 使用Zotero的Services.prompt.prompt方法
-      const Services = (globalThis as any).Services || (Zotero as any).getMainWindow().Services;
-      
-      const input = { value: "" };
-      const check = { value: false };
-      
-      // prompt(parent, dialogTitle, text, value, checkMsg, checkValue)
-      const result = Services.prompt.prompt(
-        null,
-        "加入共读会话",
-        "请输入邀请码:",
-        input,
-        null,
-        check
-      );
-      
-      if (!result || !input.value) {
-        logger.log("[ReadingSessionView] User cancelled prompt");
-        return;
-      }
 
-      logger.log(`[ReadingSessionView] Joining session with code: ${input.value}`);
-      this.lastViewBeforeSession = null; // 旧对话框方式，没有特定来源页面
-      await this.sessionManager.joinSessionByInviteCode(input.value);
-      this.context.showMessage('已加入会话', 'info');
-      await this.render();
-    } catch (error) {
-      logger.error("[ReadingSessionView] Error joining session:", error);
-      const errorMsg = error instanceof Error ? error.message : '未知错误';
-      this.context.showMessage(`加入会话失败: ${errorMsg}`, 'error');
-    }
-  }
 
   /**
    * 注册事件监听器
@@ -2302,7 +2109,7 @@ export class ReadingSessionView {
       logger.log("[ReadingSessionView] 👤 Presence update:", event);
       // 用户离线或上线时,自动刷新整个界面
       if (event.type === 'user_left' || event.type === 'user_joined') {
-        logger.log("[ReadingSessionView] 🔄 用户状态改变,刷新界面...");
+        logger.log("[ReadingSessionView] 🔄 用户状态改变,刷新当前会话页面...");
         this.render(); // 重新渲染整个视图
       }
     });
@@ -2311,12 +2118,537 @@ export class ReadingSessionView {
   /**
    * HTML转义 - 使用正则表达式替代DOM操作
    */
-  private escapeHtml(text: string): string {
-    return text
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#039;');
+
+
+  /**
+   * 渲染事件日志时间轴
+   */
+  private async renderEventTimeline(container: HTMLElement, doc: Document, sessionId: string): Promise<void> {
+    try {
+      logger.log('[ReadingSessionView] 🔍 Fetching session logs for:', sessionId);
+      
+      const timelineTitle = doc.createElement('h3');
+      timelineTitle.textContent = '⏱️ 事件时间轴';
+      timelineTitle.style.cssText = `
+        margin: 0 0 16px 0;
+        font-size: 16px;
+        font-weight: 600;
+        color: #333;
+        border-bottom: 2px solid #e9ecef;
+        padding-bottom: 8px;
+      `;
+      container.appendChild(timelineTitle);
+
+      // 获取事件日志
+      const logs = await this.logManager.getSessionLogs(sessionId, 1, 100);
+      
+      logger.log('[ReadingSessionView] 📊 Received logs count:', logs.length);
+
+      if (logs.length === 0) {
+        const emptyMsg = doc.createElement('div');
+        emptyMsg.textContent = '暂无事件记录';
+        emptyMsg.style.cssText = `
+          text-align: center;
+          color: #999;
+          padding: 40px 20px;
+          font-size: 14px;
+        `;
+        container.appendChild(emptyMsg);
+        logger.log('[ReadingSessionView] ℹ️ No logs found for session');
+        return;
+      }
+
+      // 事件列表容器
+      const eventList = doc.createElement('div');
+      eventList.style.cssText = `
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      `;
+
+      // 按时间倒序渲染事件
+      for (const log of logs) {
+        const eventCard = this.createEventCard(doc, log);
+        eventList.appendChild(eventCard);
+      }
+
+      container.appendChild(eventList);
+
+    } catch (error) {
+      logger.error('[ReadingSessionView] Error rendering event timeline:', error);
+      const errorMsg = doc.createElement('div');
+      errorMsg.textContent = '加载事件日志失败';
+      errorMsg.style.cssText = 'color: #dc3545; padding: 16px; text-align: center;';
+      container.appendChild(errorMsg);
+    }
+  }
+
+  /**
+   * 创建事件卡片
+   */
+  private createEventCard(doc: Document, log: any): HTMLElement {
+    const card = doc.createElement('div');
+    
+    // 根据事件类型选择颜色和图标
+    const eventConfig = this.getEventConfig(log.event_type);
+    
+    card.style.cssText = `
+      background: #f8f9fa;
+      border-left: 4px solid ${eventConfig.color};
+      border-radius: 6px;
+      padding: 12px;
+      transition: all 0.2s;
+    `;
+    card.addEventListener('mouseenter', () => {
+      card.style.background = '#e9ecef';
+      card.style.transform = 'translateX(4px)';
+    });
+    card.addEventListener('mouseleave', () => {
+      card.style.background = '#f8f9fa';
+      card.style.transform = 'translateX(0)';
+    });
+
+    // 事件头部
+    const header = doc.createElement('div');
+    header.style.cssText = `
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    `;
+
+    const icon = doc.createElement('span');
+    icon.textContent = eventConfig.icon;
+    icon.style.fontSize = '18px';
+    header.appendChild(icon);
+
+    const actorName = doc.createElement('strong');
+    actorName.textContent = log.actor_name || '未知用户';
+    actorName.style.cssText = 'color: #333; font-size: 14px;';
+    header.appendChild(actorName);
+
+    const time = doc.createElement('span');
+    time.textContent = formatDate(log.created_at);
+    time.style.cssText = 'color: #999; font-size: 12px; margin-left: auto;';
+    header.appendChild(time);
+
+    card.appendChild(header);
+
+    // 事件描述
+    const description = doc.createElement('div');
+    description.textContent = this.formatEventDescription(log);
+    description.style.cssText = `
+      color: #666;
+      font-size: 13px;
+      line-height: 1.5;
+    `;
+    card.appendChild(description);
+
+    return card;
+  }
+
+  /**
+   * 获取事件配置(颜色和图标)
+   */
+  private getEventConfig(eventType: string): { color: string; icon: string } {
+    const configs: { [key: string]: { color: string; icon: string } } = {
+      'member_join': { color: '#28a745', icon: '✅' },
+      'member_leave': { color: '#6c757d', icon: '👋' },
+      'annotation_create': { color: '#ffc107', icon: '📝' },
+      'annotation_update': { color: '#007bff', icon: '✏️' },
+      'annotation_delete': { color: '#dc3545', icon: '🗑️' },
+      'annotation_comment': { color: '#17a2b8', icon: '💬' },
+    };
+    return configs[eventType] || { color: '#6c757d', icon: '📌' };
+  }
+
+  /**
+   * 格式化事件描述
+   */
+  private formatEventDescription(log: any): string {
+    const metadata = log.metadata || {};
+    
+    switch (log.event_type) {
+      case 'member_join':
+        return '加入了会话';
+      case 'member_leave':
+        return '离开了会话';
+      case 'annotation_create':
+        const page = metadata.page_number || '?';
+        const content = metadata.content || '';
+        return `在第${page}页创建了标注${content ? `: "${content.substring(0, 30)}${content.length > 30 ? '...' : ''}"` : ''}`;
+      case 'annotation_update':
+        return `更新了第${metadata.page_number || '?'}页的标注`;
+      case 'annotation_delete':
+        return `删除了第${metadata.page_number || '?'}页的标注`;
+      case 'annotation_comment':
+        const comment = metadata.comment || '';
+        return `评论了标注${comment ? `: "${comment.substring(0, 30)}${comment.length > 30 ? '...' : ''}"` : ''}`;
+      default:
+        return log.event_type;
+    }
+  }
+
+  /**
+   * 渲染聊天窗口
+   */
+  private async renderChatWindow(container: HTMLElement, doc: Document, sessionId: string): Promise<void> {
+    logger.log('[ReadingSessionView] 💬 Rendering chat window for session:', sessionId);
+    
+    // 聊天标题
+    const chatTitle = doc.createElement('div');
+    chatTitle.style.cssText = `
+      padding: 12px 16px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      font-weight: 600;
+      font-size: 15px;
+      border-radius: 8px 8px 0 0;
+    `;
+    chatTitle.textContent = '💬 实时聊天';
+    container.appendChild(chatTitle);
+
+    // 消息列表容器
+    const messageList = doc.createElement('div');
+    messageList.id = `chat-messages-${sessionId}`;
+    messageList.style.cssText = `
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      background: #f8f9fa;
+    `;
+    container.appendChild(messageList);
+
+    // 加载现有消息
+    try {
+      logger.log('[ReadingSessionView] 📨 Loading chat messages...');
+      await this.loadChatMessages(messageList, doc, sessionId);
+      logger.log('[ReadingSessionView] ✅ Chat messages loaded');
+    } catch (error) {
+      logger.error('[ReadingSessionView] Error loading chat messages:', error);
+      // 显示错误但不阻塞整个界面
+      const errorDiv = doc.createElement('div');
+      errorDiv.textContent = '加载聊天记录失败';
+      errorDiv.style.cssText = 'color: #dc3545; padding: 16px; text-align: center; font-size: 13px;';
+      messageList.appendChild(errorDiv);
+    }
+
+    // 输入区域
+    const inputArea = doc.createElement('div');
+    inputArea.style.cssText = `
+      padding: 12px;
+      background: white;
+      border-top: 1px solid #e9ecef;
+      border-radius: 0 0 8px 8px;
+    `;
+
+    // 表情选择器
+    const emojiPicker = doc.createElement('div');
+    emojiPicker.style.cssText = `
+      display: flex;
+      gap: 8px;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+    `;
+    const emojis = ['😊', '😂', '👍', '❤️', '🎉', '😮', '😢', '🔥'];
+    const textarea = doc.createElement('textarea') as HTMLTextAreaElement;
+    
+    for (const emoji of emojis) {
+      const emojiBtn = doc.createElement('button');
+      emojiBtn.textContent = emoji;
+      emojiBtn.style.cssText = `
+        width: 32px;
+        height: 32px;
+        border: 1px solid #ddd;
+        background: white;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 18px;
+        transition: all 0.2s;
+      `;
+      emojiBtn.addEventListener('mouseenter', () => {
+        emojiBtn.style.background = '#f0f0f0';
+        emojiBtn.style.transform = 'scale(1.2)';
+      });
+      emojiBtn.addEventListener('mouseleave', () => {
+        emojiBtn.style.background = 'white';
+        emojiBtn.style.transform = 'scale(1)';
+      });
+      emojiBtn.addEventListener('click', () => {
+        textarea.value += emoji;
+        textarea.focus();
+      });
+      emojiPicker.appendChild(emojiBtn);
+    }
+    inputArea.appendChild(emojiPicker);
+
+    // 输入框和发送按钮容器
+    const inputRow = doc.createElement('div');
+    inputRow.style.cssText = `
+      display: flex;
+      gap: 8px;
+    `;
+
+    textarea.placeholder = '输入消息...';
+    textarea.style.cssText = `
+      flex: 1;
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      resize: none;
+      font-size: 14px;
+      font-family: inherit;
+      height: 60px;
+    `;
+    inputRow.appendChild(textarea);
+
+    const sendButton = doc.createElement('button');
+    sendButton.textContent = '发送';
+    sendButton.style.cssText = `
+      padding: 8px 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s;
+    `;
+    sendButton.addEventListener('mouseenter', () => {
+      sendButton.style.transform = 'translateY(-2px)';
+    });
+    sendButton.addEventListener('mouseleave', () => {
+      sendButton.style.transform = 'translateY(0)';
+    });
+    sendButton.addEventListener('click', async () => {
+      await this.handleSendMessage(sessionId, textarea, messageList, doc);
+    });
+    inputRow.appendChild(sendButton);
+
+    inputArea.appendChild(inputRow);
+    container.appendChild(inputArea);
+
+    // 启动轮询机制
+    this.startChatPolling(sessionId, messageList, doc);
+  }
+
+  /**
+   * 加载聊天消息
+   */
+  private async loadChatMessages(container: HTMLElement, doc: Document, sessionId: string): Promise<void> {
+    try {
+      const messages = await this.logManager.getChatMessages(sessionId, 1, 100);
+      
+      container.innerHTML = '';
+      
+      if (messages.length === 0) {
+        const emptyMsg = doc.createElement('div');
+        emptyMsg.textContent = '暂无聊天记录，开始第一条消息吧！';
+        emptyMsg.style.cssText = `
+          text-align: center;
+          color: #999;
+          padding: 20px;
+          font-size: 13px;
+        `;
+        container.appendChild(emptyMsg);
+        return;
+      }
+
+      for (const message of messages) {
+        const msgElement = this.createMessageElement(doc, message);
+        container.appendChild(msgElement);
+      }
+
+      // 滚动到底部
+      container.scrollTop = container.scrollHeight;
+
+    } catch (error) {
+      logger.error('[ReadingSessionView] Error loading chat messages:', error);
+    }
+  }
+
+  /**
+   * 创建消息元素
+   */
+  private createMessageElement(doc: Document, message: any): HTMLElement {
+    const msgDiv = doc.createElement('div');
+    msgDiv.style.cssText = `
+      background: white;
+      padding: 10px 12px;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    `;
+
+    const header = doc.createElement('div');
+    header.style.cssText = `
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    `;
+
+    const userName = doc.createElement('strong');
+    userName.textContent = message.user_name || '未知用户';
+    userName.style.cssText = 'color: #667eea; font-size: 13px;';
+    header.appendChild(userName);
+
+    const time = doc.createElement('span');
+    time.textContent = formatDate(message.created_at);
+    time.style.cssText = 'color: #999; font-size: 11px;';
+    header.appendChild(time);
+
+    msgDiv.appendChild(header);
+
+    const content = doc.createElement('div');
+    content.textContent = message.message;
+    content.style.cssText = `
+      color: #333;
+      font-size: 14px;
+      line-height: 1.5;
+      word-wrap: break-word;
+    `;
+    msgDiv.appendChild(content);
+
+    return msgDiv;
+  }
+
+  /**
+   * 发送消息
+   */
+  private async handleSendMessage(
+    sessionId: string,
+    textarea: HTMLTextAreaElement,
+    messageList: HTMLElement,
+    doc: Document
+  ): Promise<void> {
+    const message = textarea.value.trim();
+    if (!message) {
+      return;
+    }
+
+    try {
+      await this.logManager.sendChatMessage(sessionId, message);
+      textarea.value = '';
+      
+      // 立即刷新消息列表
+      await this.loadChatMessages(messageList, doc, sessionId);
+      
+      this.context.showMessage('消息已发送', 'info');
+    } catch (error) {
+      logger.error('[ReadingSessionView] Error sending message:', error);
+      this.context.showMessage('发送消息失败', 'error');
+    }
+  }
+
+  /**
+   * 启动聊天轮询
+   */
+  private chatPollingInterval: any = null;
+  private lastMessageTimestamp: string | null = null;
+  private unreadPollingInterval: any = null;
+
+  private startChatPolling(sessionId: string, messageList: HTMLElement, doc: Document): void {
+    // 清除旧的轮询
+    if (this.chatPollingInterval) {
+      clearInterval(this.chatPollingInterval);
+    }
+
+    // 每3秒轮询一次新消息
+    this.chatPollingInterval = setInterval(async () => {
+      try {
+        if (!this.lastMessageTimestamp) {
+          // 首次轮询,获取最新时间戳
+          const messages = await this.logManager.getChatMessages(sessionId, 1, 1);
+          if (messages.length > 0) {
+            this.lastMessageTimestamp = messages[0].created_at;
+          }
+          return;
+        }
+
+        // 获取新消息
+        const newMessages = await this.logManager.getNewMessages(sessionId, this.lastMessageTimestamp);
+        
+        if (newMessages.length > 0) {
+          // 更新时间戳
+          this.lastMessageTimestamp = newMessages[newMessages.length - 1].created_at;
+          
+          // 添加新消息到列表
+          for (const message of newMessages) {
+            const msgElement = this.createMessageElement(doc, message);
+            messageList.appendChild(msgElement);
+          }
+          
+          // 滚动到底部
+          messageList.scrollTop = messageList.scrollHeight;
+        }
+      } catch (error) {
+        logger.warn('[ReadingSessionView] Chat polling error:', error);
+      }
+    }, 3000);
+  }
+
+  /**
+   * 处理导出纪要
+   */
+  private async handleExportMinutes(sessionId: string): Promise<void> {
+    try {
+      logger.log('[ReadingSessionView] Exporting session minutes...');
+      
+      const content = await this.logManager.exportMinutes(sessionId, 'markdown');
+      
+      // 保存文件
+      const filePath = await this.saveMinutesToFile(content, sessionId);
+      
+      this.context.showMessage(`纪要已导出至: ${filePath}`, 'info');
+    } catch (error) {
+      logger.error('[ReadingSessionView] Error exporting minutes:', error);
+      this.context.showMessage('导出纪要失败', 'error');
+    }
+  }
+
+  /**
+   * 保存纪要到文件
+   */
+  private async saveMinutesToFile(content: string, sessionId: string): Promise<string> {
+    const Zotero = (globalThis as any).Zotero;
+    const OS = Zotero.getMainWindow().OS;
+    
+    // 获取用户下载目录
+    const downloadsDir = OS.Path.join(OS.Constants.Path.homeDir, 'Downloads');
+    
+    // 生成文件名
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').substring(0, 19);
+    const fileName = `session_minutes_${sessionId.substring(0, 8)}_${timestamp}.md`;
+    const filePath = OS.Path.join(downloadsDir, fileName);
+    
+    // 写入文件
+    await OS.File.writeAtomic(filePath, content, { encoding: 'utf-8' });
+    
+    return filePath;
+  }
+
+  /**
+   * 更新未读消息徽章
+   */
+  private async updateUnreadBadge(sessionId: string, doc: Document): Promise<void> {
+    try {
+      const unreadCount = await this.logManager.getUnreadCount(sessionId);
+      const badge = doc.getElementById('unread-badge');
+      
+      if (!badge) return;
+      
+      if (unreadCount > 0) {
+        badge.textContent = unreadCount > 99 ? '99+' : unreadCount.toString();
+        badge.style.display = 'flex';
+      } else {
+        badge.style.display = 'none';
+      }
+    } catch (error) {
+      logger.error('[ReadingSessionView] Error updating unread badge:', error);
+    }
   }
 }
+

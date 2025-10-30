@@ -46,8 +46,8 @@ export function withSecurity(handler: (req: NextRequest) => Promise<NextResponse
         'http://127.0.0.1:3007',
         'http://127.0.0.1:3008',
         'http://127.0.0.1:3009',
-        'https://researchopia.vercel.app',
-        'https://www.researchopia.com'
+        'https://www.researchopia.com',
+        'https://researchopia.vercel.app' // 保留vercel作为备用
       ]
 
       // 对于Zotero插件请求，可能没有origin头部，需要特殊处理

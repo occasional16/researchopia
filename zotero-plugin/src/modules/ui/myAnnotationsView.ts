@@ -1,6 +1,7 @@
 import { AuthManager } from "../auth";
 import { highlightText, matchesSearch, createSearchBox, createToggleSwitch } from "./helpers";
 import type { BaseViewContext } from "./types";
+import { containerPadding } from "./styles";
 
 export class MyAnnotationsView {
   private cachedAnnotations: any[] | null = null;
@@ -23,6 +24,20 @@ export class MyAnnotationsView {
 
     if (isFirstRender) {
       container.innerHTML = "";
+      
+      // 重置容器样式,确保布局一致
+      container.style.cssText = `
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        padding: ${containerPadding.content};
+        overflow-y: auto;
+        overflow-x: hidden;
+        box-sizing: border-box;
+        background: #f9fafb;
+        border-radius: 10px;
+        box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+      `;
 
       searchBox = createSearchBox(doc, (query) => {
         this.render(container, query);

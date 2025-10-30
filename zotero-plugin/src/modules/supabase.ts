@@ -1,4 +1,5 @@
 import { logger } from "../utils/logger";
+import { apiGet, apiPost, apiPatch, apiDelete } from "../utils/apiClient";
 
 export interface SupabaseAnnotation {
   id: string;
@@ -44,24 +45,33 @@ export class SupabaseManager {
   /**
    * 发起API请求
    */
-  private async apiRequest(endpoint: string, options: any = {}): Promise<any> {
+  private async apiRequest(endpoint: string, options: any = {}, retryCount = 0): Promise<any> {
     try {
       const url = `${this.baseUrl}/rest/v1/${endpoint}`;
       
-      // 对于需要认证的操作(POST/PATCH/DELETE),尝试获取用户token
+      // 尝试从AuthManager获取用户token
       let authToken = this.apiKey; // 默认使用匿名key
       const method = options.method || 'GET';
       
-      if (['POST', 'PATCH', 'DELETE'].includes(method)) {
-        // 尝试从AuthManager获取用户token
+      // 所有请求都尝试使用用户token(包括GET请求)
+      try {
         const { AuthManager } = await import('./auth');
-        const session = AuthManager.getSession();
-        if (session && session.access_token) {
-          authToken = session.access_token;
-          logger.log('[SupabaseManager] Using user access_token for authenticated request');
+        
+        // 检查登录状态
+        const isLoggedIn = await AuthManager.isLoggedIn();
+        if (isLoggedIn) {
+          const session = AuthManager.getSession();
+          if (session && session.access_token) {
+            authToken = session.access_token;
+            logger.log('[SupabaseManager] Using user access_token for request');
+          } else {
+            logger.warn('[SupabaseManager] User logged in but no access_token available');
+          }
         } else {
-          logger.warn('[SupabaseManager] No user access_token available for authenticated request');
+          logger.log('[SupabaseManager] User not logged in, using anonymous token');
         }
+      } catch (authError) {
+        logger.warn('[SupabaseManager] Error getting auth token:', authError);
       }
       
       const headers = {
@@ -78,6 +88,30 @@ export class SupabaseManager {
         ...options,
         headers
       });
+
+      // 处理401错误 - JWT过期
+      if (response.status === 401 && retryCount === 0) {
+        logger.warn('[SupabaseManager] ⚠️ 401 Unauthorized - JWT已过期,尝试刷新token');
+        
+        try {
+          const { AuthManager } = await import('./auth');
+          const authInstance = AuthManager.getInstance();
+          const refreshed = await authInstance.refreshSession();
+          
+          if (refreshed) {
+            logger.log('[SupabaseManager] ✅ Token刷新成功,重试请求');
+            return this.apiRequest(endpoint, options, retryCount + 1); // 重试一次
+          } else {
+            logger.error('[SupabaseManager] ❌ Token刷新失败,需要重新登录');
+            // 清除登录状态
+            await AuthManager.signOut();
+            throw new Error('会话已过期,请重新登录');
+          }
+        } catch (refreshError) {
+          logger.error('[SupabaseManager] ❌ 刷新token时出错:', refreshError);
+          throw new Error('会话已过期,请重新登录');
+        }
+      }
 
       if (!response.ok) {
         // 尝试获取错误详情
@@ -192,10 +226,13 @@ export class SupabaseManager {
    */
   async getSharedAnnotations(documentId: string): Promise<SupabaseAnnotation[]> {
     try {
-      const annotations = await this.apiRequest(
-        `annotations?document_id=eq.${documentId}&visibility=in.(public,shared)&select=*,users(username,avatar_url)`
-      );
+      const response = await apiGet(`/api/proxy/annotations?document_id=${encodeURIComponent(documentId)}&type=shared`);
       
+      if (!response.success) {
+        throw new Error(response.error || '获取共享标注失败');
+      }
+
+      const annotations = response.data || [];
       logger.log(`[SupabaseManager] Retrieved ${annotations.length} shared annotations`);
       return annotations;
 
@@ -210,14 +247,14 @@ export class SupabaseManager {
    */
   async getAnnotationsForDocument(documentId: string, userId?: string): Promise<SupabaseAnnotation[]> {
     try {
-      let query = `annotations?document_id=eq.${documentId}`;
-      if (userId) {
-        query += `&user_id=eq.${userId}`;
-      }
-      query += '&select=*,users(username,avatar_url)&order=created_at.desc';
-
-      const annotations = await this.apiRequest(query);
+      const type = userId ? 'my' : 'all';
+      const response = await apiGet(`/api/proxy/annotations?document_id=${encodeURIComponent(documentId)}&type=${type}`);
       
+      if (!response.success) {
+        throw new Error(response.error || '获取文档标注失败');
+      }
+
+      const annotations = response.data || [];
       logger.log(`[SupabaseManager] Retrieved ${annotations.length} annotations for document ${documentId}`);
       return annotations;
 
@@ -301,13 +338,14 @@ export class SupabaseManager {
   async createAnnotation(annotation: any): Promise<any> {
     try {
       logger.log('[SupabaseManager] Creating annotation with data:', JSON.stringify(annotation).substring(0, 200));
-      const result = await this.apiRequest('annotations', {
-        method: 'POST',
-        body: JSON.stringify(annotation)
-      });
+      const response = await apiPost('/api/proxy/annotations', annotation);
 
-      logger.log('[SupabaseManager] Created annotation:', result[0]);
-      return result[0];
+      if (!response.success) {
+        throw new Error(response.error || '创建标注失败');
+      }
+
+      logger.log('[SupabaseManager] Created annotation:', response.data);
+      return response.data;
 
     } catch (error) {
       if (error instanceof Error) {
@@ -325,17 +363,18 @@ export class SupabaseManager {
   async updateAnnotation(annotationId: string, updateData: any): Promise<any> {
     try {
       const data = {
-        ...updateData,
-        updated_at: new Date().toISOString()
+        id: annotationId,
+        ...updateData
       };
 
-      const result = await this.apiRequest(`annotations?id=eq.${annotationId}`, {
-        method: 'PATCH',
-        body: JSON.stringify(data)
-      });
+      const response = await apiPatch('/api/proxy/annotations', data);
 
-      logger.log(`[SupabaseManager] Updated annotation ${annotationId}:`, result);
-      return result;
+      if (!response.success) {
+        throw new Error(response.error || '更新标注失败');
+      }
+
+      logger.log(`[SupabaseManager] Updated annotation ${annotationId}:`, response.data);
+      return response.data;
 
     } catch (error) {
       logger.error('[SupabaseManager] Error updating annotation:', error);
@@ -362,11 +401,13 @@ export class SupabaseManager {
    */
   async deleteAnnotation(annotationId: string): Promise<void> {
     try {
-      const result = await this.apiRequest(`annotations?id=eq.${annotationId}`, {
-        method: 'DELETE'
-      });
+      const response = await apiDelete(`/api/proxy/annotations?id=${annotationId}`);
 
-      logger.log(`[SupabaseManager] Deleted annotation ${annotationId}:`, result);
+      if (!response.success) {
+        throw new Error(response.error || '删除标注失败');
+      }
+
+      logger.log(`[SupabaseManager] Deleted annotation ${annotationId}`);
     } catch (error) {
       logger.error(`[SupabaseManager] Error deleting annotation ${annotationId}:`, error);
       throw error;

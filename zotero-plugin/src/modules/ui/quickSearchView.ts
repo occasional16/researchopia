@@ -1,5 +1,6 @@
 import type { PaperInfo } from "./types";
 import { logger } from "../../utils/logger";
+import { containerPadding } from "./styles";
 
 /**
  * 快捷搜索视图
@@ -202,7 +203,7 @@ export class QuickSearchView {
       display: flex;
       flex-direction: column;
       gap: 12px;
-      padding: 12px;
+      padding: ${containerPadding.content};
       overflow-y: auto;
     `;
 
@@ -225,9 +226,6 @@ export class QuickSearchView {
   private createHeader(doc: Document, paperInfo: PaperInfo): HTMLElement {
     const header = doc.createElement('div');
     header.style.cssText = `
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
       margin-bottom: 16px;
       padding: 16px;
       background: #ffffff;
@@ -236,6 +234,7 @@ export class QuickSearchView {
     `;
 
     const infoDiv = doc.createElement('div');
+    infoDiv.style.cssText = 'margin-bottom: 12px;'; // 垂直布局,文字在上
     infoDiv.innerHTML = `
       <div style="font-size: 16px; font-weight: 700; color: #1f2937; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">
         <span style="font-size: 20px;">🔍</span>
@@ -250,7 +249,7 @@ export class QuickSearchView {
     `;
 
     const buttonsDiv = doc.createElement('div');
-    buttonsDiv.style.cssText = 'display: flex; gap: 8px; flex-shrink: 0;';
+    buttonsDiv.style.cssText = 'display: flex; gap: 8px; justify-content: flex-end;'; // 按钮靠右对齐
 
     // 展开/收起按钮
     const filteredSites = searchSites.filter(site => this.selectedSites.includes(site.name));

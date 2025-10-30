@@ -1,14 +1,27 @@
 import { logger } from "../../utils/logger";
 import { AuthManager } from "../auth";
 import { resolveCommentDisplayInfo, createToggleSwitch } from "./helpers";
+import { UserHoverCardManager } from "./userHoverCard";
 import type { BaseViewContext, PaperInfo } from "./types";
+import { containerPadding } from "./styles";
 
 /**
  * 论文评价视图
  * 负责渲染和管理论文评价功能
  */
 export class PaperEvaluationView {
-  constructor(private readonly context: BaseViewContext) {}
+  private userHoverCardManager: UserHoverCardManager;
+  
+  constructor(private readonly context: BaseViewContext) {
+    this.userHoverCardManager = new UserHoverCardManager(context);
+  }
+
+  /**
+   * 清理资源
+   */
+  public cleanup(): void {
+    this.userHoverCardManager.cleanup();
+  }
 
   /**
    * 渲染论文评价视图
@@ -86,6 +99,20 @@ export class PaperEvaluationView {
 
       // 清空容器（移除UIManager添加的loading indicator）
       container.innerHTML = '';
+      
+      // 重置容器样式,确保布局一致(垂直排列,优化窄窗口)
+      container.style.cssText = `
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        padding: ${containerPadding.content};
+        overflow-y: auto;
+        overflow-x: hidden;
+        box-sizing: border-box;
+        background: #f9fafb;
+        border-radius: 10px;
+        box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+      `;
 
       // 创建评分区域
       const ratingSection = this.createRatingSection(doc, ratings, userRating, paperId, currentUserId);
@@ -122,8 +149,11 @@ export class PaperEvaluationView {
   ): HTMLElement {
     const section = doc.createElement('div');
     section.style.cssText = `
+      display: block;
+      width: 100%;
       padding: 16px;
       border-bottom: 1px solid var(--fill-quinary);
+      box-sizing: border-box;
     `;
 
     const title = doc.createElement('h3');
@@ -376,7 +406,12 @@ export class PaperEvaluationView {
     userId: string
   ): HTMLElement {
     const section = doc.createElement('div');
-    section.style.cssText = 'padding: 16px;';
+    section.style.cssText = `
+      display: block;
+      width: 100%;
+      padding: 16px;
+      box-sizing: border-box;
+    `;
 
     const title = doc.createElement('h3');
     title.style.cssText = 'margin: 0 0 12px 0; font-size: 14px; color: var(--fill-primary);';
@@ -569,16 +604,29 @@ export class PaperEvaluationView {
     userInfo.style.cssText = 'color: var(--fill-secondary); display: flex; gap: 6px; align-items: center; font-size: 11px;';
 
     const { name: userName, isAnonymous } = resolveCommentDisplayInfo(comment);
-    const userNameColor = isAnonymous ? 'var(--fill-secondary)' : 'var(--fill-primary)';
     const replyCount = comment.reply_count || comment.children?.length || 0;
 
-    userInfo.innerHTML = `
-      <strong style="color: ${userNameColor};">${userName}</strong>
-      ${isAnonymous ? '<span style="color: var(--fill-quaternary); font-size: 10px;">🔒</span>' : ''}
+    // 使用UserHoverCardManager创建用户元素(支持hover和点击)
+    const userElement = this.userHoverCardManager.createUserElement(
+      doc,
+      comment.username || comment.user?.username || '',
+      userName,
+      {
+        isAnonymous,
+        clickable: !isAnonymous
+      }
+    );
+    userInfo.appendChild(userElement);
+
+    // 添加匿名锁图标和其他信息
+    const extraInfo = doc.createElement('span');
+    extraInfo.innerHTML = `
+      ${isAnonymous ? '<span style="color: var(--fill-quaternary); font-size: 10px; margin-left: 2px;">🔒</span>' : ''}
       <span style="color: var(--fill-quaternary);">·</span>
       <span>${this.formatDate(comment.created_at)}</span>
       ${replyCount > 0 ? `<span style="color: var(--accent-blue);">· ${replyCount} 回复</span>` : ''}
     `;
+    userInfo.appendChild(extraInfo);
 
     header.appendChild(userInfo);
 

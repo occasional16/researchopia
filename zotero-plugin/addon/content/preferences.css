@@ -77,7 +77,7 @@
 
 .form-group label {
   min-width: 65px;
-  text-align: right;
+  text-align: left;
 }
 
 .form-group input:focus {

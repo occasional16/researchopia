@@ -1,5 +1,7 @@
 import { AuthManager } from "../auth";
+import { envConfig } from "../../config/env";
 import type { ViewMode } from "./types";
+import { containerPadding } from "./styles";
 
 /**
  * UI组件创建工具函数
@@ -19,24 +21,29 @@ export function createPaperInfoSection(doc: Document): HTMLElement {
     border: 1px solid #e5e7eb;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     margin-bottom: 16px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+    word-break: break-word;
   `;
 
   const infoHTML = `
-    <div style="display: flex; flex-direction: column; gap: 12px;">
-      <div id="paper-title" data-researchopia-role="paper-title" style="font-weight: 600; font-size: 14px; color: #1f2937; line-height: 1.5;">
+    <div style="display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 100%; box-sizing: border-box;">
+      <div id="paper-title" data-researchopia-role="paper-title" style="font-weight: 700; font-size: 16px; color: #1f2937; line-height: 1.5; word-break: break-word; overflow-wrap: anywhere; width: 100%; max-width: 100%; box-sizing: border-box;">
         请选择一篇文献
       </div>
-      <div id="paper-metadata" data-researchopia-role="paper-metadata" style="display: flex; flex-direction: column; gap: 8px; font-size: 13px;">
-        <div id="paper-authors" data-researchopia-role="paper-authors" style="display: none;">
-          <span style="display: inline-block; padding: 4px 10px; background: #eff6ff; color: #1e40af; border-radius: 6px; font-size: 12px; font-weight: 500;">
-            👤 <span class="authors-text" data-researchopia-role="paper-authors-text"></span>
+      <div id="paper-metadata" data-researchopia-role="paper-metadata" style="display: flex; flex-direction: column; gap: 8px; font-size: 13px; width: 100%; max-width: 100%; box-sizing: border-box;">
+        <div id="paper-authors" data-researchopia-role="paper-authors" style="display: block; width: 100%; max-width: 100%; box-sizing: border-box;">
+          <span style="display: inline-block; padding: 4px 10px; background: #eff6ff; color: #1e40af; border-radius: 6px; font-size: 12px; font-weight: 500; max-width: 100%; box-sizing: border-box; word-break: break-word;">
+            👤 <span class="authors-text" data-researchopia-role="paper-authors-text" style="word-break: break-word;"></span>
           </span>
         </div>
-        <div id="paper-details" data-researchopia-role="paper-details" style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
-          <span id="paper-year" data-researchopia-role="paper-year" style="display: none; padding: 4px 10px; background: #f0fdf4; color: #15803d; border-radius: 6px; font-size: 12px; font-weight: 500;"></span>
-          <span id="paper-journal" data-researchopia-role="paper-journal" style="display: none; padding: 4px 10px; background: #fef3c7; color: #92400e; border-radius: 6px; font-size: 12px; font-weight: 500;"></span>
-          <span id="paper-doi" data-researchopia-role="paper-doi" style="display: none; padding: 4px 10px; background: #f3e8ff; color: #6b21a8; border-radius: 6px; font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.2s; user-select: none;">
-            <span class="doi-text"></span>
+        <div id="paper-details" data-researchopia-role="paper-details" style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center; width: 100%; max-width: 100%; box-sizing: border-box;">
+          <span id="paper-year" data-researchopia-role="paper-year" style="display: inline; padding: 4px 10px; background: #f0fdf4; color: #15803d; border-radius: 6px; font-size: 12px; font-weight: 500; max-width: 100%; box-sizing: border-box;"></span>
+          <span id="paper-journal" data-researchopia-role="paper-journal" style="display: inline; padding: 4px 10px; background: #fef3c7; color: #92400e; border-radius: 6px; font-size: 12px; font-weight: 500; max-width: 100%; box-sizing: border-box; word-break: break-word;"></span>
+          <span id="paper-doi" data-researchopia-role="paper-doi" style="display: inline; padding: 4px 10px; background: #f3e8ff; color: #6b21a8; border-radius: 6px; font-size: 12px; font-weight: 500; cursor: pointer; transition: 0.2s; user-select: none; word-break: break-all; overflow-wrap: anywhere; max-width: 100%; box-sizing: border-box;">
+            <span class="doi-text" style="word-break: break-all; overflow-wrap: anywhere;"></span>
           </span>
         </div>
       </div>
@@ -154,7 +161,6 @@ async function updateUserInfoBarContent(bar: HTMLElement, doc: Document): Promis
     profileBtn.textContent = '🏠 个人主页';
 
     // 主页按钮事件
-    const webUrl = 'http://localhost:3000';
     profileBtn.addEventListener('mouseenter', () => {
       profileBtn.style.background = 'rgba(255, 255, 255, 0.3)';
       profileBtn.style.transform = 'scale(1.05)';
@@ -164,7 +170,7 @@ async function updateUserInfoBarContent(bar: HTMLElement, doc: Document): Promis
       profileBtn.style.transform = 'scale(1)';
     });
     profileBtn.addEventListener('click', () => {
-      const url = `${webUrl}/profile/${username}`;
+      const url = `${envConfig.apiBaseUrl}/profile/${username}`;
       (Zotero as any).launchURL(url);
     });
 
@@ -236,7 +242,7 @@ export function createButtonsSection(
     margin-bottom: 16px;
   `;
 
-  // 创建五个功能按钮，带图标和颜色
+  // 创建四个功能按钮，带图标和颜色
   const buttons = [
     {
       id: 'btn-reading-session',
@@ -248,24 +254,6 @@ export function createButtonsSection(
       hoverColor: '#db2777'
     },    
     {
-      id: 'btn-paper-evaluation',
-      text: '论文评价',
-      icon: '⭐',
-      mode: 'paper-evaluation' as ViewMode,
-      disabled: false,
-      color: '#f97316',
-      hoverColor: '#ea580c'
-    },
-    {
-      id: 'btn-my-annotations',
-      text: '管理标注',
-      icon: '🔖',
-      mode: 'my-annotations' as ViewMode,
-      disabled: false,
-      color: '#3b82f6',
-      hoverColor: '#2563eb'
-    },
-    {
       id: 'btn-shared-annotations',
       text: '共享标注',
       icon: '👥',
@@ -273,7 +261,16 @@ export function createButtonsSection(
       disabled: false,
       color: '#8b5cf6',
       hoverColor: '#7c3aed'
-    },    
+    },
+    {
+      id: 'btn-paper-evaluation',
+      text: '论文评价',
+      icon: '⭐',
+      mode: 'paper-evaluation' as ViewMode,
+      disabled: false,
+      color: '#f97316',
+      hoverColor: '#ea580c'
+    },        
     {
       id: 'btn-quick-search',
       text: '快捷搜索',
@@ -355,7 +352,7 @@ export function createContentSection(doc: Document): HTMLElement {
     flex-direction: column;
     background: #f9fafb;
     border-radius: 10px;
-    padding: 16px;
+    padding: ${containerPadding.content};
     box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
   `;
 
@@ -431,16 +428,65 @@ async function renderInitialContent(container: HTMLElement): Promise<void> {
     iconDiv.textContent = '📚';
 
     const messageDiv = doc.createElement('div');
-    messageDiv.style.cssText = 'font-size: 16px; font-weight: 600; color: #1f2937;';
+    messageDiv.style.cssText = 'font-size: 16px; font-weight: 600; color: #1f2937; margin-bottom: 8px;';
     messageDiv.textContent = '选择一篇文献开始使用';
 
-    const hintDiv = doc.createElement('div');
-    hintDiv.style.cssText = 'font-size: 13px; color: #6b7280;';
-    hintDiv.textContent = '点击上方按钮查看标注、评价或快捷搜索';
+    // 功能介绍区域
+    const featuresDiv = doc.createElement('div');
+    featuresDiv.style.cssText = `
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-width: 400px;
+      text-align: left;
+    `;
+
+    const features = [
+      { icon: '📖', color: '#ec4899', title: '文献共读', desc: '创建或加入共读会话,与他人协同阅读' },
+      { icon: '👥', color: '#8b5cf6', title: '共享标注', desc: '浏览其他用户的标注,管理自己的标注' },
+      { icon: '⭐', color: '#f97316', title: '论文评价', desc: '查看论文评分、评论及学术讨论' },
+      { icon: '🔍', color: '#10b981', title: '快捷搜索', desc: '一键搜索相关论文和学术资源' }
+    ];
+
+    features.forEach(feature => {
+      const featureItem = doc.createElement('div');
+      featureItem.style.cssText = `
+        display: flex;
+        align-items: start;
+        gap: 10px;
+        padding: 10px;
+        background: #f9fafb;
+        border-radius: 8px;
+        border-left: 3px solid ${feature.color};
+      `;
+
+      const iconSpan = doc.createElement('span');
+      iconSpan.style.cssText = 'font-size: 20px; flex-shrink: 0;';
+      iconSpan.textContent = feature.icon;
+
+      const textDiv = doc.createElement('div');
+      textDiv.style.cssText = 'flex: 1;';
+
+      const titleSpan = doc.createElement('div');
+      titleSpan.style.cssText = `font-weight: 600; color: ${feature.color}; font-size: 13px; margin-bottom: 2px;`;
+      titleSpan.textContent = feature.title;
+
+      const descSpan = doc.createElement('div');
+      descSpan.style.cssText = 'font-size: 12px; color: #6b7280; line-height: 1.4;';
+      descSpan.textContent = feature.desc;
+
+      textDiv.appendChild(titleSpan);
+      textDiv.appendChild(descSpan);
+
+      featureItem.appendChild(iconSpan);
+      featureItem.appendChild(textDiv);
+
+      featuresDiv.appendChild(featureItem);
+    });
 
     emptyPrompt.appendChild(iconDiv);
     emptyPrompt.appendChild(messageDiv);
-    emptyPrompt.appendChild(hintDiv);
+    emptyPrompt.appendChild(featuresDiv);
     container.appendChild(emptyPrompt);
   }
 }

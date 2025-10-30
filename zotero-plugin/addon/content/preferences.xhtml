@@ -7,28 +7,28 @@
 <!-- Scripts are loaded via preferences.js file -->
 <vbox data-researchopia="true">
   <groupbox>
-    <label><html:h2>🔬 Researchopia - Academic Annotation Sharing</html:h2></label>
-    <html:p class="description">Share and discover academic annotations with researchers worldwide</html:p>
+    <label><html:h2>🔬 研学港 Researchopia</html:h2></label>
+    <html:p class="description">开放的学术交流和共享平台。研学并进,智慧共享 | Where Research Meets Community</html:p>
 
-    <!-- Account Section -->
+    <!-- 账户设置 -->
     <groupbox>
-      <label><html:h3>👤 Account</html:h3></label>
+      <label><html:h2>👤 账户设置</html:h2></label>
 
       <!-- 登录容器 - 直接显示登录界面 -->
       <html:div id="researchopia-login-container">
         <!-- 登录表单 -->
         <html:div class="login-form" id="login-form-section">
-          <html:h3>连接到 Researchopia</html:h3>
-          <html:p class="login-description">登录以分享和访问社区标注</html:p>
+          <html:h3>连接到研学港</html:h3>
+          <html:p class="login-description">登录以使用所有功能</html:p>
           <html:div class="form-group" style="display: flex; align-items: center; gap: 8px;">
             <html:label for="email-input">邮箱地址:</html:label>
             <html:input type="email" id="email-input" placeholder="your.email@example.com" />
-            <html:a href="javascript:void(0)" onclick="openExternalLink('https://www.researchopia.com/')" id="create-account" style="flex-shrink: 0; color: var(--accent-blue); text-decoration: none; font-size: 12px; white-space: nowrap;">创建账户</html:a>
+            <html:a href="javascript:void(0)" onclick="Zotero.launchURL('https://www.researchopia.com/')" id="create-account" style="flex-shrink: 0; color: var(--accent-blue); text-decoration: none; font-size: 12px; white-space: nowrap; cursor: pointer;">创建账户</html:a>
           </html:div>
           <html:div class="form-group" style="display: flex; align-items: center; gap: 8px;">
             <html:label for="password-input">密码:</html:label>
             <html:input type="password" id="password-input" placeholder="请输入您的密码" />
-            <html:a href="javascript:void(0)" onclick="openExternalLink('https://www.researchopia.com/')" id="forgot-password" style="flex-shrink: 0; color: var(--accent-blue); text-decoration: none; font-size: 12px; white-space: nowrap;">忘记密码</html:a>
+            <html:a href="javascript:void(0)" onclick="Zotero.launchURL('https://www.researchopia.com/')" id="forgot-password" style="flex-shrink: 0; color: var(--accent-blue); text-decoration: none; font-size: 12px; white-space: nowrap; cursor: pointer;">忘记密码</html:a>
           </html:div>
           <html:div class="form-group">
             <html:label class="checkbox-label">
@@ -48,7 +48,7 @@
         
         <!-- 已登录状态 -->
         <html:div class="logged-in-status" id="logged-in-section" style="display: none;">
-          <html:h3>已连接到 Researchopia</html:h3>
+          <html:h3>已连接到研学港</html:h3>
           <html:div class="user-info">
             <html:div class="user-details">
               <html:div class="user-name">
@@ -76,93 +76,61 @@
       </html:div>
     </groupbox>
 
-    <!-- 标注功能部分 -->
+    <!-- 开发者选项 -->
     <groupbox>
-      <label><html:h3>📝 标注功能</html:h3></label>
+      <label><html:h2>🔧 开发者选项</html:h2></label>
       <html:div class="form-group">
         <html:label class="checkbox-label">
-          <html:input type="checkbox" id="auto-upload-annotations" />
-          <html:span>自动上传新标注</html:span>
-          <html:small>创建新标注时立即分享</html:small>
+          <html:input type="checkbox" id="use-dev-environment" />
+          <html:span>⚠️ 使用开发环境 API</html:span>
+          <html:small>开发者专用 - 切换到本地开发服务器 (http://localhost:3000)</html:small>
         </html:label>
       </html:div>
       <html:div class="form-group">
-        <html:label class="checkbox-label">
-          <html:input type="checkbox" id="show-notifications" />
-          <html:span>显示通知消息</html:span>
-          <html:small>显示上传、下载和错误的状态消息</html:small>
-        </html:label>
+        <html:small style="color: #666;">💡 提示: 切换环境后,点击按钮或链接时会使用新环境地址</html:small>
       </html:div>
       <html:div class="form-group">
         <html:label class="checkbox-label">
-          <html:input type="checkbox" id="enable-precise-tracking" />
-          <html:span>启用精确标注跟踪</html:span>
-          <html:small>在段落和句子级别跟踪标注（实验性功能）</html:small>
+          <html:input type="checkbox" id="enable-experimental-features" />
+          <html:span>🧪 开放实验性功能(文献共读和共享标注)</html:span>
+          <html:small>启用测试中的功能,将在下一版本正式上线</html:small>
         </html:label>
+      </html:div>
+      <html:div class="form-group" style="display: flex; align-items: center; gap: 8px;">
+        <html:label for="custom-api-url" style="flex-shrink: 0;">自定义 API 地址:</html:label>
+        <html:input 
+          type="text" 
+          id="custom-api-url" 
+          placeholder="https://your-custom-domain.com" 
+          style="flex: 1; font-family: monospace; font-size: 12px;"
+        />
+      </html:div>
+      <html:div class="form-group" style="display: flex; align-items: center; gap: 12px;">
+        <html:button id="reset-api-url-btn" class="researchopia-btn" onclick="onResetApiUrl()" style="font-size: 12px; padding: 6px 12px;">
+          重置为默认
+        </html:button>
+        <html:span id="current-api-display" style="color: #666; font-size: 12px; font-weight: 500;"></html:span>
       </html:div>
     </groupbox>
 
-    <!-- 隐私设置部分 -->
+    <!-- 关于 -->
     <groupbox>
-      <label><html:h3>🔒 隐私设置</html:h3></label>
-      <html:div class="form-group">
-        <html:label for="default-visibility">默认标注可见性:</html:label>
-        <html:select id="default-visibility">
-          <html:option value="public">公开 - 所有用户可见</html:option>
-          <html:option value="followers">仅关注者</html:option>
-          <html:option value="private">私人 - 仅我可见</html:option>
-        </html:select>
-      </html:div>
-      <html:div class="form-group">
-        <html:label class="checkbox-label">
-          <html:input type="checkbox" id="allow-anonymous-view" />
-          <html:span>允许匿名用户查看我的公开标注</html:span>
-        </html:label>
-      </html:div>
-    </groupbox>
-
-    <!-- 显示选项部分 -->
-    <groupbox>
-      <label><html:h3>🎨 显示选项</html:h3></label>
-      <html:div class="form-group">
-        <html:label for="annotation-display-mode">标注显示模式:</html:label>
-        <html:select id="annotation-display-mode">
-          <html:option value="inline">内嵌文本</html:option>
-          <html:option value="sidebar">侧边栏面板</html:option>
-          <html:option value="popup">悬停弹出</html:option>
-        </html:select>
-      </html:div>
-      <html:div class="form-group">
-        <html:label for="max-annotations-per-page">每页最大标注数:</html:label>
-        <html:input type="number" id="max-annotations-per-page" min="5" max="100" value="20" />
-      </html:div>
-    </groupbox>
-
-
-
-    <!-- 关于部分 -->
-    <groupbox>
-      <label><html:h3>ℹ️ 关于</html:h3></label>
+      <label><html:h2>ℹ️ 关于</html:h2></label>
       <html:div class="about-info">
-        <html:p><strong>版本:</strong> 0.2.0</html:p>
-        <html:p><strong>兼容:</strong> Zotero 8 beta</html:p>
-        <html:p><strong>支持:</strong> <html:a href="https://github.com/occasional15/researchopia/issues">GitHub Issues</html:a></html:p>
-        <html:div class="stats-container" id="user-stats" style="display: none;">
-          <html:h4>Your Statistics</html:h4>
-          <html:div class="stats-grid">
-            <html:div class="stat-item">
-              <html:span class="stat-number" id="annotations-shared">0</html:span>
-              <html:span class="stat-label">Annotations Shared</html:span>
-            </html:div>
-            <html:div class="stat-item">
-              <html:span class="stat-number" id="likes-received">0</html:span>
-              <html:span class="stat-label">Likes Received</html:span>
-            </html:div>
-            <html:div class="stat-item">
-              <html:span class="stat-number" id="followers-count">0</html:span>
-              <html:span class="stat-label">Followers</html:span>
-            </html:div>
-          </html:div>
+        <html:div style="margin: 8px 0; display: flex; align-items: center;">
+          <html:strong style="margin-right: 6px;">插件版本:</html:strong>
+          <html:span>0.2.0</html:span>
+          <html:span style="margin: 0 8px;">|</html:span>
+          <html:strong style="margin-right: 6px;">兼容版本:</html:strong>
+          <html:span>Zotero 8 beta</html:span>
+        </html:div>
+        <html:div style="margin: 8px 0; display: flex; align-items: center;">
+          <html:strong style="margin-right: 6px;">官方网站:</html:strong>
+          <html:a href="javascript:void(0)" onclick="Zotero.launchURL('https://www.researchopia.com/')" style="color: var(--accent-blue); text-decoration: none; cursor: pointer;">https://www.researchopia.com/</html:a>
+        </html:div>
+        <html:div style="margin: 8px 0; display: flex; align-items: center;">
+          <html:strong style="margin-right: 6px;">项目主页:</html:strong>
+          <html:a href="javascript:void(0)" onclick="Zotero.launchURL('https://github.com/occasional16/researchopia')" style="color: var(--accent-blue); text-decoration: none; cursor: pointer;">https://github.com/occasional16/researchopia</html:a>
         </html:div>
       </html:div>
     </groupbox>

@@ -5,10 +5,14 @@
 
 import { logger } from "../utils/logger";
 import { AuthManager } from "./auth";
+import { SessionLogManager } from "./sessionLogManager";
+import { apiGet, apiPost, apiDelete } from "../utils/apiClient";
 
-// Supabase 配置
-const SUPABASE_URL = 'https://obcblvdtqhwrihoddlez.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9iY2JsdmR0cWh3cmlob2RkbGV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0OTgyMzUsImV4cCI6MjA3MzA3NDIzNX0.0kYlpFuK5WrKvUhIj7RO4-XJgv1sm39FROD_mBtxYm4';
+// 从配置文件导入Supabase配置
+import { config } from "../config/env";
+
+const SUPABASE_URL = config.supabaseUrl;
+const SUPABASE_ANON_KEY = config.supabaseAnonKey;
 
 // 辅助函数：获取token
 function getToken(): string | null {
@@ -109,6 +113,8 @@ export class ReadingSessionManager {
   private annotationListeners: ((event: RealtimeAnnotationEvent) => void)[] = [];
   private presenceListeners: ((event: RealtimePresenceEvent) => void)[] = [];
   private memberListeners: ((members: SessionMember[]) => void)[] = [];
+  
+  private logManager = SessionLogManager.getInstance();
   
   private membersCache: Map<string, SessionMember[]> = new Map();
   private membersCacheExpiry: Map<string, number> = new Map();
@@ -263,53 +269,26 @@ export class ReadingSessionManager {
   ): Promise<{ session: ReadingSession; inviteCode: string }> {
     logger.log(`[ReadingSessionManager] 创建会话: ${paperTitle}`);
     
-    const token = getToken();
-    const user = getCurrentUser();
-    
-    if (!token) {
-      throw new Error('未登录，无法创建会话');
-    }
-
     try {
-      // 调用数据库函数生成邀请码
-      const inviteCodeResult = await this.apiRequest('rpc/generate_invite_code', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      const inviteCode = inviteCodeResult;
-
-      // 创建会话记录
-      const sessionData = {
+      const response = await apiPost('/api/proxy/reading-session/create', {
         paper_doi: paperDOI,
         paper_title: paperTitle,
-        session_type: sessionType,
-        invite_code: inviteCode,
-        creator_id: user?.id,
         max_participants: maxParticipants,
-        is_active: true,
-        settings: {},
-      };
-
-      const sessionResult = await this.apiRequest('reading_sessions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Prefer': 'return=representation',
-        },
-        body: JSON.stringify(sessionData),
+        is_public: sessionType === 'public',
+        description: null,
       });
 
-      const newSession: ReadingSession = Array.isArray(sessionResult) 
-        ? sessionResult[0] 
-        : sessionResult;
+      if (!response.success) {
+        throw new Error(response.error || '创建会话失败');
+      }
 
-      // 自动加入会话（创建者角色为host）
-      await this.joinSession(newSession.id, 'host');
+      const newSession: ReadingSession = response.data.session;
+      const member: SessionMember = response.data.member;
+      const inviteCode = newSession.invite_code || '';
+
+      // 设置当前会话和成员(创建后自动进入)
+      this.currentSession = newSession;
+      this.currentMember = member;
 
       logger.log(`[ReadingSessionManager] ✅ 会话创建成功: ${newSession.id}`);
       
@@ -327,38 +306,21 @@ export class ReadingSessionManager {
   public async joinSessionByInviteCode(inviteCode: string): Promise<ReadingSession> {
     logger.log(`[ReadingSessionManager] 通过邀请码加入会话: ${inviteCode}`);
     
-    const token = getToken();
-    
-    if (!token) {
-      throw new Error('未登录，无法加入会话');
-    }
-
     try {
-      // 查询会话
-      const sessionsResult = await this.apiRequest(
-        `reading_sessions?invite_code=eq.${inviteCode}&is_active=eq.true`,
-        {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await apiPost('/api/proxy/reading-session/join', {
+        invite_code: inviteCode,
+      });
 
-      if (!sessionsResult || sessionsResult.length === 0) {
-        throw new Error('无效的邀请码或会话已结束');
+      if (!response.success) {
+        throw new Error(response.error || '加入会话失败');
       }
 
-      const foundSession: ReadingSession = sessionsResult[0];
+      const foundSession: ReadingSession = response.data.session;
+      const member: SessionMember = response.data.member;
 
-      // 检查会话是否满员
-      const membersCount = await this.getSessionMembersCount(foundSession.id);
-      if (membersCount >= foundSession.max_participants) {
-        throw new Error('会话已满员');
-      }
-
-      // 加入会话
-      await this.joinSession(foundSession.id, 'participant');
+      // 设置当前会话和成员
+      this.currentSession = foundSession;
+      this.currentMember = member;
 
       logger.log(`[ReadingSessionManager] ✅ 成功加入会话: ${foundSession.id}`);
       
@@ -468,6 +430,17 @@ export class ReadingSessionManager {
       user_email: user?.email,
       member: this.currentMember || undefined,
     });
+
+    // 记录member_join事件日志
+    try {
+      await this.logManager.logEvent(sessionId, 'member_join', undefined, {
+        role: role,
+        user_id: userId,
+      });
+    } catch (logError) {
+      logger.error('[ReadingSessionManager] 记录member_join事件失败:', logError);
+      // 不影响主流程,继续执行
+    }
   }
 
   /**
@@ -483,6 +456,7 @@ export class ReadingSessionManager {
 
     try {
       const user = getCurrentUser();
+      const sessionIdToLog = this.currentSession.id; // 保存sessionId用于日志
       
       // 停止心跳和轮询
       this.stopHeartbeat();
@@ -504,6 +478,15 @@ export class ReadingSessionManager {
         user_id: user?.id || '',
         user_email: user?.email,
       });
+
+      // 记录member_leave事件日志
+      try {
+        await this.logManager.logEvent(sessionIdToLog, 'member_leave', undefined, {
+          user_id: user?.id,
+        });
+      } catch (logError) {
+        logger.error('[ReadingSessionManager] 记录member_leave事件失败:', logError);
+      }
 
       this.currentSession = null;
       this.currentMember = null;
@@ -552,38 +535,12 @@ export class ReadingSessionManager {
   public async deleteSession(sessionId: string): Promise<void> {
     logger.log(`[ReadingSessionManager] 删除会话: ${sessionId}`);
 
-    const token = getToken();
-    const user = getCurrentUser();
-
-    if (!token || !user) {
-      throw new Error('未登录，无法删除会话');
-    }
-
     try {
-      // 先检查是否是创建者
-      const sessionResult = await this.apiRequest(`reading_sessions?id=eq.${sessionId}&select=creator_id`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
+      const response = await apiDelete(`/api/proxy/reading-session/delete?session_id=${sessionId}`);
 
-      const session = Array.isArray(sessionResult) && sessionResult.length > 0 ? sessionResult[0] : null;
-      
-      if (!session) {
-        throw new Error('会话不存在');
+      if (!response.success) {
+        throw new Error(response.error || '删除会话失败');
       }
-
-      if (session.creator_id !== user.id) {
-        throw new Error('只有创建者可以删除会话');
-      }
-
-      // 删除会话(数据库会级联删除相关的成员和标注)
-      await this.apiRequest(`reading_sessions?id=eq.${sessionId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
 
       // 如果当前在这个会话中,清除本地状态
       if (this.currentSession?.id === sessionId) {
@@ -664,27 +621,77 @@ export class ReadingSessionManager {
   public async getMyCreatedSessions(): Promise<ReadingSession[]> {
     logger.log('[ReadingSessionManager] 获取我创建的会话列表');
     
-    const token = getToken();
-    const user = getCurrentUser();
-    const userId = user?.id;
-    
-    if (!token || !userId) {
-      throw new Error('未登录');
-    }
-
     try {
-      // 查询用户创建的会话
-      const sessionsResult = await this.apiRequest(
-        `reading_sessions?creator_id=eq.${userId}&is_active=eq.true&order=created_at.desc`,
-        {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await apiGet('/api/proxy/reading-session/list?type=created');
 
-      return sessionsResult || [];
+      logger.log('[ReadingSessionManager] 🔍 API response:', {
+        success: response.success,
+        dataLength: (response.data || []).length,
+        error: response.error
+      });
+
+      if (!response.success) {
+        throw new Error(response.error || '获取创建的会话列表失败');
+      }
+
+      const sessions = (response.data || []).map((session: any) => {
+        const creator = session.creator;
+        return {
+          ...session,
+          creator_name: creator?.username || creator?.email?.split('@')[0] || '未知用户',
+          creator_email: creator?.email,
+          creator: undefined,
+        };
+      });
+
+      // 为每个会话添加成员统计(仍需要单独查询,因为API不返回统计)
+      const token = getToken();
+      const sessionsWithCount = await Promise.all(
+        sessions.map(async (session: any) => {
+          try {
+            // 查询所有成员
+            const members = await this.apiRequest(
+              `session_members?session_id=eq.${session.id}`,
+              {
+                method: 'GET',
+                headers: {
+                  'Authorization': `Bearer ${token}`,
+                },
+              }
+            );
+            
+            const memberList = members || [];
+            const totalCount = memberList.length;
+            
+            // 统计在线人数(last_seen在5分钟内)
+            const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+            const onlineCount = memberList.filter((m: SessionMember) => m.last_seen > fiveMinutesAgo).length;
+            
+            return {
+              ...session,
+              member_count: totalCount,
+              online_count: onlineCount,
+            };
+          } catch (error) {
+            logger.error(`[ReadingSessionManager] 查询会话 ${session.id} 成员失败:`, error);
+            return {
+              ...session,
+              member_count: 0,
+              online_count: 0,
+            };
+          }
+        })
+      );
+      
+      logger.log('[ReadingSessionManager] 📋 My created sessions:', sessionsWithCount.map((s: any) => ({
+        id: s.id,
+        title: s.paper_title,
+        type: s.session_type,
+        active: s.is_active,
+        members: s.member_count
+      })));
+      
+      return sessionsWithCount;
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
       logger.error(`[ReadingSessionManager] 获取创建的会话列表失败: ${errorMsg}`);
@@ -742,16 +749,52 @@ export class ReadingSessionManager {
         }
       );
 
-      // 将嵌套的用户信息扁平化到主对象中
-      const flattenedSessions = (sessionsResult || []).map((session: any) => ({
-        ...session,
-        creator_name: session.users?.username || session.users?.email?.split('@')[0] || '未知',
-        creator_email: session.users?.email,
-        // 移除原始的 users 属性以保持返回数据一致性
-        users: undefined,
-      }));
+      // 将嵌套的用户信息扁平化到主对象中,并添加成员统计
+      const sessionsWithCount = await Promise.all(
+        (sessionsResult || []).map(async (session: any) => {
+          try {
+            // 查询所有成员
+            const members = await this.apiRequest(
+              `session_members?session_id=eq.${session.id}`,
+              {
+                method: 'GET',
+                headers: {
+                  'Authorization': `Bearer ${token}`,
+                },
+              }
+            );
+            
+            const memberList = members || [];
+            const totalCount = memberList.length;
+            
+            // 统计在线人数(last_seen在5分钟内)
+            const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+            const onlineCount = memberList.filter((m: SessionMember) => m.last_seen > fiveMinutesAgo).length;
+            
+            return {
+              ...session,
+              creator_name: session.users?.username || session.users?.email?.split('@')[0] || '未知',
+              creator_email: session.users?.email,
+              member_count: totalCount,
+              online_count: onlineCount,
+              // 移除原始的 users 属性以保持返回数据一致性
+              users: undefined,
+            };
+          } catch (error) {
+            logger.error(`[ReadingSessionManager] 查询会话 ${session.id} 成员失败:`, error);
+            return {
+              ...session,
+              creator_name: session.users?.username || session.users?.email?.split('@')[0] || '未知',
+              creator_email: session.users?.email,
+              member_count: 0,
+              online_count: 0,
+              users: undefined,
+            };
+          }
+        })
+      );
 
-      return flattenedSessions;
+      return sessionsWithCount;
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
       logger.error(`[ReadingSessionManager] 获取加入的会话列表失败: ${errorMsg}`);
@@ -765,34 +808,36 @@ export class ReadingSessionManager {
   public async getPublicSessions(): Promise<ReadingSession[]> {
     logger.log('[ReadingSessionManager] 获取公开会话列表');
     
-    const token = getToken();
-    
-    if (!token) {
-      throw new Error('未登录');
-    }
-
     try {
-      // 查询所有公开且活跃的会话，并关联创建者信息
-      const sessionsResult = await this.apiRequest(
-        'reading_sessions?session_type=eq.public&is_active=eq.true&select=*,users!reading_sessions_creator_id_fkey(email,username)&order=created_at.desc&limit=50',
-        {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await apiGet('/api/proxy/reading-session/list?type=public');
 
-      // 展开用户信息到会话对象中
-      const sessions = (sessionsResult || []).map((session: any) => {
-        const creator = session.users;
+      logger.log('[ReadingSessionManager] 🔍 API response:', {
+        success: response.success,
+        dataLength: (response.data || []).length,
+        error: response.error
+      });
+
+      if (!response.success) {
+        throw new Error(response.error || '获取公开会话列表失败');
+      }
+
+      const sessions = (response.data || []).map((session: any) => {
+        const creator = session.creator;
         return {
           ...session,
           creator_name: creator?.username || creator?.email?.split('@')[0] || '未知用户',
           creator_email: creator?.email,
-          users: undefined, // 移除嵌套的users对象
+          creator: undefined,
         };
       });
+
+      logger.log('[ReadingSessionManager] 📋 Public sessions:', sessions.map((s: any) => ({
+        id: s.id,
+        title: s.paper_title,
+        type: s.session_type,
+        active: s.is_active,
+        creator: s.creator_name
+      })));
 
       return sessions;
     } catch (error) {
@@ -808,48 +853,26 @@ export class ReadingSessionManager {
   public async getMySessions(): Promise<ReadingSession[]> {
     logger.log('[ReadingSessionManager] 获取我的会话列表');
     
-    const token = getToken();
-    const user = getCurrentUser();
-    const userId = user?.id;
-    
-    if (!token || !userId) {
-      throw new Error('未登录');
-    }
-
     try {
-      // 查询用户加入过的所有会话(通过 session_members 表)
-      const membersResult = await this.apiRequest(
-        `session_members?user_id=eq.${userId}&select=session_id`,
-        {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await apiGet('/api/proxy/reading-session/list?type=my');
 
-      if (!membersResult || membersResult.length === 0) {
-        return [];
+      if (!response.success) {
+        throw new Error(response.error || '获取会话列表失败');
       }
 
-      // 提取所有会话ID
-      const sessionIds = membersResult.map((m: any) => m.session_id);
-      
-      // 查询这些会话的详细信息,只返回仍然活跃的会话
-      const sessionsResult = await this.apiRequest(
-        `reading_sessions?id=in.(${sessionIds.join(',')})&is_active=eq.true&order=created_at.desc`,
-        {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        }
-      );
+      const sessions = (response.data || []).map((session: any) => {
+        const creator = session.creator;
+        return {
+          ...session,
+          creator_name: creator?.username || creator?.email?.split('@')[0] || '未知用户',
+          creator_email: creator?.email,
+          creator: undefined,
+        };
+      });
 
-      return sessionsResult || [];
+      return sessions;
     } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : String(error);
-      logger.error(`[ReadingSessionManager] 获取会话列表失败: ${errorMsg}`);
+      logger.error('[ReadingSessionManager] 获取我的会话列表失败:', error);
       return [];
     }
   }
@@ -869,29 +892,14 @@ export class ReadingSessionManager {
       }
     }
 
-    const token = getToken();
-    
-    if (!token) {
-      throw new Error('未登录');
-    }
-
     try {
-      const membersResult = await this.apiRequest(
-        `session_members?session_id=eq.${sessionId}&select=*,users:user_id(email,username,avatar_url)`,
-        {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await apiGet(`/api/proxy/reading-session/members?session_id=${sessionId}`);
 
-      const members: SessionMember[] = (membersResult || []).map((m: any) => ({
-        ...m,
-        user_email: m.users?.email,
-        user_name: m.users?.username || m.users?.email,
-        avatar_url: m.users?.avatar_url,
-      }));
+      if (!response.success) {
+        throw new Error(response.error || '获取成员列表失败');
+      }
+
+      const members: SessionMember[] = response.data || [];
 
       this.membersCache.set(sessionId, members);
       this.membersCacheExpiry.set(sessionId, Date.now() + 5000);
@@ -977,6 +985,23 @@ export class ReadingSessionManager {
 
       annotation.user_email = user?.email;
       annotation.user_name = user?.username || user?.email;
+
+      // 记录annotation_create事件日志
+      try {
+        await this.logManager.logEvent(
+          this.currentSession.id,
+          'annotation_create',
+          annotation.id,
+          {
+            page: pageNumber,
+            text: annotationData.text?.substring(0, 100), // 只记录前100字符
+            type: annotationData.type,
+            color: annotationData.color,
+          }
+        );
+      } catch (logError) {
+        logger.error('[ReadingSessionManager] 记录annotation_create事件失败:', logError);
+      }
 
       logger.log(`[ReadingSessionManager] ✅ 标注创建成功: ${annotation.id}`);
 
@@ -1604,6 +1629,20 @@ export class ReadingSessionManager {
       );
 
       logger.log(`[ReadingSessionManager] ✅ 已从数据库删除标注: ${annotationKey}`);
+      
+      // 记录annotation_delete事件日志
+      try {
+        await this.logManager.logEvent(
+          this.currentSession.id,
+          'annotation_delete',
+          annotationKey,
+          {
+            key: annotationKey,
+          }
+        );
+      } catch (logError) {
+        logger.error('[ReadingSessionManager] 记录annotation_delete事件失败:', logError);
+      }
       
       // 触发标注删除事件,通知界面更新
       this.notifyAnnotationListeners({

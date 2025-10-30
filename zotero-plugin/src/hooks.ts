@@ -149,10 +149,10 @@ async function onMainWindowLoad(win: Window): Promise<void> {
       addon.data.ztoolkit = createZToolkit();
 
       // Insert localization files (Zotero 8 FTL approach)  
-      // Note: Build tool adds prefix, so actual file is researchopia-researchopia-mainWindow.ftl
+      // File name is researchopia-mainWindow.ftl
       if (win.MozXULElement?.insertFTLIfNeeded) {
         win.MozXULElement.insertFTLIfNeeded(
-          `${addon.data.config.addonRef}-${addon.data.config.addonRef}-mainWindow.ftl`,
+          `${addon.data.config.addonRef}-mainWindow.ftl`,
         );
       }
     }

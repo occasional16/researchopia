@@ -410,7 +410,7 @@ export default function SignUpForm({ onToggleMode, onClose }: SignUpFormProps) {
           )}
 
           <p className="text-xs text-gray-500 mt-1">
-            仅支持教育机构邮箱注册（.edu.cn、.edu、.ac.uk等）
+            暂时仅支持教育机构邮箱注册（.edu.cn、.edu等），后期会加入多种注册登录方式。
           </p>
 
           {/* 重新发送验证邮件 */}

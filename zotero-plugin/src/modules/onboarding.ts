@@ -18,10 +18,11 @@ export class OnboardingManager {
 
   public static shouldShowOnboarding(): boolean {
     try {
+      const addon = (globalThis as any).Zotero?.Researchopia;
       // 检查是否是第一次使用
       const hasSeenOnboarding = Zotero.Prefs.get('extensions.zotero.researchopia.onboardingCompleted', true);
       const pluginVersion = Zotero.Prefs.get('extensions.zotero.researchopia.version', true);
-      const currentVersion = (addon.data.config as any).buildVersion || '0.2.0';
+      const currentVersion = (addon?.data.config as any)?.buildVersion || '0.2.0';
       
       // 如果从未完成引导，或者版本更新了，则显示引导
       return !hasSeenOnboarding || pluginVersion !== currentVersion;
@@ -83,6 +84,7 @@ export class OnboardingManager {
     const instance = OnboardingManager.getInstance();
     
     try {
+      const addon = (globalThis as any).Zotero?.Researchopia;
       console.log("[OnboardingManager] Completing onboarding...");
       
       instance.isOnboardingActive = false;
@@ -90,7 +92,7 @@ export class OnboardingManager {
       
       // 标记引导完成
       Zotero.Prefs.set('extensions.zotero.researchopia.onboardingCompleted', true, true);
-      Zotero.Prefs.set('extensions.zotero.researchopia.version', (addon.data.config as any).buildVersion || '0.2.0', true);
+      Zotero.Prefs.set('extensions.zotero.researchopia.version', (addon?.data.config as any)?.buildVersion || '0.2.0', true);
       
       // 清理引导UI
       await instance.cleanupOnboardingUI();

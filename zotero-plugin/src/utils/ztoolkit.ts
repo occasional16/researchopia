@@ -11,8 +11,8 @@ export function createZToolkit() {
 function initZToolkit(_ztoolkit: ReturnType<typeof createZToolkit>) {
   const env = __env__;
   
-  // Get addon safely
-  const addon = (globalThis as any).addon || (globalThis as any).Zotero?.Researchopia;
+  // Get addon safely - only from Zotero namespace to avoid global pollution
+  const addon = (globalThis as any).Zotero?.Researchopia;
   
   if (addon) {
     _ztoolkit.basicOptions.log.prefix = `[${addon.data.config.addonName}]`;

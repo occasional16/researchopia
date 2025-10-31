@@ -8,8 +8,9 @@ import { logger } from "./utils/logger";
 
 const basicTool = new BasicTool();
 
-// 设置全局logger，让其他模块也可以使用
-(globalThis as any).logger = logger;
+// ⚠️ 不要污染globalThis - 可能与Zotero内部代码冲突
+// 改为使用Zotero命名空间存储logger
+// (globalThis as any).logger = logger;
 
 // 版本兼容性处理
 import { ZoteroVersionDetector } from './utils/version-detector';
@@ -18,46 +19,16 @@ try {
   // 记录版本信息
   ZoteroVersionDetector.logVersionInfo();
   
-  // 仅在Zotero 8中应用ChromeUtils.import shim (Zotero 7原生支持)
-  if (ZoteroVersionDetector.isZotero8()) {
-    const chromeUtils = (globalThis as any).ChromeUtils;
-    if (chromeUtils && typeof chromeUtils.importESModule === "function") {
-      const shimmedImport = chromeUtils.import;
-      if (typeof shimmedImport !== "function" || !(shimmedImport as any).__usesESModuleShim) {
-        chromeUtils.import = ((moduleUrl: string, options?: Record<string, unknown>) => {
-          const finalOptions = options && Object.keys(options).length > 0
-            ? options
-            : { global: "contextual" };
-          return chromeUtils.importESModule(moduleUrl, finalOptions);
-        }) as typeof chromeUtils.importESModule;
-        (chromeUtils.import as any).__usesESModuleShim = true;
-        logger.log("[Index] Applied ChromeUtils.import ESModule shim for Zotero 8");
-      }
-    }
-  } else {
-    logger.log("[Index] Running on Zotero 7, using native ChromeUtils.import");
-  }
+  // ⚠️ 移除ChromeUtils.import shim - zotero-plugin-toolkit已处理兼容性
+  // 添加shim会导致Zotero 8抛出废弃警告,影响context menu等核心功能
+  logger.log("[Index] ChromeUtils shim disabled - relying on toolkit compatibility layer");
 } catch (error) {
   logger.warn("[Index] Version compatibility setup failed", error);
 }
 
-// Get correct context - in bootstrap environment, script runs in ctx where ctx._globalThis = ctx
-// We need to check if the current global context has the _globalThis self-reference
-const ctx = (() => {
-  // In bootstrap context, the current execution context should have _globalThis property
-  // that points to itself
-  if ((globalThis as any)._globalThis === globalThis) {
-    return globalThis;
-  }
-  
-  // If not found on globalThis, but we're clearly in Zotero environment,
-  // then we're still in the bootstrap context
-  if (typeof Services !== 'undefined' && typeof Zotero !== 'undefined') {
-    return globalThis;
-  }
-  
-  return globalThis;
-})();
+// ⚠️ 关键教训：无论如何尝试访问bootstrap的ctx沙盒，最终都会污染Zotero全局对象
+// 因此完全不设置任何全局addon/ztoolkit变量，强制所有代码通过Zotero.Researchopia访问
+// const ctx = ...;  // REMOVED - any attempt to set ctx.addon breaks context menu
 
 logger.log("[Index] Script loading...");
 logger.log("[Index] config.addonInstance:", config.addonInstance);
@@ -67,33 +38,23 @@ logger.log("[Index] Checking existing instance:", !!basicTool.getGlobal("Zotero"
 if (!basicTool.getGlobal("Zotero")[config.addonInstance]) {
   logger.log("[Index] Creating new addon instance...");
   
-  // Create addon instance and store it directly
+  // Create addon instance and register it
   const addonInstance = new Addon();
-  ctx.addon = addonInstance;
   
-  // Define global accessors with direct references to avoid recursion
-  defineGlobal("ztoolkit", () => {
-    return addonInstance.data.ztoolkit;
-  });
-  defineGlobal("addon", () => {
-    return addonInstance;
-  });
+  // ⚠️ 终极修复：完全不设置ctx.addon，避免污染全局对象
+  // 所有代码必须通过Zotero.Researchopia访问addon实例
+  // ctx.addon = addonInstance; // REMOVED - causes context menu to break
   
   logger.log("[Index] Setting Zotero[config.addonInstance]...");
   Zotero[config.addonInstance] = addonInstance;
   logger.log("[Index] Addon instance created and registered");
   
+  // Store logger in Zotero namespace
+  Zotero[config.addonInstance].logger = logger;
+  
+  logger.log("[Index] ✅ Addon instance registered in Zotero namespace only - no global pollution");
+  
   // Preference panes are now registered only in bootstrap.js
 } else {
   logger.log("[Index] Addon instance already exists");
-}
-
-function defineGlobal(name: Parameters<BasicTool["getGlobal"]>[0]): void;
-function defineGlobal(name: string, getter: () => any): void;
-function defineGlobal(name: string, getter?: () => any) {
-  Object.defineProperty(ctx, name, {
-    get() {
-      return getter ? getter() : basicTool.getGlobal(name);
-    },
-  });
 }

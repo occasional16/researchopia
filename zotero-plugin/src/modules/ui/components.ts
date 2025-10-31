@@ -2,6 +2,7 @@ import { AuthManager } from "../auth";
 import { envConfig } from "../../config/env";
 import type { ViewMode } from "./types";
 import { containerPadding } from "./styles";
+import { logger } from "../../utils/logger";
 
 /**
  * UI组件创建工具函数
@@ -125,6 +126,7 @@ async function updateUserInfoBarContent(bar: HTMLElement, doc: Document): Promis
   `;
 
   const isLoggedIn = await AuthManager.isLoggedIn();
+  logger.log("[Components] 🔍 updateUserInfoBarContent: isLoggedIn=", isLoggedIn);
 
   if (isLoggedIn) {
     const currentUser = AuthManager.getCurrentUser();
@@ -198,30 +200,40 @@ export async function createUserInfoBar(doc: Document): Promise<HTMLElement> {
   // 初始化内容
   await updateUserInfoBarContent(bar, doc);
   
-  // 监听登出和登录事件,自动更新UI
+  // 定义事件处理器
+  const handleLogout = async () => {
+    logger.log("[Components] 📢 Received logout event, updating user info bar");
+    // 延迟一点以确保prefs已清除
+    setTimeout(async () => {
+      await updateUserInfoBarContent(bar, doc);
+    }, 100);
+  };
+  
+  const handleLogin = async () => {
+    logger.log("[Components] 📢 Received login event, updating user info bar");
+    // 延迟一点以确保session已保存
+    setTimeout(async () => {
+      await updateUserInfoBarContent(bar, doc);
+    }, 100);
+  };
+  
+  // 在当前document上监听事件(ItemPane所在的document)
+  doc.addEventListener('researchopia:logout', handleLogout);
+  doc.addEventListener('researchopia:login', handleLogin);
+  
+  // 同时也在主窗口上监听事件(兼容性)
   const win = (Zotero as any).getMainWindow();
-  if (win) {
-    const handleLogout = async () => {
-      // 延迟一点以确保prefs已清除
-      setTimeout(async () => {
-        await updateUserInfoBarContent(bar, doc);
-      }, 100);
-    };
-    
-    const handleLogin = async () => {
-      // 延迟一点以确保session已保存
-      setTimeout(async () => {
-        await updateUserInfoBarContent(bar, doc);
-      }, 100);
-    };
-    
+  if (win && win.document !== doc) {
     win.document.addEventListener('researchopia:logout', handleLogout);
     win.document.addEventListener('researchopia:login', handleLogin);
-    
-    // 保存清理函数以便后续使用
-    (bar as any)._logoutHandler = handleLogout;
-    (bar as any)._loginHandler = handleLogin;
+    logger.log("[Components] ✅ Registered event listeners on both ItemPane document and main window");
+  } else {
+    logger.log("[Components] ✅ Registered event listeners on current document");
   }
+  
+  // 保存清理函数以便后续使用
+  (bar as any)._logoutHandler = handleLogout;
+  (bar as any)._loginHandler = handleLogin;
   
   return bar;
 }

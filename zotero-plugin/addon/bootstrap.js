@@ -53,6 +53,7 @@ async function startup({ id, version, resourceURI, rootURI }, reason) {
       const paneConfig = {
         pluginID: "researchopia@zotero.plugin",
         src: rootURI + "content/preferences.xhtml",
+        // Load the preferences.js script which will call registerPrefsScripts
         scripts: [rootURI + "content/preferences.js"],
         stylesheets: [rootURI + "content/preferences.css"]
       };

@@ -17,15 +17,15 @@ interface EnvironmentConfig {
 }
 
 const defaultConfig: EnvironmentConfig = {
-  isDevelopment: true,
-  isProduction: false,
-  logLevel: 'debug',
-  // 🔧 本地开发使用localhost，生产环境使用vercel
-  apiBaseUrl: 'http://localhost:3000',
+  isDevelopment: false,
+  isProduction: true,
+  logLevel: 'warn',
+  // 默认使用生产环境,用户勾选"使用开发环境API"时才切换到localhost
+  apiBaseUrl: 'https://www.researchopia.com',
   supabaseUrl: 'https://obcblvdtqhwrihoddlez.supabase.co',
   supabaseAnonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9iY2JsdmR0cWh3cmlob2RkbGV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0OTgyMzUsImV4cCI6MjA3MzA3NDIzNX0.0kYlpFuK5WrKvUhIj7RO4-XJgv1sm39FROD_mBtxYm4',
-  enablePerformanceMonitoring: true,
-  enableDetailedLogging: true,
+  enablePerformanceMonitoring: false,
+  enableDetailedLogging: false,
   maxCacheSize: 100,
   maxErrorLogSize: 1000
 };
@@ -75,6 +75,7 @@ const createDynamicConfig = (): EnvironmentConfig => {
       try {
         if (typeof Zotero !== 'undefined' && Zotero.Prefs) {
           const customApiUrl = Zotero.Prefs.get('extensions.researchopia.apiBaseUrl', true);
+          // 只有当用户明确设置为开发环境时才使用localhost
           if (customApiUrl && typeof customApiUrl === 'string') {
             return customApiUrl;
           }
@@ -82,8 +83,8 @@ const createDynamicConfig = (): EnvironmentConfig => {
       } catch (e) {
         // 忽略错误
       }
-      // 回退到默认值: 生产环境用正式域名,开发环境用localhost
-      return env === 'production' ? 'https://www.researchopia.com' : 'http://localhost:3000';
+      // 默认始终使用生产环境
+      return 'https://www.researchopia.com';
     },
     get supabaseUrl() { return defaultConfig.supabaseUrl; },
     get supabaseAnonKey() { return defaultConfig.supabaseAnonKey; },

@@ -2,6 +2,7 @@ import { AuthManager } from "../auth";
 import { highlightText, matchesSearch, createSearchBox, createToggleSwitch } from "./helpers";
 import type { BaseViewContext } from "./types";
 import { containerPadding } from "./styles";
+import { ServicesAdapter } from '../../adapters';
 
 export class MyAnnotationsView {
   private cachedAnnotations: any[] | null = null;
@@ -507,9 +508,7 @@ export class MyAnnotationsView {
             "此操作不可撤销,是否继续?"
           ].join("\n");
 
-          const Services = (globalThis as any).Services || (globalThis as any).Components.utils.import("resource://gre/modules/Services.jsm").Services;
-          const confirmed = Services.prompt.confirm(
-            null,
+          const confirmed = ServicesAdapter.confirm(
             "确认取消共享",
             confirmMessage
           );
@@ -605,9 +604,7 @@ export class MyAnnotationsView {
             "此操作不可撤销,是否继续?"
           ].join("\n");
 
-          const Services = (globalThis as any).Services || (globalThis as any).Components.utils.import("resource://gre/modules/Services.jsm").Services;
-          const confirmed = Services.prompt.confirm(
-            null,
+          const confirmed = ServicesAdapter.confirm(
             "确认取消共享",
             confirmMessage
           );

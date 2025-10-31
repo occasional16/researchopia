@@ -1,4 +1,4 @@
-import { config } from "../../package.json";
+import { config, version as packageVersion } from "../../package.json";
 import { getString } from "../utils/locale";
 import { AuthManager } from "./auth";
 import { getPref, setPref } from "../utils/prefs";
@@ -33,7 +33,7 @@ export async function registerPrefsScripts(_window: Window) {
   } else {
     addon.data.prefs.window = _window;
   }
-  updatePrefsUI();
+  await updatePrefsUI();
   bindPrefEvents();
 }
 
@@ -48,9 +48,36 @@ async function updatePrefsUI() {
 
   const doc = addon.data.prefs.window.document;
   
+  logger.log("[Researchopia] 🔧 Updating version display...");
+  // Update version display from package.json
+  updateVersionDisplay(doc);
+  
   logger.log("[Researchopia] 🔧 Updating login status...");
   // Update login status display
   await updateLoginStatus(doc);
+}
+
+function updateVersionDisplay(doc: Document) {
+  // Use version imported from package.json at build time
+  const version = packageVersion;
+  
+  // Update title header
+  const titleHeader = doc.getElementById("researchopia-title-header");
+  if (titleHeader) {
+    titleHeader.textContent = `🔬 研学港 Researchopia v${version}`;
+    logger.log(`[Researchopia] Title header updated: v${version}`);
+  } else {
+    logger.warn("[Researchopia] Title header element not found");
+  }
+  
+  // Update about section version
+  const versionSpan = doc.getElementById("researchopia-version");
+  if (versionSpan) {
+    versionSpan.textContent = version;
+    logger.log(`[Researchopia] Version span updated: ${version}`);
+  } else {
+    logger.warn("[Researchopia] Version span element not found");
+  }
 }
 
 async function updateLoginStatus(doc: Document) {

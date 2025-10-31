@@ -6,6 +6,7 @@
 import { colors, spacing, fontSize, borderRadius, cardStyle } from './styles';
 import type { ReadingSession } from '../readingSessionManager';
 import { formatDate } from './helpers';
+import { ServicesAdapter } from '../../adapters';
 
 /**
  * 创建会话卡片（通用版本）
@@ -346,10 +347,8 @@ export function createSessionCard(
     deleteButton.addEventListener('click', (e) => {
       e.stopPropagation();
       
-      // 使用Zotero原生确认对话框
-      const Services = (Zotero as any).getMainWindow().Services;
-      const confirmed = Services.prompt.confirm(
-        null,
+      // 使用Services适配器确认对话框
+      const confirmed = ServicesAdapter.confirm(
         '⚠️ 确认删除',
         `确定要删除会话"${session.paper_title}"吗?\n\n此操作不可恢复!`
       );

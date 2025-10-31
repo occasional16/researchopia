@@ -8,6 +8,7 @@ import type { ReadingSessionManager, ReadingSession } from '../readingSessionMan
 import { createButton, createBackButton, createLoadingState, createEmptyState, createErrorState } from './uiHelpers';
 import { createSessionCard } from './sessionCard';
 import { colors, spacing, containerPadding } from './styles';
+import { ServicesAdapter } from '../../adapters';
 
 export class SessionListView {
   constructor(
@@ -281,7 +282,7 @@ export class SessionListView {
             } catch (error) {
               logger.error('[SessionListView] Error deleting session:', error);
               const errorMsg = error instanceof Error ? error.message : String(error);
-              Services.prompt.confirm(null, '删除失败', errorMsg);
+              ServicesAdapter.confirm('删除失败', errorMsg);
             }
           },
         });

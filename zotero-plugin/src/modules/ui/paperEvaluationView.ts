@@ -4,6 +4,7 @@ import { resolveCommentDisplayInfo, createToggleSwitch } from "./helpers";
 import { UserHoverCardManager } from "./userHoverCard";
 import type { BaseViewContext, PaperInfo } from "./types";
 import { containerPadding } from "./styles";
+import { ServicesAdapter } from '../../adapters';
 
 /**
  * 论文评价视图
@@ -703,9 +704,7 @@ export class PaperEvaluationView {
         box-sizing: border-box;
       `;
       deleteBtn.addEventListener('click', async () => {
-        const Services = (Zotero as any).getMainWindow().Services;
-        const confirmed = Services.prompt.confirm(
-          null,
+        const confirmed = ServicesAdapter.confirm(
           '确认删除',
           '确定要删除这条评论吗? 所有回复也会被删除。'
         );

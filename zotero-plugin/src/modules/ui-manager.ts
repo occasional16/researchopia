@@ -6,6 +6,7 @@
 
 import { logger } from "../utils/logger";
 import { envConfig } from "../config/env";
+import { config, version as packageVersion } from "../../package.json";
 import { AuthManager } from "./auth";
 import { SupabaseManager } from "./supabase";
 import { MyAnnotationsView } from "./ui/myAnnotationsView";
@@ -320,7 +321,7 @@ export class UIManager {
                 nameSpan.textContent = '研学港 Researchopia';
                 titleSpan.appendChild(nameSpan);
                 
-                // 版本号(紧跟插件名)
+                // 版本号(紧跟插件名,从package.json自动获取)
                 const versionSpan = doc.createElement('span');
                 versionSpan.className = 'researchopia-version';
                 versionSpan.style.cssText = `
@@ -329,7 +330,7 @@ export class UIManager {
                   font-weight: 600;
                   margin-left: 4px;
                 `;
-                versionSpan.textContent = 'v0.2.0';
+                versionSpan.textContent = `v${packageVersion}`;
                 titleSpan.appendChild(versionSpan);
 
                 // 官网按钮添加到head右侧 - 在twisty按钮之前

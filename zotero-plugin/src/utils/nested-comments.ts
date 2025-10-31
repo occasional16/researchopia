@@ -3,6 +3,8 @@
  * 用于 ui-manager.ts
  */
 
+import { ServicesAdapter } from '../adapters';
+
 /**
  * 递归渲染评论节点(支持嵌套)
  * @param comment 评论节点(包含children)
@@ -124,9 +126,7 @@ export function renderCommentNode(
       font-size: 11px;
     `;
     deleteBtn.addEventListener('click', async () => {
-      const Services = (Zotero as any).getMainWindow().Services;
-      const confirmed = Services.prompt.confirm(
-        null,
+      const confirmed = ServicesAdapter.confirm(
         '确认删除',
         replyCount > 0 
           ? `此评论有 ${replyCount} 条回复,删除后回复也会被删除。确定继续？`

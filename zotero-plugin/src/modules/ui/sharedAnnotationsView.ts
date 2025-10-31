@@ -13,6 +13,7 @@ import { logger } from "../../utils/logger";
 import { UserHoverCardManager } from "./userHoverCard";
 import { containerPadding } from "./styles";
 import { deduplicateAnnotations, createBatchDisplayToolbar, type BatchDisplayFilter as UtilBatchDisplayFilter } from "./annotationUtils";
+import { ServicesAdapter } from '../../adapters';
 
 export class SharedAnnotationsView {
   private cachedSharedAnnotations: any[] | null = null;
@@ -994,12 +995,11 @@ export class SharedAnnotationsView {
         font-size: 11px;
       `;
       deleteBtn.addEventListener("click", async () => {
-        const Services = (Zotero as any).getMainWindow().Services;
         const message = replyCount > 0
           ? `此评论有 ${replyCount} 条回复,删除后回复也会被删除。确定继续？`
           : "确定要删除这条评论吗?";
 
-        const confirmed = Services.prompt.confirm(null, "确认删除", message);
+        const confirmed = ServicesAdapter.confirm("确认删除", message);
 
         if (confirmed) {
           try {

@@ -11,24 +11,34 @@ const basicTool = new BasicTool();
 // 设置全局logger，让其他模块也可以使用
 (globalThis as any).logger = logger;
 
-// 在Zotero 8环境中，ChromeUtils.import已经被移除，提供兼容层
+// 版本兼容性处理
+import { ZoteroVersionDetector } from './utils/version-detector';
+
 try {
-  const chromeUtils = (globalThis as any).ChromeUtils;
-  if (chromeUtils && typeof chromeUtils.importESModule === "function") {
-    const shimmedImport = chromeUtils.import;
-    if (typeof shimmedImport !== "function" || !(shimmedImport as any).__usesESModuleShim) {
-      chromeUtils.import = ((moduleUrl: string, options?: Record<string, unknown>) => {
-        const finalOptions = options && Object.keys(options).length > 0
-          ? options
-          : { global: "contextual" };
-        return chromeUtils.importESModule(moduleUrl, finalOptions);
-      }) as typeof chromeUtils.importESModule;
-      (chromeUtils.import as any).__usesESModuleShim = true;
-      logger.log("[Index] Applied ChromeUtils.import ESModule shim");
+  // 记录版本信息
+  ZoteroVersionDetector.logVersionInfo();
+  
+  // 仅在Zotero 8中应用ChromeUtils.import shim (Zotero 7原生支持)
+  if (ZoteroVersionDetector.isZotero8()) {
+    const chromeUtils = (globalThis as any).ChromeUtils;
+    if (chromeUtils && typeof chromeUtils.importESModule === "function") {
+      const shimmedImport = chromeUtils.import;
+      if (typeof shimmedImport !== "function" || !(shimmedImport as any).__usesESModuleShim) {
+        chromeUtils.import = ((moduleUrl: string, options?: Record<string, unknown>) => {
+          const finalOptions = options && Object.keys(options).length > 0
+            ? options
+            : { global: "contextual" };
+          return chromeUtils.importESModule(moduleUrl, finalOptions);
+        }) as typeof chromeUtils.importESModule;
+        (chromeUtils.import as any).__usesESModuleShim = true;
+        logger.log("[Index] Applied ChromeUtils.import ESModule shim for Zotero 8");
+      }
     }
+  } else {
+    logger.log("[Index] Running on Zotero 7, using native ChromeUtils.import");
   }
 } catch (error) {
-  logger.warn("[Index] Failed to patch ChromeUtils.import", error);
+  logger.warn("[Index] Version compatibility setup failed", error);
 }
 
 // Get correct context - in bootstrap environment, script runs in ctx where ctx._globalThis = ctx

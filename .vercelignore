@@ -1,5 +1,80 @@
+# Environment and sensitive files
 .env*
-.git
-node_modules
-.next
+.env.local
+.env.*.local
+
+# Git
+.git/
+.gitignore
+
+# Dependencies
+node_modules/
+
+# Build outputs
+.next/
+.scaffold/
+out/
+build/
+dist/
+
+# Logs
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Browser extension (Chrome/Edge/Firefox)
+extension/
+
+# Zotero plugin
+zotero-plugin/
+
+# Documentation
+docs/
+doc/
+*.md
+README.md
+LICENSE
+
+# Debug files
+Debug/
+debug/
+
+# Supabase (configuration only, not deployed)
+supabase/
+.supabase/
+
+# IDE and editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Testing
+*.test.ts
+*.test.tsx
+*.test.js
+*.test.jsx
+*.spec.ts
+*.spec.tsx
+*.spec.js
+*.spec.jsx
+__tests__/
+coverage/
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# TypeScript
+*.tsbuildinfo
+
+# Misc
+.vercel/

@@ -6,6 +6,9 @@ if (typeof Zotero !== 'undefined' && Zotero.debug) {
   Zotero.debug("[Researchopia] Preferences.js loaded");
 }
 
+// Version placeholder - will be replaced during build
+const RESEARCHOPIA_VERSION = '__buildVersion__';
+
 // Supabase configuration
 const SUPABASE_URL = 'https://obcblvdtqhwrihoddlez.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9iY2JsdmR0cWh3cmlob2RkbGV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0OTgyMzUsImV4cCI6MjA3MzA3NDIzNX0.0kYlpFuK5WrKvUhIj7RO4-XJgv1sm39FROD_mBtxYm4';
@@ -1035,6 +1038,31 @@ ensureEnvironmentFunctionsGlobal();
 
 // ============= 初始化 =============
 
+// 更新版本号显示
+function updateVersionDisplay() {
+  try {
+    // Update title header
+    const titleHeader = document.getElementById("researchopia-title-header");
+    if (titleHeader) {
+      titleHeader.textContent = `🔬 研学港 Researchopia v${RESEARCHOPIA_VERSION}`;
+      debugLog(`[Researchopia] Title header updated: v${RESEARCHOPIA_VERSION}`);
+    } else {
+      debugLog("[Researchopia] Title header element not found");
+    }
+    
+    // Update about section version
+    const versionSpan = document.getElementById("researchopia-version");
+    if (versionSpan) {
+      versionSpan.textContent = RESEARCHOPIA_VERSION;
+      debugLog(`[Researchopia] Version span updated: ${RESEARCHOPIA_VERSION}`);
+    } else {
+      debugLog("[Researchopia] Version span element not found");
+    }
+  } catch (error) {
+    debugLog("[Researchopia] Error updating version display:", error);
+  }
+}
+
 // 延迟检查登录状态
 setTimeout(() => researchopiaPrefs.checkLoginState(), 500);
 
@@ -1043,6 +1071,9 @@ setTimeout(() => {
   initializeEnvironmentSwitcher();
   initExperimentalFeatures();
 }, 600);
+
+// 延迟更新版本号显示
+setTimeout(() => updateVersionDisplay(), 100);
 
 debugLog("[Researchopia] Preferences script initialization complete");
 debugLog("[Researchopia] Function types:", {

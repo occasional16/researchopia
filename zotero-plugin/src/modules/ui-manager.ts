@@ -285,7 +285,7 @@ export class UIManager {
     // 注册section
     ItemPaneManager.registerSection({
       paneID: this.panelId,
-      pluginID: "researchopia@occasional15.com",
+      pluginID: "researchopia@occasional16.com",
       header: {
         l10nID: "researchopia-section-header",
         icon: "chrome://researchopia/content/icons/icon20.svg"

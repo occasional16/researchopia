@@ -4,6 +4,9 @@ import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
 
+// 🔥 优化: 通知可以短时缓存60秒
+export const revalidate = 60;
+
 /**
  * GET /api/notifications
  * 获取当前用户的通知列表

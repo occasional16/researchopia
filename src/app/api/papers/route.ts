@@ -3,6 +3,9 @@ import { supabase } from '@/lib/supabase'
 import { MockAuthService } from '@/lib/mockAuth'
 import { getPapers } from '@/lib/database'
 
+// 🔥 优化: Vercel边缘缓存10分钟
+export const revalidate = 600;
+
 // 缓存配置
 const CACHE_DURATION = 5 * 60 * 1000 // 5分钟缓存
 let cachedPapers: any = null

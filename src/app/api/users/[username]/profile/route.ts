@@ -4,6 +4,9 @@ import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
 
+// 🔥 优化: 用户资料缓存5分钟 - 个人信息不频繁更新
+export const revalidate = 300;
+
 // GET /api/users/[username]/profile - 获取用户资料
 export async function GET(
   request: NextRequest,

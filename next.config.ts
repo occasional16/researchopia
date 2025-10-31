@@ -38,8 +38,14 @@ const nextConfig: NextConfig = {
       ]
     },
 
-    optimizePackageImports: ['lucide-react']
+    optimizePackageImports: ['lucide-react'],
+    
+    // 🔥 优化: 完全关闭 Speed Insights 以减少数据点消耗
+    // webVitalsAttribution: ['CLS', 'FCP', 'FID', 'INP', 'LCP', 'TTFB'], // 已禁用
   },
+  
+  // 🔥 优化: 关闭 Analytics (如果不需要详细分析)
+  // analyticId: undefined, // 取消注释以完全禁用
 
   // 头部配置
   async headers() {

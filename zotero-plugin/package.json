@@ -12,13 +12,13 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/occasional15/researchopia.git"
+    "url": "git+https://github.com/occasional16/researchopia.git"
   },
   "author": "Researchopia",
   "bugs": {
-    "url": "https://github.com/occasional15/researchopia/issues"
+    "url": "https://github.com/occasional16/researchopia/issues"
   },
-  "homepage": "https://github.com/occasional15/researchopia#readme",
+  "homepage": "https://github.com/occasional16/researchopia#readme",
   "license": "AGPL-3.0-or-later",
   "scripts": {
     "start": "zotero-plugin serve",

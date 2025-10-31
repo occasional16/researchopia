@@ -1,7 +1,7 @@
 {
   "name": "researchopia",
   "type": "module",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "An open academic community. Academic annotation sharing and collaboration for Zotero",
   "config": {
     "addonName": "研学港 Researchopia",
@@ -22,16 +22,17 @@
   "license": "AGPL-3.0-or-later",
   "scripts": {
     "start": "zotero-plugin serve",
-    "build": "zotero-plugin build && tsc --noEmit",
+    "build": "cross-env NODE_ENV=production zotero-plugin build && tsc --noEmit",
+    "build:dev": "zotero-plugin build && tsc --noEmit",
     "lint:check": "prettier --check . && eslint .",
     "lint:fix": "prettier --write . && eslint . --fix",
-    "release": "zotero-plugin release",
+    "release": "cross-env NODE_ENV=production zotero-plugin release",
     "test": "zotero-plugin test",
     "update-deps": "npm update --save"
   },
   "dependencies": {
-    "zotero-plugin-toolkit": "^5.1.0-beta.9",
-    "@supabase/supabase-js": "^2.58.0"
+    "@supabase/supabase-js": "^2.58.0",
+    "zotero-plugin-toolkit": "^5.1.0-beta.9"
   },
   "devDependencies": {
     "@types/chai": "^5.2.2",
@@ -39,6 +40,7 @@
     "@types/node": "^24.5.2",
     "@zotero-plugin/eslint-config": "^0.6.7",
     "chai": "^5.3.3",
+    "cross-env": "^10.1.0",
     "eslint": "^9.36.0",
     "mocha": "^11.7.2",
     "prettier": "^3.6.2",

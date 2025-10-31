@@ -9,7 +9,6 @@
 
 # dev
 /Debug/*
-/docs/*
 zotero-plugin/docs/*
 
 # dependencies
@@ -47,7 +46,7 @@ yarn-error.log*
 .env*.local
 
 # Supabase
-/supabase/*
+supabase/*
 
 # vercel
 .vercel

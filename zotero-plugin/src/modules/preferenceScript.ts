@@ -7,20 +7,26 @@ import { logger } from "../utils/logger";
 export async function registerPrefsScripts(_window: Window) {
   try {
     logger.log("[Researchopia] 🔧 registerPrefsScripts called with window:", !!_window);
+    logger.log("[Researchopia] 🔍 Window readyState:", _window.document.readyState);
     
     // Get addon safely
     const addon = (globalThis as any).addon || (globalThis as any).Zotero?.Researchopia;
     
     if (!addon) {
       logger.error("[Researchopia] ❌ Addon not available");
-      console.warn("[PreferenceScript] Addon not available");
       return;
     }
     
     logger.log("[Researchopia] ✅ Addon found, setting up preferences...");
   } catch (error) {
     logger.error("[Researchopia] ❌ registerPrefsScripts error:", error);
-    console.error("[PreferenceScript] Error:", error);
+    return;
+  }
+  
+  // Get addon from Zotero namespace
+  const addon = (globalThis as any).Zotero?.Researchopia;
+  if (!addon) {
+    logger.error("[Researchopia] ❌ Addon not found in Zotero namespace");
     return;
   }
   
@@ -33,8 +39,30 @@ export async function registerPrefsScripts(_window: Window) {
   } else {
     addon.data.prefs.window = _window;
   }
-  await updatePrefsUI();
-  bindPrefEvents();
+  
+  // Wait for DOM elements to be available
+  // In Zotero 8, preferences pane content might not be immediately available
+  const doc = _window.document;
+  let retries = 0;
+  const maxRetries = 50;
+  
+  logger.log("[Researchopia] 🔍 Waiting for login-form-section element...");
+  
+  while (!doc.getElementById('login-form-section') && retries < maxRetries) {
+    await new Promise(resolve => setTimeout(resolve, 100));
+    retries++;
+    if (retries % 10 === 0) {
+      logger.log(`[Researchopia] ⏳ Retry ${retries}/${maxRetries}...`);
+    }
+  }
+  
+  if (doc.getElementById('login-form-section')) {
+    logger.log("[Researchopia] ✅ DOM elements ready after", retries * 100, "ms");
+    await updatePrefsUI();
+    bindPrefEvents();
+  } else {
+    logger.error("[Researchopia] ❌ Timeout waiting for DOM elements");
+  }
 }
 
 async function updatePrefsUI() {
@@ -85,7 +113,7 @@ async function updateLoginStatus(doc: Document) {
   const loggedInSection = doc.getElementById("logged-in-section");
   
   if (!loginFormSection || !loggedInSection) {
-    console.error("[Researchopia] Could not find login form or logged-in sections");
+    logger.error("Could not find login form or logged-in sections");
     return;
   }
 
@@ -101,7 +129,7 @@ async function updateLoginStatus(doc: Document) {
     const userEmailDisplay = doc.getElementById("user-email-display");
     const loginTimeDisplay = doc.getElementById("login-time-display");
     
-    if (userNameDisplay) userNameDisplay.textContent = user?.email?.split('@')[0] || '未知用户';
+    if (userNameDisplay) userNameDisplay.textContent = user?.username || user?.email?.split('@')[0] || '未知用户';
     if (userEmailDisplay) userEmailDisplay.textContent = user?.email || '未知邮箱';
     if (loginTimeDisplay) loginTimeDisplay.textContent = formattedTime;
     
@@ -154,27 +182,37 @@ function bindLoggedInEvents(doc: Document) {
   // Add logout event listener
   const logoutBtn = doc.getElementById("logout-btn");
   logoutBtn?.addEventListener("click", async () => {
-    if (confirm("确定要退出登录吗？这将清除已保存的账号密码。")) {
-      setButtonLoading(logoutBtn, true);
-      try {
-        await AuthManager.signOut();
-        // 清除保存的凭证
+    setButtonLoading(logoutBtn, true);
+    try {
+      await AuthManager.signOut();
+      
+      // 检查是否勾选了"记住密码"
+      const rememberCredentials = getPref("rememberCredentials") as boolean;
+      
+      // 只有在未勾选"记住密码"时才清除凭证和输入框
+      if (!rememberCredentials) {
         clearSavedCredentials();
-        updateLoginStatus(doc);
-        const statusMessage = doc.getElementById("status-message");
-        if (statusMessage) {
-          statusMessage.textContent = "✅ 已成功退出登录";
-          statusMessage.className = "message success";
-        }
-      } catch (error) {
-        const statusMessage = doc.getElementById("status-message");
-        if (statusMessage) {
-          statusMessage.textContent = "退出登录时发生错误";
-          statusMessage.className = "message error";
-        }
-      } finally {
-        setButtonLoading(logoutBtn, false);
+        // 清空输入框
+        const emailInput = doc.getElementById("email-input") as HTMLInputElement;
+        const passwordInput = doc.getElementById("password-input") as HTMLInputElement;
+        if (emailInput) emailInput.value = '';
+        if (passwordInput) passwordInput.value = '';
       }
+      
+      updateLoginStatus(doc);
+      const statusMessage = doc.getElementById("status-message");
+      if (statusMessage) {
+        statusMessage.textContent = "✅ 已成功退出登录";
+        statusMessage.className = "message success";
+      }
+    } catch (error) {
+      const statusMessage = doc.getElementById("status-message");
+      if (statusMessage) {
+        statusMessage.textContent = "退出登录时发生错误";
+        statusMessage.className = "message error";
+      }
+    } finally {
+      setButtonLoading(logoutBtn, false);
     }
   });
 
@@ -208,6 +246,8 @@ function bindLoggedInEvents(doc: Document) {
 
 function bindLoginFormEvents(doc: Document) {
   logger.log("[Researchopia] 🔧 bindLoginFormEvents called");
+  logger.log("[Researchopia] 🔍 Document URL:", doc.URL);
+  logger.log("[Researchopia] 🔍 Document has getElementById:", typeof doc.getElementById);
   
   // 加载保存的账号密码
   loadSavedCredentials(doc);
@@ -216,6 +256,13 @@ function bindLoginFormEvents(doc: Document) {
   const loginBtn = doc.getElementById("login-btn");
   const signupBtn = doc.getElementById("signup-btn");
   const forgotPasswordLink = doc.getElementById("forgot-password");
+  
+  // Try querySelector as fallback
+  if (!loginBtn) {
+    logger.warn("[Researchopia] 🔍 Trying querySelector for #login-btn");
+    const qsLoginBtn = doc.querySelector("#login-btn");
+    logger.log("[Researchopia] 🔍 querySelector result:", !!qsLoginBtn);
+  }
 
   logger.log("[Researchopia] 🔧 Found buttons:", {
     login: !!loginBtn,
@@ -237,6 +284,9 @@ function bindLoginFormEvents(doc: Document) {
       showMessage(doc, "请输入有效的邮箱地址", "error");
       return;
     }
+    
+    // No need to pre-check development environment - let the login request fail naturally if server is down
+    // The API client will show appropriate error messages
 
     setButtonLoading(loginBtn, true);
     showMessage(doc, "正在登录...", "info");
@@ -264,8 +314,8 @@ function bindLoginFormEvents(doc: Document) {
         showMessage(doc, `❌ ${errorMsg}`, "error");
       }
     } catch (error) {
-      console.error("[Researchopia] Login error:", error);
-      showMessage(doc, "❌ 网络连接错误，请检查网络设置后重试", "error");
+      logger.error("Login error:", error);
+      showMessage(doc, "❌ 网络连接错误,请检查网络设置后重试", "error");
     } finally {
       setButtonLoading(loginBtn, false);
     }
@@ -305,8 +355,8 @@ function bindLoginFormEvents(doc: Document) {
         showMessage(doc, `❌ ${errorMsg}`, "error");
       }
     } catch (error) {
-      console.error("[Researchopia] Signup error:", error);
-      showMessage(doc, "❌ 网络连接错误，请检查网络设置后重试", "error");
+      logger.error("Signup error:", error);
+      showMessage(doc, "❌ 网络连接错误,请检查网络设置后重试", "error");
     } finally {
       setButtonLoading(signupBtn, false);
     }
@@ -345,6 +395,108 @@ function bindPrefEvents() {
       const checked = (e.target as HTMLInputElement).checked;
       setPref("showNotifications", checked);
     });
+  }
+
+  // Development environment API checkbox
+  const useDevEnvCheckbox = doc.querySelector("#use-dev-environment") as HTMLInputElement;
+  if (useDevEnvCheckbox) {
+    // Load current setting from prefs
+    const currentApiUrl = (Zotero as any).Prefs.get('extensions.researchopia.apiBaseUrl', true) as string;
+    useDevEnvCheckbox.checked = currentApiUrl === 'http://localhost:3000';
+    
+    logger.log("[Researchopia] 🔧 Development API checkbox initialized, checked:", useDevEnvCheckbox.checked);
+    
+    useDevEnvCheckbox.addEventListener("change", (e) => {
+      const checked = (e.target as HTMLInputElement).checked;
+      
+      if (checked) {
+        // Switch to development environment
+        (Zotero as any).Prefs.set('extensions.researchopia.apiBaseUrl', 'http://localhost:3000', true);
+        showMessage(doc, "✅ 已切换到开发环境 API (localhost:3000)", "success");
+        logger.log("[Researchopia] 🔧 Switched to development API: http://localhost:3000");
+      } else {
+        // Clear preference to use production environment
+        (Zotero as any).Prefs.clear('extensions.researchopia.apiBaseUrl', true);
+        showMessage(doc, "✅ 已切换回生产环境 API (researchopia.com)", "success");
+        logger.log("[Researchopia] 🔧 Switched to production API");
+      }
+      
+      // Remind user that they may need to re-login
+      setTimeout(() => {
+        showMessage(doc, "💡 提示: 切换环境后可能需要重新登录", "info");
+      }, 2000);
+    });
+  }
+
+  // Enable experimental features checkbox
+  const experimentalFeaturesCheckbox = doc.querySelector("#enable-experimental-features") as HTMLInputElement;
+  if (experimentalFeaturesCheckbox) {
+    experimentalFeaturesCheckbox.checked = getPref("enableExperimentalFeatures") as boolean || false;
+    experimentalFeaturesCheckbox.addEventListener("change", (e) => {
+      const checked = (e.target as HTMLInputElement).checked;
+      setPref("enableExperimentalFeatures", checked);
+      showMessage(doc, checked ? "✅ 已启用实验性功能" : "✅ 已关闭实验性功能", "success");
+    });
+  }
+
+  // Custom API URL input
+  const customApiUrlInput = doc.querySelector("#custom-api-url") as HTMLInputElement;
+  if (customApiUrlInput) {
+    const currentApiUrl = (Zotero as any).Prefs.get('extensions.researchopia.apiBaseUrl', true) as string;
+    // Only show custom URL if it's not the default or localhost
+    if (currentApiUrl && currentApiUrl !== 'http://localhost:3000') {
+      customApiUrlInput.value = currentApiUrl;
+    }
+    
+    customApiUrlInput.addEventListener("change", (e) => {
+      const url = (e.target as HTMLInputElement).value.trim();
+      if (url) {
+        try {
+          // Validate URL format
+          new URL(url);
+          (Zotero as any).Prefs.set('extensions.researchopia.apiBaseUrl', url, true);
+          showMessage(doc, "✅ 自定义 API 地址已保存", "success");
+          updateCurrentApiDisplay(doc);
+        } catch (error) {
+          showMessage(doc, "❌ 无效的 URL 格式", "error");
+          (e.target as HTMLInputElement).value = currentApiUrl || '';
+        }
+      }
+    });
+  }
+
+  // Display current API URL
+  updateCurrentApiDisplay(doc);
+
+  // Reset API URL button
+  const resetApiUrlBtn = doc.querySelector("#reset-api-url-btn") as HTMLButtonElement;
+  if (resetApiUrlBtn) {
+    resetApiUrlBtn.addEventListener("click", () => {
+      // Clear custom API URL preference
+      (Zotero as any).Prefs.clear('extensions.researchopia.apiBaseUrl', true);
+      
+      // Also uncheck the development checkbox if it's checked
+      if (useDevEnvCheckbox) {
+        useDevEnvCheckbox.checked = false;
+      }
+      
+      // Clear custom API input
+      if (customApiUrlInput) {
+        customApiUrlInput.value = '';
+      }
+      
+      showMessage(doc, "✅ API URL 已重置为默认值", "success");
+      logger.log("[Researchopia] 🔧 API URL reset to default");
+      updateCurrentApiDisplay(doc);
+    });
+  }
+}
+
+function updateCurrentApiDisplay(doc: Document) {
+  const currentApiDisplay = doc.getElementById("current-api-display");
+  if (currentApiDisplay) {
+    const currentApiUrl = (Zotero as any).Prefs.get('extensions.researchopia.apiBaseUrl', true) as string;
+    currentApiDisplay.textContent = currentApiUrl ? `当前: ${currentApiUrl}` : '当前: https://www.researchopia.com (默认)';
   }
 }
 

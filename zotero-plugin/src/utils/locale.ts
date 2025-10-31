@@ -1,6 +1,9 @@
 import { config } from "../../package.json";
 
 export function initLocale() {
+  const addon = (Zotero as any)[config.addonInstance];
+  if (!addon) return;
+  
   addon.data.locale = {
     current: Zotero.locale,
   };
@@ -10,7 +13,8 @@ export function getString(
   key: string,
   ...args: Array<string | number>
 ): string {
-  if (!addon.data.locale?.current) {
+  const addon = (Zotero as any)[config.addonInstance];
+  if (!addon?.data.locale?.current) {
     return key;
   }
   const stringBundle = Services.strings.createBundle(

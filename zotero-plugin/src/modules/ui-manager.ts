@@ -107,7 +107,7 @@ export class UIManager {
    */
   private isExperimentalFeatureEnabled(): boolean {
     try {
-      return Zotero.Prefs.get('extensions.researchopia.enableExperimentalFeatures', false) === true;
+      return Zotero.Prefs.get('extensions.zotero.researchopia.enableExperimentalFeatures', true) === true;
     } catch (error) {
       logger.error("[UIManager] Error checking experimental feature flag:", error);
       return false;
@@ -155,6 +155,7 @@ export class UIManager {
       }
 
       // 注册自定义item pane section
+      // ✅ FIX CONFIRMED: ItemPane registration is SAFE, FTL insertion is the problem
       this.registerItemPaneSection();
 
       // 监听PDF页面标注点击事件，高亮插件面板中的对应卡片
@@ -295,10 +296,11 @@ export class UIManager {
         icon: "chrome://researchopia/content/icons/icon20.svg"
       },
       onRender: async ({ doc, body, item, editable, tabType }: any) => {
-        logger.log("[UIManager] onRender called with item:", item?.id, "tabType:", tabType);
-
-        // ✨ 自定义collapsible-section的head部分，使用MutationObserver保证持久性
         try {
+          logger.log("[UIManager] onRender called with item:", item?.id, "tabType:", tabType);
+
+          // ✨ 自定义collapsible-section的head部分，使用MutationObserver保证持久性
+          try {
           const collapsibleSection = body.closest('collapsible-section');
           if (collapsibleSection) {
             // 创建自定义元素的函数
@@ -430,47 +432,58 @@ export class UIManager {
           logger.log("[UIManager] 💾 Saved document for item:", targetItem.id);
         }
 
-        // 🔧 关键修复：传递正确的doc参数给handleItemChange
-        // 确保使用onRender提供的最新document更新面板内容
-        if (targetItem) {
-          this.handleItemChange(targetItem, doc);
+          // 🔧 关键修复：传递正确的doc参数给handleItemChange
+          // 确保使用onRender提供的最新document更新面板内容
+          if (targetItem) {
+            await this.handleItemChange(targetItem, doc);
+          }
+        } catch (error) {
+          logger.error("[UIManager] ❌ Error in onRender:", error);
+          // 确保即使出错也不影响Zotero的其他功能
         }
-        return;
       },
       onItemChange: ({ item, setEnabled, tabType, doc }: any) => {
-        logger.log("[UIManager] onItemChange called with item:", item?.id, "tabType:", tabType);
-        // 允许在所有tab中显示
-        setEnabled(true);
+        try {
+          logger.log("[UIManager] onItemChange called with item:", item?.id, "tabType:", tabType);
+          // 允许在所有tab中显示
+          setEnabled(true);
 
-        // 更新当前的panelDocument引用(这是关键!)
-        if (doc) {
-          this.panelDocument = doc;
-          logger.log("[UIManager] Updated panelDocument in onItemChange");
-        }
-
-        // 获取正确的item并更新
-        const targetItem = this.getCorrectItem(item, tabType);
-        if (targetItem && doc) {
-          // 保存item ID到document的映射
-          // 如果targetItem是PDF attachment,需要获取父条目ID并同时保存两个映射
-          if (targetItem.isAttachment && targetItem.isAttachment()) {
-            // 保存attachment ID -> doc
-            this.itemDocuments.set(targetItem.id, doc);
-            logger.log("[UIManager] 💾 Updated document mapping for attachment:", targetItem.id);
-
-            // 如果有父条目,也保存父条目ID -> doc
-            const parentItemID = targetItem.parentItemID;
-            if (parentItemID) {
-              this.itemDocuments.set(parentItemID, doc);
-              logger.log("[UIManager] 💾 Updated document mapping for parent item:", parentItemID);
-            }
-          } else {
-            // 普通条目,直接保存
-            this.itemDocuments.set(targetItem.id, doc);
-            logger.log("[UIManager] 💾 Updated document mapping for item:", targetItem.id);
+          // 更新当前的panelDocument引用(这是关键!)
+          if (doc) {
+            this.panelDocument = doc;
+            logger.log("[UIManager] Updated panelDocument in onItemChange");
           }
 
-          this.handleItemChange(targetItem);
+          // 获取正确的item并更新
+          const targetItem = this.getCorrectItem(item, tabType);
+          if (targetItem && doc) {
+            // 保存item ID到document的映射
+            // 如果targetItem是PDF attachment,需要获取父条目ID并同时保存两个映射
+            if (targetItem.isAttachment && targetItem.isAttachment()) {
+              // 保存attachment ID -> doc
+              this.itemDocuments.set(targetItem.id, doc);
+              logger.log("[UIManager] 💾 Updated document mapping for attachment:", targetItem.id);
+
+              // 如果有父条目,也保存父条目ID -> doc
+              const parentItemID = targetItem.parentItemID;
+              if (parentItemID) {
+                this.itemDocuments.set(parentItemID, doc);
+                logger.log("[UIManager] 💾 Updated document mapping for parent item:", parentItemID);
+              }
+            } else {
+              // 普通条目,直接保存
+              this.itemDocuments.set(targetItem.id, doc);
+              logger.log("[UIManager] 💾 Updated document mapping for item:", targetItem.id);
+            }
+
+            // 使用.catch()处理Promise,避免unhandled rejection
+            this.handleItemChange(targetItem).catch((err) => {
+              logger.error("[UIManager] ❌ handleItemChange failed in onItemChange:", err);
+            });
+          }
+        } catch (error) {
+          logger.error("[UIManager] ❌ Error in onItemChange:", error);
+          // 确保即使出错也不影响Zotero的其他功能,仍然setEnabled(true)
         }
       },
       onDestroy: () => {
@@ -598,10 +611,11 @@ export class UIManager {
    * 处理item变化
    */
   private async handleItemChange(item: any, explicitDoc?: Document): Promise<void> {
-    logger.log("[UIManager] 📄 Item changed:", item?.id);
+    try {
+      logger.log("[UIManager] 📄 Item changed:", item?.id);
 
-    // 如果是PDF附件,获取其父条目
-    let targetItem = item;
+      // 如果是PDF附件,获取其父条目
+      let targetItem = item;
     if (item && item.isAttachment && item.isAttachment()) {
       logger.log("[UIManager] Item is attachment, getting parent item");
       const parentItemID = item.parentItemID;
@@ -726,6 +740,10 @@ export class UIManager {
           panel.contentSection.appendChild(featuresContainer);
         }
       }
+      }
+    } catch (error) {
+      logger.error("[UIManager] ❌ Error in handleItemChange:", error);
+      // 即使出错也不要抛出,防止影响Zotero核心功能
     }
   }
 

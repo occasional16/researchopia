@@ -479,9 +479,10 @@ export class ConfigValidator {
 
   private static exportDiagnosticReport(validation: any): void {
     try {
+      const addon = (globalThis as any).Zotero?.Researchopia;
       const report = {
         timestamp: new Date().toISOString(),
-        pluginVersion: (addon.data.config as any).buildVersion || '0.2.0',
+        pluginVersion: (addon?.data.config as any)?.buildVersion || '0.2.0',
         validation
       };
 

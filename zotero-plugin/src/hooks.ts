@@ -9,180 +9,114 @@ import { logger } from "./utils/logger";
 "use strict";
 
 async function onStartup() {
-  // 立即记录，确保这个被看到
-  (globalThis as any).logger?.log("[Researchopia] 🚀🚀 onStartup DEFINITELY CALLED 🚀🚀");
-  logger.log("[Researchopia] ⭐ onStartup called - VERSION 2.0 ⭐");
+  logger.log("[Researchopia] 🚀 onStartup - Full initialization");
   
   try {
-    logger.log("[Researchopia] ⭐ HOOKS VERSION 2.0 - Starting up... ⭐");
-    
-    // Removed duplicate preference pane registration from hooks.ts
-    
-    // Access ztoolkit and addon safely by getting them from global
-    const ztoolkit = (globalThis as any).ztoolkit || (globalThis as any).Zotero?.Researchopia?.data?.ztoolkit;
-    if (ztoolkit) {
-      ztoolkit.log("Researchopia: ⭐ VERSION 2.0 - Starting up... ⭐");
-    }
-
-    // Wait for Zotero to be fully ready (Critical for Zotero 8)
+    // Wait for Zotero to be ready
     await Promise.all([
       Zotero.initializationPromise,
       Zotero.unlockPromise,
       Zotero.uiReadyPromise,
     ]);
-
-    logger.log("[Researchopia] Zotero ready, initializing locale...");
-    if (ztoolkit) {
-      ztoolkit.log("Researchopia: Zotero ready, initializing locale...");
-    }
+    
+    logger.log("[Researchopia] Zotero initialization complete");
+    
+    // Initialize locale
     initLocale();
-
-    logger.log("[Researchopia] Loading configuration...");
-    if (ztoolkit) {
-      ztoolkit.log("Researchopia: Loading configuration...");
-    }
-
-    // 确保Zotero完全就绪
-    logger.log("[Researchopia] Checking Zotero readiness...");
-    logger.log("[Researchopia] ItemPaneManager available:", !!(Zotero as any).ItemPaneManager);
+    logger.log("[Researchopia] Locale initialized");
     
-    if (ztoolkit) {
-      ztoolkit.log("Researchopia: Zotero fully ready, initializing core modules...");
-    }
+    // Initialize modules
+    logger.log("[Researchopia] Initializing modules...");
     
-    // 等待一小段时间确保所有组件都已加载
-    await new Promise(resolve => setTimeout(resolve, 100));
+    // Initialize AuthManager (must be first to load session)
+    await AuthManager.initialize();
+    logger.log("[Researchopia] AuthManager initialized ✅");
     
-    // 按正确顺序初始化核心模块
-    try {
-      logger.log("[Researchopia] Initializing AuthManager...");
-      await AuthManager.initialize();
-      logger.log("[Researchopia] AuthManager initialized ✅");
-      
-      // 立即在 Zotero.Researchopia 上暴露 AuthManager 类本身(包含静态方法),供 preferences.js 使用
-      const addon = (globalThis as any).Zotero?.Researchopia;
-      if (addon) {
-        addon.authManager = AuthManager;  // 暴露类本身,不是实例
-        logger.log("[Researchopia] ✅ AuthManager class exposed on Zotero.Researchopia");
-      } else {
-        logger.error("[Researchopia] ⚠️ Zotero.Researchopia not found, cannot expose authManager");
-      }
-      
-      logger.log("[Researchopia] Initializing AnnotationManager...");
-      const { AnnotationManager } = await import("./modules/annotations");
-      await AnnotationManager.initialize();
-      logger.log("[Researchopia] AnnotationManager initialized ✅");
-      
-      logger.log("[Researchopia] Initializing UIManager...");
-      await UIManager.getInstance().initialize();
-      logger.log("[Researchopia] UIManager initialized ✅");
-      
-      logger.log("[Researchopia] Initializing PDFReaderManager...");
-      const { PDFReaderManager } = await import("./modules/pdfReaderManager");
-      await PDFReaderManager.getInstance().initialize();
-      logger.log("[Researchopia] PDFReaderManager initialized ✅");
-      
-      if (ztoolkit) {
-        ztoolkit.log("Researchopia: All core modules initialized successfully");
-      }
-    } catch (error) {
-      logger.error("[Researchopia] ❌ Error initializing modules:", error);
-      if (ztoolkit) {
-        ztoolkit.log("Researchopia: Module initialization error:", error);
-      }
-      // 继续运行，不要阻止整个启动过程
-    }
-
-    if (ztoolkit) {
-      ztoolkit.log("Researchopia: Loading main windows...");
-    }
-    // Process existing windows
+    // Initialize AnnotationManager
+    const { AnnotationManager } = await import("./modules/annotations");
+    await AnnotationManager.initialize();
+    logger.log("[Researchopia] AnnotationManager initialized ✅");
+    
+    // Initialize UIManager (registers ItemPane)
+    await UIManager.getInstance().initialize();
+    logger.log("[Researchopia] UIManager initialized ✅");
+    
+    // Initialize PDFReaderManager
+    const { PDFReaderManager } = await import("./modules/pdfReaderManager");
+    await PDFReaderManager.getInstance().initialize();
+    logger.log("[Researchopia] PDFReaderManager initialized ✅");
+    
+    // Process existing windows (WITHOUT FTL insertion to avoid breaking context menu)
     const mainWindows = Zotero.getMainWindows();
-    if (ztoolkit) {
-      ztoolkit.log(`Researchopia: Found ${mainWindows.length} main windows`);
-    }
-
-    // Process windows in parallel
+    logger.log(`[Researchopia] Found ${mainWindows.length} main windows`);
+    
     await Promise.all(
       mainWindows.map((win) => onMainWindowLoad(win)),
     );
-
+    logger.log("[Researchopia] Main windows loaded");
+    
     // Mark as initialized
-    const addon = (globalThis as any).addon || (globalThis as any).Zotero?.Researchopia;
+    const addon = (Zotero as any).Researchopia;
     if (addon) {
       addon.data.initialized = true;
-    }
-    if (ztoolkit) {
-      ztoolkit.log("Researchopia: Startup completed successfully!");
-      
-      // Notify successful initialization
-      if (addon) {
-        ztoolkit.log(`${addon.data.config.addonName} initialized successfully`);
-      }
+      logger.log("[Researchopia] ✅ Full initialization complete");
     }
     
   } catch (error) {
-    const ztoolkit = (globalThis as any).ztoolkit || (globalThis as any).Zotero?.Researchopia?.data?.ztoolkit;
-    const addon = (globalThis as any).addon || (globalThis as any).Zotero?.Researchopia;
-    
-    if (ztoolkit) {
-      ztoolkit.log("Researchopia: Startup error:", error);
-      if (addon) {
-        ztoolkit.log(`${addon.data.config.addonName} startup failed: ${error}`);
-      }
-    }
+    logger.error("[Researchopia] Startup error:", error);
     throw error;
   }
 }
 
+/**
+ * Main window load hook - called for each Zotero main window
+ * 
+ * ⚠️ CRITICAL FIX: Do NOT call win.MozXULElement.insertFTLIfNeeded() here!
+ * It breaks Zotero's context menu initialization (zoteroPane.js:3241 throws undefined error)
+ * 
+ * The FTL insertion modifies the window's Fluent localization context during menu build,
+ * causing race conditions in Zotero's internal menu generation code.
+ * 
+ * Alternative localization approaches:
+ * - Use addon.data.locale.strings directly (loaded by initLocale())
+ * - Register FTL files in plugin manifest if needed
+ * - Use Zotero.getString() for core Zotero strings
+ * 
+ * @param win - Zotero main window instance
+ */
 async function onMainWindowLoad(win: Window): Promise<void> {
   try {
-    const ztoolkit = (globalThis as any).ztoolkit || (globalThis as any).Zotero?.Researchopia?.data?.ztoolkit;
-    const addon = (globalThis as any).addon || (globalThis as any).Zotero?.Researchopia;
+    const addon = (Zotero as any).Researchopia;
+    if (!addon) {
+      logger.error("[Researchopia] Addon not found in Zotero namespace");
+      return;
+    }
     
-    if (ztoolkit) {
-      ztoolkit.log("Researchopia: Loading main window...");
-    }
-
-    // Create ztoolkit for every window (Zotero 8 requirement)
-    if (addon) {
-      addon.data.ztoolkit = createZToolkit();
-
-      // Insert localization files (Zotero 8 FTL approach)  
-      // File name is researchopia-mainWindow.ftl
-      if (win.MozXULElement?.insertFTLIfNeeded) {
-        win.MozXULElement.insertFTLIfNeeded(
-          `${addon.data.config.addonRef}-mainWindow.ftl`,
-        );
-      }
-    }
-
-    // UI components are already registered during initialize()
-    if (ztoolkit) {
-      ztoolkit.log("UI components registered during initialization");
-    }
-
-    if (ztoolkit) {
-      ztoolkit.log("Researchopia: Main window loaded successfully!");
-    }
+    logger.log("[Researchopia] Loading main window");
+    
+    // Create ztoolkit instance for this window (required for Zotero 8)
+    addon.data.ztoolkit = createZToolkit();
+    
+    // ⚠️ INTENTIONALLY SKIPPED: FTL insertion breaks context menu
+    // Original code that caused the bug:
+    // if (win.MozXULElement?.insertFTLIfNeeded) {
+    //   win.MozXULElement.insertFTLIfNeeded(`${addon.data.config.addonRef}-mainWindow.ftl`);
+    // }
+    
+    logger.log("[Researchopia] Main window loaded successfully");
   } catch (error) {
-    const ztoolkit = (globalThis as any).ztoolkit || (globalThis as any).Zotero?.Researchopia?.data?.ztoolkit;
-    const addon = (globalThis as any).addon || (globalThis as any).Zotero?.Researchopia;
-    
-    if (ztoolkit) {
-      ztoolkit.log("Researchopia: Main window load error:", error);
-      if (addon) {
-        ztoolkit.log(`${addon.data.config.addonName} window load failed: ${error}`);
-      }
-    }
-    // Don't throw here to prevent plugin from failing completely
+    logger.error("[Researchopia] Main window load error:", error);
   }
 }
 
+/**
+ * Main window unload hook - cleanup before window closes
+ * @param win - Zotero main window instance being closed
+ */
 async function onMainWindowUnload(win: Window): Promise<void> {
   try {
-    const ztoolkit = (globalThis as any).ztoolkit || (globalThis as any).Zotero?.Researchopia?.data?.ztoolkit;
-    const addon = (globalThis as any).addon || (globalThis as any).Zotero?.Researchopia;
+    const addon = (Zotero as any).Researchopia;
+    const ztoolkit = addon?.data?.ztoolkit;
     
     if (ztoolkit) {
       ztoolkit.log("Researchopia: Unloading main window...");
@@ -242,26 +176,23 @@ async function onMainWindowUnload(win: Window): Promise<void> {
       ztoolkit.log("Researchopia: Main window unloaded successfully");
     }
   } catch (error) {
-    const ztoolkit = (globalThis as any).ztoolkit || (globalThis as any).Zotero?.Researchopia?.data?.ztoolkit;
-    if (ztoolkit) {
-      ztoolkit.log("Researchopia: Main window unload error:", error);
-    }
+    logger.error("[Researchopia] Main window unload error:", error);
   }
 }
 
+/**
+ * Shutdown hook - cleanup when plugin is disabled/removed
+ */
 function onShutdown(): void {
   try {
-    const ztoolkit = (globalThis as any).ztoolkit || (globalThis as any).Zotero?.Researchopia?.data?.ztoolkit;
-    const addon = (globalThis as any).addon || (globalThis as any).Zotero?.Researchopia;
+    const addon = (Zotero as any).Researchopia;
+    const ztoolkit = addon?.data?.ztoolkit;
     
-    if (ztoolkit) {
-      ztoolkit.log("Researchopia: Shutting down...");
+    logger.log("[Researchopia] Shutting down...");
     
-      // Unregister all components
-      // @ts-ignore - unregisterAll may exist on ztoolkit
-      if (typeof (ztoolkit as any).unregisterAll === 'function') {
-        (ztoolkit as any).unregisterAll();
-      }
+    // Unregister all components
+    if (ztoolkit && typeof (ztoolkit as any).unregisterAll === 'function') {
+      (ztoolkit as any).unregisterAll();
     }
     
     // Close dialogs
@@ -329,14 +260,9 @@ function onShutdown(): void {
       delete (Zotero as any)[addon.data.config.addonInstance];
     }
     
-    if (ztoolkit) {
-      ztoolkit.log("Researchopia: Shutdown completed");
-    }
-  } catch (error) {
-    const ztoolkit = (globalThis as any).ztoolkit || (globalThis as any).Zotero?.Researchopia?.data?.ztoolkit;
-    if (ztoolkit) {
-      ztoolkit.log("Researchopia: Shutdown error:", error);
-    }
+    logger.log("[Researchopia] ✅ Shutdown complete");
+  } catch (e) {
+    logger.error("[Researchopia] Shutdown error:", e);
   }
 }
 
@@ -367,10 +293,7 @@ async function onNotify(
     }
     
   } catch (error) {
-    const ztoolkit = (globalThis as any).ztoolkit || (globalThis as any).Zotero?.Researchopia?.data?.ztoolkit;
-    if (ztoolkit) {
-      ztoolkit.log("Researchopia: Notify error:", error);
-    }
+    logger.error("[Researchopia] Notify error:", error);
   }
 }
 

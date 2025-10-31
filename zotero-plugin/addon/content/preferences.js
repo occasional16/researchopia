@@ -897,12 +897,21 @@ function initializeEnvironmentSwitcher() {
     const currentApiDisplay = document.getElementById('current-api-display');
     
     // 读取当前设置
-    const savedApiUrl = Zotero.Prefs.get('extensions.researchopia.apiBaseUrl', true);
+    let savedApiUrl = Zotero.Prefs.get('extensions.researchopia.apiBaseUrl', true);
+    
+    // 🔥 关键: 首次安装时,savedApiUrl为undefined,默认设置为生产环境
+    if (!savedApiUrl) {
+      debugLog('[Researchopia] First time setup - setting default to production environment');
+      savedApiUrl = 'https://www.researchopia.com';
+      Zotero.Prefs.set('extensions.researchopia.apiBaseUrl', savedApiUrl, true);
+    }
+    
     const isDevEnv = savedApiUrl === 'http://localhost:3000';
     
     // 设置复选框状态
     if (useDevCheckbox) {
       useDevCheckbox.checked = isDevEnv;
+      debugLog('[Researchopia] Environment checkbox set to:', isDevEnv ? 'Development' : 'Production');
       
       // 监听复选框变化
       useDevCheckbox.addEventListener('change', function() {

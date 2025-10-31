@@ -120,5 +120,6 @@ export const GET = withSecurity(async (req: NextRequest) => {
   }
 })
 
-export const dynamic = 'force-dynamic'
+// 🔥 优化: 认证状态可以短时缓存30秒,移除force-dynamic以启用缓存
+export const revalidate = 30;
 

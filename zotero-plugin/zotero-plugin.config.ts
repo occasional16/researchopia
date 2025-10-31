@@ -7,11 +7,11 @@ export default defineConfig({
   name: pkg.config.addonName,
   id: pkg.config.addonID,
   namespace: pkg.config.addonRef,
-  updateURL: `https://github.com/occasional15/researchopia/releases/download/release/${
+  updateURL: `https://github.com/occasional16/researchopia/releases/download/release/${
     pkg.version.includes("-") ? "update-beta.json" : "update.json"
   }`,
   xpiDownloadLink:
-    "https://github.com/occasional15/researchopia/releases/download/v{{version}}/{{xpiName}}.xpi",
+    "https://github.com/occasional16/researchopia/releases/download/v{{version}}/{{xpiName}}.xpi",
 
   build: {
     assets: ["addon/**/*.*"],

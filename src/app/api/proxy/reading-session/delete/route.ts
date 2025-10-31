@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClientWithToken } from '@/lib/supabase-server';
 
-// 禁用缓存
+// POST请求默认不缓存
 export const dynamic = 'force-dynamic';
-export const revalidate = 0;
 
 /**
  * DELETE /api/proxy/reading-session/delete

@@ -138,7 +138,7 @@ export default function UserGuidePage() {
               <div className="text-sm font-medium">{t('nav.profile', '个人中心')}</div>
             </Link>
             <a 
-              href="https://github.com/occasional15/researchopia" 
+              href="https://github.com/occasional16/researchopia" 
               target="_blank" 
               className="text-center p-4 bg-white rounded-lg hover:shadow-md transition-shadow"
             >

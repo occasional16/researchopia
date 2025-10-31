@@ -6,9 +6,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClientWithToken, createAnonClient } from '@/lib/supabase-server';
 
-// 禁用缓存,确保实时数据
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+// 🔥 优化: 启用3分钟缓存 - 会话列表不需要秒级实时性
+export const revalidate = 180; // 3分钟
 
 export async function GET(request: NextRequest) {
   try {
@@ -81,15 +80,13 @@ export async function GET(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // 返回响应并设置不缓存的头
+    // 🔥 优化: 返回响应并设置3分钟缓存
     return NextResponse.json({
       success: true,
       data: data || []
     }, {
       headers: {
-        'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
-        'Pragma': 'no-cache',
-        'Expires': '0'
+        'Cache-Control': 'public, s-maxage=180, stale-while-revalidate=360',
       }
     });
 

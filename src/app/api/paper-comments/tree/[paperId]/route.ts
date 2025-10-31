@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
+// 🔥 优化: 评论树可以缓存2分钟
+export const revalidate = 120;
+
 /**
  * GET /api/paper-comments/tree/[paperId]
  * 获取论文的嵌套评论树结构
@@ -70,6 +73,10 @@ export async function GET(
       success: true,
       comments: formattedTree,
       isTree: true
+    }, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=120, stale-while-revalidate=240',
+      }
     });
 
   } catch (error) {

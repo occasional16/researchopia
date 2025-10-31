@@ -1,12 +1,16 @@
 # 研学港 Researchopia - 开放的学术交流平台
 
-[![zotero target version](https://img.shields.io/badge/Zotero-8-green?style=flat-square&logo=zotero&logoColor=CC2936)](https://www.zotero.org) 
+[![zotero target version](https://img.shields.io/badge/Zotero-8/7-green?style=flat-square&logo=zotero&logoColor=CC2936)](https://www.zotero.org) 
 [![Using Zotero Plugin Template](https://img.shields.io/badge/Using-Zotero%20Plugin%20Template-blue?style=flat-square&logo=github)](https://github.com/windingwind/zotero-plugin-template)
-![Downloads](https://gh-down-badges.linkof.link/occasional15/researchopia)
-[![Latest release](https://img.shields.io/github/v/release/occasional15/researchopia)](https://github.com/occasional15/researchopia/releases)
+![Downloads](https://gh-down-badges.linkof.link/occasional16/researchopia)
+[![Latest release](https://img.shields.io/github/v/release/occasional16/researchopia)](https://github.com/occasional16/researchopia/releases)
 ![License](https://img.shields.io/badge/License-AGPLv3-green.svg)
 
 > **研学并进，智慧共享** | Where Research Meets Community
+
+## 🚀 最新动态
+
+**2025.10.31** Zotero插件0.3.1版已上线，请前往zotero插件商店或github下载安装。
 
 ## 💡 项目声明
 
@@ -14,7 +18,7 @@
 
 本项目为 **研学港 Researchopia** 的开源项目（项目名称、logo和slogan也是AI给设计的），旨在为学术研究者提供优质的学术资源和交流环境。
 
-本项目主要呈现方式是一个 **[网站](https://www.researchopia.com)** ，以及于此网站关联的 **[浏览器扩展](https://microsoftedge.microsoft.com/addons/detail/%E7%A0%94%E5%AD%A6%E6%B8%AF-researchopia/hjijphegihgkddcmdmfjpflpcdaadbio)** 和 **Zotero插件** （官网或 [Releases](https://github.com/occasional15/researchopia/releases) 下载）。具体功能参考下方描述，以及网站上的 [用户指南](https://www.researchopia.com/guide) 。
+本项目主要呈现方式是一个 **[网站](https://www.researchopia.com)** ，以及于此网站关联的 **[浏览器扩展](https://microsoftedge.microsoft.com/addons/detail/%E7%A0%94%E5%AD%A6%E6%B8%AF-researchopia/hjijphegihgkddcmdmfjpflpcdaadbio)** 和 **Zotero插件** （官网或 [Releases](https://github.com/occasional16/researchopia/releases) 下载）。具体功能参考下方描述，以及网站上的 [用户指南](https://www.researchopia.com/guide) 。
 
 本项目总共历时1周。其实只要描述清楚，直接给一段话AI就可以搞定！一点也不夸张，一周前我还不懂什么叫网站前后端也不懂VS code（现在也只是大致了解一点），但第一天时间就完成了网站基本的界面设计和数据库搭建。浏览器扩展和zotero插件的第一版真的是各用一句话直接生成。当然，进一步的细节打磨和bug处理是花了更多的时间。这段时间也渐渐学到了一些编程知识，也积累了一些与AI对话的经验和小窍门。目前项目处于初期阶段，后续会持续优化和完善。
 
@@ -45,7 +49,7 @@
 
 ![alt text](/doc/img/gerenzhongxin.png)
 
-## 🚀 主要功能
+## ✨ 主要功能
 
 - **学术论文搜索与评分**: 智能搜索学术文献，提供多维度评价体系
 - **研究者社区**: 构建学术交流与讨论的专业平台
@@ -53,7 +57,7 @@
 - **Zotero 集成**: 无缝集成 Zotero 文献管理器
 - **多平台支持**: 响应式设计，支持桌面和移动端访问
 
-## � 项目结构
+## 📁 项目结构
 
 ```
 📁 researchopia/

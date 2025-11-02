@@ -4,6 +4,7 @@
  */
 
 import { logger } from "../utils/logger";
+import { APIClient } from "../utils/apiClient";
 
 // Supabase 配置
 const SUPABASE_URL = 'https://obcblvdtqhwrihoddlez.supabase.co';
@@ -15,6 +16,7 @@ export class AuthManager {
   private user: any = null;
   private session: any = null;
   private supabase: any = null;
+  private apiClient = APIClient.getInstance();
 
   public static getInstance(): AuthManager {
     if (!AuthManager.instance) {
@@ -84,20 +86,13 @@ export class AuthManager {
     try {
       logger.log("[AuthManager] 🔐 Signing in user:", email);
       
-      // 使用主网站的登录API(与网站使用相同接口)
-      const { apiPost } = await import('../utils/apiClient');
       const { envConfig } = await import('../config/env');
       logger.log("[AuthManager] 🌐 Using API base URL:", envConfig.apiBaseUrl);
-      const response = await apiPost('/api/auth/custom-signin', { email, password }, { requireAuth: false });
       
-      // custom-signin返回格式: { data, error }
-      if (response.error || !response.data) {
-        logger.error("[AuthManager] Sign in failed:", response.error);
-        return { 
-          success: false, 
-          error: response.error || '登录失败，请检查邮箱和密码'
-        };
-      }
+      const response = await instance.apiClient.post<{
+        data: { user: any; session: any };
+        error?: string;
+      }>('/api/auth/custom-signin', { email, password }, false);
       
       const { user, session } = response.data;
       
@@ -181,16 +176,19 @@ export class AuthManager {
   }
 
   public static async signUp(email: string, password: string, username?: string): Promise<{ success: boolean; error?: string; user?: any }> {
+    const instance = AuthManager.getInstance();
     try {
       logger.log("[AuthManager] 📝 Signing up user:", email);
       
-      // 使用API代理进行注册
-      const { apiPost } = await import('../utils/apiClient');
-      const response = await apiPost('/api/proxy/auth/register', { 
+      const response = await instance.apiClient.post<{
+        data: { user: any };
+        error?: string;
+        success: boolean;
+      }>('/api/proxy/auth/register', { 
         email, 
         password, 
         username: username || email.split('@')[0]
-      }, { requireAuth: false });
+      }, false);
       
       if (!response.success || !response.data) {
         logger.error("[AuthManager] Sign up failed:", response.error);
@@ -334,6 +332,10 @@ export class AuthManager {
   public static getCurrentUser(): any {
     const instance = AuthManager.getInstance();
     return instance.user;
+  }
+
+  public getUser(): any {
+    return this.user;
   }
 
   public static getSession(): any {
@@ -581,11 +583,13 @@ export class AuthManager {
       
       logger.log("[AuthManager] 🔄 Refreshing session token...");
       
-      // 使用API代理刷新token
-      const { apiPost } = await import('../utils/apiClient');
-      const response = await apiPost('/api/proxy/auth/refresh', {
+      const response = await this.apiClient.post<{
+        data: { session: any; user: any };
+        error?: string;
+        success: boolean;
+      }>('/api/proxy/auth/refresh', {
         refresh_token: this.session.refresh_token
-      }, { requireAuth: false });
+      }, false);
       
       if (!response.success || !response.data) {
         logger.error("[AuthManager] ❌ Token refresh failed:", response.error);

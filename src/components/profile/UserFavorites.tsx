@@ -119,7 +119,7 @@ export default function UserFavorites({ username }: UserFavoritesProps = {}) {
               <div className="flex-1">
                 <div className="flex items-center space-x-2 mb-2">
                   <Link
-                    href={getPaperRoute(paper).href}
+                    href={getPaperRoute(paper.id || paper.doi || '')}
                     className="text-lg font-medium text-gray-900 hover:text-blue-600 transition-colors"
                   >
                     {paper.title}

@@ -3,6 +3,7 @@ import { getString } from "../utils/locale";
 import { AuthManager } from "./auth";
 import { getPref, setPref } from "../utils/prefs";
 import { logger } from "../utils/logger";
+import { ServicesAdapter } from "../adapters/services-adapter";
 
 export async function registerPrefsScripts(_window: Window) {
   try {
@@ -406,25 +407,62 @@ function bindPrefEvents() {
     
     logger.log("[Researchopia] 🔧 Development API checkbox initialized, checked:", useDevEnvCheckbox.checked);
     
-    useDevEnvCheckbox.addEventListener("change", (e) => {
+    useDevEnvCheckbox.addEventListener("change", async (e) => {
       const checked = (e.target as HTMLInputElement).checked;
       
+      // Check if user is currently logged in
+      const isLoggedIn = await AuthManager.isLoggedIn();
+      
       if (checked) {
+        // Warn user about switching to localhost
+        if (isLoggedIn) {
+          const confirmed = ServicesAdapter.confirm(
+            '切换到开发环境',
+            '切换到开发环境 API 后，你将登出当前账号。\n\n请确保本地开发服务器正在运行 (http://localhost:3000)，否则所有功能将不可用。\n\n是否继续？'
+          );
+          
+          if (!confirmed) {
+            // User cancelled, uncheck the box
+            (e.target as HTMLInputElement).checked = false;
+            return;
+          }
+          
+          // Force logout before switching
+          await AuthManager.signOut();
+          updateLoginStatus(doc);
+        }
+        
         // Switch to development environment
         (Zotero as any).Prefs.set('extensions.researchopia.apiBaseUrl', 'http://localhost:3000', true);
         showMessage(doc, "✅ 已切换到开发环境 API (localhost:3000)", "success");
         logger.log("[Researchopia] 🔧 Switched to development API: http://localhost:3000");
       } else {
+        // Warn user about switching back to production
+        if (isLoggedIn) {
+          const confirmed = ServicesAdapter.confirm(
+            '切换到生产环境',
+            '切换回生产环境后，你将登出当前账号。\n\n需要使用生产环境的账号重新登录。\n\n是否继续？'
+          );
+          
+          if (!confirmed) {
+            // User cancelled, keep the box checked
+            (e.target as HTMLInputElement).checked = true;
+            return;
+          }
+          
+          // Force logout before switching
+          await AuthManager.signOut();
+          updateLoginStatus(doc);
+        }
+        
         // Clear preference to use production environment
         (Zotero as any).Prefs.clear('extensions.researchopia.apiBaseUrl', true);
         showMessage(doc, "✅ 已切换回生产环境 API (researchopia.com)", "success");
         logger.log("[Researchopia] 🔧 Switched to production API");
       }
       
-      // Remind user that they may need to re-login
-      setTimeout(() => {
-        showMessage(doc, "💡 提示: 切换环境后可能需要重新登录", "info");
-      }, 2000);
+      // Update API display
+      updateCurrentApiDisplay(doc);
     });
   }
 

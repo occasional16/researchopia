@@ -3,20 +3,43 @@
  * 替代console对象，在Zotero环境中正常工作
  */
 
+// 获取日志级别配置
+function getLogLevel(): 'debug' | 'info' | 'warn' | 'error' {
+  try {
+    const customLevel = (Zotero as any).Prefs?.get('extensions.zotero.researchopia.logLevel', true);
+    if (customLevel && ['debug', 'info', 'warn', 'error'].includes(customLevel)) {
+      return customLevel;
+    }
+  } catch (e) {
+    // Ignore
+  }
+  // 生产环境默认warn,开发环境默认debug
+  return (globalThis as any).__env__ === 'production' ? 'warn' : 'debug';
+}
+
+function shouldLog(messageLevel: 'debug' | 'info' | 'warn' | 'error'): boolean {
+  const levels = ['debug', 'info', 'warn', 'error'];
+  const currentLevel = getLogLevel();
+  return levels.indexOf(messageLevel) >= levels.indexOf(currentLevel);
+}
+
 export class ZoteroLogger {
   private static prefix = '[Researchopia]';
 
   public static debug(...args: any[]): void {
+    if (!shouldLog('debug')) return;
     const message = ZoteroLogger.formatMessage('DEBUG', ...args);
     (Zotero as any).debug(message);
   }
 
   public static info(...args: any[]): void {
+    if (!shouldLog('info')) return;
     const message = ZoteroLogger.formatMessage('INFO', ...args);
     (Zotero as any).debug(message);
   }
 
   public static warn(...args: any[]): void {
+    if (!shouldLog('warn')) return;
     const message = ZoteroLogger.formatMessage('WARN', ...args);
     (Zotero as any).debug(message);
     // 也输出到Zotero的错误控制台
@@ -26,6 +49,7 @@ export class ZoteroLogger {
   }
 
   public static error(...args: any[]): void {
+    if (!shouldLog('error')) return;
     const message = ZoteroLogger.formatMessage('ERROR', ...args);
     (Zotero as any).debug(message);
     // 输出到Zotero的错误控制台

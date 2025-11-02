@@ -27,13 +27,13 @@ export default function PaperCard({ paper }: PaperCardProps) {
     ? calculateAverageRating(paper.ratings)
     : null
   
-  const paperRoute = getPaperRoute(paper)
+  const paperRoute = getPaperRoute(paper.id || paper.doi || '')
 
   return (
     <div className="bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow p-6">
       <div className="flex justify-between items-start mb-3">
         <Link
-          href={paperRoute.href}
+          href={paperRoute}
           className="text-lg font-semibold text-gray-900 hover:text-blue-600 transition-colors line-clamp-2"
         >
           {paper.title}
@@ -151,7 +151,7 @@ export default function PaperCard({ paper }: PaperCardProps) {
             showCount={true}
           />
           <Link
-            href={paperRoute.href}
+            href={paperRoute}
             className="text-blue-600 hover:text-blue-700 font-medium text-sm"
           >
             查看详情 →

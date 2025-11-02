@@ -1,9 +1,18 @@
 {
   "name": "researchopia",
-  "version": "0.3",
-  "description": "研学港 - 新一代学术评价与研学社区平台 | Researchopia - Next-generation Academic Evaluation & Research Community Platform",
+  "version": "0.3.0",
+  "description": "研学港 | Researchopia - 开放的学术交流和共享平台。研学并进，智慧共享 | Where Research Meets Community",
   "private": true,
+  "components": {
+    "website": "0.3.0",
+    "zotero-plugin": "0.3.3",
+    "browser-extension": "0.1.1",
+    "docs": "0.1"
+  },
   "scripts": {
+    "version:sync": "node scripts/sync-versions.js",
+    "version:check": "node scripts/check-versions.js",
+    "version:bump": "npm version patch && npm run version:sync",
     "dev": "next dev -H 0.0.0.0",
     "build": "next build",
     "start": "next start",
@@ -26,6 +35,7 @@
   "dependencies": {
     "@supabase/auth-ui-react": "^0.4.7",
     "@supabase/auth-ui-shared": "^0.1.8",
+    "@supabase/ssr": "^0.7.0",
     "@supabase/supabase-js": "^2.57.2",
     "@tanstack/react-query": "^5.90.5",
     "@types/nodemailer": "^7.0.1",
@@ -42,7 +52,8 @@
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-google-recaptcha-v3": "^1.11.0",
-    "ws": "^8.18.3"
+    "ws": "^8.18.3",
+    "zod": "^4.1.12"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

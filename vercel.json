@@ -3,6 +3,9 @@
   "buildCommand": "npm run build",
   "framework": "nextjs",
   "installCommand": "npm install",
+  "github": {
+    "silent": true
+  },
   "functions": {
     "src/app/api/**/*.ts": {
       "maxDuration": 10

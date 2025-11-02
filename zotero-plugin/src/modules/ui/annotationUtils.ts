@@ -7,13 +7,18 @@ import { logger } from "../../utils/logger";
 
 /**
  * 标注去重
+ * 优先使用zotero_key作为唯一标识,因为这是Zotero中真正的唯一键
+ * 如果zotero_key不存在,则使用original_id或id
  */
 export function deduplicateAnnotations<T extends { id: string }>(annotations: T[]): T[] {
   const seen = new Set<string>();
   const unique: T[] = [];
 
   for (const annotation of annotations) {
-    const key = (annotation as any).original_id || annotation.id;
+    // 优先使用zotero_key(从annotation_data中获取)
+    const zoteroKey = (annotation as any).annotation_data?.zotero_key;
+    const key = zoteroKey || (annotation as any).original_id || annotation.id;
+    
     if (!seen.has(key)) {
       seen.add(key);
       unique.push(annotation);

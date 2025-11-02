@@ -181,8 +181,8 @@ export function SmartSearch({ onSearch, onPaperAdded, className = '' }: SmartSea
         setProcessingMessage('')
         setIsProcessing(false)
         // 论文已存在，跳转到论文详情页
-        const route = getPaperRoute(checkResult.paper)
-        window.location.href = route.href
+        const route = getPaperRoute(checkResult.paper?.id || checkResult.paper?.doi || '')
+        window.location.href = route
         return
       }
 
@@ -215,8 +215,8 @@ export function SmartSearch({ onSearch, onPaperAdded, className = '' }: SmartSea
 
       // 跳转到新添加的论文
       setTimeout(() => {
-        const route = getPaperRoute(newPaper.paper)
-        window.location.href = route.href
+        const route = getPaperRoute(newPaper.paper?.id || newPaper.paper?.doi || '')
+        window.location.href = route
       }, 1000)
 
     } catch (err: any) {

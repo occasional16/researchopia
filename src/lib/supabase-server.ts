@@ -22,6 +22,7 @@ export function createAnonClient() {
 
 /**
  * 创建Admin客户端(用于管理员操作)
+ * 使用service role key，自动绕过RLS
  */
 export function createAdminClient() {
   if (!supabaseUrl || !supabaseServiceKey) {
@@ -32,6 +33,9 @@ export function createAdminClient() {
     auth: {
       autoRefreshToken: false,
       persistSession: false
+    },
+    db: {
+      schema: 'public'
     }
   });
 }

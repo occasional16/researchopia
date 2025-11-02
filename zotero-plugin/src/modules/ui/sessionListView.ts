@@ -277,12 +277,16 @@ export class SessionListView {
           onDeleteClick: async () => {
             try {
               await this.sessionManager.deleteSession(session.id);
-              // 删除成功后重新加载列表
-              await this.showCreatedSessionsTab(container, doc);
             } catch (error) {
               logger.error('[SessionListView] Error deleting session:', error);
+              // 如果是404错误(会话不存在),当作成功处理
               const errorMsg = error instanceof Error ? error.message : String(error);
-              ServicesAdapter.confirm('删除失败', errorMsg);
+              if (!errorMsg.includes('404') && !errorMsg.includes('不存在')) {
+                ServicesAdapter.alert('删除失败', errorMsg);
+              }
+            } finally {
+              // 无论成功还是失败,都重新加载列表以更新UI
+              await this.showCreatedSessionsTab(container, doc);
             }
           },
         });

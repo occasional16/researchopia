@@ -15,6 +15,7 @@ export class ChatView {
   private logManager = SessionLogManager.getInstance();
   private chatPollingInterval: any = null;
   private lastMessageId: string | null = null;
+  private skipNextPolls: number = 0; // 跳过接下来N次轮询，用于发送消息后暂停轮询
 
   constructor(private readonly context: BaseViewContext) {
     logger.log("[ChatView] 💬 Initializing...");
@@ -131,7 +132,7 @@ export class ChatView {
     messageList.appendChild(emptyPlaceholder);
 
     // 异步加载现有消息(不阻塞UI)
-    this.loadChatMessages(messageList, doc, sessionId).catch(error => {
+    this.loadChatMessages(messageList, doc, sessionId).catch((error) => {
       logger.warn('[ChatView] Failed to load chat messages:', error);
       // 失败也没关系,用户依然可以发送新消息
     });
@@ -244,24 +245,33 @@ export class ChatView {
   /**
    * 加载聊天消息
    */
-  private async loadChatMessages(container: HTMLElement, doc: Document, sessionId: string): Promise<void> {
+  private async loadChatMessages(
+    container: HTMLElement,
+    doc: Document,
+    sessionId: string
+  ): Promise<void> {
     try {
-      logger.log('[ChatView] 📨 Loading chat messages...');
-      
-      container.innerHTML = '';
-      
-      const messages = await this.logManager.getChatMessages(sessionId, 1, 50);
-      
-      logger.log(`[ChatView] 📊 loadChatMessages received ${messages.length} messages`);
-      
+      logger.log('[ChatView] 📨 Loading chat messages for initial display...');
+
+      container.innerHTML = `<div style="padding: 20px; text-align: center; color: #666;">加载中...</div>`;
+
+      const messages = await this.logManager.getChatMessages(sessionId, {
+        page: 1,
+        limit: 50, // 加载最新的50条作为初始视图
+      });
+
+      container.innerHTML = ''; // 清空加载提示
+
+      logger.log(
+        `[ChatView] 📊 loadChatMessages received ${messages.length} messages`
+      );
+
       if (messages.length === 0) {
         const placeholder = doc.createElement('div');
         placeholder.style.cssText = `
           padding: 40px;
           text-align: center;
           color: #6b7280;
-          width: 100%;
-          box-sizing: border-box;
         `;
         placeholder.innerHTML = `
           <div style="font-size: 48px; margin-bottom: 16px;">💬</div>
@@ -274,16 +284,21 @@ export class ChatView {
           const msgElement = this.createMessageElement(doc, message);
           container.appendChild(msgElement);
         }
-        // 只在第一次加载时设置lastMessageId，避免重新加载时覆盖
-        if (!this.lastMessageId && messages.length > 0) {
-          this.lastMessageId = messages[messages.length - 1].id;
+        // 更新lastMessageId为最新消息的ID，用于后续增量轮询
+        const newLastMessageId = messages[messages.length - 1].id;
+        if (this.lastMessageId !== newLastMessageId) {
+          logger.log(
+            `[ChatView] 📌 Initial lastMessageId set to: ${newLastMessageId}`
+          );
+          this.lastMessageId = newLastMessageId;
         }
         container.scrollTop = container.scrollHeight;
       }
-      
-      logger.log('[ChatView] ✅ Chat messages loaded');
+
+      logger.log('[ChatView] ✅ Initial chat messages loaded');
     } catch (error) {
-      logger.error('[ChatView] Error loading chat messages:', error);
+      logger.error('[ChatView] Error loading initial chat messages:', error);
+      container.innerHTML = `<div style="padding: 20px; text-align: center; color: red;">加载消息失败</div>`;
       throw error;
     }
   }
@@ -366,19 +381,25 @@ export class ChatView {
       const newMessage = await this.logManager.sendChatMessage(sessionId, message);
       textarea.value = '';
       
+      // 检查是否有"暂无聊天消息"的空状态
+      const emptyMsg = messageList.querySelector('div');
+      if (emptyMsg && emptyMsg.textContent?.includes('暂无聊天消息')) {
+        messageList.innerHTML = '';
+      }
+      
       // 直接将新消息添加到列表末尾，避免重新加载导致的延迟
       if (newMessage && newMessage.id) {
         const msgElement = this.createMessageElement(doc, newMessage);
         messageList.appendChild(msgElement);
         messageList.scrollTop = messageList.scrollHeight;
-        this.lastMessageId = newMessage.id;
-        logger.log('[ChatView] ✅ Message sent and displayed');
         
-        // 重置轮询计时器，避免立即轮询导致找不到消息
-        this.startChatPolling(sessionId, messageList, doc);
+        // 更新lastMessageId并暂停轮询
+        const oldLastMessageId = this.lastMessageId;
+        this.lastMessageId = newMessage.id;
+        this.skipNextPolls = 3; // 暂停3次轮询(9秒，给服务器同步时间)
+        logger.log(`[ChatView] ✅ Message sent and displayed, lastMessageId: ${oldLastMessageId} -> ${this.lastMessageId}, skipNextPolls=3`);
       } else {
         // 如果没有返回消息ID，则重新加载
-        messageList.innerHTML = '';
         await this.loadChatMessages(messageList, doc, sessionId);
         logger.log('[ChatView] ✅ Message sent (reloaded)');
       }
@@ -389,73 +410,73 @@ export class ChatView {
   }
 
   /**
-   * 启动聊天轮询
+   * 启动聊天轮询 - 使用lastMessageId来获取增量新消息
    */
-  private startChatPolling(sessionId: string, messageList: HTMLElement, doc: Document): void {
+  private startChatPolling(
+    sessionId: string,
+    messageList: HTMLElement,
+    doc: Document
+  ): void {
     if (this.chatPollingInterval) {
       clearInterval(this.chatPollingInterval);
     }
 
     this.chatPollingInterval = setInterval(async () => {
       try {
-        logger.log('[ChatView] 🔄 Polling for new messages...');
-        const messages = await this.logManager.getChatMessages(sessionId, 1, 50);
-        
-        logger.log(`[ChatView] 📊 Got ${messages.length} messages, lastMessageId=${this.lastMessageId}`);
-        logger.log(`[ChatView] 📊 Message IDs: ${messages.map((m: any) => m.id).join(', ')}`);
-        
-        if (messages.length === 0) {
-          logger.log('[ChatView] ⚠️ No messages returned, skipping');
+        if (this.skipNextPolls > 0) {
+          this.skipNextPolls--;
+          logger.log(
+            `[ChatView] ⏭️ Skipping poll (${this.skipNextPolls} more to skip)`
+          );
           return;
         }
-        
-        // 检查是否有新消息（比较最新消息ID）
-        const latestMessage = messages[messages.length - 1];
-        logger.log(`[ChatView] 📊 Latest message ID: ${latestMessage.id}`);
-        
-        if (!this.lastMessageId) {
-          logger.log('[ChatView] ⚠️ No lastMessageId set, skipping first poll');
-          this.lastMessageId = latestMessage.id;
-          return;
-        }
-        
-        if (latestMessage.id === this.lastMessageId) {
-          logger.log('[ChatView] ✅ No new messages');
-          return;
-        }
-        
-        // 找出所有比lastMessageId更新的消息
-        const lastIndex = messages.findIndex((m: any) => m.id === this.lastMessageId);
-        logger.log(`[ChatView] 📊 Last message index: ${lastIndex}, searching for: ${this.lastMessageId}`);
-        
-        if (lastIndex === -1) {
-          // 找不到上次的消息ID，可能是消息太多被分页了，需要重新加载全部
-          logger.warn(`[ChatView] ⚠️ Cannot find lastMessageId in ${messages.length} messages, reloading all...`);
-          const isScrolledToBottom = messageList.scrollHeight - messageList.scrollTop <= messageList.clientHeight + 50;
-          messageList.innerHTML = '';
-          await this.loadChatMessages(messageList, doc, sessionId);
-          if (isScrolledToBottom) {
-            messageList.scrollTop = messageList.scrollHeight;
+
+        logger.log(
+          `[ChatView] 🔄 Polling for new messages with lastMessageId: ${this.lastMessageId}`
+        );
+
+        // 只请求lastMessageId之后的新消息
+        const newMessages = await this.logManager.getChatMessages(sessionId, {
+          lastMessageId: this.lastMessageId,
+        });
+
+        if (newMessages && newMessages.length > 0) {
+          logger.log(`[ChatView] ✨ Found ${newMessages.length} new messages.`);
+
+          // 如果之前是空状态，先清空
+          const emptyMsg = messageList.querySelector('div');
+          if (emptyMsg && emptyMsg.textContent?.includes('暂无聊天消息')) {
+            messageList.innerHTML = '';
           }
-        } else {
-          // 只添加新消息
-          const newMessages = messages.slice(lastIndex + 1);
-          if (newMessages.length > 0) {
-            logger.log(`[ChatView] 🆕 Adding ${newMessages.length} new message(s)...`);
-            const isScrolledToBottom = messageList.scrollHeight - messageList.scrollTop <= messageList.clientHeight + 50;
-            for (const message of newMessages) {
+
+          // 将新消息追加到列表末尾
+          for (const message of newMessages) {
+            // 再次检查，避免重复添加
+            if (!doc.querySelector(`[data-message-id="${message.id}"]`)) {
               const msgElement = this.createMessageElement(doc, message);
               messageList.appendChild(msgElement);
-              this.lastMessageId = message.id;
-            }
-            if (isScrolledToBottom) {
-              messageList.scrollTop = messageList.scrollHeight;
             }
           }
+
+          // 更新 lastMessageId
+          const newLastMessageId = newMessages[newMessages.length - 1].id;
+          logger.log(
+            `[ChatView] 📌 Updating lastMessageId: ${this.lastMessageId} -> ${newLastMessageId}`
+          );
+          this.lastMessageId = newLastMessageId;
+
+          // 滚动到底部
+          messageList.scrollTop = messageList.scrollHeight;
+        } else {
+          logger.log(`[ChatView] ⏸️ No new messages found.`);
         }
       } catch (error) {
-        logger.warn('[ChatView] Error polling messages:', error);
+        logger.warn('[ChatView] Error polling for new messages:', error);
       }
-    }, 5000); // 从3秒改为5秒,减少API调用频率
+    }, 3000); // 轮询间隔3秒
+
+    logger.log(
+      `[ChatView] ✅ Started incremental chat polling for session ${sessionId}`
+    );
   }
 }

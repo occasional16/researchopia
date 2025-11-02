@@ -7,7 +7,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClientWithToken, createAnonClient } from '@/lib/supabase-server';
 
 // 🔥 优化: 启用3分钟缓存 - 会话列表不需要秒级实时性
-export const revalidate = 180; // 3分钟
+// 生产环境启用3分钟缓存
+export const revalidate = 180;
 
 export async function GET(request: NextRequest) {
   try {
@@ -80,7 +81,7 @@ export async function GET(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // 🔥 优化: 返回响应并设置3分钟缓存
+    // 🔥 优化: 返回响应并设置缓存
     return NextResponse.json({
       success: true,
       data: data || []

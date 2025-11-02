@@ -5,10 +5,11 @@
 
 import { logger } from "../utils/logger";
 import { AuthManager } from "./auth";
-import { apiGet, apiPost } from "../utils/apiClient";
+import { APIClient } from "../utils/apiClient";
 
 export class PaperRegistry {
   private static registeredPapers = new Map<string, boolean>(); // DOI -> 是否已注册
+  private static apiClient = APIClient.getInstance();
 
   /**
    * 确保论文已在数据库中注册
@@ -60,8 +61,8 @@ export class PaperRegistry {
    */
   private static async checkPaperExists(doi: string): Promise<any | null> {
     try {
-      const result = await apiGet(`/api/proxy/papers/check?doi=${encodeURIComponent(doi)}`);
-      return result.data?.exists ? result.data.paper : null;
+      const result = await this.apiClient.get<{ exists: boolean; paper: any }>(`/api/proxy/papers/check?doi=${encodeURIComponent(doi)}`);
+      return result.exists ? result.paper : null;
     } catch (error) {
       logger.error("[PaperRegistry] ❌ Error checking paper existence:", error);
       return null;
@@ -124,13 +125,13 @@ export class PaperRegistry {
 
       logger.log("[PaperRegistry] 📤 Creating paper with data:", paperData);
 
-      const result = await apiPost('/api/proxy/papers/register', paperData);
+      const result = await this.apiClient.post<{ data: { paper: any }, success: boolean }>('/api/proxy/papers/register', paperData);
       
-      if (result.success && result.data) {
-        logger.log("[PaperRegistry] ✅ Paper created successfully:", result.data);
+      if (result.success && result.data && result.data.paper) {
+        logger.log("[PaperRegistry] ✅ Paper created successfully:", result.data.paper);
         return result.data.paper;
       } else {
-        logger.error("[PaperRegistry] ❌ API Error:", result.message);
+        logger.error("[PaperRegistry] ❌ API Error creating paper");
         return null;
       }
     } catch (error) {

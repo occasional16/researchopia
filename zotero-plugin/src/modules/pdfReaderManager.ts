@@ -486,7 +486,7 @@ export class PDFReaderManager {
       // 获取页面容器的实际渲染尺寸
       const canvas = pageContainer.querySelector('canvas');
       if (!canvas) {
-        logger.error("[PDFReaderManager] ❌ Canvas not found in page container");
+        logger.warn("[PDFReaderManager] ⚠️ Canvas not found in page container (page may not be rendered yet)");
         logger.log("[PDFReaderManager] 🔍 Trying alternative selectors...");
 
         // 尝试其他可能的元素

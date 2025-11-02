@@ -1,63 +1,32 @@
 /**
- * 智能论文路由系统
- * 
- * 路由规则：
- * - 有DOI的论文：/doi/[doi] 
- * - 无DOI的论文：/papers/[id]
+ * 论文路由工具函数
+ * 用于生成论文详情页的URL
  */
 
-export interface PaperRoute {
-  href: string
-  type: 'doi' | 'id'
-}
-
-export function getPaperRoute(paper: { id: string; doi?: string }): PaperRoute {
-  if (paper.doi && paper.doi.trim()) {
-    return {
-      href: `/doi/${encodeURIComponent(paper.doi)}`,
-      type: 'doi'
-    }
-  } else {
-    return {
-      href: `/papers/${paper.id}`,
-      type: 'id'
-    }
+/**
+ * 获取论文详情页的路由
+ * @param paperId - 论文ID或DOI
+ * @returns 论文详情页的路径
+ */
+export function getPaperRoute(paperId: string): string {
+  if (!paperId) {
+    return '/papers'
   }
-}
-
-export function getExternalDOILink(doi: string): string {
-  return `https://doi.org/${doi}`
+  
+  // 如果是DOI格式,编码后使用
+  if (paperId.includes('/')) {
+    return `/papers/${encodeURIComponent(paperId)}`
+  }
+  
+  // 否则直接使用ID
+  return `/papers/${paperId}`
 }
 
 /**
- * 获取论文的标准URL（用于分享、SEO等）
+ * 从路由参数中解析论文ID或DOI
+ * @param param - 路由参数
+ * @returns 解码后的论文ID或DOI
  */
-export function getPaperCanonicalURL(paper: { id: string; doi?: string }, baseURL: string = ''): string {
-  const route = getPaperRoute(paper)
-  return `${baseURL}${route.href}`
-}
-
-/**
- * 从路径解析论文标识符
- */
-export function parsePaperRoute(pathname: string): { type: 'doi' | 'id'; value: string } | null {
-  // /doi/[doi] 格式
-  const doiMatch = pathname.match(/^\/doi\/(.+)$/)
-  if (doiMatch) {
-    return {
-      type: 'doi',
-      value: decodeURIComponent(doiMatch[1])
-    }
-  }
-  
-  // /papers/[id] 格式
-  const idMatch = pathname.match(/^\/papers\/([a-f0-9-]+)$/)
-  if (idMatch) {
-    return {
-      type: 'id',
-      value: idMatch[1]
-    }
-  }
-  
-  return null
+export function parsePaperParam(param: string): string {
+  return decodeURIComponent(param)
 }

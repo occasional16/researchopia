@@ -1,150 +1,164 @@
-// 输入验证和清理工具
+/**
+ * 安全工具函数
+ * 提供速率限制、安全头部等功能
+ */
 
-// 基础验证规则
-export const ValidationRules = {
-  email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-  username: /^[a-zA-Z0-9_]{3,20}$/,
-  password: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d@$!%*?&]{8,}$/,
-  doi: /^10\.\d{4,}\/[-._;()\/:A-Za-z0-9]+$/,
-  url: /^https?:\/\/.+/,
-}
-
-// 输入清理函数
-export function sanitizeInput(input: string): string {
-  if (!input || typeof input !== 'string') return ''
-  
-  // 移除危险字符
-  return input
-    .trim()
-    .replace(/[<>\"']/g, '') // 移除HTML危险字符
-    .replace(/javascript:/gi, '') // 移除JavaScript协议
-    .replace(/data:/gi, '') // 移除data协议
-    .substring(0, 1000) // 限制长度
-}
-
-// 简单的HTML清理（基础版本）
-export function sanitizeHtml(html: string): string {
-  if (!html || typeof html !== 'string') return ''
-  
-  // 移除脚本标签和危险属性
-  return html
-    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-    .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, '')
-    .replace(/on\w+\s*=/gi, '') // 移除事件处理器
-    .replace(/javascript:/gi, '')
-    .replace(/data:/gi, '')
-    .trim()
-}
-
-// 验证函数
-export function validateEmail(email: string): { isValid: boolean; message?: string } {
-  if (!email) return { isValid: false, message: '邮箱不能为空' }
-  if (!ValidationRules.email.test(email)) {
-    return { isValid: false, message: '邮箱格式不正确' }
-  }
-  return { isValid: true }
-}
-
-export function validateUsername(username: string): { isValid: boolean; message?: string } {
-  if (!username) return { isValid: false, message: '用户名不能为空' }
-  if (username.length < 3) return { isValid: false, message: '用户名至少3个字符' }
-  if (username.length > 20) return { isValid: false, message: '用户名最多20个字符' }
-  if (!ValidationRules.username.test(username)) {
-    return { isValid: false, message: '用户名只能包含字母、数字和下划线' }
-  }
-  return { isValid: true }
-}
-
-export function validatePassword(password: string): { isValid: boolean; message?: string } {
-  if (!password) return { isValid: false, message: '密码不能为空' }
-  if (password.length < 8) return { isValid: false, message: '密码至少8个字符' }
-  if (!ValidationRules.password.test(password)) {
-    return { 
-      isValid: false, 
-      message: '密码必须包含大小写字母和数字' 
-    }
-  }
-  return { isValid: true }
-}
-
-export function validateDOI(doi: string): { isValid: boolean; message?: string } {
-  if (!doi) return { isValid: false, message: 'DOI不能为空' }
-  if (!ValidationRules.doi.test(doi)) {
-    return { isValid: false, message: 'DOI格式不正确' }
-  }
-  return { isValid: true }
-}
-
-// 通用表单验证
-export function validateForm<T extends Record<string, any>>(
-  data: T,
-  rules: Record<keyof T, (value: any) => { isValid: boolean; message?: string }>
-): { isValid: boolean; errors: Partial<Record<keyof T, string>> } {
-  const errors: Partial<Record<keyof T, string>> = {}
-  let isValid = true
-
-  for (const field in rules) {
-    const validation = rules[field](data[field])
-    if (!validation.isValid) {
-      errors[field] = validation.message
-      isValid = false
-    }
-  }
-
-  return { isValid, errors }
-}
-
-// 速率限制工具
+// 速率限制器
 class RateLimiter {
   private requests: Map<string, number[]> = new Map()
 
-  isAllowed(key: string, maxRequests: number = 10, timeWindow: number = 60000): boolean {
+  /**
+   * 检查是否允许请求
+   * @param identifier - 客户端标识符（如IP）
+   * @param maxRequests - 最大请求数
+   * @param windowMs - 时间窗口（毫秒）
+   */
+  isAllowed(identifier: string, maxRequests: number, windowMs: number): boolean {
     const now = Date.now()
-    const requests = this.requests.get(key) || []
+    const timestamps = this.requests.get(identifier) || []
     
-    // 清理过期的请求记录
-    const validRequests = requests.filter(time => now - time < timeWindow)
+    // 过滤掉时间窗口外的请求
+    const validTimestamps = timestamps.filter(time => now - time < windowMs)
     
-    if (validRequests.length >= maxRequests) {
+    if (validTimestamps.length >= maxRequests) {
+      this.requests.set(identifier, validTimestamps)
       return false
     }
     
-    validRequests.push(now)
-    this.requests.set(key, validRequests)
-    
+    validTimestamps.push(now)
+    this.requests.set(identifier, validTimestamps)
     return true
   }
-  
-  getRemainingTime(key: string, timeWindow: number = 60000): number {
-    const requests = this.requests.get(key) || []
-    if (requests.length === 0) return 0
+
+  /**
+   * 获取剩余时间（毫秒）
+   */
+  getRemainingTime(identifier: string): number {
+    const timestamps = this.requests.get(identifier) || []
+    if (timestamps.length === 0) return 0
     
-    const oldestRequest = Math.min(...requests)
-    const remaining = timeWindow - (Date.now() - oldestRequest)
+    const oldest = timestamps[0]
+    const windowMs = 60000 // 1分钟
+    return Math.max(0, windowMs - (Date.now() - oldest))
+  }
+
+  /**
+   * 清理过期的记录
+   */
+  cleanup(): void {
+    const now = Date.now()
+    const windowMs = 60000
     
-    return Math.max(0, remaining)
+    for (const [identifier, timestamps] of this.requests.entries()) {
+      const validTimestamps = timestamps.filter(time => now - time < windowMs)
+      if (validTimestamps.length === 0) {
+        this.requests.delete(identifier)
+      } else {
+        this.requests.set(identifier, validTimestamps)
+      }
+    }
   }
 }
 
 export const rateLimiter = new RateLimiter()
 
-// 安全Headers
-export const SecurityHeaders = {
+// 定期清理速率限制器（每5分钟）
+if (typeof setInterval !== 'undefined') {
+  setInterval(() => rateLimiter.cleanup(), 5 * 60 * 1000)
+}
+
+/**
+ * 基础安全头部
+ */
+export const SecurityHeaders: Record<string, string> = {
   'X-Content-Type-Options': 'nosniff',
   'X-Frame-Options': 'DENY',
   'X-XSS-Protection': '1; mode=block',
   'Referrer-Policy': 'strict-origin-when-cross-origin',
-  'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+  'Permissions-Policy': 'geolocation=(), microphone=(), camera=()',
 }
 
-// 获取动态安全Headers（支持插件认证页面）
-export function getSecurityHeaders(pathname?: string) {
+/**
+ * 获取动态安全头部
+ * @param pathname - 请求路径
+ */
+export function getSecurityHeaders(pathname: string): Record<string, string> {
   const headers = { ...SecurityHeaders }
-
-  // 允许插件认证页面被iframe嵌入
-  if (pathname && pathname.startsWith('/plugin/auth')) {
-    headers['X-Frame-Options'] = 'SAMEORIGIN'
+  
+  // API路由使用更严格的CSP
+  if (pathname.startsWith('/api/')) {
+    headers['Content-Security-Policy'] = "default-src 'self'; frame-ancestors 'none';"
+  } else {
+    // 页面路由使用相对宽松的CSP
+    headers['Content-Security-Policy'] = [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+      "style-src 'self' 'unsafe-inline'",
+      "img-src 'self' data: https:",
+      "font-src 'self' data:",
+      "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
+      "frame-ancestors 'self'"
+    ].join('; ')
   }
-
+  
   return headers
+}
+
+/**
+ * 验证输入字符串
+ */
+export function validateString(value: any, minLength = 1, maxLength = 1000): { isValid: boolean; message?: string } {
+  if (typeof value !== 'string') {
+    return { isValid: false, message: '必须是字符串' }
+  }
+  if (value.length < minLength) {
+    return { isValid: false, message: `长度不能少于${minLength}个字符` }
+  }
+  if (value.length > maxLength) {
+    return { isValid: false, message: `长度不能超过${maxLength}个字符` }
+  }
+  return { isValid: true }
+}
+
+/**
+ * 验证邮箱
+ */
+export function validateEmail(value: any): { isValid: boolean; message?: string } {
+  if (typeof value !== 'string') {
+    return { isValid: false, message: '必须是字符串' }
+  }
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (!emailRegex.test(value)) {
+    return { isValid: false, message: '邮箱格式不正确' }
+  }
+  return { isValid: true }
+}
+
+/**
+ * 验证URL
+ */
+export function validateUrl(value: any): { isValid: boolean; message?: string } {
+  if (typeof value !== 'string') {
+    return { isValid: false, message: '必须是字符串' }
+  }
+  try {
+    new URL(value)
+    return { isValid: true }
+  } catch {
+    return { isValid: false, message: 'URL格式不正确' }
+  }
+}
+
+/**
+ * 验证UUID
+ */
+export function validateUUID(value: any): { isValid: boolean; message?: string } {
+  if (typeof value !== 'string') {
+    return { isValid: false, message: '必须是字符串' }
+  }
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+  if (!uuidRegex.test(value)) {
+    return { isValid: false, message: 'UUID格式不正确' }
+  }
+  return { isValid: true }
 }

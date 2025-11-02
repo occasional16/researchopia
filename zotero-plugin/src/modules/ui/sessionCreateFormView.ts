@@ -14,7 +14,7 @@ export class SessionCreateFormView {
     private sessionManager: ReadingSessionManager,
     private context: BaseViewContext,
     private onBack: () => void,
-    private onCreated: () => Promise<void>
+    private onCreated: (sessionType: 'public' | 'private') => Promise<void>
   ) {}
 
   /**
@@ -171,7 +171,7 @@ export class SessionCreateFormView {
         `${type === 'public' ? '公开' : '私密'}会话已创建！邀请码: ${session.inviteCode}`,
         'info'
       );
-      await this.onCreated();
+      await this.onCreated(type);
     } catch (error) {
       logger.error("[SessionCreateFormView] Error creating session:", error);
       const errorMsg = error instanceof Error ? error.message : '未知错误';

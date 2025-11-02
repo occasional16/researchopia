@@ -1,5 +1,5 @@
 import { logger } from "../utils/logger";
-import { apiGet, apiPost, apiPatch, apiDelete } from "../utils/apiClient";
+import { APIClient } from "../utils/apiClient";
 
 export interface SupabaseAnnotation {
   id: string;
@@ -33,6 +33,7 @@ export interface DocumentInfo {
  * Supabase数据库集成管理器
  */
 export class SupabaseManager {
+  private apiClient = APIClient.getInstance();
   private baseUrl: string;
   private apiKey: string;
   
@@ -226,15 +227,10 @@ export class SupabaseManager {
    */
   async getSharedAnnotations(documentId: string): Promise<SupabaseAnnotation[]> {
     try {
-      const response = await apiGet(`/api/proxy/annotations?document_id=${encodeURIComponent(documentId)}&type=shared`);
+      const annotations = await this.apiClient.get<SupabaseAnnotation[]>(`/api/proxy/annotations?document_id=${encodeURIComponent(documentId)}&type=shared`);
       
-      if (!response.success) {
-        throw new Error(response.error || '获取共享标注失败');
-      }
-
-      const annotations = response.data || [];
       logger.log(`[SupabaseManager] Retrieved ${annotations.length} shared annotations`);
-      return annotations;
+      return annotations || [];
 
     } catch (error) {
       logger.error('[SupabaseManager] Error getting shared annotations:', error);
@@ -248,15 +244,10 @@ export class SupabaseManager {
   async getAnnotationsForDocument(documentId: string, userId?: string): Promise<SupabaseAnnotation[]> {
     try {
       const type = userId ? 'my' : 'all';
-      const response = await apiGet(`/api/proxy/annotations?document_id=${encodeURIComponent(documentId)}&type=${type}`);
+      const annotations = await this.apiClient.get<SupabaseAnnotation[]>(`/api/proxy/annotations?document_id=${encodeURIComponent(documentId)}&type=${type}`);
       
-      if (!response.success) {
-        throw new Error(response.error || '获取文档标注失败');
-      }
-
-      const annotations = response.data || [];
       logger.log(`[SupabaseManager] Retrieved ${annotations.length} annotations for document ${documentId}`);
-      return annotations;
+      return annotations || [];
 
     } catch (error) {
       logger.error('[SupabaseManager] Error getting document annotations:', error);
@@ -338,14 +329,10 @@ export class SupabaseManager {
   async createAnnotation(annotation: any): Promise<any> {
     try {
       logger.log('[SupabaseManager] Creating annotation with data:', JSON.stringify(annotation).substring(0, 200));
-      const response = await apiPost('/api/proxy/annotations', annotation);
+      const newAnnotation = await this.apiClient.post<any>('/api/proxy/annotations', annotation);
 
-      if (!response.success) {
-        throw new Error(response.error || '创建标注失败');
-      }
-
-      logger.log('[SupabaseManager] Created annotation:', response.data);
-      return response.data;
+      logger.log('[SupabaseManager] Created annotation:', newAnnotation);
+      return newAnnotation;
 
     } catch (error) {
       if (error instanceof Error) {
@@ -367,14 +354,10 @@ export class SupabaseManager {
         ...updateData
       };
 
-      const response = await apiPatch('/api/proxy/annotations', data);
+      const updatedAnnotation = await this.apiClient.patch<any>('/api/proxy/annotations', data);
 
-      if (!response.success) {
-        throw new Error(response.error || '更新标注失败');
-      }
-
-      logger.log(`[SupabaseManager] Updated annotation ${annotationId}:`, response.data);
-      return response.data;
+      logger.log(`[SupabaseManager] Updated annotation ${annotationId}:`, updatedAnnotation);
+      return updatedAnnotation;
 
     } catch (error) {
       logger.error('[SupabaseManager] Error updating annotation:', error);
@@ -401,11 +384,7 @@ export class SupabaseManager {
    */
   async deleteAnnotation(annotationId: string): Promise<void> {
     try {
-      const response = await apiDelete(`/api/proxy/annotations?id=${annotationId}`);
-
-      if (!response.success) {
-        throw new Error(response.error || '删除标注失败');
-      }
+      await this.apiClient.delete(`/api/proxy/annotations?id=${annotationId}`);
 
       logger.log(`[SupabaseManager] Deleted annotation ${annotationId}`);
     } catch (error) {

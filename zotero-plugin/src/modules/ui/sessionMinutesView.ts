@@ -210,10 +210,16 @@ export class SessionMinutesView {
     contentArea.innerHTML = '';
     
     try {
+      // Get session details to pass to sub-views
+      const session = this.sessionManager.getCurrentSession();
+      if (!session) {
+        throw new Error("Current session not found when rendering sub-view.");
+      }
+
       switch (mode) {
         case 'minutes':
           logger.log("[SessionMinutesView] Rendering minutes content");
-          await this.renderMinutesContent(contentArea, sessionId, doc);
+          await this.renderLogContent(contentArea, doc, session); // Pass the full session object
           break;
           
         case 'chat':
@@ -237,108 +243,126 @@ export class SessionMinutesView {
   /**
    * 渲染会话纪要内容(事件日志部分)
    */
-  private async renderMinutesContent(container: HTMLElement, sessionId: string, doc: Document): Promise<void> {
-    const session = this.sessionManager.getCurrentSession();
-    if (!session) {
-      container.innerHTML = '<div style="padding: 32px; text-align: center; color: #666;">未找到当前会话</div>';
-      return;
+  private async renderLogContent(
+    container: HTMLElement,
+    doc: Document,
+    session: any // Receive the full session object
+  ) {
+    logger.log('[SessionMinutesView] Rendering minutes content');
+    try {
+      // Corrected method name from fetchLogs to getSessionLogs
+      const logs = await this.logManager.getSessionLogs(session.id, 1, 100);
+      const messages = await this.logManager.getChatMessages(session.id, {
+        page: 1,
+        limit: 1000,
+      });
+      
+      // 设置container样式
+      container.style.cssText = `
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+        overflow-x: hidden;
+        overflow-y: auto;
+      `;
+
+      // 标题栏
+      const headerDiv = doc.createElement('div');
+      headerDiv.style.cssText = `
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+        flex-shrink: 0;
+      `;
+
+      const title = doc.createElement('h3');
+      title.textContent = '📋 会话纪要';
+      title.style.cssText = `
+        margin: 0;
+        font-size: 18px;
+        font-weight: 600;
+        color: #1f2937;
+      `;
+      headerDiv.appendChild(title);
+
+      // 导出按钮
+      const exportButton = doc.createElement('button');
+      exportButton.textContent = '📥 导出';
+      exportButton.style.cssText = `
+        padding: 6px 12px;
+        background: #28a745;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 600;
+        transition: opacity 0.2s;
+      `;
+      exportButton.addEventListener('mouseenter', () => {
+        exportButton.style.opacity = '0.85';
+      });
+      exportButton.addEventListener('mouseleave', () => {
+        exportButton.style.opacity = '1';
+      });
+      exportButton.addEventListener('click', async () => {
+        await this.handleExportMinutes(session.id);
+      });
+      headerDiv.appendChild(exportButton);
+
+      container.appendChild(headerDiv);
+
+      // 会话信息摘要
+      const summaryCard = doc.createElement('div');
+      summaryCard.style.cssText = `
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 16px;
+        margin-bottom: 8px;
+        flex-shrink: 0;
+      `;
+      summaryCard.innerHTML = `
+        <div style="font-weight: 600; margin-bottom: 8px; word-break: break-word; overflow-wrap: break-word;">📄 ${this.escapeHtml(session.paper_title)}</div>
+        <div style="font-size: 13px; color: #666; word-break: break-all; overflow-wrap: break-word;">DOI: ${this.escapeHtml(session.paper_doi)}</div>
+        <div style="font-size: 13px; color: #666;">创建时间: ${formatDate(session.created_at)}</div>
+      `;
+      container.appendChild(summaryCard);
+
+      // 先添加加载占位符
+      const logsPlaceholder = doc.createElement('div');
+      logsPlaceholder.id = 'logs-placeholder';
+      logsPlaceholder.style.cssText = `
+        padding: 40px;
+        text-align: center;
+        color: #6b7280;
+        border: 2px dashed #d1d5db;
+        border-radius: 8px;
+      `;
+      logsPlaceholder.innerHTML = `
+        <div style="font-size: 48px; margin-bottom: 16px;">⏳</div>
+        <div style="font-size: 14px;">加载事件日志中...</div>
+      `;
+      container.appendChild(logsPlaceholder);
+
+      // 异步加载事件日志
+      this.loadEventLogs(session.id, container, doc).catch(error => {
+        logger.error("[SessionMinutesView] Error loading event logs:", error);
+      });
+    } catch (error) {
+      logger.error("[SessionMinutesView] Error rendering minutes content:", error);
+      container.innerHTML = `
+        <div style="padding: 40px; text-align: center; color: #ef4444;">
+          <div>❌ 加载失败</div>
+          <div style="font-size: 12px; margin-top: 8px;">${
+            error instanceof Error ? error.message : '未知错误'
+          }</div>
+        </div>
+      `;
     }
-
-    // 设置container样式
-    container.style.cssText = `
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      width: 100%;
-      max-width: 100%;
-      box-sizing: border-box;
-      overflow-x: hidden;
-      overflow-y: auto;
-    `;
-
-    // 标题栏
-    const headerDiv = doc.createElement('div');
-    headerDiv.style.cssText = `
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 8px;
-      flex-shrink: 0;
-    `;
-
-    const title = doc.createElement('h3');
-    title.textContent = '📋 会话纪要';
-    title.style.cssText = `
-      margin: 0;
-      font-size: 18px;
-      font-weight: 600;
-      color: #1f2937;
-    `;
-    headerDiv.appendChild(title);
-
-    // 导出按钮
-    const exportButton = doc.createElement('button');
-    exportButton.textContent = '📥 导出';
-    exportButton.style.cssText = `
-      padding: 6px 12px;
-      background: #28a745;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      font-size: 13px;
-      font-weight: 600;
-      transition: opacity 0.2s;
-    `;
-    exportButton.addEventListener('mouseenter', () => {
-      exportButton.style.opacity = '0.85';
-    });
-    exportButton.addEventListener('mouseleave', () => {
-      exportButton.style.opacity = '1';
-    });
-    exportButton.addEventListener('click', async () => {
-      await this.handleExportMinutes(sessionId);
-    });
-    headerDiv.appendChild(exportButton);
-
-    container.appendChild(headerDiv);
-
-    // 会话信息摘要
-    const summaryCard = doc.createElement('div');
-    summaryCard.style.cssText = `
-      background: #f8f9fa;
-      border-radius: 8px;
-      padding: 16px;
-      margin-bottom: 8px;
-      flex-shrink: 0;
-    `;
-    summaryCard.innerHTML = `
-      <div style="font-weight: 600; margin-bottom: 8px; word-break: break-word; overflow-wrap: break-word;">📄 ${this.escapeHtml(session.paper_title)}</div>
-      <div style="font-size: 13px; color: #666; word-break: break-all; overflow-wrap: break-word;">DOI: ${this.escapeHtml(session.paper_doi)}</div>
-      <div style="font-size: 13px; color: #666;">创建时间: ${formatDate(session.created_at)}</div>
-    `;
-    container.appendChild(summaryCard);
-
-    // 先添加加载占位符
-    const logsPlaceholder = doc.createElement('div');
-    logsPlaceholder.id = 'logs-placeholder';
-    logsPlaceholder.style.cssText = `
-      padding: 40px;
-      text-align: center;
-      color: #6b7280;
-      border: 2px dashed #d1d5db;
-      border-radius: 8px;
-    `;
-    logsPlaceholder.innerHTML = `
-      <div style="font-size: 48px; margin-bottom: 16px;">⏳</div>
-      <div style="font-size: 14px;">加载事件日志中...</div>
-    `;
-    container.appendChild(logsPlaceholder);
-
-    // 异步加载事件日志
-    this.loadEventLogs(sessionId, container, doc).catch(error => {
-      logger.error("[SessionMinutesView] Error loading event logs:", error);
-    });
   }
 
   /**
@@ -489,7 +513,10 @@ export class SessionMinutesView {
       }
       
       const logs = await this.logManager.getSessionLogs(sessionId, 1, 1000);
-      const messages = await this.logManager.getChatMessages(sessionId, 1, 1000);
+      const messages = await this.logManager.getChatMessages(sessionId, {
+        page: 1,
+        limit: 1000, // Fetch all messages for export
+      });
       
       let markdown = `# 会话纪要\n\n`;
       markdown += `## 会话信息\n\n`;

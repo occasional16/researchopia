@@ -1,4 +1,13 @@
-# 研学港 Researchopia - 开放的学术交流平台
+<!-- markdownlint-disable first-line-h1 -->
+<!-- markdownlint-disable html -->
+<!-- markdownlint-disable no-duplicate-header -->
+
+
+<div align="center">
+  <a href="https://www.researchopia.com/" target="_blank">
+    <img src="./docs/res/icon128.svg" width="45%" alt="Researchopia Homepage" />
+  </a>
+
 
 [![zotero target version](https://img.shields.io/badge/Zotero-8/7-green?style=flat-square&logo=zotero&logoColor=CC2936)](https://www.zotero.org) 
 [![Using Zotero Plugin Template](https://img.shields.io/badge/Using-Zotero%20Plugin%20Template-blue?style=flat-square&logo=github)](https://github.com/windingwind/zotero-plugin-template)
@@ -6,102 +15,104 @@
 [![Latest release](https://img.shields.io/github/v/release/occasional16/researchopia)](https://github.com/occasional16/researchopia/releases)
 ![License](https://img.shields.io/badge/License-AGPLv3-green.svg)
 
-> **研学并进，智慧共享** | Where Research Meets Community
+**研学港 | Researchopia - 开放的学术交流和共享平台**
+
+**研学并进，智慧共享 | Where Research Meets Community**
+
+     
+
+[🌐 官方网站](https://www.researchopia.com) | [📄 用户指南](/docs/USER-GUIDE.md) | [🤝 贡献指南](./docs/CONTRIBUTING.md)
+
+
+</div>
+
+
+## 🧩 目录 Contents
+
+- [🧩 目录 Contents](#-目录-contents)
+- [🚀 最新动态](#-最新动态)
+- [📋 项目简介](#-项目简介)
+- [⚡ 快速开始](#-快速开始)
+  - [✨ 核心功能](#-核心功能)
+  - [🌐 网站平台](#-网站平台)
+  - [📱 浏览器扩展](#-浏览器扩展)
+  - [📚 Zotero 插件](#-zotero-插件)
+- [📝 相关文档](#-相关文档)
+  - [核心文档](#核心文档)
+  - [多语言](#多语言)
+- [🔧 开发指南](#-开发指南)
+  - [🤝 贡献指南](#-贡献指南)
+  - [📁 项目结构](#-项目结构)
+  - [🛠 技术栈](#-技术栈)
+- [📄 许可证](#-许可证)
+- [📞 联系方式](#-联系方式)
+
+
 
 ## 🚀 最新动态
 
-**2025.10.31** Zotero插件0.3.1版已上线，请前往zotero插件商店或github下载安装。
+**2025.10.31** Zotero插件0.3.2版已上线，请前往zotero插件商店或github下载安装。详见 [修改日志 Changelog](/docs/CHANGELOG.md) 。
 
-## 💡 项目声明
+## 📋 项目简介
 
-欢迎来到 **研学港 Researchopia** ！ **本项目完全由AI工具生成**（除了这段话），没敲过一行代码（因为根本不会😂）。我是一名刚博士毕业的科研狗（化学领域），没有编程基础，也没有报过AI课程，抱着试一试的态度，才发现AI太好用了！
-
-本项目为 **研学港 Researchopia** 的开源项目（项目名称、logo和slogan也是AI给设计的），旨在为学术研究者提供优质的学术资源和交流环境。
+欢迎来到 **研学港 Researchopia** ！ **研学港 Researchopia** 是一个开放的学术交流和共享平台（开源项目），旨在为研究者提供优质的学术资源和交流环境。我们致力于构建一个研究者的理想国，让学术智慧在这里汇聚和传播。
 
 本项目主要呈现方式是一个 **[网站](https://www.researchopia.com)** ，以及于此网站关联的 **[浏览器扩展](https://microsoftedge.microsoft.com/addons/detail/%E7%A0%94%E5%AD%A6%E6%B8%AF-researchopia/hjijphegihgkddcmdmfjpflpcdaadbio)** 和 **Zotero插件** （官网或 [Releases](https://github.com/occasional16/researchopia/releases) 下载）。具体功能参考下方描述，以及网站上的 [用户指南](https://www.researchopia.com/guide) 。
 
-本项目总共历时1周。其实只要描述清楚，直接给一段话AI就可以搞定！一点也不夸张，一周前我还不懂什么叫网站前后端也不懂VS code（现在也只是大致了解一点），但第一天时间就完成了网站基本的界面设计和数据库搭建。浏览器扩展和zotero插件的第一版真的是各用一句话直接生成。当然，进一步的细节打磨和bug处理是花了更多的时间。这段时间也渐渐学到了一些编程知识，也积累了一些与AI对话的经验和小窍门。目前项目处于初期阶段，后续会持续优化和完善。
+本项目正式启动于2025-09-08，作者是一名刚博士毕业的科研狗（化学领域），没有编程基础，也没有报过AI课程，因此，**本项目的编程部分由AI工具生成** （项目整体架构、项目名称、logo和slogan也是AI给设计的）。一开始我还不懂什么叫网站前后端也不懂VS code，但第一天时间就完成了网站基本的界面设计和数据库搭建。浏览器扩展和zotero插件的第一版真的是各用一句话直接生成。当然，进一步的细节打磨和bug处理是花了更多的时间。这段时间也渐渐学到了一些编程知识，也积累了一些与AI对话的经验和小窍门。目前项目处于初期阶段，后续会持续优化和完善。
 
 想要近距离了解本项目开发意图和计划，有任何开发和使用上的建议和反馈，或者想了解AI开发的细节的小伙伴，欢迎加我的个人微信，也欢迎加入官方群用户群。
 
 <div align="center">
-<img src="./doc/img/wechat.png" alt="微信二维码" width="35%">
-<img src="./doc/img/wechat group-users.png" alt="微信二维码" width="33.5%">
+  <img src="./docs/res/wechat.png" alt="个人微信二维码" width="30%">
+  <img src="./docs/res/group-users-wechat.png" alt="微信二维码" width="28.8%">
+  <img src="./docs/res/group-users-qq.png" alt="qq群" width="29.5%">
 </div> 
 
-## 📋 项目概述
+---
 
-**研学港 Researchopia** 是一个现代化的学术论文交流平台，旨在为研究者提供优质的学术资源评价和交流环境。我们致力于构建一个研究者的理想国，让学术智慧在这里汇聚和传播。
+## ⚡ 快速开始
 
-## 🌐 在线访问
+### ✨ 核心功能
+
+详细内容请看 [用户指南](/docs/USER-GUIDE.md) 。
+
+**🌐 Next.js 网站平台**
+- **论文搜索与管理**: DOI/关键词搜索，智能推荐
+- **标注共享社区**: 查看和分享学术标注，社交互动
+- **实时协作**: 文献共读会话，多人同步阅读
+- **学术社交**: 关注研究者，评论互动，学术讨论
+
+**📚 Zotero 插件**
+- **无缝集成**: 嵌入 Zotero 8 item pane
+- **标注同步**: 自动同步 PDF 标注到云端
+- **实时会话**: 创建/加入共读会话，实时标注共享
+- **社区互动**: 查看他人标注，点赞评论
+
+**📱 浏览器扩展**
+- **智能 DOI 检测**: 自动识别学术网页中的 DOI
+- **悬浮工具**: 拖拽式浮动图标，快速访问
+- **侧边栏集成**: 在任意网页打开研学港
+- **快速搜索**: 一键搜索检测到的 DOI
+
+### 🌐 网站平台
 
 - **官方网站**: [https://www.researchopia.com](https://www.researchopia.com)
 
 主页：
 
-![主页](/doc/img/zhuye.png)
+![主页](./docs/res/zhuye.png)
 
 论文详情页：
 
-![alt text](/doc/img/xiangqingye.png)
+![论文详情页](./docs/res/xiangqingye.png)
 
 个人中心页：
 
-![alt text](/doc/img/gerenzhongxin.png)
+![个人中心页](./docs/res/gerenzhongxin.png)
 
-## ✨ 主要功能
 
-- **学术论文搜索与评分**: 智能搜索学术文献，提供多维度评价体系
-- **研究者社区**: 构建学术交流与讨论的专业平台
-- **浏览器扩展**: 提供 Chrome/Edge 浏览器插件，便捷访问论文评价
-- **Zotero 集成**: 无缝集成 Zotero 文献管理器
-- **多平台支持**: 响应式设计，支持桌面和移动端访问
-
-## 📁 项目结构
-
-```
-📁 researchopia/
-├── 📁 src/                    # 源代码目录
-│   ├── 📁 app/               # Next.js 13+ App Router页面
-│   ├── 📁 components/        # React组件
-│   ├── 📁 contexts/          # React上下文
-│   ├── 📁 hooks/             # 自定义Hook
-│   ├── 📁 lib/               # 工具库
-│   ├── 📁 middleware/        # 中间件
-│   └── 📁 utils/             # 工具函数
-├── 📁 public/                # 静态资源文件
-├── 📁 database/              # 数据库配置与脚本
-├── 📁 extension/             # 浏览器扩展
-├── 📁 zotero-plugin/         # Zotero插件
-├── 📁 supabase/              # Supabase配置与迁移
-└── 📁 doc/                  # 相关文件
-```
-
-## 🔧 开发环境
-
-### 本地运行
-
-```bash
-# 安装依赖
-npm install
-
-# 启动开发服务器
-npm run dev
-
-# 本地访问: http://localhost:300x
-```
-
-### 环境配置
-
-复制 `.env.example` 到 `.env.local` 并配置必要的环境变量：
-
-```bash
-# Supabase 数据库配置
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_key
-```
-
-## 📱 浏览器扩展
+### 📱 浏览器扩展
 
 研学港提供 Chrome/Edge 浏览器扩展，支持：
 
@@ -110,42 +121,118 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_key
 - 侧边栏快速预览
 - 浮动图标便捷访问
 
-![浏览器扩展](/doc/img/1.png)
+![浏览器扩展](./docs/res/1.png)
 
-### 安装扩展
+**安装扩展：**
 
 1. 打开浏览器扩展管理页面
 2. 启用"开发者模式"
 3. 选择"加载已解压的扩展程序"
 4. 选择项目中的 `extension` 文件夹
 
-## 📚 Zotero 插件
+### 📚 Zotero 插件
 
 集成 Zotero 文献管理器，在 Zotero 中直接查看论文评价。
 
-![Zotero插件](/doc/img/zotero.png)
+![Zotero插件](./docs/res/zotero.png)
 
-### 安装 Zotero 插件
+**安装 Zotero 插件：**
 
-1. 将 `zotero-plugin` 文件夹打包压缩为 `.zip` 文件并修改后缀名为 `.xpi`
-2. 在 Zotero > Tools > Plugins 中安装插件
+在Zotero插件商店内直接下载安装，或下载xpi文件，在 Zotero > Tools > Plugins 中安装。
 
-## 🛠 技术栈
+---
 
-- **前端框架**: Next.js 15 + React 19
-- **样式设计**: Tailwind CSS + Shadcn/ui
-- **数据库**: Supabase (PostgreSQL)
-- **部署平台**: Vercel
-- **开发语言**: TypeScript
+## 📝 相关文档
+
+> **🗂️ 完整文档导航**: [文档索引和规范](./docs/README.md) - 查看所有文档和编写规范
+
+### 核心文档
+- [架构说明](./docs/ARCHITECTURE.md) - 整体架构、数据库设计、技术栈
+- [开发指南](./docs/DEVELOPMENT.md) - Next.js、Zotero插件、浏览器扩展开发
+- [贡献指南](./docs/CONTRIBUTING.md) - 开发规范、Git工作流、PR流程
+- [用户指南](./docs/USER-GUIDE.md) - 网站、插件、扩展使用教程
+- [API 文档](./docs/API.md) - 所有API端点、认证、错误处理
+- [问题排查](./docs/TROUBLESHOOTING.md) - 常见问题和解决方案
+
+### 多语言
+- [English README](./docs/README-en.md)
+
+
+## 🔧 开发指南
+
+### 🤝 贡献指南
+欢迎添加作者微信，或提交 Issue 和 Pull Request 来帮助改进项目！请查看 [贡献指南](./docs/CONTRIBUTING.md) 了解详情。
+
+更多信息请参考:
+- [开发指南](./docs/DEVELOPMENT.md) - 详细技术文档
+- [贡献指南](./docs/CONTRIBUTING.md) - 开发流程和规范
+- [架构说明](./docs/ARCHITECTURE.md) - 系统架构和数据库设计
+
+### 📁 项目结构
+
+```
+📁 Researchopia/
+├── 📁 src/                  # Next.js 网站源码
+│   ├── 📁 app/              # App Router 页面
+│   ├── 📁 components/       # React 组件
+│   ├── 📁 lib/              # 工具库和配置
+│   └── 📁 types/            # TypeScript 类型定义
+├── 📁 zotero-plugin/        # Zotero 插件
+│   ├── 📁 src/              # 插件源码
+│   │   ├── 📁 modules/      # 核心功能模块
+│   │   ├── 📁 utils/        # 工具函数
+│   │   └── 📁 config/       # 配置文件
+│   └── 📁 addon/            # 插件资源文件
+├── 📁 extension/            # 浏览器扩展
+│   ├── 📁 manifest.json     # 扩展清单
+│   ├── 📁 background.js     # 后台脚本
+│   ├── 📁 content.js        # 内容脚本
+│   └── 📁 icons/            # 图标资源
+├── 📁 docs/                 # 项目文档 
+└── 📁 public/               # 静态资源文件
+```
+
+### 🛠 技术栈
+
+**网站**
+- **Next.js 15** - React 框架，App Router
+- **TypeScript** - 类型安全
+- **Tailwind CSS** - 样式框架
+- **Supabase** - 后端服务和实时数据库
+- **Vercel** - 部署平台
+
+**Zotero 插件**
+- **TypeScript** - 插件开发语言
+- **Zotero Plugin Toolkit** - 官方工具库
+- **Mozilla/XUL** - Zotero UI 框架
+
+**浏览器扩展**
+- **Manifest V3** - Chrome 扩展最新标准
+- **Vanilla JavaScript** - 轻量高效
+
+---
+
 
 ## 📄 许可证
 
-本项目采用 AGPL-v3 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情。
-
-## 🤝 贡献指南
-
-欢迎添加作者微信，或提交 Issue 和 Pull Request 来帮助改进项目！
+本项目采用 [AGPL-3.0-or-later](LICENSE) 许可证。
 
 ---
+
+
+## 📞 联系方式
+
+- **项目维护**: Researchopia Team
+- **技术支持**: 通过 GitHub Issues
+- **反馈建议**: 欢迎在平台上提交
+
+- **网站**: [https://www.researchopia.com](https://www.researchopia.com)
+- **GitHub**: [https://github.com/occasional16/researchopia](https://github.com/occasional16/researchopia)
+- **技术支持 + 反馈建议**: 欢迎添加作者微信，加入项目群，或欢在平台上反馈。
+
+
+---
+
+**Made with ❤️ for the research community**
 
 **研学港 Researchopia** - 研学并进，智慧共享 | Where Research Meets Community。

@@ -111,8 +111,9 @@ export async function GET(request: NextRequest) {
         data: mockRecentComments.slice(0, limit)
       }, {
         headers: {
-          'Cache-Control': 'public, s-maxage=600, max-age=300, stale-while-revalidate=1800',
-          'CDN-Cache-Control': 'public, s-maxage=1200'
+          // 方案A: 平衡性能和实时性 - CDN 3分钟, 客户端 1分钟
+          'Cache-Control': 'public, s-maxage=180, max-age=60, stale-while-revalidate=600',
+          'CDN-Cache-Control': 'public, s-maxage=300'
         }
       })
     }
@@ -208,9 +209,9 @@ export async function GET(request: NextRequest) {
         data: result
       }, {
         headers: {
-          // 优化缓存策略: 延长缓存时间并添加后台重验证
-          'Cache-Control': 'public, s-maxage=600, max-age=300, stale-while-revalidate=1800',
-          'CDN-Cache-Control': 'public, s-maxage=1200'
+          // 方案A: 平衡性能和实时性 - CDN 3分钟, 客户端 1分钟, 后台重验证 10分钟
+          'Cache-Control': 'public, s-maxage=180, max-age=60, stale-while-revalidate=600',
+          'CDN-Cache-Control': 'public, s-maxage=300'
         }
       })
 
@@ -227,8 +228,9 @@ export async function GET(request: NextRequest) {
         data: sortedMockData
       }, {
         headers: {
-          'Cache-Control': 'public, s-maxage=300, max-age=180, stale-while-revalidate=900',
-          'CDN-Cache-Control': 'public, s-maxage=600'
+          // 方案A: 数据库失败时的降级缓存策略
+          'Cache-Control': 'public, s-maxage=180, max-age=60, stale-while-revalidate=600',
+          'CDN-Cache-Control': 'public, s-maxage=300'
         }
       })
     }
@@ -246,8 +248,9 @@ export async function GET(request: NextRequest) {
       data: fallbackData
     }, {
       headers: {
-        'Cache-Control': 'public, s-maxage=300, max-age=180, stale-while-revalidate=900',
-        'CDN-Cache-Control': 'public, s-maxage=600'
+        // 方案A: 最终后备缓存策略
+        'Cache-Control': 'public, s-maxage=180, max-age=60, stale-while-revalidate=600',
+        'CDN-Cache-Control': 'public, s-maxage=300'
       }
     })
   }

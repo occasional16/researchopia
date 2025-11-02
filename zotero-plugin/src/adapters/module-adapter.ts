@@ -12,15 +12,30 @@ export class ModuleAdapter {
    * Zotero 7: Services.jsm
    */
   static importServices(): any {
-    if (ZoteroVersionDetector.isZotero8()) {
-      // Zotero 8 使用ESM
-      // @ts-ignore - ChromeUtils is available at runtime
-      return ChromeUtils.importESModule('resource://gre/modules/Services.sys.mjs').Services;
-    } else {
-      // Zotero 7 使用CommonJS
-      // @ts-ignore - ChromeUtils is available at runtime
-      const { Services } = ChromeUtils.import('resource://gre/modules/Services.jsm');
-      return Services;
+    // 优先尝试从Zotero主窗口获取Services(更可靠)
+    try {
+      const mainWindow = (Zotero as any).getMainWindow();
+      if (mainWindow && mainWindow.Services) {
+        return mainWindow.Services;
+      }
+    } catch (e) {
+      // Fallback to ChromeUtils
+    }
+    
+    // Fallback: 使用ChromeUtils导入
+    try {
+      if (ZoteroVersionDetector.isZotero8()) {
+        // Zotero 8 使用ESM
+        // @ts-ignore - ChromeUtils is available at runtime
+        return ChromeUtils.importESModule('resource://gre/modules/Services.sys.mjs').Services;
+      } else {
+        // Zotero 7 使用CommonJS
+        // @ts-ignore - ChromeUtils is available at runtime
+        const { Services } = ChromeUtils.import('resource://gre/modules/Services.jsm');
+        return Services;
+      }
+    } catch (e) {
+      throw new Error('Failed to import Services module: ' + e);
     }
   }
 

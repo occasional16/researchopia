@@ -42,8 +42,8 @@ export default function DOISearch() {
 
         // Auto redirect after 2 seconds, or user can click
         setTimeout(() => {
-          const route = getPaperRoute(paper)
-          router.push(route.href)
+          const route = getPaperRoute(paper.id || paper.doi || '')
+          router.push(route)
         }, 2000)
       }
     } catch (err: any) {
@@ -99,8 +99,8 @@ export default function DOISearch() {
           <div className="flex space-x-2 mt-3">
             <button
               onClick={() => {
-                const route = getPaperRoute(paperPreview)
-                router.push(route.href)
+                const route = getPaperRoute(paperPreview.id || paperPreview.doi || '')
+                router.push(route)
               }}
               className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors"
             >

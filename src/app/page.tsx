@@ -11,7 +11,6 @@ import { useAuthenticatedFetch } from '@/hooks/useAuthenticatedFetch'
 import { useScrollRestoration } from '@/hooks/useScrollRestoration'
 import NetworkOptimizer from '@/components/NetworkOptimizer'
 import AnnouncementForm from '@/components/AnnouncementForm'
-import { deduplicatedFetch, clearRequestCache } from '@/utils/requestDeduplicator'
 
 // 日期格式化工具函数（避免hydration错误）
 function formatDate(dateString: string): string {
@@ -105,6 +104,7 @@ export default function HomePage() {
   const [showAnnouncementForm, setShowAnnouncementForm] = useState(false)
   const [showAnnouncementHistory, setShowAnnouncementHistory] = useState(false)
   const [editingAnnouncement, setEditingAnnouncement] = useState<Announcement | null>(null)
+  const [refreshingComments, setRefreshingComments] = useState(false) // 手动刷新状态
 
   // 访问跟踪函数
   const trackVisit = async () => {
@@ -150,7 +150,8 @@ export default function HomePage() {
         
         if (cachedComments) {
           const parsed = JSON.parse(cachedComments)
-          if (Date.now() - parsed.timestamp < 300000) {
+          // 方案A: 客户端缓存改为1分钟
+          if (Date.now() - parsed.timestamp < 60000) {
             setRecentComments(parsed.data)
           }
         }
@@ -172,18 +173,22 @@ export default function HomePage() {
         // 在后台记录访问,不阻塞数据加载
         trackVisit().catch(() => {}) // 静默失败
 
-        // 并行加载统计数据、评论数据和公告数据,使用请求去重工具
+        // 并行加载统计数据、评论数据和公告数据
         const [statsResponse, commentsResponse, announcementsResponse] = await Promise.allSettled([
-          deduplicatedFetch('/api/site/statistics', {
+          fetch('/api/site/statistics', {
             headers: { 'Content-Type': 'application/json' }
-          }, 1000, 300000) // 1秒去重,5分钟缓存
-            .then(data => data.success ? data.data : null)
-            .catch(() => null),
+          }).then(async res => {
+            if (res.ok) {
+              const data = await res.json()
+              return data.success ? data.data : null
+            }
+            return null
+          }).catch(() => null),
 
           fetch('/api/papers/recent-comments?limit=5', {
             headers: { 
               'Content-Type': 'application/json',
-              'Cache-Control': 'max-age=180' // 3分钟客户端缓存
+              'Cache-Control': 'max-age=60' // 方案A: 1分钟客户端缓存
             }
           }).then(async res => {
             if (res.ok) {
@@ -240,7 +245,7 @@ export default function HomePage() {
         // 处理评论数据
         if (commentsResponse.status === 'fulfilled' && commentsResponse.value && commentsResponse.value.length > 0) {
           setRecentComments(commentsResponse.value)
-          // 缓存到localStorage
+          // 方案A: 缓存到localStorage (1分钟有效期)
           localStorage.setItem('homepageComments', JSON.stringify({
             data: commentsResponse.value,
             timestamp: Date.now()
@@ -292,27 +297,66 @@ export default function HomePage() {
 
     loadData()
 
-    // 定时刷新统计数据（每5分钟）- 从60秒优化为300秒
+    // 定时刷新统计数据（每5分钟）
     const interval = setInterval(async () => {
       try {
-        const data = await deduplicatedFetch('/api/site/statistics', {
+        const response = await fetch('/api/site/statistics', {
           headers: { 'Content-Type': 'application/json' }
-        }, 1000, 300000) // 1秒去重,5分钟缓存
+        })
         
-        if (data.success && data.data) {
-          setStats((prev) => ({
-            ...prev,
-            totalPapers: data.data.totalPapers ?? prev.totalPapers,
-            totalUsers: data.data.totalUsers ?? prev.totalUsers,
-            totalVisits: data.data.totalVisits ?? prev.totalVisits,
-            todayVisits: data.data.todayVisits ?? prev.todayVisits,
-          }))
+        if (response.ok) {
+          const data = await response.json()
+          if (data.success && data.data) {
+            setStats((prev) => ({
+              ...prev,
+              totalPapers: data.data.totalPapers ?? prev.totalPapers,
+              totalUsers: data.data.totalUsers ?? prev.totalUsers,
+              totalVisits: data.data.totalVisits ?? prev.totalVisits,
+              todayVisits: data.data.todayVisits ?? prev.todayVisits,
+            }))
+          }
         }
       } catch {}
-    }, 300000) // 60000ms -> 300000ms (1分钟 -> 5分钟)
+    }, 300000) // 5分钟刷新一次
 
     return () => clearInterval(interval)
   }, [])
+
+  // 手动刷新最新评论
+  const refreshComments = async () => {
+    if (refreshingComments) return // 防止重复点击
+    
+    setRefreshingComments(true)
+    try {
+      // 清除localStorage缓存
+      localStorage.removeItem('homepageComments')
+      
+      // 强制重新获取数据,绕过缓存
+      const response = await fetch('/api/papers/recent-comments?limit=5&_t=' + Date.now(), {
+        headers: { 
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache, no-store, must-revalidate'
+        }
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        if (data.success && data.data) {
+          setRecentComments(data.data)
+          // 更新缓存
+          localStorage.setItem('homepageComments', JSON.stringify({
+            data: data.data,
+            timestamp: Date.now()
+          }))
+        }
+      }
+    } catch (error) {
+      console.error('Failed to refresh comments:', error)
+    } finally {
+      // 延迟恢复按钮状态,提供视觉反馈
+      setTimeout(() => setRefreshingComments(false), 1000)
+    }
+  }
 
   // 检测URL参数中的DOI并自动填入搜索框
   useEffect(() => {
@@ -350,10 +394,8 @@ export default function HomePage() {
   // 刷新公告数据
   const refreshAnnouncements = async () => {
     try {
-      // 清除announcements API的所有缓存(包括浏览器和requestDeduplicator)
-      clearRequestCache('/api/announcements')
-      
-      const response = await fetch('/api/announcements', {
+      // 添加时间戳绕过缓存
+      const response = await fetch('/api/announcements?_t=' + Date.now(), {
         headers: { 
           'Content-Type': 'application/json',
           'Cache-Control': 'no-cache' // 强制服务端重新获取
@@ -781,13 +823,31 @@ export default function HomePage() {
               <MessageCircle className="h-5 w-5 mr-2 text-blue-600" />
               {t('papers.recent', '最新评论')}
             </h2>
-            <Link
-              href="/papers"
-              className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white text-sm font-medium rounded-lg hover:from-blue-600 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 shadow-md hover:shadow-lg"
-            >
-              <BookOpen className="h-4 w-4 mr-2" />
-              {t('papers.allPapers', '所有论文')}
-            </Link>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={refreshComments}
+                disabled={refreshingComments}
+                className="inline-flex items-center px-3 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                title="刷新评论"
+              >
+                <svg 
+                  className={`h-4 w-4 mr-1 ${refreshingComments ? 'animate-spin' : ''}`} 
+                  fill="none" 
+                  viewBox="0 0 24 24" 
+                  stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                {refreshingComments ? '刷新中...' : '刷新'}
+              </button>
+              <Link
+                href="/papers"
+                className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white text-sm font-medium rounded-lg hover:from-blue-600 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 shadow-md hover:shadow-lg"
+              >
+                <BookOpen className="h-4 w-4 mr-2" />
+                {t('papers.allPapers', '所有论文')}
+              </Link>
+            </div>
           </div>
         </div>
         <div className="p-6">

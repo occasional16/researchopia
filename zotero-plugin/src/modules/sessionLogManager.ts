@@ -3,7 +3,8 @@
  * 负责记录会话事件和聊天消息
  */
 
-import { logger } from "../utils/logger";
+import { APIClient } from '../utils/apiClient';
+import { logger } from '../utils/logger';
 import { AuthManager } from "./auth";
 
 // 从配置文件导入配置
@@ -75,6 +76,8 @@ export interface ChatMessage {
 
 export class SessionLogManager {
   private static instance: SessionLogManager;
+  private apiClient = APIClient.getInstance();
+  private logger = logger;
 
   private constructor() {}
 
@@ -196,47 +199,49 @@ export class SessionLogManager {
    */
   public async getChatMessages(
     sessionId: string,
-    page = 1,
-    limit = 100
-  ): Promise<ChatMessage[]> {
+    options: {
+      page?: number;
+      limit?: number;
+      lastMessageId?: string | null;
+    } = {}
+  ): Promise<any[]> {
+    const { page, limit, lastMessageId } = options;
+    this.logger.log(
+      `[SessionLogManager] Fetching chat for ${sessionId} with options: ${JSON.stringify(
+        options
+      )}`
+    );
+    const params = new URLSearchParams({
+      session_id: sessionId,
+    });
+
+    // 如果有lastMessageId，我们只关心增量，不关心分页
+    if (lastMessageId) {
+      params.append('last_message_id', lastMessageId);
+    } else {
+      // 否则，我们进行分页加载
+      if (page) {
+        params.append('page', String(page));
+      }
+      if (limit) {
+        params.append('limit', String(limit));
+      }
+    }
+
     try {
-      const token = getToken();
-      if (!token) {
-        throw new Error('未登录');
-      }
-
-      const response = await fetchWithTimeout(
-        `${API_BASE_URL}/api/reading-session/chat?session_id=${sessionId}&page=${page}&limit=${limit}`,
-        {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        },
-        10000 // 10秒超时
+      const response = await this.apiClient.get<{ data: any[] }>(
+        '/api/reading-session/chat',
+        params
       );
-
-      if (!response.ok) {
-        throw new Error(`获取消息失败: ${response.status}`);
-      }
-
-      const result = await response.json();
-      const messages = result.data || [];
-      logger.log(`[SessionLogManager] 🔍 getChatMessages API response:`, {
-        sessionId,
-        page,
-        limit,
-        messageCount: messages.length,
-        pagination: result.pagination,
-        firstMessage: messages[0] ? { id: messages[0].id, message: messages[0].message } : null,
-        lastMessage: messages[messages.length - 1] ? { id: messages[messages.length - 1].id, message: messages[messages.length - 1].message } : null,
-        allMessages: messages.map((m: any) => ({ id: m.id, message: m.message }))
-      });
-      return messages;
+      this.logger.log(
+        `[SessionLogManager] 🔍 getChatMessages API response: ${JSON.stringify(
+          response
+        )}`
+      );
+      return response.data || [];
     } catch (error) {
-      logger.error('[SessionLogManager] Error getting messages:', error);
-      throw error;
+      this.logger.error('[SessionLogManager] Error fetching chat messages:', error);
+      return [];
     }
   }
 

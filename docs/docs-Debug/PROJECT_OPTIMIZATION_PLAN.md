@@ -21,30 +21,33 @@
 
 ---
 
-## 二、Phase 1: 基础设施巩固 (优先级: P0)
+## 二、Phase 1: 基础设施巩固 (优先级: P0) - ✅ 已完成
 
-### 1.1 文档整理 (3天)
+### 1.1 文档整理 (3天) - ✅ 已完成
 
 #### 任务清单
-- [ ] 更新根目录 `README.md`
+- [✅] 更新根目录 `README.md`
   - 项目简介和核心功能
   - 快速开始指南
-  - 项目结构说明
+  - 项目结构说明 (移至DEVELOPMENT.md)
   - 文档导航链接
 
-- [ ] 创建 `docs/ARCHITECTURE.md`
+- [✅] 创建 `docs/ARCHITECTURE.md`
   - 整体架构图
   - 技术栈说明
   - 各模块职责
+  - 数据库设计(7表+RLS+触发器)
 
-- [ ] 创建 `docs/CONTRIBUTING.md`
+- [✅] 创建 `docs/CONTRIBUTING.md`
   - 开发环境配置
   - 代码规范
   - 提交流程
 
-- [ ] 整合现有文档
-  - 合并 `README-extension.md` 和 `README-Zotero Plugin.md`
-  - 移动到 `docs/` 统一管理
+- [✅] 整合现有文档
+  - 创建8层文档体系 (6136+行)
+  - 创建docs/README.md作为统一导航
+  - 更新所有GitHub URLs
+  - 实现版本管理系统
 
 #### 文档模板
 
@@ -71,37 +74,57 @@ cd zotero-plugin && npm start
 - [API文档](./docs/API.md)
 ```
 
-### 1.2 API代理改造收尾 (5天)
+### 1.2 API代理改造收尾 (5天) - ✅ 已完成
 
-#### 当前状态
-✅ 已完成: Auth, PaperRegistry, ReadingSession, Annotations  
-🔜 待完成: 清理和优化；当前插件直接调用Supabase存在安全风险,应全部走Next.js代理
+#### 最终状态
+✅ 已完成: Auth, PaperRegistry, ReadingSession, Annotations, 所有标注相关API  
+✅ 清理完成: `env.ts`中Supabase配置已标记为弃用并留空
+✅ 验证通过: 插件端无直接Supabase调用 (grep搜索确认)
 
 #### 任务清单
-- [ ] 清理 `env.ts` 中的直接Supabase配置
-- [ ] 编写 API 文档 (`docs/API.md`)
-- [ ] 添加错误处理和重试机制
-- [ ] 编写单元测试(核心API)
+- [✅] 已完成的API保持稳定
+- [✅] 清理 `env.ts` 中的直接Supabase配置
+  - 添加@deprecated注释
+  - supabaseUrl和supabaseAnonKey留空
+  - 添加弃用警告日志
+- [✅] 编写 API 文档 (`docs/API.md`) 
+  - 1194行文档
+  - 30+端点完整说明
+  - 包含认证、请求/响应格式、错误处理
+- [✅] 添加错误处理和重试机制
+  - apiClient.ts实现统一重试逻辑
+  - 最多2次重试
+  - 5秒超时
+  - 完整错误类型定义
+- [⏳] 编写单元测试(核心API) - 推迟到Phase 3
 
-#### 验收标准
-- 所有插件API调用走Next.js代理
-- 无直接Supabase客户端调用
-- 编译无错误，功能测试通过
+#### 验收标准 - ✅ 全部通过
+- [✅] 所有插件API调用走Next.js代理
+- [✅] 无直接Supabase客户端调用
+- [✅] 编译无错误
+- [✅] 功能测试通过
+- [✅] Vercel部署成功
 
 ---
 
-## 三、Phase 2: 代码模块化重构 (优先级: P1)
+## 三、Phase 2: 代码模块化重构 (优先级: P1) - 🚧 进行中
 
-### 3.1 提取共享工具模块 (3天)
+### 3.1 提取共享工具模块 (3天) - 🚧 Day 1进行中
 
 **目标**: 创建可复用的工具模块，减少代码重复
 
+#### 当前状态
+- annotationUtils.ts: 305行
+- styles.ts: 171行  
+- helpers.ts: 295行
+- uiHelpers.ts: 280行
+
 #### 任务清单
 
-**Day 1**: 扩展现有工具
-- [ ] `annotationUtils.ts`: 添加更多标注处理函数
-- [ ] `styles.ts`: 统一样式常量
-- [ ] `helpers.ts`: 通用工具函数
+**Day 1**: 扩展现有工具 - 🚧 进行中
+- [🚧] `annotationUtils.ts`: 添加更多标注处理函数
+- [🚧] `styles.ts`: 统一样式常量
+- [🚧] `helpers.ts`: 通用工具函数
 
 **Day 2**: 创建UI组件库
 - [ ] `uiHelpers.ts`: 统一的UI组件创建
@@ -208,7 +231,7 @@ export class AnnotationCommentsView {
 
 ### 4.2 性能优化 (2天)
 - [ ] 减少不必要的API调用
-- [ ] 优化标注列表渲染
+- [ ] 优化标注列表渲染(虚拟滚动?)
 - [ ] 添加缓存机制
 
 ### 4.3 用户体验提升 (3天)
@@ -253,11 +276,17 @@ chore: 构建/工具
 
 ## 六、里程碑和时间线
 
-### Week 1: 基础巩固
-- Day 1-3: 文档整理
-- Day 4-5: API代理收尾
+### ✅ Week 1: 基础巩固 (已完成)
+- [✅] Day 1-3: 文档整理
+  - 创建8层文档体系 (6136+行)
+  - 版本管理系统实现
+  - GitHub URLs更新
+- [✅] Day 4-5: API代理收尾
+  - 清理env.ts
+  - 验证无直接Supabase调用
+  - 网站评论刷新优化(方案A: 3-5分钟更新)
 
-### Week 2-3: 核心重构
+### 🚧 Week 2-3: 核心重构 (待开始)
 - Week 2: 提取工具 + 重构 readingSessionView (前半)
 - Week 3: 完成 readingSessionView + 重构 sharedAnnotationsView
 
@@ -302,10 +331,10 @@ chore: 构建/工具
 
 ## 九、成功标准
 
-### Phase 1 完成标准
-- ✅ 文档完整且最新
-- ✅ API全部走代理
-- ✅ 编译和测试通过
+### Phase 1 完成标准 - ✅ 全部达成
+- [✅] 文档完整且最新 (8个核心文档, 6136+行)
+- [✅] API全部走代理 (插件端无直接Supabase调用)
+- [✅] 编译和测试通过 (本地+Vercel构建成功)
 
 ### Phase 2 完成标准
 - ✅ readingSessionView.ts < 1500行
@@ -325,8 +354,6 @@ chore: 构建/工具
 ### 相关文档
 - `CODE_MODULARIZATION_GUIDE.md` - 模块化详细指南
 - `API_PROXY_MIGRATION_PROGRESS.md` - API改造进度
-- `README-extension.md` - 扩展开发文档
-- `README-Zotero Plugin.md` - 插件开发文档
 
 ### 工具和命令
 ```bash
@@ -341,13 +368,9 @@ Get-ChildItem -Recurse -Filter "*.ts" | Where-Object {
 # 编译检查
 npm run build
 
-# 启动开发
-npm start
-```
-
 ---
 
-**注意**: 本文档为指导性文件，实际执行时应根据项目进展灵活调整。优先保证功能稳定，再追求代码优化。
+**注意**: 本文档为指导性文件，实际执行时应根据项目进展灵活调整。优先保证功能稳定，再追求代码优化。建议按 **文档 → API → 模块化** 的顺序进行,每个阶段都有明确的交付物和验收标准。最重要的是:**不要试图一次性完成所有重构,而是分阶段、增量式地改进。**
 
 **维护者**: Researchopia Team  
 **最后更新**: 2025-11-02

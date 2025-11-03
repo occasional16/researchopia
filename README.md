@@ -4,25 +4,23 @@
 
 
 <div align="center">
+
   <a href="https://www.researchopia.com/" target="_blank">
-    <img src="./docs/res/icon128.svg" width="45%" alt="Researchopia Homepage" />
+    <img src="./docs/res/icon128.svg" width="40%" alt="Researchopia Homepage" />
   </a>
 
+  [![zotero target version](https://img.shields.io/badge/Zotero-8/7-green?style=flat-square&logo=zotero&logoColor=CC2936)](https://www.zotero.org) 
+  [![Latest release](https://img.shields.io/github/v/release/occasional16/researchopia)](https://github.com/occasional16/researchopia/releases)
+  ![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/occasional16/researchopia/total)
+  [![Using Zotero Plugin Template](https://img.shields.io/badge/Using-Zotero%20Plugin%20Template-blue?style=flat-square&logo=github)](https://github.com/windingwind/zotero-plugin-template)
+  <a href="https://github.com/occasional16/researchopia/blob/main/LICENSE"><img alt="License"
+    src="https://img.shields.io/badge/License-AGPLv3-green.svg"/></a>
 
-[![zotero target version](https://img.shields.io/badge/Zotero-8/7-green?style=flat-square&logo=zotero&logoColor=CC2936)](https://www.zotero.org) 
-[![Using Zotero Plugin Template](https://img.shields.io/badge/Using-Zotero%20Plugin%20Template-blue?style=flat-square&logo=github)](https://github.com/windingwind/zotero-plugin-template)
-![Downloads](https://gh-down-badges.linkof.link/occasional16/researchopia)
-[![Latest release](https://img.shields.io/github/v/release/occasional16/researchopia)](https://github.com/occasional16/researchopia/releases)
-![License](https://img.shields.io/badge/License-AGPLv3-green.svg)
+  <font size="5"> **研学港 | Researchopia - 开放的学术交流和共享平台** </font> 
 
-**研学港 | Researchopia - 开放的学术交流和共享平台**
+  <font size="4"> **研学并进，智慧共享 | Where Research Meets Community** </font> 
 
-**研学并进，智慧共享 | Where Research Meets Community**
-
-     
-
-[🌐 官方网站](https://www.researchopia.com) | [📄 用户指南](/docs/USER-GUIDE.md) | [🤝 贡献指南](./docs/CONTRIBUTING.md)
-
+  [🌐 官方网站](https://www.researchopia.com) | [📄 用户指南](/docs/USER-GUIDE.md) | [🤝 贡献指南](./docs/CONTRIBUTING.md)
 
 </div>
 
@@ -46,7 +44,6 @@
   - [🛠 技术栈](#-技术栈)
 - [📄 许可证](#-许可证)
 - [📞 联系方式](#-联系方式)
-
 
 
 ## 🚀 最新动态

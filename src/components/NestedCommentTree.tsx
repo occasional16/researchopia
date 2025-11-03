@@ -159,12 +159,12 @@ function CommentNode({
         {/* 评论内容 */}
         <div className="flex-1 min-w-0">
           {/* 时间和回复数 */}
-          <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
+          <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mb-1">
             <span>{formatTimeAgo(comment.created_at)}</span>
             {comment.reply_count > 0 && (
               <>
                 <span>·</span>
-                <span className="text-blue-600">
+                <span className="text-blue-600 dark:text-blue-400">
                   {comment.reply_count} 条回复
                 </span>
               </>
@@ -177,7 +177,7 @@ function CommentNode({
               <textarea
                 value={editContent}
                 onChange={(e) => setEditContent(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
                 rows={3}
                 disabled={isSubmitting}
               />
@@ -188,16 +188,16 @@ function CommentNode({
                   id={`edit-anonymous-${comment.id}`}
                   checked={editIsAnonymous}
                   onChange={(e) => setEditIsAnonymous(e.target.checked)}
-                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  className="w-4 h-4 text-blue-600 dark:text-blue-500 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500"
                   disabled={isSubmitting}
                 />
                 <label 
                   htmlFor={`edit-anonymous-${comment.id}`} 
-                  className="text-xs text-gray-600 cursor-pointer select-none"
+                  className="text-xs text-gray-600 dark:text-gray-400 cursor-pointer select-none"
                 >
                   匿名显示
                   {editIsAnonymous && (
-                    <span className="ml-1 text-blue-600">（将显示为"匿名用户"）</span>
+                    <span className="ml-1 text-blue-600 dark:text-blue-400">（将显示为"匿名用户"）</span>
                   )}
                 </label>
               </div>
@@ -205,7 +205,7 @@ function CommentNode({
                 <button
                   onClick={handleEdit}
                   disabled={isSubmitting || !editContent.trim()}
-                  className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-3 py-1 text-sm bg-blue-600 dark:bg-blue-700 text-white rounded hover:bg-blue-700 dark:hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSubmitting ? '保存中...' : '保存'}
                 </button>
@@ -216,14 +216,14 @@ function CommentNode({
                     setEditIsAnonymous(comment.is_anonymous || false);
                   }}
                   disabled={isSubmitting}
-                  className="px-3 py-1 text-sm bg-gray-200 text-gray-700 rounded hover:bg-gray-300 disabled:opacity-50"
+                  className="px-3 py-1 text-sm bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50"
                 >
                   取消
                 </button>
               </div>
             </div>
           ) : (
-            <p className="text-gray-800 whitespace-pre-wrap break-words">
+            <p className="text-gray-800 dark:text-gray-200 whitespace-pre-wrap break-words">
               {comment.content}
             </p>
           )}
@@ -234,7 +234,7 @@ function CommentNode({
               {canReply && onReply && (
                 <button
                   onClick={() => setShowReplyBox(!showReplyBox)}
-                  className="text-blue-600 hover:text-blue-800"
+                  className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
                 >
                   回复
                 </button>
@@ -242,7 +242,7 @@ function CommentNode({
               {isOwner && onEdit && (
                 <button
                   onClick={() => setIsEditing(true)}
-                  className="text-gray-600 hover:text-gray-800"
+                  className="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-300"
                 >
                   编辑
                 </button>
@@ -252,7 +252,7 @@ function CommentNode({
                 <button
                   onClick={handleDelete}
                   disabled={isSubmitting}
-                  className="text-red-600 hover:text-red-800 disabled:opacity-50"
+                  className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 disabled:opacity-50"
                 >
                   {currentUserRole === 'admin' && !isOwner ? '删除(管理员)' : '删除'}
                 </button>
@@ -267,7 +267,7 @@ function CommentNode({
                 value={replyContent}
                 onChange={(e) => setReplyContent(e.target.value)}
                 placeholder={`回复 @${comment.is_anonymous ? '匿名用户' : (comment.username || '用户')}...`}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
                 rows={3}
                 disabled={isSubmitting}
               />
@@ -278,16 +278,16 @@ function CommentNode({
                   id={`anonymous-reply-${comment.id}`}
                   checked={replyIsAnonymous}
                   onChange={(e) => setReplyIsAnonymous(e.target.checked)}
-                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  className="w-4 h-4 text-blue-600 dark:text-blue-500 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500"
                   disabled={isSubmitting}
                 />
                 <label 
                   htmlFor={`anonymous-reply-${comment.id}`} 
-                  className="text-xs text-gray-600 cursor-pointer select-none"
+                  className="text-xs text-gray-600 dark:text-gray-400 cursor-pointer select-none"
                 >
                   匿名回复
                   {replyIsAnonymous && (
-                    <span className="ml-1 text-blue-600">（将显示为"匿名用户"）</span>
+                    <span className="ml-1 text-blue-600 dark:text-blue-400">（将显示为"匿名用户"）</span>
                   )}
                 </label>
               </div>
@@ -295,7 +295,7 @@ function CommentNode({
                 <button
                   onClick={handleReply}
                   disabled={isSubmitting || !replyContent.trim()}
-                  className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-3 py-1 text-sm bg-blue-600 dark:bg-blue-700 text-white rounded hover:bg-blue-700 dark:hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSubmitting ? '发送中...' : '发送'}
                 </button>
@@ -306,7 +306,7 @@ function CommentNode({
                     setReplyIsAnonymous(false); // 🆕 重置匿名选项
                   }}
                   disabled={isSubmitting}
-                  className="px-3 py-1 text-sm bg-gray-200 text-gray-700 rounded hover:bg-gray-300 disabled:opacity-50"
+                  className="px-3 py-1 text-sm bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50"
                 >
                   取消
                 </button>
@@ -381,7 +381,7 @@ export default function NestedCommentTree({
 
   if (commentTree.length === 0) {
     return (
-      <div className="text-center py-8 text-gray-500">
+      <div className="text-center py-8 text-gray-500 dark:text-gray-400">
         暂无评论,来发表第一条评论吧!
       </div>
     );

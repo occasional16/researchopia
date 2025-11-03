@@ -30,13 +30,13 @@ export default function UserDisplay({
     return (
       <div className={`flex items-center gap-2 ${className}`}>
         {showAvatar && (
-          <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center">
-            <svg className="w-4 h-4 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+          <div className="w-8 h-8 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center">
+            <svg className="w-4 h-4 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
             </svg>
           </div>
         )}
-        <span className="text-gray-500">匿名用户</span>
+        <span className="text-gray-500 dark:text-gray-400">匿名用户</span>
       </div>
     )
   }

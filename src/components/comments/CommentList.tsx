@@ -197,13 +197,13 @@ export default function CommentList({ paperId }: CommentListProps) {
     return (
       <div className="space-y-4">
         {[...Array(3)].map((_, i) => (
-          <div key={i} className="bg-white border border-gray-200 rounded-lg p-4 animate-pulse">
+          <div key={i} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 animate-pulse">
             <div className="flex items-start space-x-3">
-              <div className="w-8 h-8 bg-gray-200 rounded-full"></div>
+              <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
               <div className="flex-1">
-                <div className="h-4 bg-gray-200 rounded mb-2 w-1/4"></div>
-                <div className="h-4 bg-gray-200 rounded mb-1 w-3/4"></div>
-                <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded mb-2 w-1/4"></div>
+                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded mb-1 w-3/4"></div>
+                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
               </div>
             </div>
           </div>
@@ -214,17 +214,17 @@ export default function CommentList({ paperId }: CommentListProps) {
 
   if (comments.length === 0) {
     return (
-      <div className="bg-gray-50 rounded-lg p-8 text-center">
-        <MessageCircle className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-        <p className="text-gray-600 font-medium mb-1">暂无评论</p>
-        <p className="text-sm text-gray-500">成为第一个评论的用户吧！</p>
+      <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-8 text-center">
+        <MessageCircle className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+        <p className="text-gray-600 dark:text-gray-400 font-medium mb-1">暂无评论</p>
+        <p className="text-sm text-gray-500 dark:text-gray-500">成为第一个评论的用户吧！</p>
       </div>
     )
   }
 
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">
+      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
         评论 ({displayComments.length}
         {filter === 'mine' && displayComments.length !== comments.length &&
           ` / ${comments.length}`
@@ -232,14 +232,14 @@ export default function CommentList({ paperId }: CommentListProps) {
       </h3>
 
       {/* 筛选控件 */}
-      <div className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
+      <div className="flex items-center space-x-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
         <div className="flex items-center space-x-2">
-          <Filter className="w-4 h-4 text-gray-500" />
-          <span className="text-sm font-medium text-gray-700">筛选:</span>
+          <Filter className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">筛选:</span>
           <select
             value={filter}
             onChange={(e) => setFilter(e.target.value as FilterType)}
-            className="text-sm border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="all">所有评论</option>
             <option value="mine">我的评论</option>

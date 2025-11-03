@@ -162,8 +162,8 @@ export default function NotificationsPage() {
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="text-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="text-gray-600 mt-2">加载中...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 dark:border-blue-400 mx-auto"></div>
+          <p className="text-gray-600 dark:text-gray-400 mt-2">加载中...</p>
         </div>
       </div>
     )
@@ -176,13 +176,13 @@ export default function NotificationsPage() {
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* 头部 */}
-      <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border dark:border-gray-700 p-6 mb-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-            <Bell className="w-6 h-6 text-blue-600" />
-            <h1 className="text-2xl font-bold text-gray-900">通知中心</h1>
+            <Bell className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">通知中心</h1>
             {unreadCount > 0 && (
-              <span className="px-3 py-1 bg-red-500 text-white text-sm font-semibold rounded-full">
+              <span className="px-3 py-1 bg-red-500 dark:bg-red-600 text-white text-sm font-semibold rounded-full">
                 {unreadCount}
               </span>
             )}
@@ -190,7 +190,7 @@ export default function NotificationsPage() {
           {unreadCount > 0 && (
             <button
               onClick={() => markAsRead()}
-              className="flex items-center gap-2 px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+              className="flex items-center gap-2 px-4 py-2 text-sm text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
             >
               <CheckCheck className="w-4 h-4" />
               全部标为已读
@@ -206,8 +206,8 @@ export default function NotificationsPage() {
               onClick={() => setActiveFilter(filter.id)}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 activeFilter === filter.id
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ? 'bg-blue-600 dark:bg-blue-700 text-white'
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
               }`}
             >
               {filter.name}
@@ -217,25 +217,25 @@ export default function NotificationsPage() {
       </div>
 
       {/* 通知列表 */}
-      <div className="bg-white rounded-lg shadow-sm border">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border dark:border-gray-700">
         {loading ? (
           <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="text-gray-600 mt-2">加载中...</p>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 dark:border-blue-400 mx-auto"></div>
+            <p className="text-gray-600 dark:text-gray-400 mt-2">加载中...</p>
           </div>
         ) : notifications.length === 0 ? (
           <div className="text-center py-12">
-            <Bell className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-            <p className="text-gray-600">暂无通知</p>
+            <Bell className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+            <p className="text-gray-600 dark:text-gray-400">暂无通知</p>
           </div>
         ) : (
-          <div className="divide-y">
+          <div className="divide-y dark:divide-gray-700">
             {notifications.map((notification) => {
               const link = getNotificationLink(notification)
               const NotificationContent = (
                 <div
-                  className={`p-4 hover:bg-gray-50 transition-colors cursor-pointer ${
-                    !notification.is_read ? 'bg-blue-50' : ''
+                  className={`p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer ${
+                    !notification.is_read ? 'bg-blue-50 dark:bg-blue-900/20' : ''
                   }`}
                   onClick={() => {
                     if (!notification.is_read) {
@@ -256,12 +256,12 @@ export default function NotificationsPage() {
                           {notification.actor && (
                             <Link
                               href={`/profile/${notification.actor.username}`}
-                              className="font-semibold text-gray-900 hover:text-blue-600"
+                              className="font-semibold text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400"
                             >
                               {notification.actor.real_name || notification.actor.username}
                             </Link>
                           )}
-                          <span className="text-gray-700 ml-1">{notification.content}</span>
+                          <span className="text-gray-700 dark:text-gray-200 ml-1">{notification.content}</span>
                         </div>
                         {!notification.is_read && (
                           <div className="w-2 h-2 bg-blue-600 rounded-full flex-shrink-0 mt-2"></div>

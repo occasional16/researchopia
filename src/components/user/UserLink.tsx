@@ -21,7 +21,7 @@ export default function UserLink({
   // 匿名用户不显示hover卡片和链接
   if (isAnonymous) {
     return (
-      <span className={`text-gray-500 ${className}`}>
+      <span className={`text-gray-500 dark:text-gray-400 ${className}`}>
         匿名用户
       </span>
     )
@@ -30,7 +30,7 @@ export default function UserLink({
   const linkElement = (
     <Link
       href={`/profile/${username}`}
-      className={`font-medium text-gray-900 hover:text-blue-600 transition-colors ${className}`}
+      className={`font-medium text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 transition-colors ${className}`}
     >
       {displayName || username}
     </Link>

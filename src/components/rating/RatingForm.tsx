@@ -109,8 +109,8 @@ export default function RatingForm({ paperId, onRatingSubmitted }: RatingFormPro
   ) => (
     <div className="space-y-2">
       <div>
-        <h4 className="font-medium text-gray-900">{label}</h4>
-        <p className="text-sm text-gray-600">{description}</p>
+        <h4 className="font-medium text-gray-900 dark:text-gray-100">{label}</h4>
+        <p className="text-sm text-gray-600 dark:text-gray-400">{description}</p>
       </div>
       <div className="flex items-center space-x-1">
         {[1, 2, 3, 4, 5].map((star) => {
@@ -131,13 +131,13 @@ export default function RatingForm({ paperId, onRatingSubmitted }: RatingFormPro
                 className={`transition-colors duration-150 ${
                   isHovered || isFilled
                     ? 'text-yellow-400 fill-yellow-400'
-                    : 'text-gray-300'
+                    : 'text-gray-300 dark:text-gray-600'
                 }`}
               />
             </button>
           )
         })}
-        <span className="ml-2 text-sm text-gray-600 font-medium min-w-[50px]">
+        <span className="ml-2 text-sm text-gray-600 dark:text-gray-400 font-medium min-w-[50px]">
           {scores[category] > 0 ? `${scores[category]}/5` : '未评分'}
         </span>
       </div>
@@ -147,16 +147,16 @@ export default function RatingForm({ paperId, onRatingSubmitted }: RatingFormPro
   // Allow viewing the form without login, but require login for submission
 
   return (
-    <div className="bg-white rounded-lg border p-6">
-      <h3 className="text-lg font-semibold text-gray-900 mb-2">
+    <div className="bg-white dark:bg-gray-800 rounded-lg border dark:border-gray-700 p-6">
+      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
         {existingRating ? '修改评分' : '为这篇论文评分'}
       </h3>
-      <p className="text-sm text-gray-600 mb-4">
+      <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
         请基于您的专业知识客观评价此论文。您的评价将帮助其他学者更好地理解这项研究。
       </p>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 text-red-700 dark:text-red-300 px-4 py-3 rounded mb-4">
           {error}
         </div>
       )}
@@ -188,18 +188,18 @@ export default function RatingForm({ paperId, onRatingSubmitted }: RatingFormPro
 
         {/* 🆕 匿名选项 */}
         {user && (
-          <div className="pt-4 border-t space-y-3">
+          <div className="pt-4 border-t dark:border-gray-700 space-y-3">
             <div className="flex items-start space-x-3">
               <input
                 type="checkbox"
                 id="isAnonymous"
                 checked={isAnonymous}
                 onChange={(e) => setIsAnonymous(e.target.checked)}
-                className="mt-1 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                className="mt-1 h-4 w-4 text-blue-600 dark:text-blue-500 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500"
               />
               <label htmlFor="isAnonymous" className="flex-1 text-sm">
-                <span className="font-medium text-gray-900">匿名评分</span>
-                <p className="text-gray-600 mt-0.5">
+                <span className="font-medium text-gray-900 dark:text-gray-100">匿名评分</span>
+                <p className="text-gray-600 dark:text-gray-400 mt-0.5">
                   评分将不会显示您的用户名,显示为"匿名学者"
                 </p>
               </label>
@@ -212,11 +212,11 @@ export default function RatingForm({ paperId, onRatingSubmitted }: RatingFormPro
                   id="showUsername"
                   checked={showUsername}
                   onChange={(e) => setShowUsername(e.target.checked)}
-                  className="mt-1 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  className="mt-1 h-4 w-4 text-blue-600 dark:text-blue-500 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500"
                 />
                 <label htmlFor="showUsername" className="flex-1 text-sm">
-                  <span className="font-medium text-gray-900">显示用户名</span>
-                  <p className="text-gray-600 mt-0.5">
+                  <span className="font-medium text-gray-900 dark:text-gray-100">显示用户名</span>
+                  <p className="text-gray-600 dark:text-gray-400 mt-0.5">
                     在评分历史中显示您的用户名(您可以随时修改此设置)
                   </p>
                 </label>
@@ -225,10 +225,10 @@ export default function RatingForm({ paperId, onRatingSubmitted }: RatingFormPro
           </div>
         )}
 
-        <div className="pt-4 border-t">
+        <div className="pt-4 border-t dark:border-gray-700">
           {!user ? (
             <div className="text-center">
-              <p className="text-sm text-gray-600 mb-3">请登录后提交评分</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">请登录后提交评分</p>
               <button
                 type="button"
                 onClick={() => {
@@ -236,7 +236,7 @@ export default function RatingForm({ paperId, onRatingSubmitted }: RatingFormPro
                   const event = new CustomEvent('showAuthModal', { detail: { mode: 'login' } })
                   window.dispatchEvent(event)
                 }}
-                className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors"
+                className="w-full bg-blue-600 dark:bg-blue-700 text-white py-2 px-4 rounded-md hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors"
               >
                 登录以提交评分
               </button>
@@ -245,15 +245,15 @@ export default function RatingForm({ paperId, onRatingSubmitted }: RatingFormPro
             <button
               type="submit"
               disabled={loading || Object.values(scores).some(score => score === 0)}
-              className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 active:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 ease-out hover:shadow-md transform hover:-translate-y-0.5 active:translate-y-0"
+              className="w-full bg-blue-600 dark:bg-blue-700 text-white py-2 px-4 rounded-md hover:bg-blue-700 dark:hover:bg-blue-600 active:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 ease-out hover:shadow-md transform hover:-translate-y-0.5 active:translate-y-0"
             >
               {loading ? '提交中...' : existingRating ? '更新评分' : '提交评分'}
             </button>
           )}
         </div>
 
-        <div className="mt-4 pt-4 border-t border-gray-100">
-          <p className="text-xs text-gray-500">
+        <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+          <p className="text-xs text-gray-500 dark:text-gray-400">
             <strong>免责声明：</strong>评分和评论仅代表个人学术观点，不构成对论文质量的官方评价。
             请尊重学术讨论的客观性和建设性原则。
           </p>

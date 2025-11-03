@@ -1,149 +1,160 @@
 'use client'
 
 import Link from 'next/link'
-import { useLanguage } from '@/contexts/LanguageContext'
-import { Book, Globe, Download, Settings } from 'lucide-react'
+import { ArrowRight, Search, BookOpen } from 'lucide-react'
+import { guideConfig } from './guide-config'
 
 export default function UserGuidePage() {
-  const { t, language } = useLanguage()
-
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
       {/* 页面头部 */}
-      <div className="bg-gradient-to-r from-purple-600 to-blue-700 text-white py-16">
-        <div className="max-w-6xl mx-auto px-4 text-center">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            {t('guide.title', '研学港用户指南')}
+      <div className="relative overflow-hidden bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 dark:from-blue-700 dark:via-purple-700 dark:to-pink-700 text-white py-20">
+        <div className="absolute inset-0 bg-grid-white/10"></div>
+        <div className="relative max-w-6xl mx-auto px-4 text-center">
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-white/20 dark:bg-white/30 backdrop-blur-sm rounded-2xl mb-6">
+            <BookOpen className="w-10 h-10" />
+          </div>
+          <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-white to-blue-100">
+            Researchopia 用户指南
           </h1>
-          <p className="text-xl opacity-90">
-            {t('guide.subtitle', '详细的使用指南，助您轻松上手研学港的所有功能')}
+          <p className="text-xl md:text-2xl opacity-90 mb-8 max-w-3xl mx-auto">
+            详细的使用指南，助您轻松上手 Researchopia 的所有功能
           </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Link
+              href="/guide/getting-started/account"
+              className="px-8 py-3 bg-white dark:bg-gray-100 text-blue-600 dark:text-blue-700 rounded-lg font-semibold hover:bg-blue-50 dark:hover:bg-white transition-all hover:scale-105 shadow-lg flex items-center space-x-2"
+            >
+              <span>快速开始</span>
+              <ArrowRight className="w-5 h-5" />
+            </Link>
+            <Link
+              href="#categories"
+              className="px-8 py-3 bg-white/10 dark:bg-white/20 backdrop-blur-sm border-2 border-white/20 dark:border-white/30 text-white rounded-lg font-semibold hover:bg-white/20 dark:hover:bg-white/30 transition-all flex items-center space-x-2"
+            >
+              <Search className="w-5 h-5" />
+              <span>浏览指南</span>
+            </Link>
+          </div>
         </div>
       </div>
 
-      {/* 导航卡片 */}
-      <div className="max-w-6xl mx-auto px-4 py-12">
+      {/* 分类卡片 */}
+      <div id="categories" className="max-w-7xl mx-auto px-4 py-16">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-4">探索所有指南</h2>
+          <p className="text-lg text-gray-600 dark:text-gray-400">选择一个类别开始学习</p>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {/* 网站使用指南 */}
-          <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
-            <div className="flex items-center mb-4">
-              <Globe className="w-8 h-8 text-blue-600 mr-3" />
-              <h2 className="text-xl font-semibold text-gray-900">
-                {t('guide.website.title', '网站使用')}
-              </h2>
-            </div>
-            <p className="text-gray-600 mb-4">
-              {t('guide.website.desc', '学习如何使用研学港网站的各项功能，包括论文搜索、评分和社区交流。')}
-            </p>
-            <ul className="text-sm text-gray-600 space-y-2">
-              <li>• {t('guide.website.feature1', '智能论文搜索')}</li>
-              <li>• {t('guide.website.feature2', '多维度评价体系')}</li>
-              <li>• {t('guide.website.feature3', '个性化推荐')}</li>
-              <li>• {t('guide.website.feature4', '学者档案管理')}</li>
-            </ul>
-          </div>
+          {guideConfig.map((category) => (
+            <div
+              key={category.slug}
+              className="group bg-white dark:bg-gray-800 rounded-2xl shadow-md hover:shadow-2xl dark:hover:shadow-blue-900/20 transition-all duration-300 overflow-hidden border border-gray-100 dark:border-gray-700"
+            >
+              <div className="p-6">
+                {/* 分类头部 */}
+                <div className="flex items-center mb-4">
+                  <div className="text-4xl mr-4">{category.icon}</div>
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                      {category.title}
+                    </h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{category.description}</p>
+                  </div>
+                </div>
 
-          {/* 浏览器扩展 */}
-          <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
-            <div className="flex items-center mb-4">
-              <Download className="w-8 h-8 text-green-600 mr-3" />
-              <h2 className="text-xl font-semibold text-gray-900">
-                {t('guide.extension.title', '浏览器扩展')}
-              </h2>
-            </div>
-            <p className="text-gray-600 mb-4">
-              {t('guide.extension.desc', '安装和使用研学港浏览器扩展，在任意学术网页上快速访问论文评价。')}
-            </p>
-            <ul className="text-sm text-gray-600 space-y-2">
-              <li>• {t('guide.extension.feature1', '自动DOI检测')}</li>
-              <li>• {t('guide.extension.feature2', '悬浮拖拽图标')}</li>
-              <li>• {t('guide.extension.feature3', '集成侧边栏')}</li>
-              <li>• {t('guide.extension.feature4', '一键搜索')}</li>
-            </ul>
-          </div>
+                {/* 分类项目列表 */}
+                <ul className="space-y-2 mt-4">
+                  {category.items.map((item) => (
+                    <li key={item.slug}>
+                      <Link
+                        href={`/guide/${category.slug}/${item.slug}`}
+                        className="flex items-center justify-between px-3 py-2 text-sm rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors group/item"
+                      >
+                        <span className="text-gray-700 dark:text-gray-300 group-hover/item:text-blue-600 dark:group-hover/item:text-blue-400">
+                          {item.title}
+                        </span>
+                        <ArrowRight className="w-4 h-4 text-gray-400 dark:text-gray-500 group-hover/item:text-blue-600 dark:group-hover/item:text-blue-400 group-hover/item:translate-x-1 transition-all" />
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
 
-          {/* Zotero插件 */}
-          <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
-            <div className="flex items-center mb-4">
-              <Book className="w-8 h-8 text-purple-600 mr-3" />
-              <h2 className="text-xl font-semibold text-gray-900">
-                {t('guide.zotero.title', 'Zotero插件')}
-              </h2>
+                {/* 查看全部链接 */}
+                <Link
+                  href={`/guide/${category.slug}/${category.items[0].slug}`}
+                  className="mt-4 flex items-center justify-center text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
+                >
+                  开始学习
+                  <ArrowRight className="w-4 h-4 ml-1" />
+                </Link>
+              </div>
             </div>
-            <p className="text-gray-600 mb-4">
-              {t('guide.zotero.desc', '将研学港功能集成到Zotero文献管理器中，无缝管理您的学术资源。')}
-            </p>
-            <ul className="text-sm text-gray-600 space-y-2">
-              <li>• {t('guide.zotero.feature1', '条目面板集成')}</li>
-              <li>• {t('guide.zotero.feature2', '自动评价同步')}</li>
-              <li>• {t('guide.zotero.feature3', '灵活配置选项')}</li>
-              <li>• {t('guide.zotero.feature4', '多平台支持')}</li>
-            </ul>
-          </div>
+          ))}
         </div>
+      </div>
 
-        {/* 完整用户指南嵌入 */}
-        <div className="mt-16 bg-white rounded-lg shadow-md overflow-hidden">
-          <div className="bg-gray-50 px-6 py-4 border-b">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-gray-900 flex items-center">
-                <Settings className="w-5 h-5 mr-2" />
-                {t('guide.complete.title', '完整用户指南')}
-              </h2>
-              <Link 
-                href="/user-guide.html" 
-                target="_blank" 
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
-              >
-                {t('guide.complete.openNewTab', '在新窗口中打开')}
-              </Link>
-            </div>
-          </div>
-          
-          {/* 嵌入iframe */}
-          <div className="relative">
-            <iframe 
-              src="/user-guide.html"
-              className="w-full h-[800px] border-none"
-              title={t('guide.complete.title', '研学港用户指南')}
-            />
-          </div>
-        </div>
-
-        {/* 快速链接 */}
-        <div className="mt-12 bg-gradient-to-r from-gray-50 to-blue-50 rounded-lg p-8">
-          <h3 className="text-xl font-semibold text-gray-900 mb-4 text-center">
-            {t('guide.quickLinks.title', '快速链接')}
-          </h3>
+      {/* 快速链接区域 */}
+      <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-16">
+        <div className="max-w-6xl mx-auto px-4">
+          <h3 className="text-2xl font-bold text-center mb-8">快速访问</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <Link 
-              href="/" 
-              className="text-center p-4 bg-white rounded-lg hover:shadow-md transition-shadow"
+            <Link
+              href="/"
+              className="text-center p-6 bg-white/10 backdrop-blur-sm rounded-xl hover:bg-white/20 transition-all hover:scale-105"
             >
-              <div className="text-blue-600 text-2xl mb-2">🏠</div>
-              <div className="text-sm font-medium">{t('nav.home', '首页')}</div>
+              <div className="text-4xl mb-2">🏠</div>
+              <div className="font-medium">首页</div>
             </Link>
-            <Link 
-              href="/papers" 
-              className="text-center p-4 bg-white rounded-lg hover:shadow-md transition-shadow"
+            <Link
+              href="/papers"
+              className="text-center p-6 bg-white/10 backdrop-blur-sm rounded-xl hover:bg-white/20 transition-all hover:scale-105"
             >
-              <div className="text-green-600 text-2xl mb-2">📚</div>
-              <div className="text-sm font-medium">{t('nav.papers', '论文')}</div>
+              <div className="text-4xl mb-2">📚</div>
+              <div className="font-medium">论文</div>
             </Link>
-            <Link 
-              href="/profile" 
-              className="text-center p-4 bg-white rounded-lg hover:shadow-md transition-shadow"
+            <Link
+              href="/profile"
+              className="text-center p-6 bg-white/10 backdrop-blur-sm rounded-xl hover:bg-white/20 transition-all hover:scale-105"
             >
-              <div className="text-purple-600 text-2xl mb-2">👤</div>
-              <div className="text-sm font-medium">{t('nav.profile', '个人中心')}</div>
+              <div className="text-4xl mb-2">👤</div>
+              <div className="font-medium">个人中心</div>
             </Link>
-            <a 
-              href="https://github.com/occasional16/researchopia" 
-              target="_blank" 
-              className="text-center p-4 bg-white rounded-lg hover:shadow-md transition-shadow"
+            <a
+              href="https://github.com/occasional16/researchopia"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-center p-6 bg-white/10 backdrop-blur-sm rounded-xl hover:bg-white/20 transition-all hover:scale-105"
             >
-              <div className="text-gray-600 text-2xl mb-2">💻</div>
-              <div className="text-sm font-medium">{t('guide.github', 'GitHub')}</div>
+              <div className="text-4xl mb-2">💻</div>
+              <div className="font-medium">GitHub</div>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      {/* 底部 CTA */}
+      <div className="bg-white dark:bg-gray-800 py-16">
+        <div className="max-w-4xl mx-auto px-4 text-center">
+          <h3 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-4">需要帮助？</h3>
+          <p className="text-lg text-gray-600 dark:text-gray-400 mb-8">
+            如果在使用过程中遇到问题，欢迎查看常见问题或联系我们
+          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Link
+              href="/guide/best-practices/faq"
+              className="px-8 py-3 bg-blue-600 dark:bg-blue-700 text-white rounded-lg font-semibold hover:bg-blue-700 dark:hover:bg-blue-600 transition-all hover:scale-105"
+            >
+              查看常见问题
+            </Link>
+            <a
+              href="https://github.com/occasional16/researchopia/issues"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-8 py-3 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg font-semibold hover:border-gray-400 dark:hover:border-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all"
+            >
+              提交反馈
             </a>
           </div>
         </div>

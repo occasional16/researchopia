@@ -22,10 +22,10 @@ export default function RatingDisplay({ ratings, showAdvanced = true }: RatingDi
 
   if (ratings.length === 0) {
     return (
-      <div className="bg-gray-50 rounded-lg p-6 text-center">
-        <Star className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-        <p className="text-gray-500">还没有评分</p>
-        <p className="text-sm text-gray-400 mt-1">成为第一个评价这篇论文的人</p>
+      <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-6 text-center">
+        <Star className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+        <p className="text-gray-500 dark:text-gray-400">还没有评分</p>
+        <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">成为第一个评价这篇论文的人</p>
       </div>
     )
   }
@@ -41,11 +41,11 @@ export default function RatingDisplay({ ratings, showAdvanced = true }: RatingDi
             className={
               star <= score
                 ? 'text-yellow-400 fill-current'
-                : 'text-gray-300'
+                : 'text-gray-300 dark:text-gray-600'
             }
           />
         ))}
-        <span className="ml-1 text-sm text-gray-600">{score}</span>
+        <span className="ml-1 text-sm text-gray-600 dark:text-gray-400">{score}</span>
       </div>
     )
   }
@@ -54,41 +54,41 @@ export default function RatingDisplay({ ratings, showAdvanced = true }: RatingDi
     <div className="space-y-6">
       {/* Average Rating Summary */}
       {averageRating && (
-        <div className="bg-blue-50 rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+        <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-6">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
             平均评分 ({averageRating.count} 个评分)
           </h3>
           
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600 mb-1">
+              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400 mb-1">
                 {averageRating.innovation}
               </div>
-              <div className="text-sm text-gray-600 mb-2">创新性</div>
+              <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">创新性</div>
               {renderStars(Math.round(averageRating.innovation))}
             </div>
             
             <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600 mb-1">
+              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400 mb-1">
                 {averageRating.methodology}
               </div>
-              <div className="text-sm text-gray-600 mb-2">方法论</div>
+              <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">方法论</div>
               {renderStars(Math.round(averageRating.methodology))}
             </div>
             
             <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600 mb-1">
+              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400 mb-1">
                 {averageRating.practicality}
               </div>
-              <div className="text-sm text-gray-600 mb-2">实用性</div>
+              <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">实用性</div>
               {renderStars(Math.round(averageRating.practicality))}
             </div>
             
             <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600 mb-1">
+              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400 mb-1">
                 {averageRating.overall}
               </div>
-              <div className="text-sm text-gray-600 mb-2">总体</div>
+              <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">总体</div>
               {renderStars(Math.round(averageRating.overall))}
             </div>
           </div>
@@ -99,13 +99,13 @@ export default function RatingDisplay({ ratings, showAdvanced = true }: RatingDi
 
   const renderIndividualView = () => (
     <div>
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">
+      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
         用户评分 ({ratings.length})
       </h3>
       
       <div className="space-y-4">
         {ratings.map((rating) => (
-          <div key={rating.id} className="bg-white border rounded-lg p-4">
+          <div key={rating.id} className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-lg p-4">
             <div className="flex items-center justify-between mb-3">
               <UserDisplay
                 username={rating.users?.username || 'anonymous'}
@@ -114,29 +114,29 @@ export default function RatingDisplay({ ratings, showAdvanced = true }: RatingDi
                 avatarSize="sm"
                 showHoverCard={!rating.is_anonymous && rating.show_username}
               />
-              <span className="text-sm text-gray-500">
+              <span className="text-sm text-gray-500 dark:text-gray-400">
                 {new Date(rating.created_at).toLocaleDateString('zh-CN')}
               </span>
             </div>
             
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div>
-                <div className="text-sm text-gray-600 mb-1">创新性</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">创新性</div>
                 {renderStars(rating.innovation_score)}
               </div>
               
               <div>
-                <div className="text-sm text-gray-600 mb-1">方法论</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">方法论</div>
                 {renderStars(rating.methodology_score)}
               </div>
               
               <div>
-                <div className="text-sm text-gray-600 mb-1">实用性</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">实用性</div>
                 {renderStars(rating.practicality_score)}
               </div>
               
               <div>
-                <div className="text-sm text-gray-600 mb-1">总体</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">总体</div>
                 {renderStars(rating.overall_score)}
               </div>
             </div>
@@ -150,13 +150,13 @@ export default function RatingDisplay({ ratings, showAdvanced = true }: RatingDi
     <div className="space-y-4">
       {/* View Mode Selector */}
       {showAdvanced && (
-        <div className="flex space-x-1 bg-gray-100 rounded-lg p-1">
+        <div className="flex space-x-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
           <button
             onClick={() => setViewMode('simple')}
             className={`flex items-center space-x-2 flex-1 text-sm py-2 px-3 rounded-md transition-colors ${
               viewMode === 'simple' 
-                ? 'bg-white text-gray-900 shadow-sm' 
-                : 'text-gray-600 hover:text-gray-900'
+                ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm' 
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
             }`}
           >
             <Info className="h-4 w-4" />
@@ -166,8 +166,8 @@ export default function RatingDisplay({ ratings, showAdvanced = true }: RatingDi
             onClick={() => setViewMode('analytics')}
             className={`flex items-center space-x-2 flex-1 text-sm py-2 px-3 rounded-md transition-colors ${
               viewMode === 'analytics' 
-                ? 'bg-white text-gray-900 shadow-sm' 
-                : 'text-gray-600 hover:text-gray-900'
+                ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm' 
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
             }`}
           >
             <TrendingUp className="h-4 w-4" />
@@ -177,8 +177,8 @@ export default function RatingDisplay({ ratings, showAdvanced = true }: RatingDi
             onClick={() => setViewMode('individual')}
             className={`flex items-center space-x-2 flex-1 text-sm py-2 px-3 rounded-md transition-colors ${
               viewMode === 'individual' 
-                ? 'bg-white text-gray-900 shadow-sm' 
-                : 'text-gray-600 hover:text-gray-900'
+                ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm' 
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
             }`}
           >
             <BarChart3 className="h-4 w-4" />

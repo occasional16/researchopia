@@ -6,6 +6,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClientWithToken, createAnonClient } from '@/lib/supabase-server';
 
+// 强制动态渲染(消除build警告)
+export const dynamic = 'force-dynamic'
+
 // 🔥 优化: 启用3分钟缓存 - 会话列表不需要秒级实时性
 // 生产环境启用3分钟缓存
 export const revalidate = 180;

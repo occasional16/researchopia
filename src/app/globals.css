@@ -12,6 +12,9 @@
   --font-mono: var(--font-geist-mono);
 }
 
+/* Configure dark mode variant */
+@variant dark (.dark &);
+
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
@@ -19,15 +22,137 @@
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
-}
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Prose 样式 - 用于 MDX 内容 */
+.prose {
+  @apply text-gray-800 leading-relaxed;
+  max-width: 65ch;
+}
+
+.prose h1 {
+  @apply text-4xl font-bold text-gray-900 mt-8 mb-4;
+}
+
+.prose h2 {
+  @apply text-3xl font-bold text-gray-900 mt-8 mb-4 pb-2 border-b border-gray-200;
+}
+
+.prose h3 {
+  @apply text-2xl font-semibold text-gray-900 mt-6 mb-3;
+}
+
+.prose h4 {
+  @apply text-xl font-semibold text-gray-900 mt-4 mb-2;
+}
+
+.prose p {
+  @apply mb-4 text-base;
+}
+
+.prose a {
+  @apply text-blue-600 hover:text-blue-700 underline;
+}
+
+.prose ul {
+  @apply list-disc list-inside mb-4 space-y-2;
+}
+
+.prose ol {
+  @apply list-decimal list-inside mb-4 space-y-2;
+}
+
+.prose li {
+  @apply text-gray-700;
+}
+
+.prose strong {
+  @apply font-semibold text-gray-900;
+}
+
+.prose code {
+  @apply bg-gray-100 text-pink-600 px-1.5 py-0.5 rounded text-sm font-mono;
+}
+
+.prose pre {
+  @apply bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto mb-4;
+}
+
+.prose pre code {
+  @apply bg-transparent text-gray-100 p-0;
+}
+
+.prose blockquote {
+  @apply border-l-4 border-blue-500 pl-4 italic text-gray-700 my-4;
+}
+
+.prose table {
+  @apply w-full border-collapse mb-4;
+}
+
+.prose th {
+  @apply bg-gray-100 border border-gray-300 px-4 py-2 text-left font-semibold;
+}
+
+.prose td {
+  @apply border border-gray-300 px-4 py-2;
+}
+
+.prose img {
+  @apply rounded-lg shadow-md my-6;
+}
+
+.prose hr {
+  @apply my-8 border-t border-gray-300;
+}
+
+/* 深色模式支持 */
+@media (prefers-color-scheme: dark) {
+  .prose {
+    @apply text-gray-200;
+  }
+
+  .prose h1,
+  .prose h2,
+  .prose h3,
+  .prose h4 {
+    @apply text-white;
+  }
+
+  .prose h2 {
+    @apply border-gray-700;
+  }
+
+  .prose a {
+    @apply text-blue-400 hover:text-blue-300;
+  }
+
+  .prose code {
+    @apply bg-gray-800 text-pink-400;
+  }
+
+  .prose pre {
+    @apply bg-gray-950;
+  }
+
+  .prose blockquote {
+    @apply border-blue-400 text-gray-300;
+  }
+
+  .prose th {
+    @apply bg-gray-800 border-gray-700 text-white;
+  }
+
+  .prose td {
+    @apply border-gray-700;
+  }
+
+  .prose strong {
+    @apply text-white;
+  }
+}
 
 /* 自定义动画 */
 @keyframes pulse-slow {
@@ -104,4 +229,79 @@ body {
 /* 隐藏 reCAPTCHA 徽章 */
 .grecaptcha-badge {
   visibility: hidden !important;
+}
+
+/* Dark mode prose styling - better text contrast */
+.dark .prose {
+  color: rgb(229 231 235); /* text-gray-200 */
+}
+
+.dark .prose h1,
+.dark .prose h2,
+.dark .prose h3,
+.dark .prose h4,
+.dark .prose h5,
+.dark .prose h6 {
+  color: rgb(243 244 246); /* text-gray-100 */
+}
+
+.dark .prose strong {
+  color: rgb(243 244 246); /* text-gray-100 */
+}
+
+.dark .prose a {
+  color: rgb(96 165 250); /* text-blue-400 */
+}
+
+.dark .prose a:hover {
+  color: rgb(147 197 253); /* text-blue-300 */
+}
+
+.dark .prose code {
+  color: rgb(251 191 36); /* text-amber-400 */
+  background-color: rgb(55 65 81); /* bg-gray-700 */
+}
+
+.dark .prose pre {
+  background-color: rgb(31 41 55); /* bg-gray-800 */
+  border-color: rgb(75 85 99); /* border-gray-600 */
+}
+
+.dark .prose pre code {
+  background-color: transparent;
+  color: rgb(229 231 235); /* text-gray-200 */
+}
+
+.dark .prose blockquote {
+  color: rgb(209 213 219); /* text-gray-300 */
+  border-left-color: rgb(107 114 128); /* border-gray-500 */
+}
+
+.dark .prose ul,
+.dark .prose ol,
+.dark .prose li {
+  color: rgb(209 213 219); /* text-gray-300 */
+}
+
+.dark .prose table {
+  border-color: rgb(75 85 99); /* border-gray-600 */
+}
+
+.dark .prose thead {
+  background-color: rgb(55 65 81); /* bg-gray-700 */
+  border-bottom-color: rgb(107 114 128); /* border-gray-500 */
+}
+
+.dark .prose tbody tr {
+  border-bottom-color: rgb(75 85 99); /* border-gray-600 */
+}
+
+.dark .prose thead th {
+  color: rgb(243 244 246); /* text-gray-100 */
+}
+
+.dark .prose td,
+.dark .prose th {
+  border-color: rgb(75 85 99); /* border-gray-600 */
+  color: rgb(229 231 235); /* text-gray-200 */
 }

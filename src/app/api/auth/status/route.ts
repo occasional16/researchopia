@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { withSecurity } from '@/middleware/security'
 import { createClient } from '@supabase/supabase-js'
 
+// 强制动态渲染(消除build警告)
+export const dynamic = 'force-dynamic'
+
 // Enhanced auth status for Zotero plugin
 // - Returns authenticated based on presence of Supabase cookies or dev cookies
 // - Attempts to validate Supabase session if available

@@ -8,7 +8,9 @@ interface EnvironmentConfig {
   isProduction: boolean;
   logLevel: 'debug' | 'info' | 'warn' | 'error';
   apiBaseUrl: string;
+  /** @deprecated 不再直接使用,所有API请求通过Next.js代理 */
   supabaseUrl: string;
+  /** @deprecated 不再直接使用,所有API请求通过Next.js代理 */
   supabaseAnonKey: string;
   enablePerformanceMonitoring: boolean;
   enableDetailedLogging: boolean;
@@ -22,8 +24,12 @@ const defaultConfig: EnvironmentConfig = {
   logLevel: 'warn',
   // 默认使用生产环境,用户勾选"使用开发环境API"时才切换到localhost
   apiBaseUrl: 'https://www.researchopia.com',
-  supabaseUrl: 'https://obcblvdtqhwrihoddlez.supabase.co',
-  supabaseAnonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9iY2JsdmR0cWh3cmlob2RkbGV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0OTgyMzUsImV4cCI6MjA3MzA3NDIzNX0.0kYlpFuK5WrKvUhIj7RO4-XJgv1sm39FROD_mBtxYm4',
+  
+  // ⚠️ 已弃用: 所有API请求现在通过Next.js代理(/api/proxy/*),不再直接调用Supabase
+  // 保留这些配置仅用于向后兼容,实际使用中应通过Next.js API进行所有数据库操作
+  supabaseUrl: '',  // 留空,强制使用API代理
+  supabaseAnonKey: '',  // 留空,强制使用API代理
+  
   enablePerformanceMonitoring: false,
   enableDetailedLogging: false,
   maxCacheSize: 100,
@@ -86,8 +92,16 @@ const createDynamicConfig = (): EnvironmentConfig => {
       // 默认始终使用生产环境
       return 'https://www.researchopia.com';
     },
-    get supabaseUrl() { return defaultConfig.supabaseUrl; },
-    get supabaseAnonKey() { return defaultConfig.supabaseAnonKey; },
+    /** @deprecated 不再使用,所有API通过Next.js代理 */
+    get supabaseUrl() { 
+      console.warn('[Researchopia] supabaseUrl已弃用,请使用API代理');
+      return defaultConfig.supabaseUrl; 
+    },
+    /** @deprecated 不再使用,所有API通过Next.js代理 */
+    get supabaseAnonKey() { 
+      console.warn('[Researchopia] supabaseAnonKey已弃用,请使用API代理');
+      return defaultConfig.supabaseAnonKey; 
+    },
     get enablePerformanceMonitoring() { return env !== 'production'; },
     get enableDetailedLogging() { return env !== 'production'; },
     get maxCacheSize() { return defaultConfig.maxCacheSize; },

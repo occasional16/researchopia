@@ -505,9 +505,9 @@ export default function HomePage() {
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t('home.search.placeholder', '搜索论文标题、作者、DOI或关键词...')}
               disabled={searchStatus === 'checking' || searchStatus === 'adding' || searchStatus === 'redirecting'}
-              className="w-full pl-12 pr-32 py-4 text-gray-900 bg-white rounded-lg text-lg focus:outline-none focus:ring-2 focus:ring-purple-300 disabled:bg-gray-100"
+              className="w-full pl-12 pr-32 py-4 text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 rounded-lg text-lg focus:outline-none focus:ring-2 focus:ring-purple-300 dark:focus:ring-purple-600 disabled:bg-gray-100 dark:disabled:bg-gray-700 transition-colors"
             />
-            <Search className="absolute left-4 top-4 h-6 w-6 text-gray-400" />
+            <Search className="absolute left-4 top-4 h-6 w-6 text-gray-400 dark:text-gray-500" />
             <button
               type="submit"
               disabled={searchStatus !== 'idle' || !searchQuery.trim()}
@@ -565,25 +565,25 @@ export default function HomePage() {
 
       {/* Stats Section - 响应式紧凑布局 */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6">
-        <div className="bg-white rounded-lg shadow p-4 md:p-6 text-center">
-          <BookOpen className="h-6 w-6 md:h-8 md:w-8 text-blue-600 mx-auto mb-2" />
-          <div className="text-lg md:text-2xl font-bold text-gray-900">{loading ? '...' : stats.totalPapers}</div>
-          <div className="text-xs md:text-sm text-gray-600">{t('stats.papers', '学术论文')}</div>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900 p-4 md:p-6 text-center transition-colors">
+          <BookOpen className="h-6 w-6 md:h-8 md:w-8 text-blue-600 dark:text-blue-400 mx-auto mb-2" />
+          <div className="text-lg md:text-2xl font-bold text-gray-900 dark:text-gray-100">{loading ? '...' : stats.totalPapers}</div>
+          <div className="text-xs md:text-sm text-gray-600 dark:text-gray-400">{t('stats.papers', '学术论文')}</div>
         </div>
-        <div className="bg-white rounded-lg shadow p-4 md:p-6 text-center">
-          <Users className="h-6 w-6 md:h-8 md:w-8 text-green-600 mx-auto mb-2" />
-          <div className="text-lg md:text-2xl font-bold text-gray-900">{loading ? '...' : stats.totalUsers}</div>
-          <div className="text-xs md:text-sm text-gray-600">{t('stats.users', '注册用户')}</div>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900 p-4 md:p-6 text-center transition-colors">
+          <Users className="h-6 w-6 md:h-8 md:w-8 text-green-600 dark:text-green-400 mx-auto mb-2" />
+          <div className="text-lg md:text-2xl font-bold text-gray-900 dark:text-gray-100">{loading ? '...' : stats.totalUsers}</div>
+          <div className="text-xs md:text-sm text-gray-600 dark:text-gray-400">{t('stats.users', '注册用户')}</div>
         </div>
-        <div className="bg-white rounded-lg shadow p-4 md:p-6 text-center">
-          <Eye className="h-6 w-6 md:h-8 md:w-8 text-purple-600 mx-auto mb-2" />
-          <div className="text-lg md:text-2xl font-bold text-gray-900">{loading ? '...' : stats.totalVisits}</div>
-          <div className="text-xs md:text-sm text-gray-600">{t('stats.visits', '总访问量')}</div>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900 p-4 md:p-6 text-center transition-colors">
+          <Eye className="h-6 w-6 md:h-8 md:w-8 text-purple-600 dark:text-purple-400 mx-auto mb-2" />
+          <div className="text-lg md:text-2xl font-bold text-gray-900 dark:text-gray-100">{loading ? '...' : stats.totalVisits}</div>
+          <div className="text-xs md:text-sm text-gray-600 dark:text-gray-400">{t('stats.visits', '总访问量')}</div>
         </div>
-        <div className="bg-white rounded-lg shadow p-4 md:p-6 text-center">
-          <TrendingUp className="h-6 w-6 md:h-8 md:w-8 text-orange-600 mx-auto mb-2" />
-          <div className="text-lg md:text-2xl font-bold text-gray-900">{loading ? '...' : stats.todayVisits}</div>
-          <div className="text-xs md:text-sm text-gray-600">{t('stats.todayVisits', '今日访问')}</div>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900 p-4 md:p-6 text-center transition-colors">
+          <TrendingUp className="h-6 w-6 md:h-8 md:w-8 text-orange-600 dark:text-orange-400 mx-auto mb-2" />
+          <div className="text-lg md:text-2xl font-bold text-gray-900 dark:text-gray-100">{loading ? '...' : stats.todayVisits}</div>
+          <div className="text-xs md:text-sm text-gray-600 dark:text-gray-400">{t('stats.todayVisits', '今日访问')}</div>
         </div>
       </div>
 
@@ -609,12 +609,12 @@ export default function HomePage() {
       {/* Current Announcement - 只展示最新一条 */}
       {currentAnnouncement && (
         <div
-          className={`rounded-lg shadow-md border-l-4 p-4 ${
-            currentAnnouncement.type === 'info' ? 'bg-blue-50 border-blue-400' :
-            currentAnnouncement.type === 'warning' ? 'bg-yellow-50 border-yellow-400' :
-            currentAnnouncement.type === 'success' ? 'bg-green-50 border-green-400' :
-            currentAnnouncement.type === 'error' ? 'bg-red-50 border-red-400' :
-            'bg-gray-50 border-gray-400'
+          className={`rounded-lg shadow-md border-l-4 p-4 transition-colors ${
+            currentAnnouncement.type === 'info' ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-400 dark:border-blue-600' :
+            currentAnnouncement.type === 'warning' ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-400 dark:border-yellow-600' :
+            currentAnnouncement.type === 'success' ? 'bg-green-50 dark:bg-green-900/20 border-green-400 dark:border-green-600' :
+            currentAnnouncement.type === 'error' ? 'bg-red-50 dark:bg-red-900/20 border-red-400 dark:border-red-600' :
+            'bg-gray-50 dark:bg-gray-800 border-gray-400 dark:border-gray-600'
           }`}
         >
           <div className="flex items-start justify-between">
@@ -622,15 +622,15 @@ export default function HomePage() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
                   <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    currentAnnouncement.type === 'info' ? 'bg-blue-100 text-blue-800' :
-                    currentAnnouncement.type === 'warning' ? 'bg-yellow-100 text-yellow-800' :
-                    currentAnnouncement.type === 'success' ? 'bg-green-100 text-green-800' :
-                    currentAnnouncement.type === 'error' ? 'bg-red-100 text-red-800' :
-                    'bg-gray-100 text-gray-800'
+                    currentAnnouncement.type === 'info' ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-200' :
+                    currentAnnouncement.type === 'warning' ? 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-200' :
+                    currentAnnouncement.type === 'success' ? 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-200' :
+                    currentAnnouncement.type === 'error' ? 'bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-200' :
+                    'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200'
                   }`}>
                     📢 最新公告
                   </div>
-                  <h3 className="ml-3 text-lg font-semibold text-gray-900">
+                  <h3 className="ml-3 text-lg font-semibold text-gray-900 dark:text-gray-100">
                     {currentAnnouncement.title}
                   </h3>
                 </div>
@@ -638,17 +638,17 @@ export default function HomePage() {
                 {announcements.length > 1 && (
                   <button
                     onClick={() => setShowAnnouncementHistory(!showAnnouncementHistory)}
-                    className="text-sm text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1"
+                    className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline flex items-center gap-1"
                   >
                     📜 查看历史公告 ({announcements.length - 1})
                   </button>
                 )}
               </div>
-              <div className="mt-2 text-gray-700 whitespace-pre-wrap">
+              <div className="mt-2 text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
                 {currentAnnouncement.content}
               </div>
               <div className="mt-3 flex justify-between items-center">
-                <div className="text-sm text-gray-500">
+                <div className="text-sm text-gray-500 dark:text-gray-400">
                   发布时间: {formatDate(currentAnnouncement.created_at)}
                   {currentAnnouncement.created_by && (
                     <span className="ml-4">发布者: {currentAnnouncement.created_by}</span>
@@ -658,13 +658,13 @@ export default function HomePage() {
                   <div className="flex space-x-2">
                     <button
                       onClick={() => handleEditAnnouncement(currentAnnouncement)}
-                      className="px-3 py-1 text-sm text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded transition-colors"
+                      className="px-3 py-1 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded transition-colors"
                     >
                       ✏️ 编辑
                     </button>
                     <button
                       onClick={() => handleDeleteAnnouncement(currentAnnouncement.id)}
-                      className="px-3 py-1 text-sm text-red-600 hover:text-red-800 hover:bg-red-100 rounded transition-colors"
+                      className="px-3 py-1 text-sm text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 hover:bg-red-100 dark:hover:bg-red-900/30 rounded transition-colors"
                     >
                       🗑️ 删除
                     </button>
@@ -678,13 +678,13 @@ export default function HomePage() {
 
       {/* Announcement History Modal */}
       {showAnnouncementHistory && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[80vh] overflow-hidden flex flex-col">
-            <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-gray-900">📜 公告历史记录</h2>
+        <div className="fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-70 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[80vh] overflow-hidden flex flex-col">
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">📜 公告历史记录</h2>
               <button
                 onClick={() => setShowAnnouncementHistory(false)}
-                className="text-gray-400 hover:text-gray-600 text-2xl leading-none"
+                className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 text-2xl leading-none"
               >
                 ×
               </button>
@@ -695,34 +695,34 @@ export default function HomePage() {
                   <div
                     key={announcement.id}
                     className={`rounded-lg border-l-4 p-4 ${
-                      announcement.type === 'info' ? 'bg-blue-50 border-blue-400' :
-                      announcement.type === 'warning' ? 'bg-yellow-50 border-yellow-400' :
-                      announcement.type === 'success' ? 'bg-green-50 border-green-400' :
-                      announcement.type === 'error' ? 'bg-red-50 border-red-400' :
-                      'bg-gray-50 border-gray-400'
+                      announcement.type === 'info' ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-400 dark:border-blue-600' :
+                      announcement.type === 'warning' ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-400 dark:border-yellow-600' :
+                      announcement.type === 'success' ? 'bg-green-50 dark:bg-green-900/20 border-green-400 dark:border-green-600' :
+                      announcement.type === 'error' ? 'bg-red-50 dark:bg-red-900/20 border-red-400 dark:border-red-600' :
+                      'bg-gray-50 dark:bg-gray-700 border-gray-400 dark:border-gray-600'
                     }`}
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center">
                           <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            announcement.type === 'info' ? 'bg-blue-100 text-blue-800' :
-                            announcement.type === 'warning' ? 'bg-yellow-100 text-yellow-800' :
-                            announcement.type === 'success' ? 'bg-green-100 text-green-800' :
-                            announcement.type === 'error' ? 'bg-red-100 text-red-800' :
-                            'bg-gray-100 text-gray-800'
+                            announcement.type === 'info' ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-200' :
+                            announcement.type === 'warning' ? 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-200' :
+                            announcement.type === 'success' ? 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-200' :
+                            announcement.type === 'error' ? 'bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-200' :
+                            'bg-gray-100 dark:bg-gray-600 text-gray-800 dark:text-gray-200'
                           }`}>
                             {index === 0 ? '📢 最新' : `#${index + 1}`}
                           </div>
-                          <h3 className="ml-3 text-lg font-semibold text-gray-900">
+                          <h3 className="ml-3 text-lg font-semibold text-gray-900 dark:text-gray-100">
                             {announcement.title}
                           </h3>
                         </div>
-                        <div className="mt-2 text-gray-700 whitespace-pre-wrap">
+                        <div className="mt-2 text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
                           {announcement.content}
                         </div>
                         <div className="mt-3 flex justify-between items-center">
-                          <div className="text-sm text-gray-500">
+                          <div className="text-sm text-gray-500 dark:text-gray-400">
                             发布时间: {formatDate(announcement.created_at)}
                             {announcement.created_by && (
                               <span className="ml-4">发布者: {announcement.created_by}</span>
@@ -732,13 +732,13 @@ export default function HomePage() {
                             <div className="flex space-x-2">
                               <button
                                 onClick={() => handleEditAnnouncement(announcement)}
-                                className="px-3 py-1 text-sm text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded transition-colors"
+                                className="px-3 py-1 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded transition-colors"
                               >
                                 ✏️ 编辑
                               </button>
                               <button
                                 onClick={() => handleDeleteAnnouncement(announcement.id)}
-                                className="px-3 py-1 text-sm text-red-600 hover:text-red-800 hover:bg-red-100 rounded transition-colors"
+                                className="px-3 py-1 text-sm text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 hover:bg-red-100 dark:hover:bg-red-900/30 rounded transition-colors"
                               >
                                 🗑️ 删除
                               </button>
@@ -751,10 +751,10 @@ export default function HomePage() {
                 ))}
               </div>
             </div>
-            <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
+            <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
               <button
                 onClick={() => setShowAnnouncementHistory(false)}
-                className="w-full px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                className="w-full px-4 py-2 bg-gray-600 dark:bg-gray-700 text-white rounded-lg hover:bg-gray-700 dark:hover:bg-gray-600 transition-colors"
               >
                 关闭
               </button>
@@ -765,10 +765,10 @@ export default function HomePage() {
 
       {/* Admin Announcement Management */}
       {profile && profile.role === 'admin' && (
-        <div className="bg-white rounded-lg shadow">
-          <div className="px-6 py-4 border-b border-gray-200">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900 transition-colors">
+          <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
             <div className="flex justify-between items-center">
-              <h2 className="text-xl font-semibold text-gray-900">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
                 管理员 - 公告管理
               </h2>
               <div className="flex gap-2">
@@ -778,7 +778,7 @@ export default function HomePage() {
                     setShowAnnouncementForm(!showAnnouncementForm)
                     setShowAnnouncementHistory(false)
                   }}
-                  className="inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors"
+                  className="inline-flex items-center px-4 py-2 bg-green-600 dark:bg-green-700 text-white text-sm font-medium rounded-lg hover:bg-green-700 dark:hover:bg-green-600 transition-colors"
                 >
                   {showAnnouncementForm ? '❌ 取消' : '➕ 新建公告'}
                 </button>
@@ -787,7 +787,7 @@ export default function HomePage() {
                     setShowAnnouncementHistory(!showAnnouncementHistory)
                     setShowAnnouncementForm(false)
                   }}
-                  className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                  className="inline-flex items-center px-4 py-2 bg-blue-600 dark:bg-blue-700 text-white text-sm font-medium rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors"
                 >
                   📜 历史管理 ({announcements.length})
                 </button>
@@ -816,18 +816,18 @@ export default function HomePage() {
       )}
 
       {/* Recent Comments */}
-      <div className="bg-white rounded-lg shadow">
-        <div className="px-6 py-4 border-b border-gray-200">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900 transition-colors">
+        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
           <div className="flex justify-between items-center">
-            <h2 className="text-xl font-semibold text-gray-900 flex items-center">
-              <MessageCircle className="h-5 w-5 mr-2 text-blue-600" />
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 flex items-center">
+              <MessageCircle className="h-5 w-5 mr-2 text-blue-600 dark:text-blue-400" />
               {t('papers.recent', '最新评论')}
             </h2>
             <div className="flex items-center space-x-2">
               <button
                 onClick={refreshComments}
                 disabled={refreshingComments}
-                className="inline-flex items-center px-3 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                className="inline-flex items-center px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                 title="刷新评论"
               >
                 <svg 
@@ -852,32 +852,32 @@ export default function HomePage() {
         </div>
         <div className="p-6">
           {loading ? (
-            <div className="text-center py-8 text-gray-500">{t('papers.loading', '加载中...')}</div>
+            <div className="text-center py-8 text-gray-500 dark:text-gray-400">{t('papers.loading', '加载中...')}</div>
           ) : recentComments.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">{t('papers.noComments', '暂无评论')}</div>
+            <div className="text-center py-8 text-gray-500 dark:text-gray-400">{t('papers.noComments', '暂无评论')}</div>
           ) : (
             <div className="space-y-4">
               {recentComments.map((comment) => (
-                <div key={comment.id} className="border-b border-gray-100 pb-6 last:border-b-0">
+                <div key={comment.id} className="border-b border-gray-100 dark:border-gray-700 pb-6 last:border-b-0">
                   <div className="flex items-start justify-between">
                     <div className="flex-1 min-w-0"> {/* 添加min-w-0防止内容溢出 */}
                       <Link
                         href={`/papers/${comment.id}`}
-                        className="text-lg font-semibold text-blue-600 hover:text-blue-800 transition-colors block mb-2"
+                        className="text-lg font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors block mb-2"
                       >
                         {comment.title}
                       </Link>
-                      <div className="flex flex-col space-y-1 text-sm text-gray-600 mb-3">
+                      <div className="flex flex-col space-y-1 text-sm text-gray-600 dark:text-gray-400 mb-3">
                         <p>作者：<span className="font-medium">{comment.authors}</span></p>
                         {comment.journal && (
-                          <p>期刊：<span className="font-medium text-green-600">{comment.journal}</span></p>
+                          <p>期刊：<span className="font-medium text-green-600 dark:text-green-400">{comment.journal}</span></p>
                         )}
                       </div>
-                      <div className="mt-2 p-3 bg-gray-50 rounded-lg">
-                        <p className="text-gray-700 text-sm leading-relaxed">
+                      <div className="mt-2 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                        <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">
                           {comment.latest_comment.content}
                         </p>
-                        <div className="flex items-center justify-between mt-3 text-xs text-gray-500">
+                        <div className="flex items-center justify-between mt-3 text-xs text-gray-500 dark:text-gray-400">
                           <span>
                             评论者：<span className="font-medium">
                               {comment.latest_comment.is_anonymous 
@@ -893,20 +893,20 @@ export default function HomePage() {
                     </div>
                     <div className="ml-6 text-right flex-shrink-0">
                       <div className="flex flex-col space-y-2">
-                        <div className="flex items-center justify-end space-x-4 text-sm text-gray-600">
-                          <div className="flex items-center bg-blue-50 px-2 py-1 rounded-full">
-                            <MessageCircle className="h-4 w-4 mr-1 text-blue-600" />
+                        <div className="flex items-center justify-end space-x-4 text-sm text-gray-600 dark:text-gray-400">
+                          <div className="flex items-center bg-blue-50 dark:bg-blue-900/30 px-2 py-1 rounded-full">
+                            <MessageCircle className="h-4 w-4 mr-1 text-blue-600 dark:text-blue-400" />
                             <span className="font-medium">{comment.comment_count}</span>
                           </div>
                           {comment.average_rating > 0 && (
-                            <div className="flex items-center bg-yellow-50 px-2 py-1 rounded-full">
-                              <Star className="h-4 w-4 mr-1 text-yellow-500" />
+                            <div className="flex items-center bg-yellow-50 dark:bg-yellow-900/30 px-2 py-1 rounded-full">
+                              <Star className="h-4 w-4 mr-1 text-yellow-500 dark:text-yellow-400" />
                               <span className="font-medium">{comment.average_rating.toFixed(1)}</span>
-                              <span className="text-xs text-gray-500 ml-1">({comment.rating_count})</span>
+                              <span className="text-xs text-gray-500 dark:text-gray-400 ml-1">({comment.rating_count})</span>
                             </div>
                           )}
                         </div>
-                        <div className="text-xs text-gray-400 text-right">
+                        <div className="text-xs text-gray-400 dark:text-gray-500 text-right">
                           论文发布：{formatDateOnly(comment.created_at)}
                         </div>
                       </div>
@@ -930,14 +930,14 @@ export default function HomePage() {
       </div>
 
       {/* Welcome Message for All Users */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-        <h3 className="text-lg font-semibold text-blue-900 mb-2">
+      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6 transition-colors">
+        <h3 className="text-lg font-semibold text-blue-900 dark:text-blue-200 mb-2">
           {t('auth.welcome', '欢迎来到研学港！')}
         </h3>
-        <p className="text-blue-700 mb-4">
+        <p className="text-blue-700 dark:text-blue-300 mb-4">
           {t('auth.welcomeDesc', '研学港是新一代学术评价与研学社区平台，研学并进，智慧共享。您可以：')}
         </p>
-        <ul className="text-blue-700 space-y-1 mb-4">
+        <ul className="text-blue-700 dark:text-blue-300 space-y-1 mb-4">
           <li>• 浏览和搜索最新的学术论文</li>
           <li>• 为论文提供专业评分和评论</li>
           <li>• 与全球研究者交流学术见解</li>
@@ -946,7 +946,7 @@ export default function HomePage() {
         {!isAuthenticated && (
           <button
             onClick={() => window.dispatchEvent(new CustomEvent('showAuthModal', { detail: { mode: 'signup' } }))}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="px-6 py-2 bg-blue-600 dark:bg-blue-700 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors"
           >
             {t('auth.joinNow', '立即注册，开始研学之旅')}
           </button>

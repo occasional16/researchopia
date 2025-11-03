@@ -100,14 +100,14 @@ export default function FeedPage() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
-          <Rss className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">动态流</h2>
-          <p className="text-gray-600 mb-6">登录后查看你关注的用户的最新动态</p>
+          <Rss className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">动态流</h2>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">登录后查看你关注的用户的最新动态</p>
           <button
             onClick={() => router.push('/')}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            className="px-6 py-2 bg-blue-600 dark:bg-blue-700 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600"
           >
             返回首页
           </button>
@@ -117,14 +117,14 @@ export default function FeedPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
       <div className="max-w-4xl mx-auto px-4">
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
             动态流
           </h1>
-          <p className="text-gray-600">
+          <p className="text-gray-600 dark:text-gray-400">
             {feedMode === 'following' && '查看你关注的人的最新学术动态'}
             {feedMode === 'recommended' && '基于你的兴趣为你推荐的学术动态'}
             {feedMode === 'trending' && '查看最热门的学术动态'}
@@ -132,8 +132,8 @@ export default function FeedPage() {
         </div>
 
         {/* Feed Mode Tabs */}
-        <div className="bg-white rounded-lg shadow-sm border mb-6">
-          <div className="flex border-b">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border dark:border-gray-700 mb-6">
+          <div className="flex border-b dark:border-gray-700">
             <button
               onClick={() => {
                 setFeedMode('following')
@@ -141,8 +141,8 @@ export default function FeedPage() {
               }}
               className={`flex-1 px-6 py-4 text-center font-medium transition-colors ${
                 feedMode === 'following'
-                  ? 'text-blue-600 border-b-2 border-blue-600'
-                  : 'text-gray-600 hover:text-gray-900'
+                  ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
               }`}
             >
               关注
@@ -154,8 +154,8 @@ export default function FeedPage() {
               }}
               className={`flex-1 px-6 py-4 text-center font-medium transition-colors ${
                 feedMode === 'recommended'
-                  ? 'text-blue-600 border-b-2 border-blue-600'
-                  : 'text-gray-600 hover:text-gray-900'
+                  ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
               }`}
             >
               推荐
@@ -167,8 +167,8 @@ export default function FeedPage() {
               }}
               className={`flex-1 px-6 py-4 text-center font-medium transition-colors ${
                 feedMode === 'trending'
-                  ? 'text-blue-600 border-b-2 border-blue-600'
-                  : 'text-gray-600 hover:text-gray-900'
+                  ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
               }`}
             >
               热门
@@ -177,7 +177,7 @@ export default function FeedPage() {
         </div>
 
         {/* Filter */}
-        <div className="bg-white rounded-lg shadow-sm border p-4 mb-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border dark:border-gray-700 p-4 mb-6">
           <div className="flex items-center gap-2 mb-3">
             <Filter className="w-5 h-5 text-gray-600" />
             <span className="font-medium text-gray-900">筛选动态类型</span>

@@ -88,8 +88,20 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="zh-CN">
+    <html lang="zh-CN" suppressHydrationWarning>
       <head>
+        {/* 立即执行脚本，防止深色模式闪烁 */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              try {
+                if (localStorage.getItem('rp-dark-mode') === '1') {
+                  document.documentElement.classList.add('dark');
+                }
+              } catch (e) {}
+            `,
+          }}
+        />
         <link rel="manifest" href="/manifest.json" />
         {/* 保险起见再加一条显式的 favicon 链接（Next 的 metadata 会自动注入，但部分环境缓存严格时更稳妥）*/}
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
@@ -102,13 +114,13 @@ export default function RootLayout({
         <link rel="preconnect" href={process.env.NEXT_PUBLIC_SUPABASE_URL || ''} />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-50`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-50 dark:bg-gray-900`}
       >
         <ClientProviders>
           <SafeWrapper>
             <div className="min-h-screen">
               <Navbar />
-              <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+              <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-24">
                 {children}
               </main>
               <DevPerformanceMonitor />

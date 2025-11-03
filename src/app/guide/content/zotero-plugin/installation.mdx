@@ -1,0 +1,241 @@
+---
+title: 安装和配置 Zotero 插件
+description: 安装 Researchopia Zotero 插件并完成初始配置
+---
+
+# 安装和配置 Zotero 插件
+
+将 Researchopia 集成到 Zotero 文献管理器中，享受无缝的标注同步和协作阅读体验。
+
+## 系统要求
+
+### 前置条件
+
+在安装插件前，请确保：
+
+<div className="bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 dark:border-blue-600 p-4 my-4 not-prose">
+  <ul className="text-sm text-blue-900 dark:text-blue-100 space-y-2">
+    <li>✅ <strong>Zotero 版本</strong>: 7.0+ (推荐 8.0 Beta)</li>
+    <li>✅ <strong>操作系统</strong>: Windows 10+, macOS 11+, Linux</li>
+    <li>✅ <strong>网络连接</strong>: 稳定的互联网</li>
+    <li>✅ <strong>Researchopia 账号</strong>: 已注册并验证</li>
+  </ul>
+</div>
+
+### 检查 Zotero 版本
+
+1. 打开 Zotero
+2. 点击 **帮助** → **关于 Zotero**
+3. 查看版本号
+
+如果版本低于 7.0，请先升级 Zotero。
+
+## 安装插件
+
+### 方法 1: 从官网下载（推荐）
+
+1. 访问 [researchopia.com/plugin](https://researchopia.com/plugin)
+2. 点击 **"下载 Zotero 插件"** 按钮
+3. 下载 `researchopia-v0.3.3.xpi` 文件
+
+### 方法 2: 从 GitHub 下载
+
+1. 访问 [GitHub Releases](https://github.com/occasional16/researchopia/releases)
+2. 找到最新版本
+3. 下载 Assets 中的 `.xpi` 文件
+
+### 安装步骤
+
+<div className="space-y-4 my-6">
+  <div className="border-l-4 border-green-500 bg-green-50 p-4">
+    <div className="font-semibold text-green-900 mb-2">步骤 1: 打开附加组件管理器</div>
+    <div className="text-sm text-green-800">Zotero → 工具 → 附加组件</div>
+  </div>
+  
+  <div className="border-l-4 border-blue-500 bg-blue-50 p-4">
+    <div className="font-semibold text-blue-900 mb-2">步骤 2: 安装插件</div>
+    <div className="text-sm text-blue-800">点击齿轮图标 ⚙️ → Install Add-on From File → 选择下载的 .xpi 文件</div>
+  </div>
+  
+  <div className="border-l-4 border-purple-500 bg-purple-50 p-4">
+    <div className="font-semibold text-purple-900 mb-2">步骤 3: 重启 Zotero</div>
+    <div className="text-sm text-purple-800">关闭并重新打开 Zotero 以完成安装</div>
+  </div>
+</div>
+
+### 验证安装
+
+安装成功后，您应该看到：
+
+- ✅ 工具栏出现 Researchopia 图标 🌐
+- ✅ 工具菜单中有 "Researchopia" 选项
+- ✅ 右侧面板有新的标签页
+
+## 首次配置
+
+### 登录账号
+
+1. 点击工具栏的 Researchopia 图标
+2. 或点击 **工具** → **Researchopia** → **Login**
+3. 在弹出窗口输入您的邮箱和密码
+4. 点击 **"登录"**
+
+<div className="bg-green-50 dark:bg-green-900/20 border-l-4 border-green-500 dark:border-green-600 p-4 my-4 not-prose">
+  <div className="text-sm text-green-900 dark:text-green-100">
+    🎉 <strong>成功</strong>！登录成功后会显示 "Welcome, [Your Name]!"
+  </div>
+</div>
+
+### 配置同步选项
+
+打开设置：**工具** → **Researchopia** → **Settings**
+
+#### 标注同步设置
+
+```
+✅ 自动同步: 创建标注后立即同步到云端
+⏸️ 手动同步: 需要手动点击同步按钮
+❌ 不同步: 标注只保存在本地
+```
+
+#### 隐私设置
+
+选择标注的默认可见性：
+
+- 🌍 **公开**: 所有人可见
+- 👥 **仅好友**: 只有关注的人可见
+- 🔒 **私密**: 只有自己可见
+
+#### 通知设置
+
+- 新评论通知
+- 共读会话邀请通知
+- 新关注者通知
+
+## 界面介绍
+
+### 主要面板
+
+插件在 Zotero 右侧添加了两个新面板：
+
+<div className="grid grid-cols-1 md:grid-cols-2 gap-4 my-6 not-prose">
+  <div className="border border-blue-200 dark:border-blue-700 rounded-lg p-4 bg-white dark:bg-gray-800">
+    <div className="font-semibold text-blue-900 dark:text-blue-100 mb-2">📝 Community Annotations</div>
+    <div className="text-sm text-gray-700 dark:text-gray-300">查看和互动社区标注</div>
+    <ul className="text-xs text-gray-600 dark:text-gray-400 mt-2 space-y-1">
+      <li>• 浏览他人的标注</li>
+      <li>• 点赞和评论</li>
+      <li>• 筛选和排序</li>
+    </ul>
+  </div>
+  
+  <div className="border border-purple-200 dark:border-purple-700 rounded-lg p-4 bg-white dark:bg-gray-800">
+    <div className="font-semibold text-purple-900 dark:text-purple-100 mb-2">👥 Reading Session</div>
+    <div className="text-sm text-gray-700 dark:text-gray-300">创建和加入共读会话</div>
+    <ul className="text-xs text-gray-600 dark:text-gray-400 mt-2 space-y-1">
+      <li>• 实时协作阅读</li>
+      <li>• 即时聊天</li>
+      <li>• 会话管理</li>
+    </ul>
+  </div>
+</div>
+
+### 工具栏按钮
+
+点击工具栏的 Researchopia 图标可以：
+
+- 🔄 快速同步标注
+- 👤 查看登录状态
+- ⚙️ 打开设置
+- 🚪 登出账号
+
+## 更新插件
+
+### 自动更新
+
+Zotero 会自动检查插件更新。当有新版本时：
+
+1. 附加组件管理器会显示更新通知
+2. 点击 **"立即更新"**
+3. 重启 Zotero
+
+### 手动更新
+
+1. 下载最新版本的 `.xpi` 文件
+2. 按照安装步骤重新安装
+3. 覆盖旧版本
+
+## 卸载插件
+
+如需卸载：
+
+1. 工具 → 附加组件
+2. 找到 Researchopia
+3. 点击 **"移除"**
+4. 重启 Zotero
+
+<div className="bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-500 dark:border-yellow-600 p-4 my-4 not-prose">
+  <div className="text-sm text-yellow-900 dark:text-yellow-100">
+    <strong>⚠️ 注意</strong>: 卸载插件不会删除您在云端的标注数据
+  </div>
+</div>
+
+## 故障排除
+
+### 插件无法安装
+
+**问题**: 提示 "无法安装附加组件"
+
+**解决方案**:
+- 检查 Zotero 版本是否 ≥ 7.0
+- 尝试从不同来源下载 .xpi 文件
+- 检查文件是否完整（约 500KB）
+
+### 无法登录
+
+**问题**: 输入邮箱密码后无反应
+
+**解决方案**:
+- 检查网络连接
+- 确认邮箱和密码正确
+- 尝试重置密码
+- 查看 Zotero 控制台错误（帮助 → 开发者 → 控制台）
+
+### 标注不同步
+
+**问题**: 创建的标注没有上传到云端
+
+**解决方案**:
+- 检查是否已登录
+- 确认同步设置不是"不同步"
+- 手动点击同步按钮
+- 查看网络连接状态
+
+## 常见问题
+
+### 插件是免费的吗？
+
+是的，完全免费且开源！
+
+### 支持哪些语言？
+
+目前支持中文和英文，更多语言即将推出。
+
+### 会影响 Zotero 性能吗？
+
+不会。插件经过优化，对 Zotero 性能影响极小。
+
+---
+
+## 下一步
+
+插件安装完成后，您可以：
+
+- [查看社区标注](/guide/zotero-plugin/view-annotations) - 浏览他人的标注
+- [创建共读会话](/guide/zotero-plugin/reading-sessions) - 开始协作阅读
+- [同步个人标注](/guide/zotero-plugin/sync-annotations) - 管理您的标注
+
+<div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-6 my-6 not-prose">
+  <div className="font-semibold text-gray-900 dark:text-gray-100 mb-2">🚀 准备好开始了吗？</div>
+  <div className="text-sm text-gray-700 dark:text-gray-300">在 Zotero 中选择一篇论文，点击右侧的 "Community Annotations" 标签，探索社区的智慧！</div>
+</div>

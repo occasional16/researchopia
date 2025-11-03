@@ -30,11 +30,11 @@ export default function PaperCard({ paper }: PaperCardProps) {
   const paperRoute = getPaperRoute(paper.id || paper.doi || '')
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow p-6">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border dark:border-gray-700 hover:shadow-md transition-shadow p-6">
       <div className="flex justify-between items-start mb-3">
         <Link
           href={paperRoute}
-          className="text-lg font-semibold text-gray-900 hover:text-blue-600 transition-colors line-clamp-2"
+          className="text-lg font-semibold text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 transition-colors line-clamp-2"
         >
           {paper.title}
         </Link>
@@ -42,17 +42,17 @@ export default function PaperCard({ paper }: PaperCardProps) {
         {averageValue !== null && averageValue !== undefined && (
           <div className="flex items-center space-x-1 ml-4 flex-shrink-0">
             <Star className="w-4 h-4 text-yellow-400 fill-current" />
-            <span className="text-sm font-medium text-gray-700">
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
               {averageValue}
             </span>
-            <span className="text-xs text-gray-500">
+            <span className="text-xs text-gray-500 dark:text-gray-400">
               ({ratingCount})
             </span>
           </div>
         )}
       </div>
 
-      <div className="flex items-center space-x-4 text-sm text-gray-600 mb-3">
+      <div className="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400 mb-3">
         <div className="flex items-center space-x-1">
           <Users className="w-4 h-4" />
           <span>{paper.authors.join(', ')}</span>
@@ -67,11 +67,11 @@ export default function PaperCard({ paper }: PaperCardProps) {
       </div>
 
       {paper.journal && (
-        <p className="text-sm text-gray-600 mb-3 italic">{paper.journal}</p>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 italic">{paper.journal}</p>
       )}
 
       {paper.abstract && (
-        <p className="text-sm text-gray-700 line-clamp-3 mb-4">
+        <p className="text-sm text-gray-700 dark:text-gray-300 line-clamp-3 mb-4">
           {paper.abstract}
         </p>
       )}
@@ -81,13 +81,13 @@ export default function PaperCard({ paper }: PaperCardProps) {
           {paper.keywords.slice(0, 4).map((keyword, index) => (
             <span
               key={index}
-              className="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded-full"
+              className="px-2 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs rounded-full"
             >
               {keyword}
             </span>
           ))}
           {paper.keywords.length > 4 && (
-            <span className="px-2 py-1 bg-gray-50 text-gray-500 text-xs rounded-full">
+            <span className="px-2 py-1 bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-xs rounded-full">
               +{paper.keywords.length - 4} more
             </span>
           )}
@@ -95,37 +95,37 @@ export default function PaperCard({ paper }: PaperCardProps) {
       )}
 
       {paper.doi && (
-        <div className="text-xs text-gray-500">
+        <div className="text-xs text-gray-500 dark:text-gray-400">
           DOI: {paper.doi}
         </div>
       )}
 
       {averageRating && (
-        <div className="mt-4 pt-4 border-t border-gray-100">
+        <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
           <div className="grid grid-cols-4 gap-2 text-xs">
             <div className="text-center">
-              <div className="font-medium text-gray-700">{averageRating.innovation}</div>
-              <div className="text-gray-500">创新性</div>
+              <div className="font-medium text-gray-700 dark:text-gray-300">{averageRating.innovation}</div>
+              <div className="text-gray-500 dark:text-gray-400">创新性</div>
             </div>
             <div className="text-center">
-              <div className="font-medium text-gray-700">{averageRating.methodology}</div>
-              <div className="text-gray-500">方法论</div>
+              <div className="font-medium text-gray-700 dark:text-gray-300">{averageRating.methodology}</div>
+              <div className="text-gray-500 dark:text-gray-400">方法论</div>
             </div>
             <div className="text-center">
-              <div className="font-medium text-gray-700">{averageRating.practicality}</div>
-              <div className="text-gray-500">实用性</div>
+              <div className="font-medium text-gray-700 dark:text-gray-300">{averageRating.practicality}</div>
+              <div className="text-gray-500 dark:text-gray-400">实用性</div>
             </div>
             <div className="text-center">
-              <div className="font-medium text-gray-700">{averageRating.overall}</div>
-              <div className="text-gray-500">总体</div>
+              <div className="font-medium text-gray-700 dark:text-gray-300">{averageRating.overall}</div>
+              <div className="text-gray-500 dark:text-gray-400">总体</div>
             </div>
           </div>
         </div>
       )}
 
       {/* Action Bar */}
-      <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between">
-        <div className="flex items-center space-x-4 text-sm text-gray-500">
+      <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between">
+        <div className="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
           <div className="flex items-center space-x-1">
             <Star className="w-4 h-4" />
             <span>{averageValue !== null && averageValue !== undefined ? averageValue : '暂无评分'}</span>
@@ -152,7 +152,7 @@ export default function PaperCard({ paper }: PaperCardProps) {
           />
           <Link
             href={paperRoute}
-            className="text-blue-600 hover:text-blue-700 font-medium text-sm"
+            className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium text-sm"
           >
             查看详情 →
           </Link>

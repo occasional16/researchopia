@@ -57,20 +57,20 @@ export default function CommentForm({ paperId, onCommentAdded }: CommentFormProp
   // Allow viewing the form without login, but require login for submission
 
   return (
-    <div className="bg-white rounded-lg border p-6">
-      <h3 className="text-lg font-semibold text-gray-900 mb-2">发表评论</h3>
-      <p className="text-sm text-gray-600 mb-4">
+    <div className="bg-white dark:bg-gray-800 rounded-lg border dark:border-gray-700 p-6">
+      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">发表评论</h3>
+      <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
         欢迎分享您的学术见解和建设性意见，促进学术交流与讨论。
       </p>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 text-red-700 dark:text-red-300 px-4 py-3 rounded mb-4">
           {error}
         </div>
       )}
 
       {success && (
-        <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded mb-4">
+        <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 text-green-700 dark:text-green-300 px-4 py-3 rounded mb-4">
           评论发表成功！
         </div>
       )}
@@ -81,36 +81,36 @@ export default function CommentForm({ paperId, onCommentAdded }: CommentFormProp
             value={content}
             onChange={(e) => setContent(e.target.value)}
             rows={4}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
             placeholder="分享您对这篇论文的看法..."
             maxLength={1000}
           />
           <div className="flex justify-between items-center mt-2">
-            <span className="text-sm text-gray-500">
+            <span className="text-sm text-gray-500 dark:text-gray-400">
               {content.length}/1000
             </span>
           </div>
         </div>
 
         {/* 🆕 匿名选项 */}
-        <div className="flex items-center space-x-2 bg-blue-50 border border-blue-200 rounded-md p-3">
+        <div className="flex items-center space-x-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-md p-3">
           <input
             type="checkbox"
             id="anonymous-comment"
             checked={isAnonymous}
             onChange={(e) => setIsAnonymous(e.target.checked)}
-            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+            className="w-4 h-4 text-blue-600 dark:text-blue-500 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500"
           />
           <label 
             htmlFor="anonymous-comment" 
-            className="text-sm text-gray-700 cursor-pointer select-none flex items-center"
+            className="text-sm text-gray-700 dark:text-gray-300 cursor-pointer select-none flex items-center"
           >
-            <svg className="w-4 h-4 mr-1.5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-4 h-4 mr-1.5 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
             </svg>
             匿名发表
             {isAnonymous && (
-              <span className="ml-2 text-xs text-blue-600 font-medium">
+              <span className="ml-2 text-xs text-blue-600 dark:text-blue-400 font-medium">
                 （将显示为"匿名用户"）
               </span>
             )}
@@ -118,7 +118,7 @@ export default function CommentForm({ paperId, onCommentAdded }: CommentFormProp
           <div className="ml-auto">
             <button
               type="button"
-              className="text-xs text-gray-500 hover:text-gray-700"
+              className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
               title="匿名评论说明"
               onClick={() => {
                 alert(
@@ -149,7 +149,7 @@ export default function CommentForm({ paperId, onCommentAdded }: CommentFormProp
                 const event = new CustomEvent('showAuthModal', { detail: { mode: 'login' } })
                 window.dispatchEvent(event)
               }}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+              className="px-4 py-2 bg-blue-600 dark:bg-blue-700 text-white rounded-md hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors"
             >
               登录以发表评论
             </button>
@@ -157,15 +157,15 @@ export default function CommentForm({ paperId, onCommentAdded }: CommentFormProp
             <button
               type="submit"
               disabled={loading || !content.trim()}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="px-4 py-2 bg-blue-600 dark:bg-blue-700 text-white rounded-md hover:bg-blue-700 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {loading ? '发表中...' : '发表评论'}
             </button>
           )}
         </div>
 
-        <div className="mt-4 pt-4 border-t border-gray-100">
-          <p className="text-xs text-gray-500">
+        <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+          <p className="text-xs text-gray-500 dark:text-gray-400">
             <strong>评论规范：</strong>请保持客观、建设性的学术讨论态度，避免人身攻击或不当言论。
             评论内容仅代表个人观点。
           </p>

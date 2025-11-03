@@ -160,7 +160,7 @@ export default function AdminPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
         <a 
           href="/admin/visit-stats" 
-          className="bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg p-6 shadow-md hover:shadow-lg transition-all"
+          className="bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-700 dark:to-purple-700 text-white rounded-lg p-6 shadow-md hover:shadow-lg transition-all"
         >
           <div className="flex items-center gap-3">
             <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -173,40 +173,40 @@ export default function AdminPage() {
           </div>
         </a>
         
-        <div className="bg-white rounded-lg p-6 shadow-sm border">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">论文管理</h3>
-          <p className="text-sm text-gray-600">当前页面功能</p>
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border dark:border-gray-700">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">论文管理</h3>
+          <p className="text-sm text-gray-600 dark:text-gray-400">当前页面功能</p>
         </div>
         
-        <div className="bg-gray-100 rounded-lg p-6 shadow-sm border border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-700 mb-2">更多功能</h3>
-          <p className="text-sm text-gray-500">敬请期待...</p>
+        <div className="bg-gray-100 dark:bg-gray-700/50 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-600">
+          <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-2">更多功能</h3>
+          <p className="text-sm text-gray-500 dark:text-gray-400">敬请期待...</p>
         </div>
       </div>
 
       {/* 统计信息 */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white rounded-lg shadow-sm border p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">论文总数</h3>
-          <p className="text-3xl font-bold text-blue-600">{papers.length}</p>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border dark:border-gray-700 p-6">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">论文总数</h3>
+          <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">{papers.length}</p>
         </div>
-        <div className="bg-white rounded-lg shadow-sm border p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">编辑中</h3>
-          <p className="text-3xl font-bold text-orange-600">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border dark:border-gray-700 p-6">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">编辑中</h3>
+          <p className="text-3xl font-bold text-orange-600 dark:text-orange-400">
             {papers.filter(p => p.isEditing).length}
           </p>
         </div>
-        <div className="bg-white rounded-lg shadow-sm border p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">管理功能</h3>
-          <p className="text-sm text-gray-600">DOI更新、手动编辑、删除</p>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border dark:border-gray-700 p-6">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">管理功能</h3>
+          <p className="text-sm text-gray-600 dark:text-gray-400">DOI更新、手动编辑、删除</p>
         </div>
       </div>
 
       {/* 论文列表 */}
-      <div className="bg-white rounded-lg shadow-sm border">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-xl font-semibold text-gray-900">论文管理</h2>
-          <p className="text-sm text-gray-600 mt-1">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border dark:border-gray-700">
+        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">论文管理</h2>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
             点击"从DOI更新"可重新获取最新信息，点击"编辑"可手动修改论文信息
           </p>
         </div>

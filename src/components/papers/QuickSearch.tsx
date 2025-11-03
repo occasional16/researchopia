@@ -285,19 +285,19 @@ export default function QuickSearch({ paper }: QuickSearchProps) {
 
   return (
     <>
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-8">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-1 flex items-center space-x-2">
-              <Search className="w-5 h-5 text-blue-600" />
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-1 flex items-center space-x-2">
+              <Search className="w-5 h-5 text-blue-600 dark:text-blue-400" />
               <span>快捷搜索</span>
             </h2>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
               {paper.doi 
                 ? (
                     <span>
                       基于 DOI 
-                      <code className="mx-1 px-2 py-0.5 bg-gray-100 rounded text-xs font-mono">
+                      <code className="mx-1 px-2 py-0.5 bg-gray-100 dark:bg-gray-700 rounded text-xs font-mono">
                         {paper.doi}
                       </code>
                       在其他学术平台搜索此论文
@@ -311,7 +311,7 @@ export default function QuickSearch({ paper }: QuickSearchProps) {
           <div className="flex items-center space-x-2">
             <button
               onClick={() => setShowPreferences(true)}
-              className="flex items-center space-x-1 px-3 py-1.5 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
+              className="flex items-center space-x-1 px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
               title="设置搜索偏好"
             >
               <Settings className="w-4 h-4" />
@@ -321,7 +321,7 @@ export default function QuickSearch({ paper }: QuickSearchProps) {
             {filteredSites.length > 6 && (
               <button
                 onClick={() => setIsExpanded(!isExpanded)}
-                className="flex items-center space-x-1 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+                className="flex items-center space-x-1 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
               >
                 <span>{isExpanded ? '收起' : '展开全部'}</span>
                 {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
@@ -363,35 +363,35 @@ export default function QuickSearch({ paper }: QuickSearchProps) {
           <div className="mt-4 text-center">
             <button
               onClick={() => setIsExpanded(true)}
-              className="text-sm text-blue-600 hover:text-blue-700 hover:underline"
+              className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline"
             >
               查看更多搜索选项 ({filteredSites.length - 6} 个)
             </button>
           </div>
         )}
         
-        <div className="mt-4 pt-4 border-t border-gray-100">
+        <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4 text-xs text-gray-500">
+            <div className="flex items-center space-x-4 text-xs text-gray-500 dark:text-gray-400">
               <span className="flex items-center space-x-1">
-                <div className="w-2 h-2 bg-blue-200 rounded-full"></div>
+                <div className="w-2 h-2 bg-blue-200 dark:bg-blue-600 rounded-full"></div>
                 <span>通用搜索</span>
               </span>
               <span className="flex items-center space-x-1">
-                <div className="w-2 h-2 bg-purple-200 rounded-full"></div>
+                <div className="w-2 h-2 bg-purple-200 dark:bg-purple-600 rounded-full"></div>
                 <span>专业数据库</span>
               </span>
               <span className="flex items-center space-x-1">
-                <div className="w-2 h-2 bg-orange-200 rounded-full"></div>
+                <div className="w-2 h-2 bg-orange-200 dark:bg-orange-600 rounded-full"></div>
                 <span>论文仓库</span>
               </span>
               <span className="flex items-center space-x-1">
-                <div className="w-2 h-2 bg-green-200 rounded-full"></div>
+                <div className="w-2 h-2 bg-green-200 dark:bg-green-600 rounded-full"></div>
                 <span>中文平台</span>
               </span>
             </div>
           </div>
-          <p className="text-xs text-gray-500 mt-2">
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
             💡 点击按钮将在新标签页中打开对应网站的搜索结果 • 显示 {filteredSites.length}/{searchSites.length} 个网站
           </p>
         </div>

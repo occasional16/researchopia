@@ -56,7 +56,7 @@ export default function PaperList({
   // 错误状态 - 仅在没有数据且有错误时显示
   if (error && papers.length === 0) {
     return (
-      <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+      <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 text-red-700 dark:text-red-300 px-4 py-3 rounded">
         <p>加载论文时出错: {error}</p>
         <button
           onClick={refresh}
@@ -116,13 +116,13 @@ export default function PaperList({
 
       {/* 限制显示数量的提示 */}
       {!showInfiniteScroll && limit && papers.length > limit && (
-        <div className="text-center pt-4 border-t">
-          <p className="text-gray-500 text-sm mb-3">
+        <div className="text-center pt-4 border-t dark:border-gray-700">
+          <p className="text-gray-500 dark:text-gray-400 text-sm mb-3">
             显示前 {limit} 篇论文，共 {papers.length} 篇
           </p>
           <button
             onClick={() => window.location.href = '/papers'}
-            className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+            className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-sm font-medium"
           >
             查看全部 →
           </button>

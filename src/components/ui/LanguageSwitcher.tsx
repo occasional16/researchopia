@@ -36,7 +36,7 @@ export default function LanguageSwitcher({
       <div className={`relative ${className}`}>
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="flex items-center space-x-1 px-2 py-1 text-sm text-gray-600 hover:text-gray-900 transition-colors rounded-md hover:bg-gray-100"
+          className="flex items-center space-x-1 px-2 py-1 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
           aria-label="Switch Language"
         >
           <Globe className="w-4 h-4" />
@@ -50,19 +50,19 @@ export default function LanguageSwitcher({
               className="fixed inset-0 z-40" 
               onClick={() => setIsOpen(false)}
             />
-            <div className="absolute right-0 mt-1 w-36 bg-white rounded-lg shadow-lg border py-1 z-50">
+            <div className="absolute right-0 mt-1 w-36 bg-white dark:bg-gray-800 rounded-lg shadow-lg border dark:border-gray-700 py-1 z-50">
               {languages.map((lang) => (
                 <button
                   key={lang.code}
                   onClick={() => handleLanguageChange(lang.code)}
-                  className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 flex items-center space-x-2 ${
-                    language === lang.code ? 'text-blue-600 bg-blue-50' : 'text-gray-700'
+                  className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2 ${
+                    language === lang.code ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20' : 'text-gray-700 dark:text-gray-300'
                   }`}
                 >
                   <span className="text-base">{lang.flag}</span>
                   <span>{lang.name}</span>
                   {language === lang.code && (
-                    <span className="ml-auto text-blue-600">✓</span>
+                    <span className="ml-auto text-blue-600 dark:text-blue-400">✓</span>
                   )}
                 </button>
               ))}
@@ -76,15 +76,15 @@ export default function LanguageSwitcher({
   // 切换按钮模式：类似于原用户指南的样式
   if (variant === 'toggle') {
     return (
-      <div className={`bg-white rounded-full p-1 shadow-md border ${className}`}>
+      <div className={`bg-white dark:bg-gray-800 rounded-full p-1 shadow-md border dark:border-gray-700 ${className}`}>
         {languages.map((lang) => (
           <button
             key={lang.code}
             onClick={() => handleLanguageChange(lang.code)}
             className={`px-3 py-1 rounded-full text-sm font-medium transition-all duration-200 ${
               language === lang.code
-                ? 'bg-blue-500 text-white shadow-sm'
-                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                ? 'bg-blue-500 dark:bg-blue-600 text-white shadow-sm'
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700'
             }`}
           >
             {lang.name}
@@ -99,7 +99,7 @@ export default function LanguageSwitcher({
     <div className={`relative ${className}`}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center space-x-2 px-3 py-2 text-sm text-gray-600 hover:text-gray-900 transition-colors rounded-lg hover:bg-gray-100"
+        className="flex items-center space-x-2 px-3 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
       >
         <Globe className="w-4 h-4" />
         <span className="hidden sm:inline">{currentLang.name}</span>
@@ -113,24 +113,24 @@ export default function LanguageSwitcher({
             className="fixed inset-0 z-40" 
             onClick={() => setIsOpen(false)}
           />
-          <div className={`absolute mt-2 w-48 bg-white rounded-lg shadow-lg border py-1 z-50 ${
+          <div className={`absolute mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border dark:border-gray-700 py-1 z-50 ${
             position === 'navbar' ? 'right-0' : 'left-0'
           }`}>
             {languages.map((lang) => (
               <button
                 key={lang.code}
                 onClick={() => handleLanguageChange(lang.code)}
-                className={`w-full text-left px-4 py-3 text-sm hover:bg-gray-100 flex items-center space-x-3 ${
-                  language === lang.code ? 'text-blue-600 bg-blue-50' : 'text-gray-700'
+                className={`w-full text-left px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-3 ${
+                  language === lang.code ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20' : 'text-gray-700 dark:text-gray-300'
                 }`}
               >
                 <span className="text-lg">{lang.flag}</span>
                 <div className="flex-1">
                   <div className="font-medium">{lang.name}</div>
-                  <div className="text-xs text-gray-500">{lang.nativeName}</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">{lang.nativeName}</div>
                 </div>
                 {language === lang.code && (
-                  <span className="text-blue-600 font-medium">✓</span>
+                  <span className="text-blue-600 dark:text-blue-400 font-medium">✓</span>
                 )}
               </button>
             ))}

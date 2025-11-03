@@ -1,7 +1,14 @@
 import type { NextConfig } from "next";
 import path from 'path';
+import createMDX from '@next/mdx';
+import remarkGfm from 'remark-gfm';
+import rehypeHighlight from 'rehype-highlight';
+import rehypeSlug from 'rehype-slug';
+import rehypeAutolinkHeadings from 'rehype-autolink-headings';
 
 const nextConfig: NextConfig = {
+  // 支持 MDX 页面
+  pageExtensions: ['js', 'jsx', 'ts', 'tsx', 'md', 'mdx'],
   // 修复工作区根目录警告
   outputFileTracingRoot: path.join(__dirname),
   
@@ -125,4 +132,17 @@ const nextConfig: NextConfig = {
   }
 };
 
-export default nextConfig;
+// MDX 配置
+const withMDX = createMDX({
+  extension: /\.mdx?$/,
+  options: {
+    remarkPlugins: [remarkGfm],
+    rehypePlugins: [
+      rehypeHighlight,
+      rehypeSlug,
+      [rehypeAutolinkHeadings, { behavior: 'wrap' }],
+    ],
+  },
+});
+
+export default withMDX(nextConfig);

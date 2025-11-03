@@ -89,11 +89,11 @@ export default function PaperDetailPage() {
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded mb-4"></div>
-          <div className="h-4 bg-gray-200 rounded mb-2 w-3/4"></div>
-          <div className="h-4 bg-gray-200 rounded mb-4 w-1/2"></div>
-          <div className="h-32 bg-gray-200 rounded mb-6"></div>
-          <div className="h-64 bg-gray-200 rounded"></div>
+          <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded mb-4"></div>
+          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded mb-2 w-3/4"></div>
+          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded mb-4 w-1/2"></div>
+          <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded mb-6"></div>
+          <div className="h-64 bg-gray-200 dark:bg-gray-700 rounded"></div>
         </div>
       </div>
     )
@@ -102,7 +102,7 @@ export default function PaperDetailPage() {
   if (error || !paper) {
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded">
           <p>{error || '论文不存在'}</p>
         </div>
       </div>
@@ -112,25 +112,25 @@ export default function PaperDetailPage() {
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Breadcrumb Navigation */}
-      <nav className="flex items-center space-x-2 text-sm text-gray-600 mb-6">
+      <nav className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400 mb-6">
         <Link
           href="/"
-          className="flex items-center space-x-1 hover:text-blue-600 transition-colors"
+          className="flex items-center space-x-1 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
         >
           <Home className="w-4 h-4" />
           <span>首页</span>
         </Link>
         <ChevronRight className="w-4 h-4" />
-        <span className="text-gray-900 font-medium">论文详情</span>
+        <span className="text-gray-900 dark:text-gray-100 font-medium">论文详情</span>
       </nav>
 
       {/* Paper Header */}
-      <div className="bg-white rounded-lg shadow-sm border p-8 mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-4">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm dark:shadow-gray-900 border dark:border-gray-700 p-8 mb-8 transition-colors">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-4">
           {paper.title}
         </h1>
         
-        <div className="flex flex-wrap items-center gap-6 text-sm text-gray-600 mb-6">
+        <div className="flex flex-wrap items-center gap-6 text-sm text-gray-600 dark:text-gray-400 mb-6">
           <div className="flex items-center space-x-2">
             <Users className="w-4 h-4" />
             <span>{paper.authors.join(', ')}</span>
@@ -156,7 +156,7 @@ export default function PaperDetailPage() {
               href={`https://doi.org/${paper.doi}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center space-x-1 text-blue-600 hover:text-blue-700"
+              className="inline-flex items-center space-x-1 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
             >
               <ExternalLink className="w-4 h-4" />
               <span>DOI: {paper.doi}</span>
@@ -167,14 +167,14 @@ export default function PaperDetailPage() {
         {paper.keywords && paper.keywords.length > 0 && (
           <div className="mb-6">
             <div className="flex items-center space-x-2 mb-2">
-              <Tag className="w-4 h-4 text-gray-500" />
-              <span className="text-sm font-medium text-gray-700">关键词</span>
+              <Tag className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">关键词</span>
             </div>
             <div className="flex flex-wrap gap-2">
               {paper.keywords.map((keyword, index) => (
                 <span
                   key={index}
-                  className="px-3 py-1 bg-blue-50 text-blue-700 text-sm rounded-full"
+                  className="px-3 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-sm rounded-full"
                 >
                   {keyword}
                 </span>
@@ -185,8 +185,8 @@ export default function PaperDetailPage() {
 
         {paper.abstract && (
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-3">摘要</h3>
-            <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">摘要</h3>
+            <p className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
               {paper.abstract}
             </p>
           </div>
@@ -202,47 +202,23 @@ export default function PaperDetailPage() {
         }} 
       />
 
-      {/* Admin Status and Visibility Info */}
-      <div className="mb-6 space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-gray-900">
-            📰 相关新闻报道
-          </h2>
-          <div className="flex items-center space-x-4">
-            <ReportsVisibilityInfo isAdminMode={isAdminMode} />
-            {isAdminMode && (
-              <div className="flex items-center space-x-2 px-3 py-2 bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-lg">
-                <Crown className="w-4 h-4 text-yellow-600" />
-                <span className="text-sm font-medium text-yellow-800">
-                  管理员账户
-                </span>
-                <span className="px-2 py-1 bg-yellow-200 text-yellow-800 text-xs rounded-full font-medium">
-                  可管理所有报道
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
-        
-        {isAdminMode && (
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-            <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-              <span className="text-sm text-yellow-800 font-medium">
-                管理员权限已激活 - 您可以编辑和删除所有用户的报道条目
-              </span>
-            </div>
-          </div>
-        )}
+      {/* Admin Status and Visibility Info - 暂时隐藏，等待后续开发 */}
+      <div className="mb-6">
+        <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+          📰 相关新闻报道
+        </h2>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+          该功能正在开发中，敬请期待...
+        </p>
       </div>
 
-      {/* Paper Reports Section */}
-      <PaperReports 
+      {/* Paper Reports Section - 暂时隐藏 */}
+      {/* <PaperReports 
         paperId={paperId}
         paperTitle={paper.title}
         paperDOI={paper.doi}
         isAdminMode={isAdminMode}
-      />
+      /> */}
 
       {/* Rating Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">

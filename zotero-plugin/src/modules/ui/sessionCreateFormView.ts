@@ -47,7 +47,28 @@ export class SessionCreateFormView {
     `;
     pageContainer.appendChild(title);
 
-    // 选项容器
+    // 永久会话选项 (单独一行)
+    const permanentOption = this.createSessionTypeOption(
+      doc,
+      '永久会话',
+      '为论文创建永久讨论空间，任何人可首次创建',
+      '🌍',  // 与公开会话图标调换
+      '#f59e0b' // 橙色
+    );
+    // 确保不溢出：使用flex布局并限制最大宽度
+    permanentOption.style.cssText += `
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+      margin-bottom: ${spacing.lg};
+    `;
+    permanentOption.addEventListener('click', async () => {
+      // TODO: 等待后续开发
+      this.context.showMessage('永久会话功能开发中，敬请期待！', 'info');
+    });
+    pageContainer.appendChild(permanentOption);
+
+    // 临时会话选项容器 (2列)
     const optionsContainer = doc.createElement('div');
     optionsContainer.style.cssText = `
       display: grid;
@@ -60,7 +81,7 @@ export class SessionCreateFormView {
       doc,
       '公开会话',
       '任何人都可以查看和加入',
-      '🌍',
+      '📚',  // 与永久会话图标调换
       colors.primary
     );
     publicOption.addEventListener('click', async () => {
@@ -109,6 +130,7 @@ export class SessionCreateFormView {
       flex-direction: column;
       align-items: center;
       justify-content: center;
+      box-sizing: border-box;
     `;
 
     // 初始文本颜色

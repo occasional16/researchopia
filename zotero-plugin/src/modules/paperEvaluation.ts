@@ -3,6 +3,8 @@
  * 负责论文评分、评价、推荐等功能
  */
 
+import { logger } from "../utils/logger";
+
 export class PaperEvaluationManager {
   private static instance: PaperEvaluationManager | null = null;
   private isInitialized = false;
@@ -21,15 +23,15 @@ export class PaperEvaluationManager {
       return;
     }
 
-    console.log("[PaperEvaluationManager] Initializing...");
+    logger.log("[PaperEvaluationManager] Initializing...");
     
     try {
       // 初始化论文评估系统
       instance.loadEvaluations();
       instance.isInitialized = true;
-      console.log("[PaperEvaluationManager] Initialized successfully");
+      logger.log("[PaperEvaluationManager] Initialized successfully");
     } catch (error) {
-      console.error("[PaperEvaluationManager] Initialization error:", error);
+      logger.error("[PaperEvaluationManager] Initialization error:", error);
       throw error;
     }
   }
@@ -42,7 +44,7 @@ export class PaperEvaluationManager {
     const instance = PaperEvaluationManager.getInstance();
     
     try {
-      console.log("[PaperEvaluationManager] Evaluating paper:", itemId, rating);
+      logger.log("[PaperEvaluationManager] Evaluating paper:", itemId, rating);
       
       const evaluation = {
         itemId: itemId.toString(),
@@ -55,10 +57,10 @@ export class PaperEvaluationManager {
       instance.evaluations.set(itemId.toString(), evaluation);
       await instance.saveEvaluation(evaluation);
       
-      console.log("[PaperEvaluationManager] Paper evaluation saved");
+      logger.log("[PaperEvaluationManager] Paper evaluation saved");
       return true;
     } catch (error) {
-      console.error("[PaperEvaluationManager] Error evaluating paper:", error);
+      logger.error("[PaperEvaluationManager] Error evaluating paper:", error);
       return false;
     }
   }
@@ -78,7 +80,7 @@ export class PaperEvaluationManager {
     limit: number = 5
   ): Promise<any[]> {
     try {
-      console.log("[PaperEvaluationManager] Getting recommendations for item:", itemId);
+      logger.log("[PaperEvaluationManager] Getting recommendations for item:", itemId);
       
       // TODO: 实现基于评分和标注的推荐算法
       // 这里返回模拟数据
@@ -95,7 +97,7 @@ export class PaperEvaluationManager {
       
       return recommendations;
     } catch (error) {
-      console.error("[PaperEvaluationManager] Error getting recommendations:", error);
+      logger.error("[PaperEvaluationManager] Error getting recommendations:", error);
       return [];
     }
   }
@@ -111,14 +113,14 @@ export class PaperEvaluationManager {
         return JSON.stringify(evaluations, null, 2);
       }
     } catch (error) {
-      console.error("[PaperEvaluationManager] Error exporting evaluations:", error);
+      logger.error("[PaperEvaluationManager] Error exporting evaluations:", error);
       throw error;
     }
   }
 
   private loadEvaluations(): void {
     try {
-      console.log("[PaperEvaluationManager] Loading evaluations...");
+      logger.log("[PaperEvaluationManager] Loading evaluations...");
       
       // TODO: 从Zotero首选项或本地存储加载评估数据
       const storedEvaluations = Zotero.Prefs.get('extensions.zotero.researchopia.evaluations', true);
@@ -128,24 +130,24 @@ export class PaperEvaluationManager {
         for (const evaluation of evaluations) {
           this.evaluations.set(evaluation.itemId, evaluation);
         }
-        console.log("[PaperEvaluationManager] Loaded evaluations:", this.evaluations.size);
+        logger.log("[PaperEvaluationManager] Loaded evaluations:", this.evaluations.size);
       }
     } catch (error) {
-      console.error("[PaperEvaluationManager] Error loading evaluations:", error);
+      logger.error("[PaperEvaluationManager] Error loading evaluations:", error);
     }
   }
 
   private async saveEvaluation(evaluation: any): Promise<void> {
     try {
       // 保存单个评估
-      console.log("[PaperEvaluationManager] Saving evaluation:", evaluation.itemId);
+      logger.log("[PaperEvaluationManager] Saving evaluation:", evaluation.itemId);
       
       // TODO: 保存到本地存储和/或远程API
       await this.saveAllEvaluations();
       
-      console.log("[PaperEvaluationManager] Evaluation saved");
+      logger.log("[PaperEvaluationManager] Evaluation saved");
     } catch (error) {
-      console.error("[PaperEvaluationManager] Error saving evaluation:", error);
+      logger.error("[PaperEvaluationManager] Error saving evaluation:", error);
       throw error;
     }
   }
@@ -159,7 +161,7 @@ export class PaperEvaluationManager {
         true
       );
     } catch (error) {
-      console.error("[PaperEvaluationManager] Error saving all evaluations:", error);
+      logger.error("[PaperEvaluationManager] Error saving all evaluations:", error);
       throw error;
     }
   }
@@ -197,9 +199,9 @@ export class PaperEvaluationManager {
       instance.isInitialized = false;
       PaperEvaluationManager.instance = null;
       
-      console.log("[PaperEvaluationManager] Cleanup completed");
+      logger.log("[PaperEvaluationManager] Cleanup completed");
     } catch (error) {
-      console.error("[PaperEvaluationManager] Error during cleanup:", error);
+      logger.error("[PaperEvaluationManager] Error during cleanup:", error);
     }
   }
 }

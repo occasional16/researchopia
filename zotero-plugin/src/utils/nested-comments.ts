@@ -5,6 +5,7 @@
 
 import { ServicesAdapter } from '../adapters';
 
+import { logger } from "./logger";
 /**
  * 递归渲染评论节点(支持嵌套)
  * @param comment 评论节点(包含children)
@@ -342,7 +343,7 @@ function createReplyBox(
       await onSubmit(content);
       textarea.value = '';
     } catch (error) {
-      console.error('Reply failed:', error);
+      logger.error('Reply failed:', error);
     }
   });
 

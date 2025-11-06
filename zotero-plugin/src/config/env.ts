@@ -1,17 +1,15 @@
-/**
+﻿/**
  * 环境配置模块
  * 负责环境变量、配置项管理等功能
  */
+
+import { logger as Logger } from "../utils/logger";
 
 interface EnvironmentConfig {
   isDevelopment: boolean;
   isProduction: boolean;
   logLevel: 'debug' | 'info' | 'warn' | 'error';
   apiBaseUrl: string;
-  /** @deprecated 不再直接使用,所有API请求通过Next.js代理 */
-  supabaseUrl: string;
-  /** @deprecated 不再直接使用,所有API请求通过Next.js代理 */
-  supabaseAnonKey: string;
   enablePerformanceMonitoring: boolean;
   enableDetailedLogging: boolean;
   maxCacheSize: number;
@@ -24,12 +22,6 @@ const defaultConfig: EnvironmentConfig = {
   logLevel: 'warn',
   // 默认使用生产环境,用户勾选"使用开发环境API"时才切换到localhost
   apiBaseUrl: 'https://www.researchopia.com',
-  
-  // ⚠️ 已弃用: 所有API请求现在通过Next.js代理(/api/proxy/*),不再直接调用Supabase
-  // 保留这些配置仅用于向后兼容,实际使用中应通过Next.js API进行所有数据库操作
-  supabaseUrl: '',  // 留空,强制使用API代理
-  supabaseAnonKey: '',  // 留空,强制使用API代理
-  
   enablePerformanceMonitoring: false,
   enableDetailedLogging: false,
   maxCacheSize: 100,
@@ -58,7 +50,7 @@ const getEnvironmentConfig = (): EnvironmentConfig => {
       const customApiUrl = Zotero.Prefs.get('extensions.researchopia.apiBaseUrl');
       if (customApiUrl) {
         config.apiBaseUrl = customApiUrl as string;
-        console.log('[Researchopia] Using custom API URL:', customApiUrl);
+        Logger.log('[Researchopia] Using custom API URL:', customApiUrl);
       }
     }
   } catch (e) {
@@ -92,16 +84,6 @@ const createDynamicConfig = (): EnvironmentConfig => {
       // 默认始终使用生产环境
       return 'https://www.researchopia.com';
     },
-    /** @deprecated 不再使用,所有API通过Next.js代理 */
-    get supabaseUrl() { 
-      console.warn('[Researchopia] supabaseUrl已弃用,请使用API代理');
-      return defaultConfig.supabaseUrl; 
-    },
-    /** @deprecated 不再使用,所有API通过Next.js代理 */
-    get supabaseAnonKey() { 
-      console.warn('[Researchopia] supabaseAnonKey已弃用,请使用API代理');
-      return defaultConfig.supabaseAnonKey; 
-    },
     get enablePerformanceMonitoring() { return env !== 'production'; },
     get enableDetailedLogging() { return env !== 'production'; },
     get maxCacheSize() { return defaultConfig.maxCacheSize; },
@@ -115,13 +97,12 @@ export const envConfig = createDynamicConfig();
 export const config = envConfig;
 
 export const logConfig = (): void => {
-  console.group('[Researchopia] Environment Configuration');
-  console.log('Environment:', envConfig.isDevelopment ? 'Development' : 'Production');
-  console.log('Log Level:', envConfig.logLevel);
-  console.log('Performance Monitoring:', envConfig.enablePerformanceMonitoring);
-  console.log('Detailed Logging:', envConfig.enableDetailedLogging);
-  console.log('API Base URL:', envConfig.apiBaseUrl);
-  console.groupEnd();
+  Logger.info('[Researchopia] Environment Configuration');
+  Logger.info('Environment:', envConfig.isDevelopment ? 'Development' : 'Production');
+  Logger.info('Log Level:', envConfig.logLevel);
+  Logger.info('Performance Monitoring:', envConfig.enablePerformanceMonitoring);
+  Logger.info('Detailed Logging:', envConfig.enableDetailedLogging);
+  Logger.info('API Base URL:', envConfig.apiBaseUrl);
 };
 
 export const getApiUrl = (endpoint: string): string => {
@@ -134,32 +115,6 @@ export const shouldLog = (level: 'debug' | 'info' | 'warn' | 'error'): boolean =
   const requestedLevel = levels.indexOf(level);
   
   return requestedLevel >= configLevel;
-};
-
-export const logger = {
-  debug: (...args: any[]) => {
-    if (shouldLog('debug')) {
-      console.debug('[Researchopia]', ...args);
-    }
-  },
-  
-  info: (...args: any[]) => {
-    if (shouldLog('info')) {
-      console.info('[Researchopia]', ...args);
-    }
-  },
-  
-  warn: (...args: any[]) => {
-    if (shouldLog('warn')) {
-      console.warn('[Researchopia]', ...args);
-    }
-  },
-  
-  error: (...args: any[]) => {
-    if (shouldLog('error')) {
-      console.error('[Researchopia]', ...args);
-    }
-  }
 };
 
 // 导出默认配置供其他模块使用

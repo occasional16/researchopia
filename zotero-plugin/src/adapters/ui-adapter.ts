@@ -8,6 +8,7 @@ import { ModernUIRenderer } from './ui-modern';
 import { LegacyUIRenderer } from './ui-legacy';
 import { IUIRenderer, PanelOptions, ButtonOptions, TextboxOptions } from './ui-types';
 
+import { logger } from "../utils/logger";
 export class UIAdapter {
   private static renderer: IUIRenderer | null = null;
 
@@ -20,10 +21,10 @@ export class UIAdapter {
     }
 
     if (ZoteroVersionDetector.isZotero8()) {
-      console.log('[UI Adapter] Using ModernUIRenderer for Zotero 8');
+      logger.log('[UI Adapter] Using ModernUIRenderer for Zotero 8');
       this.renderer = new ModernUIRenderer();
     } else {
-      console.log('[UI Adapter] Using LegacyUIRenderer for Zotero 7');
+      logger.log('[UI Adapter] Using LegacyUIRenderer for Zotero 7');
       this.renderer = new LegacyUIRenderer();
     }
 

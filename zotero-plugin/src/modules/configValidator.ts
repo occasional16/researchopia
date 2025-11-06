@@ -3,6 +3,8 @@
  * 负责系统配置验证、兼容性检查、诊断等功能
  */
 
+import { logger } from "../utils/logger";
+
 export class ConfigValidator {
   private static instance: ConfigValidator | null = null;
   
@@ -24,7 +26,7 @@ export class ConfigValidator {
     const info: any = {};
 
     try {
-      console.log("[ConfigValidator] Starting system validation...");
+      logger.log("[ConfigValidator] Starting system validation...");
       
       // 验证Zotero版本
       const zoteroValidation = ConfigValidator.validateZoteroVersion();
@@ -64,7 +66,7 @@ export class ConfigValidator {
       }
       info.storage = storageValidation.info;
 
-      console.log("[ConfigValidator] System validation completed", {
+      logger.log("[ConfigValidator] System validation completed", {
         errors: errors.length,
         warnings: warnings.length
       });
@@ -77,7 +79,7 @@ export class ConfigValidator {
       };
 
     } catch (error) {
-      console.error("[ConfigValidator] System validation error:", error);
+      logger.error("[ConfigValidator] System validation error:", error);
       return {
         isValid: false,
         errors: [`系统验证过程中发生错误: ${error}`],
@@ -395,13 +397,13 @@ export class ConfigValidator {
 
   public static async showDiagnosticDialog(): Promise<void> {
     try {
-      console.log("[ConfigValidator] Showing diagnostic dialog...");
+      logger.log("[ConfigValidator] Showing diagnostic dialog...");
       
       const validation = await ConfigValidator.validateSystem();
       const mainWindow = Zotero.getMainWindow();
       
       if (!mainWindow) {
-        console.error("[ConfigValidator] No main window available for dialog");
+        logger.error("[ConfigValidator] No main window available for dialog");
         return;
       }
 
@@ -429,7 +431,7 @@ export class ConfigValidator {
       mainWindow.document.body.appendChild(dialog);
       
     } catch (error) {
-      console.error("[ConfigValidator] Error showing diagnostic dialog:", error);
+      logger.error("[ConfigValidator] Error showing diagnostic dialog:", error);
     }
   }
 
@@ -491,19 +493,19 @@ export class ConfigValidator {
       // 复制到剪贴板
       if (navigator.clipboard) {
         navigator.clipboard.writeText(reportText);
-        console.log("[ConfigValidator] Diagnostic report copied to clipboard");
+        logger.log("[ConfigValidator] Diagnostic report copied to clipboard");
       } else {
-        console.log("[ConfigValidator] Diagnostic report:", reportText);
+        logger.log("[ConfigValidator] Diagnostic report:", reportText);
       }
       
     } catch (error) {
-      console.error("[ConfigValidator] Error exporting diagnostic report:", error);
+      logger.error("[ConfigValidator] Error exporting diagnostic report:", error);
     }
   }
 
   public static cleanup(): void {
     // 清理工作（如果有的话）
     ConfigValidator.instance = null;
-    console.log("[ConfigValidator] Cleanup completed");
+    logger.log("[ConfigValidator] Cleanup completed");
   }
 }

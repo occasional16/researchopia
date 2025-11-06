@@ -83,7 +83,7 @@ export function createPaperInfoSection(doc: Document): HTMLElement {
             doiSpan.innerHTML = originalText;
           }, 1500);
         } catch (error) {
-          console.error('[Researchopia] Failed to copy DOI:', error);
+          logger.error('[Researchopia] Failed to copy DOI:', error);
           // 复制失败提示
           const originalBg = doiSpan.style.background;
           doiSpan.style.background = '#ef4444';

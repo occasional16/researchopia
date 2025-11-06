@@ -116,7 +116,7 @@ class ResearchopiaSidebar {
       targetUrl += `/?doi=${encodeURIComponent(this.currentDoi)}`;
       console.log('🔗 构建带DOI的URL:', targetUrl);
     } else {
-      console.log('� 使用默认URL:', targetUrl);
+      console.log(' 使用默认URL:', targetUrl);
     }
     
     // 显示加载状态

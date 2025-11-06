@@ -3,6 +3,8 @@
  * 负责错误处理、日志记录、报告等功能
  */
 
+import { logger } from "../utils/logger";
+
 export class ErrorManager {
   private static instance: ErrorManager | null = null;
   private errorLog: any[] = [];
@@ -56,7 +58,7 @@ export class ErrorManager {
   public static clearLog(): void {
     const instance = ErrorManager.getInstance();
     instance.errorLog = [];
-    console.log("[ErrorManager] Error log cleared");
+    logger.log("[ErrorManager] Error log cleared");
   }
 
   public static addEventListener(
@@ -120,9 +122,9 @@ export class ErrorManager {
       this.triggerEvent('error', errorEntry);
       
       // 输出到控制台
-      console.error(`[ErrorManager] ${context || 'Error'}:`, error, details);
+      logger.error(`[ErrorManager] ${context || 'Error'}:`, error, details);
     } catch (logError) {
-      console.error("[ErrorManager] Failed to record error:", logError);
+      logger.error("[ErrorManager] Failed to record error:", logError);
     }
   }
 
@@ -146,9 +148,9 @@ export class ErrorManager {
       this.triggerEvent('warning', warningEntry);
       
       // 输出到控制台
-      console.warn(`[ErrorManager] ${context || 'Warning'}:`, message, details);
+      logger.warn(`[ErrorManager] ${context || 'Warning'}:`, message, details);
     } catch (logError) {
-      console.error("[ErrorManager] Failed to record warning:", logError);
+      logger.error("[ErrorManager] Failed to record warning:", logError);
     }
   }
 
@@ -172,9 +174,9 @@ export class ErrorManager {
       this.triggerEvent('info', infoEntry);
       
       // 输出到控制台
-      console.info(`[ErrorManager] ${context || 'Info'}:`, message, details);
+      logger.info(`[ErrorManager] ${context || 'Info'}:`, message, details);
     } catch (logError) {
-      console.error("[ErrorManager] Failed to record info:", logError);
+      logger.error("[ErrorManager] Failed to record info:", logError);
     }
   }
 
@@ -195,12 +197,12 @@ export class ErrorManager {
           try {
             handler(data);
           } catch (handlerError) {
-            console.error(`[ErrorManager] Error in ${eventType} handler:`, handlerError);
+            logger.error(`[ErrorManager] Error in ${eventType} handler:`, handlerError);
           }
         }
       }
     } catch (triggerError) {
-      console.error("[ErrorManager] Error triggering event:", triggerError);
+      logger.error("[ErrorManager] Error triggering event:", triggerError);
     }
   }
 
@@ -219,7 +221,7 @@ export class ErrorManager {
       
       return lines.join('\n\n');
     } catch (exportError) {
-      console.error("[ErrorManager] Error exporting as text:", exportError);
+      logger.error("[ErrorManager] Error exporting as text:", exportError);
       return 'Error exporting log as text';
     }
   }
@@ -297,9 +299,9 @@ export class ErrorManager {
       instance.errorHandlers.clear();
       ErrorManager.instance = null;
       
-      console.log("[ErrorManager] Cleanup completed");
+      logger.log("[ErrorManager] Cleanup completed");
     } catch (error) {
-      console.error("[ErrorManager] Error during cleanup:", error);
+      logger.error("[ErrorManager] Error during cleanup:", error);
     }
   }
 }

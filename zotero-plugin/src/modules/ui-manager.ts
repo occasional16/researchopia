@@ -103,7 +103,7 @@ export class UIManager {
   }
 
   /**
-   * 检查实验性功能是否开启
+   * 检查实验性功能是否开启（仅用于共享标注）
    */
   private isExperimentalFeatureEnabled(): boolean {
     try {
@@ -411,18 +411,20 @@ export class UIManager {
           logger.error("[UIManager] ❌ Failed to customize title bar:", error);
         }
 
-        // 检查容器是否已有内容
-        const hasContent = body.children.length > 0;
-        logger.log("[UIManager] Container hasContent:", hasContent);
+        // 🔧 改进的重复渲染检查：使用data属性标记已渲染的容器
+        const isAlreadyRendered = body.hasAttribute('data-researchopia-rendered');
+        logger.log("[UIManager] Container already rendered:", isAlreadyRendered);
 
-        // 只在容器为空时渲染面板UI结构
-        if (!hasContent) {
+        // 只在容器未渲染时渲染面板UI结构
+        if (!isAlreadyRendered) {
           await this.renderPanel(doc, body);
-          logger.log("[UIManager] ✅ Panel rendered, panelDocument updated to:", doc?.location?.href || "unknown");
+          // 标记容器已渲染
+          body.setAttribute('data-researchopia-rendered', 'true');
+          logger.log("[UIManager] ✅ Panel rendered and marked, panelDocument updated to:", doc?.location?.href || "unknown");
         } else {
-          // 容器已有内容，只更新document引用
+          // 容器已渲染，只更新document引用
           this.panelDocument = doc;
-          logger.log("[UIManager] ⏭️ Panel already exists, skipped re-rendering, panelDocument updated to:", doc?.location?.href || "unknown");
+          logger.log("[UIManager] ⏭️ Panel already rendered, skipped re-rendering, panelDocument updated to:", doc?.location?.href || "unknown");
         }
 
         // 保存item ID到document的映射
@@ -1187,7 +1189,7 @@ export class UIManager {
             logger.log("[UIManager] ✅ My annotations rendered");
             break;
           case 'shared-annotations':
-            // 检查实验性功能是否开启
+            // 检查实验性功能是否开启（共享标注仍为实验性功能）
             if (this.isExperimentalFeatureEnabled()) {
               // 渲染标注中心Hub视图(包含次级按钮)
               await this.annotationsHubView.render();
@@ -1205,13 +1207,8 @@ export class UIManager {
             logger.log("[UIManager] ✅ Quick search rendered");
             break;
           case 'reading-session':
-            // 检查实验性功能是否开启
-            if (this.isExperimentalFeatureEnabled()) {
-              await this.readingSessionHubView.render();
-              logger.log("[UIManager] ✅ Reading session hub rendered");
-            } else {
-              this.showFeatureComingSoonMessage(contentSection, '文献共读');
-            }
+            await this.readingSessionHubView.render();
+            logger.log("[UIManager] ✅ Reading session hub rendered");
             break;
         }
 

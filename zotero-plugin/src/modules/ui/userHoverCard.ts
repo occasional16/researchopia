@@ -1,4 +1,4 @@
-import { logger } from "../../utils/logger";
+﻿import { logger } from "../../utils/logger";
 import { AuthManager } from "../auth";
 import { envConfig } from "../../config/env";
 import type { BaseViewContext } from "./types";
@@ -37,8 +37,8 @@ interface UserPreviewData {
 }
 
 /**
- * 用户悬浮卡片管理�?
- * 负责显示用户预览信息和关注功�?
+ * 用户悬浮卡片管理器?
+ * 负责显示用户预览信息和关注功能?
  */
 export class UserHoverCardManager {
   private hoverTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -51,9 +51,9 @@ export class UserHoverCardManager {
   constructor(private readonly context: BaseViewContext) {}
 
   /**
-   * 创建可hover的用户元�?
+   * 创建可hover的用户元素?
    * @param doc Document对象
-   * @param username 用户�?
+   * @param username 用户名?
    * @param displayName 显示名称
    * @param options 配置选项
    * @returns 包装后的用户元素
@@ -97,7 +97,7 @@ export class UserHoverCardManager {
       return container;
     }
 
-    // 头像(如果需�?
+    // 头像(如果需要?
     if (showAvatar) {
       const avatar = doc.createElement('div');
       avatar.className = 'user-avatar';
@@ -130,7 +130,7 @@ export class UserHoverCardManager {
       container.appendChild(avatar);
     }
 
-    // 用户�?
+    // 用户名?
     const nameSpan = doc.createElement('strong');
     nameSpan.textContent = displayName;
     nameSpan.style.cssText = `
@@ -140,7 +140,7 @@ export class UserHoverCardManager {
     `;
     container.appendChild(nameSpan);
 
-    // 如果可点�?添加hover和click事件
+    // 如果可点击?添加hover和click事件
     if (clickable && !isAnonymous) {
       logger.log(`[UserHoverCard] Setting up hover for username: ${username}`);
       
@@ -148,13 +148,13 @@ export class UserHoverCardManager {
       container.addEventListener('mouseenter', () => {
         logger.log(`[UserHoverCard] Mouse enter on ${username}`);
         
-        // 取消隐藏计时�?
+        // 取消隐藏计时器?
         if (this.hideTimeout) {
           clearTimeout(this.hideTimeout);
           this.hideTimeout = null;
         }
         
-        // 如果已经有卡片显�?不需要重新创�?
+        // 如果已经有卡片显示?不需要重新创建?
         if (this.currentCard && this.currentAnchor === container) {
           return;
         }
@@ -182,7 +182,7 @@ export class UserHoverCardManager {
           this.hoverTimeout = null;
         }
         
-        // 延迟隐藏卡片,给用户时间移动到卡片�?
+        // 延迟隐藏卡片,给用户时间移动到卡片上?
         if (this.currentCard) {
           this.hideTimeout = setTimeout(() => {
             this.hideHoverCard();
@@ -218,7 +218,7 @@ export class UserHoverCardManager {
 
       const doc = anchorElement.ownerDocument;
       
-      // 检查文档环�?
+      // 检查文档环境?
       if (!doc || !doc.documentElement) {
         logger.error('[UserHoverCard] Invalid document environment');
         return;
@@ -259,7 +259,7 @@ export class UserHoverCardManager {
 
       logger.log(`[UserHoverCard] Position: top=${card.style.top}, left=${card.style.left}`);
 
-      // 显示加载状�?
+      // 显示加载状态?
       const loadingDiv = doc.createElement('div');
       loadingDiv.style.cssText = 'display: flex; align-items: center; justify-content: center; padding: 40px 0;';
       
@@ -272,7 +272,7 @@ export class UserHoverCardManager {
 
       logger.log(`[UserHoverCard] Appending card to document`);
       
-      // 尝试找到合适的父元�?
+      // 尝试找到合适的父元素?
       const parentElement = doc.body || doc.documentElement;
       if (!parentElement) {
         logger.error('[UserHoverCard] No suitable parent element found');
@@ -307,7 +307,7 @@ export class UserHoverCardManager {
       // 卡片hover保持显示
       card.addEventListener('mouseenter', () => {
         logger.log(`[UserHoverCard] Mouse enter on card`);
-        // 取消隐藏计时�?
+        // 取消隐藏计时器?
         if (this.hideTimeout) {
           clearTimeout(this.hideTimeout);
           this.hideTimeout = null;
@@ -580,7 +580,7 @@ export class UserHoverCardManager {
 
       const action = userData.isFollowing ? 'unfollow' : 'follow';
       button.disabled = true;
-      button.textContent = '处理�?..';
+      button.textContent = '处理中..';
 
       const webUrl = getWebsiteBaseUrl();
       const response = await fetch(`${webUrl}/api/users/${userData.username}/follow`, {

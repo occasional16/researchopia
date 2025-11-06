@@ -36,8 +36,6 @@
   - [📱 浏览器扩展](#-浏览器扩展)
   - [📚 Zotero 插件](#-zotero-插件)
 - [📝 相关文档](#-相关文档)
-  - [核心文档](#核心文档)
-  - [多语言](#多语言)
 - [🔧 开发指南](#-开发指南)
   - [🤝 贡献指南](#-贡献指南)
   - [📁 项目结构](#-项目结构)
@@ -58,7 +56,7 @@
 
 本项目正式启动于2025-09-08，作者是一名刚博士毕业的科研狗（化学领域），没有编程基础，也没有报过AI课程，因此，**本项目的编程部分由AI工具生成** （项目整体架构、项目名称、logo和slogan也是AI给设计的）。一开始我还不懂什么叫网站前后端也不懂VS code，但第一天时间就完成了网站基本的界面设计和数据库搭建。浏览器扩展和zotero插件的第一版真的是各用一句话直接生成。当然，进一步的细节打磨和bug处理是花了更多的时间。这段时间也渐渐学到了一些编程知识，也积累了一些与AI对话的经验和小窍门。目前项目处于初期阶段，后续会持续优化和完善。
 
-想要近距离了解本项目开发意图和计划，有任何开发和使用上的建议和反馈，或者想了解AI开发的细节的小伙伴，欢迎加我的个人微信，也欢迎加入官方群用户群。
+想要近距离了解本项目开发意图和计划，有任何开发和使用上的建议和反馈，或者想了解AI开发的细节的小伙伴，欢迎加我的个人微信，也欢迎加入用户群。
 
 <div align="center">
   <img src="./docs/res/wechat.png" alt="个人微信二维码" width="30%">
@@ -143,7 +141,7 @@
 
 > **🗂️ 完整文档导航**: [文档索引和规范](./docs/README.md) - 查看所有文档和编写规范
 
-### 核心文档
+**核心文档：**
 - [架构说明](./docs/ARCHITECTURE.md) - 整体架构、数据库设计、技术栈
 - [开发指南](./docs/DEVELOPMENT.md) - Next.js、Zotero插件、浏览器扩展开发
 - [贡献指南](./docs/CONTRIBUTING.md) - 开发规范、Git工作流、PR流程
@@ -151,7 +149,7 @@
 - [API 文档](./docs/API.md) - 所有API端点、认证、错误处理
 - [问题排查](./docs/TROUBLESHOOTING.md) - 常见问题和解决方案
 
-### 多语言
+**多语言：**
 - [English README](./docs/README-en.md)
 
 
@@ -199,6 +197,7 @@
 - **Vercel** - 部署平台
 
 **Zotero 插件**
+- **[Zotero Plugin Template](https://github.com/windingwind/zotero-plugin-template)** - Zotero 插件模版
 - **TypeScript** - 插件开发语言
 - **Zotero Plugin Toolkit** - 官方工具库
 - **Mozilla/XUL** - Zotero UI 框架
@@ -225,7 +224,7 @@
 
 - **网站**: [https://www.researchopia.com](https://www.researchopia.com)
 - **GitHub**: [https://github.com/occasional16/researchopia](https://github.com/occasional16/researchopia)
-- **技术支持 + 反馈建议**: 欢迎添加作者微信，加入项目群，或欢在平台上反馈。
+- **技术支持 + 反馈建议**: 欢迎添加作者微信，加入项目群，或在平台上反馈。
 
 
 ---

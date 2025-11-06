@@ -1,1 +1,1 @@
-# 研学港 Researchopia - 开放的学术交流平台
+# 研学港 | Researchopia - 开放的学术交流和共享平台

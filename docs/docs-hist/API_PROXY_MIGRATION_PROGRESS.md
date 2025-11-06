@@ -69,7 +69,7 @@
 - ✅ SupabaseManager (标注相关)
 - ✅ 新增必要的API端点
 
-### � 待优化项 (低优先级)
+### 待优化项 (低优先级)
 
 1. **清理工作** (可选)
    - 从`env.ts`移除supabaseUrl和supabaseAnonKey (保留用于兼容性)

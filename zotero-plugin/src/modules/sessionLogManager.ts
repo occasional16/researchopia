@@ -6,11 +6,8 @@
 import { APIClient } from '../utils/apiClient';
 import { logger } from '../utils/logger';
 import { AuthManager } from "./auth";
-
-// 从配置文件导入配置
 import { config } from "../config/env";
 
-const SUPABASE_URL = config.supabaseUrl;
 const API_BASE_URL = config.apiBaseUrl;
 
 // 辅助函数

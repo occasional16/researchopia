@@ -8,18 +8,6 @@ import { logger } from '../utils/logger';
 import { SessionLogManager } from './sessionLogManager';
 import { APIClient } from '../utils/apiClient';
 
-// 从配置文件导入Supabase配置
-import { config } from '../config/env';
-
-const SUPABASE_URL = config.supabaseUrl;
-const SUPABASE_ANON_KEY = config.supabaseAnonKey;
-
-// 辅助函数：获取token
-function getToken(): string | null {
-  const session = AuthManager.getSession();
-  return session?.access_token || null;
-}
-
 // 辅助函数：获取当前用户
 function getCurrentUser(): any {
   return AuthManager.getCurrentUser();

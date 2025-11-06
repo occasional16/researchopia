@@ -14,7 +14,8 @@ export class SessionListView {
   constructor(
     private sessionManager: ReadingSessionManager,
     private onBack: () => void,
-    private onSessionClick: (session: ReadingSession) => void
+    private onSessionClick: (session: ReadingSession) => void,
+    private onSessionDeleted?: () => Promise<void> // 可选的删除会话后回调
   ) {}
 
   /**
@@ -287,6 +288,10 @@ export class SessionListView {
             } finally {
               // 无论成功还是失败,都重新加载列表以更新UI
               await this.showCreatedSessionsTab(container, doc);
+              // 如果提供了删除回调,调用它通知父组件刷新其他视图
+              if (this.onSessionDeleted) {
+                await this.onSessionDeleted();
+              }
             }
           },
         });

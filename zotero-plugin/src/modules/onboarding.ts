@@ -3,6 +3,8 @@
  * 负责新用户引导、帮助提示、功能介绍等
  */
 
+import { logger } from "../utils/logger";
+
 export class OnboardingManager {
   private static instance: OnboardingManager | null = null;
   private isOnboardingActive = false;
@@ -27,7 +29,7 @@ export class OnboardingManager {
       // 如果从未完成引导，或者版本更新了，则显示引导
       return !hasSeenOnboarding || pluginVersion !== currentVersion;
     } catch (error) {
-      console.error("[OnboardingManager] Error checking onboarding status:", error);
+      logger.error("[OnboardingManager] Error checking onboarding status:", error);
       return false;
     }
   }
@@ -36,7 +38,7 @@ export class OnboardingManager {
     const instance = OnboardingManager.getInstance();
     
     try {
-      console.log("[OnboardingManager] Starting onboarding...");
+      logger.log("[OnboardingManager] Starting onboarding...");
       
       instance.setupOnboardingSteps();
       instance.isOnboardingActive = true;
@@ -45,7 +47,7 @@ export class OnboardingManager {
       await instance.showStep(0);
       
     } catch (error) {
-      console.error("[OnboardingManager] Error starting onboarding:", error);
+      logger.error("[OnboardingManager] Error starting onboarding:", error);
     }
   }
 
@@ -85,7 +87,7 @@ export class OnboardingManager {
     
     try {
       const addon = (globalThis as any).Zotero?.Researchopia;
-      console.log("[OnboardingManager] Completing onboarding...");
+      logger.log("[OnboardingManager] Completing onboarding...");
       
       instance.isOnboardingActive = false;
       instance.currentStep = 0;
@@ -97,15 +99,15 @@ export class OnboardingManager {
       // 清理引导UI
       await instance.cleanupOnboardingUI();
       
-      console.log("[OnboardingManager] Onboarding completed");
+      logger.log("[OnboardingManager] Onboarding completed");
     } catch (error) {
-      console.error("[OnboardingManager] Error completing onboarding:", error);
+      logger.error("[OnboardingManager] Error completing onboarding:", error);
     }
   }
 
   public static resetOnboarding(): void {
     try {
-      console.log("[OnboardingManager] Resetting onboarding...");
+      logger.log("[OnboardingManager] Resetting onboarding...");
       
       Zotero.Prefs.clear('extensions.zotero.researchopia.onboardingCompleted', true);
       Zotero.Prefs.clear('extensions.zotero.researchopia.version', true);
@@ -114,9 +116,9 @@ export class OnboardingManager {
       instance.isOnboardingActive = false;
       instance.currentStep = 0;
       
-      console.log("[OnboardingManager] Onboarding reset completed");
+      logger.log("[OnboardingManager] Onboarding reset completed");
     } catch (error) {
-      console.error("[OnboardingManager] Error resetting onboarding:", error);
+      logger.error("[OnboardingManager] Error resetting onboarding:", error);
     }
   }
 
@@ -167,7 +169,7 @@ export class OnboardingManager {
       }
 
       const step = this.onboardingSteps[stepIndex];
-      console.log(`[OnboardingManager] Showing step ${stepIndex + 1}/${this.onboardingSteps.length}: ${step.title}`);
+      logger.log(`[OnboardingManager] Showing step ${stepIndex + 1}/${this.onboardingSteps.length}: ${step.title}`);
 
       // 执行步骤动作
       switch (step.action) {
@@ -191,7 +193,7 @@ export class OnboardingManager {
       }
 
     } catch (error) {
-      console.error(`[OnboardingManager] Error showing step ${stepIndex}:`, error);
+      logger.error(`[OnboardingManager] Error showing step ${stepIndex}:`, error);
     }
   }
 
@@ -372,9 +374,9 @@ export class OnboardingManager {
         this.removeDialog(win);
       }
       
-      console.log("[OnboardingManager] Onboarding UI cleanup completed");
+      logger.log("[OnboardingManager] Onboarding UI cleanup completed");
     } catch (error) {
-      console.error("[OnboardingManager] Error cleaning up onboarding UI:", error);
+      logger.error("[OnboardingManager] Error cleaning up onboarding UI:", error);
     }
   }
 
@@ -388,9 +390,9 @@ export class OnboardingManager {
       instance.onboardingSteps = [];
       
       OnboardingManager.instance = null;
-      console.log("[OnboardingManager] Cleanup completed");
+      logger.log("[OnboardingManager] Cleanup completed");
     } catch (error) {
-      console.error("[OnboardingManager] Error during cleanup:", error);
+      logger.error("[OnboardingManager] Error during cleanup:", error);
     }
   }
 }

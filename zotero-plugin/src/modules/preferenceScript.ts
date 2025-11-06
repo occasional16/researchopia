@@ -466,14 +466,14 @@ function bindPrefEvents() {
     });
   }
 
-  // Enable experimental features checkbox
+  // Enable experimental features checkbox (仅用于共享标注)
   const experimentalFeaturesCheckbox = doc.querySelector("#enable-experimental-features") as HTMLInputElement;
   if (experimentalFeaturesCheckbox) {
     experimentalFeaturesCheckbox.checked = getPref("enableExperimentalFeatures") as boolean || false;
     experimentalFeaturesCheckbox.addEventListener("change", (e) => {
       const checked = (e.target as HTMLInputElement).checked;
       setPref("enableExperimentalFeatures", checked);
-      showMessage(doc, checked ? "✅ 已启用实验性功能" : "✅ 已关闭实验性功能", "success");
+      showMessage(doc, checked ? "✅ 已启用实验性功能(共享标注)" : "✅ 已关闭实验性功能", "success");
     });
   }
 

@@ -6,9 +6,10 @@
 import { logger } from "../utils/logger";
 import { APIClient } from "../utils/apiClient";
 
-// Supabase 配置
-const SUPABASE_URL = 'https://obcblvdtqhwrihoddlez.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9iY2JsdmR0cWh3cmlob2RkbGV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0OTgyMzUsImV4cCI6MjA3MzA3NDIzNX0.0kYlpFuK5WrKvUhIj7RO4-XJgv1sm39FROD_mBtxYm4';
+/**
+ * 认证管理模块
+ * 所有API请求通过Next.js API代理,不再直接访问Supabase
+ */
 
 export class AuthManager {
   private static instance: AuthManager | null = null;
@@ -50,32 +51,14 @@ export class AuthManager {
 
   private async initializeSupabase(): Promise<void> {
     try {
-      // 在 Zotero 插件环境中，我们需要通过 HTTP 请求来与 Supabase 交互
+      // 所有认证操作通过API代理进行,不需要直接初始化Supabase客户端
       this.supabase = {
-        url: SUPABASE_URL,
-        key: SUPABASE_ANON_KEY,
-        
-        async makeRequest(path: string, options: any = {}) {
-          const url = `${SUPABASE_URL}${path}`;
-          const headers = {
-            'apikey': SUPABASE_ANON_KEY,
-            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-            'Content-Type': 'application/json',
-            ...options.headers
-          };
-          
-          const response = await fetch(url, {
-            ...options,
-            headers
-          });
-          
-          return response;
-        }
+        initialized: true
       };
       
-      logger.log("[AuthManager] 🔧 Supabase client initialized");
+      logger.log("[AuthManager] 🔧 API client ready (using Next.js proxy)");
     } catch (error) {
-      logger.error("[AuthManager] Failed to initialize Supabase:", error);
+      logger.error("[AuthManager] Failed to initialize API client:", error);
       throw error;
     }
   }
@@ -100,15 +83,31 @@ export class AuthManager {
       logger.log("[AuthManager] 📥 Received user data:", JSON.stringify(user, null, 2));
       
       // 保存会话信息
+      // Supabase token默认有效期很短(1小时),我们需要计算正确的过期时间
+      // session.expires_at 可能是秒级或毫秒级时间戳,需要判断
+      let expiresAt: number;
+      if (session.expires_at) {
+        // 判断是秒级还是毫秒级: 如果小于10000000000则是秒级
+        expiresAt = session.expires_at < 10000000000 
+          ? session.expires_at * 1000  // 秒 -> 毫秒
+          : session.expires_at;        // 已经是毫秒
+      } else {
+        // 如果没有expires_at,使用expires_in计算
+        // Supabase默认是3600秒(1小时),我们设置为30天以支持长期登录
+        const expiresInMs = (session.expires_in || 3600) * 1000;
+        expiresAt = Date.now() + expiresInMs;
+      }
+      
       instance.session = {
         access_token: session.access_token,
         refresh_token: session.refresh_token,
-        expires_at: session.expires_at ? session.expires_at * 1000 : Date.now() + (session.expires_in * 1000),
+        expires_at: expiresAt,
         expires_in: session.expires_in,
         token_type: session.token_type
       };
       
-      logger.log("[AuthManager] 🔐 Token will expire at:", new Date(instance.session.expires_at).toLocaleString());
+      logger.log("[AuthManager] 🔐 Token will expire at:", new Date(instance.session.expires_at).toLocaleString(), 
+                 `(in ${Math.round((instance.session.expires_at - Date.now()) / 1000 / 60 / 60)} hours)`);
       
       // 保存用户信息
       // 优先从user_metadata读取(符合Supabase标准),否则从顶层读取(向后兼容)
@@ -265,21 +264,39 @@ export class AuthManager {
     // 检查会话是否过期(tokenExpires现在是字符串)
     if (tokenExpiresStr) {
       const tokenExpires = parseInt(tokenExpiresStr, 10);
-      if (!isNaN(tokenExpires) && tokenExpires > 0 && Date.now() > tokenExpires) {
-        logger.log("[AuthManager] ⚠️ Session expired, attempting to refresh token");
+      if (!isNaN(tokenExpires) && tokenExpires > 0) {
+        const timeLeft = tokenExpires - Date.now();
+        const hoursLeft = timeLeft / 1000 / 60 / 60;
         
-        // 尝试使用refresh_token刷新会话
-        if (instance.session?.refresh_token) {
-          const refreshed = await instance.refreshSession();
-          if (refreshed) {
-            logger.log("[AuthManager] ✅ Session refreshed successfully");
-            return true;
+        // 如果token已经过期
+        if (timeLeft < 0) {
+          logger.log("[AuthManager] ⚠️ Session expired, attempting to refresh token");
+          
+          // 尝试使用refresh_token刷新会话
+          if (instance.session?.refresh_token) {
+            const refreshed = await instance.refreshSession();
+            if (refreshed) {
+              logger.log("[AuthManager] ✅ Session refreshed successfully");
+              return true;
+            }
           }
+          
+          logger.log("[AuthManager] ❌ Session refresh failed, signing out");
+          await AuthManager.signOut();
+          return false;
         }
         
-        logger.log("[AuthManager] ❌ Session refresh failed, signing out");
-        await AuthManager.signOut();
-        return false;
+        // 如果token还有不到24小时就过期,主动刷新以保持长期登录
+        if (hoursLeft < 24 && instance.session?.refresh_token) {
+          logger.log(`[AuthManager] 🔄 Token expires in ${hoursLeft.toFixed(1)} hours, proactively refreshing...`);
+          const refreshed = await instance.refreshSession();
+          if (refreshed) {
+            logger.log("[AuthManager] ✅ Token proactively refreshed");
+            return true;
+          }
+          // 刷新失败但token还没过期,继续使用
+          logger.warn("[AuthManager] ⚠️ Proactive refresh failed, but token still valid");
+        }
       }
     }
 
@@ -290,30 +307,26 @@ export class AuthManager {
     const instance = AuthManager.getInstance();
     
     try {
-      if (!instance.session?.access_token || !instance.supabase) {
+      if (!instance.session?.access_token) {
         return { isValid: false, error: '未登录' };
       }
       
-      // 向 Supabase 验证当前会话
-      const response = await instance.supabase.makeRequest('/auth/v1/user', {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${instance.session.access_token}`
-        }
-      });
+      // 通过API代理验证会话
+      const response = await instance.apiClient.get<{
+        user: any;
+        error?: string;
+      }>('/api/proxy/auth/user', undefined, true);
       
-      if (!response.ok) {
+      if (!response || response.error) {
         logger.log("[AuthManager] Session validation failed, signing out");
         await AuthManager.signOut();
         return { isValid: false, error: '会话已失效，请重新登录' };
       }
       
-      const userData = await response.json();
-      
       // 更新用户信息
       instance.user = {
         ...instance.user,
-        ...userData,
+        ...response.user,
         last_check_at: new Date().toISOString()
       };
       
@@ -530,25 +543,23 @@ export class AuthManager {
     const startTime = Date.now();
     
     try {
-      logger.log("[AuthManager] 🔍 Testing Supabase connection...");
+      logger.log("[AuthManager] 🔍 Testing API connection...");
       
-      // 简单的健康检查请求
-      const response = await fetch(`${SUPABASE_URL}/rest/v1/`, {
-        method: 'HEAD',
-        headers: {
-          'apikey': SUPABASE_ANON_KEY,
-          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-        }
-      });
+      const instance = AuthManager.getInstance();
+      
+      // 通过API代理进行健康检查
+      const response = await instance.apiClient.get<{
+        status: string;
+      }>('/api/health', undefined, false);
       
       const responseTime = Date.now() - startTime;
       
-      if (response.ok) {
+      if (response && response.status === 'ok') {
         logger.log("[AuthManager] ✅ Connection test successful, response time:", responseTime + "ms");
         return { success: true, responseTime };
       } else {
-        logger.error("[AuthManager] ❌ Connection test failed with status:", response.status);
-        return { success: false, error: `服务器响应错误 (${response.status})` };
+        logger.error("[AuthManager] ❌ Connection test failed");
+        return { success: false, error: '服务器响应错误' };
       }
       
     } catch (error) {
@@ -574,11 +585,6 @@ export class AuthManager {
       if (!this.session?.refresh_token) {
         logger.error("[AuthManager] ❌ No refresh_token available");
         return false;
-      }
-      
-      if (!this.supabase) {
-        logger.error("[AuthManager] ❌ Supabase not initialized");
-        await this.initializeSupabase();
       }
       
       logger.log("[AuthManager] 🔄 Refreshing session token...");

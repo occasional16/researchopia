@@ -146,7 +146,10 @@ export class SessionPlazaView {
         return;
       }
 
+      logger.log(`[SessionPlazaView] 📊 Sessions data:`, JSON.stringify(sessions.map(s => ({ id: s.id, title: s.paper_title, invite_code: s.invite_code, is_active: s.is_active }))));
+      
       for (const session of sessions) {
+        logger.log(`[SessionPlazaView] 🎴 Creating card for session: ${session.id} - ${session.paper_title}`);
         const card = createSessionCard(doc, session, {
           showInviteCode: true,
           showCreator: true,
@@ -160,6 +163,7 @@ export class SessionPlazaView {
           },
         });
         container.appendChild(card);
+        logger.log(`[SessionPlazaView] ✅ Card appended, container now has ${container.children.length} children`);
       }
     } catch (error) {
       logger.error('[SessionPlazaView] Error loading public sessions:', error);

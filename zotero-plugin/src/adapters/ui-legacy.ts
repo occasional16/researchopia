@@ -5,6 +5,7 @@
 
 import { IUIRenderer, PanelOptions, ButtonOptions, TextboxOptions } from './ui-types';
 
+import { logger } from "../utils/logger";
 export class LegacyUIRenderer implements IUIRenderer {
   createPanel(options: PanelOptions): any {
     // Zotero 7 优先尝试创建HTML div (更好的样式支持)
@@ -28,7 +29,7 @@ export class LegacyUIRenderer implements IUIRenderer {
       return panel;
     } catch (error) {
       // 降级到XUL
-      console.warn('[Legacy UI] Falling back to XUL vbox:', error);
+      logger.warn('[Legacy UI] Falling back to XUL vbox:', error);
       // @ts-ignore - XUL elements
       const panel = document.createXULElement('vbox') as any;
       if (options.id) panel.id = options.id;
@@ -65,7 +66,7 @@ export class LegacyUIRenderer implements IUIRenderer {
       return button;
     } catch (error) {
       // 降级到XUL button
-      console.warn('[Legacy UI] Falling back to XUL button:', error);
+      logger.warn('[Legacy UI] Falling back to XUL button:', error);
       // @ts-ignore
       const button = document.createXULElement('button') as any;
       button.setAttribute('label', options.label);
@@ -99,7 +100,7 @@ export class LegacyUIRenderer implements IUIRenderer {
       return textbox;
     } catch (error) {
       // 降级到XUL textbox
-      console.warn('[Legacy UI] Falling back to XUL textbox:', error);
+      logger.warn('[Legacy UI] Falling back to XUL textbox:', error);
       // @ts-ignore
       const textbox = document.createXULElement('textbox') as any;
       if (options.multiline) {

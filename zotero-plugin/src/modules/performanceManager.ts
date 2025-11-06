@@ -3,6 +3,8 @@
  * 负责性能监控、指标收集、优化建议等功能
  */
 
+import { logger } from "../utils/logger";
+
 export class PerformanceManager {
   private static instance: PerformanceManager | null = null;
   private timings: Map<string, number> = new Map();
@@ -21,7 +23,7 @@ export class PerformanceManager {
     const instance = PerformanceManager.getInstance();
     const timingId = `${label}_${Date.now()}_${Math.random()}`;
     instance.timings.set(timingId, performance.now());
-    console.log(`[PerformanceManager] Started timing: ${label} (${timingId})`);
+    logger.log(`[PerformanceManager] Started timing: ${label} (${timingId})`);
     return timingId;
   }
 
@@ -34,7 +36,7 @@ export class PerformanceManager {
     
     const startTime = instance.timings.get(timingId);
     if (!startTime) {
-      console.warn(`[PerformanceManager] No start time found for timing ID: ${timingId}`);
+      logger.warn(`[PerformanceManager] No start time found for timing ID: ${timingId}`);
       return 0;
     }
 
@@ -56,7 +58,7 @@ export class PerformanceManager {
     instance.timings.delete(timingId);
     
     const status = success ? 'SUCCESS' : 'FAILED';
-    console.log(`[PerformanceManager] ${status} timing: ${metric.label} - ${duration.toFixed(2)}ms`);
+    logger.log(`[PerformanceManager] ${status} timing: ${metric.label} - ${duration.toFixed(2)}ms`);
     
     return duration;
   }
@@ -94,7 +96,7 @@ export class PerformanceManager {
     const instance = PerformanceManager.getInstance();
     
     if (instance.isMonitoring) {
-      console.log("[PerformanceManager] Monitoring already started");
+      logger.log("[PerformanceManager] Monitoring already started");
       return;
     }
 
@@ -104,14 +106,14 @@ export class PerformanceManager {
       try {
         instance.collectSystemMetrics();
       } catch (error) {
-        console.error("[PerformanceManager] Error in monitoring interval:", error);
+        logger.error("[PerformanceManager] Error in monitoring interval:", error);
       }
     }, intervalMs);
 
     // 清理函数
     (instance as any).monitoringInterval = monitoringInterval;
     
-    console.log(`[PerformanceManager] Started performance monitoring (${intervalMs}ms interval)`);
+    logger.log(`[PerformanceManager] Started performance monitoring (${intervalMs}ms interval)`);
   }
 
   public static stopMonitoring(): void {
@@ -128,7 +130,7 @@ export class PerformanceManager {
       delete (instance as any).monitoringInterval;
     }
     
-    console.log("[PerformanceManager] Stopped performance monitoring");
+    logger.log("[PerformanceManager] Stopped performance monitoring");
   }
 
   public static getPerformanceReport(timeRange?: number): any {
@@ -232,7 +234,7 @@ export class PerformanceManager {
       
       this.addMetric(systemMetric);
     } catch (error) {
-      console.error("[PerformanceManager] Error collecting system metrics:", error);
+      logger.error("[PerformanceManager] Error collecting system metrics:", error);
     }
   }
 
@@ -335,9 +337,9 @@ export class PerformanceManager {
       instance.isMonitoring = false;
       
       PerformanceManager.instance = null;
-      console.log("[PerformanceManager] Cleanup completed");
+      logger.log("[PerformanceManager] Cleanup completed");
     } catch (error) {
-      console.error("[PerformanceManager] Error during cleanup:", error);
+      logger.error("[PerformanceManager] Error during cleanup:", error);
     }
   }
 }

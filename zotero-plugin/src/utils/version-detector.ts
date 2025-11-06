@@ -3,6 +3,8 @@
  * 用于判断当前运行环境并提供版本信息
  */
 
+import { logger } from "./logger";
+
 export class ZoteroVersionDetector {
   private static cachedVersion: number | null = null;
 
@@ -22,7 +24,7 @@ export class ZoteroVersionDetector {
       return majorVersion;
     } catch (error) {
       // 降级到Zotero 7
-      console.warn('[Version Detector] Failed to detect version, assuming Zotero 7:', error);
+      logger.warn('[Version Detector] Failed to detect version, assuming Zotero 7:', error);
       this.cachedVersion = 7;
       return 7;
     }
@@ -54,7 +56,7 @@ export class ZoteroVersionDetector {
    * 日志输出当前版本信息
    */
   static logVersionInfo(): void {
-    console.log(`[Researchopia] Running on Zotero ${this.getFullVersion()} (Major: ${this.getMajorVersion()})`);
+    logger.log(`[Researchopia] Running on Zotero ${this.getFullVersion()} (Major: ${this.getMajorVersion()})`);
   }
 
   /**

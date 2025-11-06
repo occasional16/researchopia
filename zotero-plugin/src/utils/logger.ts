@@ -83,7 +83,7 @@ export class ZoteroLogger {
 export const logger = {
   debug: ZoteroLogger.debug,
   info: ZoteroLogger.info,
-  log: ZoteroLogger.log,
+  log: ZoteroLogger.info, // log is alias for info
   warn: ZoteroLogger.warn,
   error: ZoteroLogger.error
 };

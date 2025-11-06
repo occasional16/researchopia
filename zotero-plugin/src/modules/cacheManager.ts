@@ -3,6 +3,8 @@
  * 负责数据缓存、清理、优化等功能
  */
 
+import { logger } from "../utils/logger";
+
 export class CacheManager {
   private static instance: CacheManager | null = null;
   private cache: Map<string, any> = new Map();
@@ -75,9 +77,9 @@ export class CacheManager {
         accessCount: 0
       });
       
-      console.log(`[CacheManager] Set cache item: ${key}`);
+      logger.log(`[CacheManager] Set cache item: ${key}`);
     } catch (error) {
-      console.error(`[CacheManager] Error setting cache item ${key}:`, error);
+      logger.error(`[CacheManager] Error setting cache item ${key}:`, error);
     }
   }
 
@@ -105,7 +107,7 @@ export class CacheManager {
 
       return null;
     } catch (error) {
-      console.error(`[CacheManager] Error getting cache item ${key}:`, error);
+      logger.error(`[CacheManager] Error getting cache item ${key}:`, error);
       return null;
     }
   }
@@ -131,12 +133,12 @@ export class CacheManager {
       this.cacheExpiry.delete(key);
       
       if (deleted) {
-        console.log(`[CacheManager] Deleted cache item: ${key}`);
+        logger.log(`[CacheManager] Deleted cache item: ${key}`);
       }
       
       return deleted;
     } catch (error) {
-      console.error(`[CacheManager] Error deleting cache item ${key}:`, error);
+      logger.error(`[CacheManager] Error deleting cache item ${key}:`, error);
       return false;
     }
   }
@@ -146,9 +148,9 @@ export class CacheManager {
       const size = this.cache.size;
       this.cache.clear();
       this.cacheExpiry.clear();
-      console.log(`[CacheManager] Cleared cache (${size} items)`);
+      logger.log(`[CacheManager] Cleared cache (${size} items)`);
     } catch (error) {
-      console.error("[CacheManager] Error clearing cache:", error);
+      logger.error("[CacheManager] Error clearing cache:", error);
     }
   }
 
@@ -167,10 +169,10 @@ export class CacheManager {
 
       if (oldestKey) {
         this.deleteItem(oldestKey);
-        console.log(`[CacheManager] Evicted oldest cache item: ${oldestKey}`);
+        logger.log(`[CacheManager] Evicted oldest cache item: ${oldestKey}`);
       }
     } catch (error) {
-      console.error("[CacheManager] Error evicting oldest cache item:", error);
+      logger.error("[CacheManager] Error evicting oldest cache item:", error);
     }
   }
 
@@ -187,7 +189,7 @@ export class CacheManager {
       
       return totalSize;
     } catch (error) {
-      console.error("[CacheManager] Error calculating memory usage:", error);
+      logger.error("[CacheManager] Error calculating memory usage:", error);
       return 0;
     }
   }
@@ -199,11 +201,11 @@ export class CacheManager {
       try {
         instance.cleanupExpired();
       } catch (error) {
-        console.error("[CacheManager] Error in periodic cleanup:", error);
+        logger.error("[CacheManager] Error in periodic cleanup:", error);
       }
     }, intervalMs);
     
-    console.log(`[CacheManager] Started periodic cleanup (${intervalMs}ms interval)`);
+    logger.log(`[CacheManager] Started periodic cleanup (${intervalMs}ms interval)`);
   }
 
   private cleanupExpired(): void {
@@ -223,7 +225,7 @@ export class CacheManager {
     }
     
     if (expiredKeys.length > 0) {
-      console.log(`[CacheManager] Cleaned up ${expiredKeys.length} expired cache items`);
+      logger.log(`[CacheManager] Cleaned up ${expiredKeys.length} expired cache items`);
     }
   }
 
@@ -231,6 +233,6 @@ export class CacheManager {
     const instance = CacheManager.getInstance();
     instance.clearCache();
     CacheManager.instance = null;
-    console.log("[CacheManager] Cleanup completed");
+    logger.log("[CacheManager] Cleanup completed");
   }
 }

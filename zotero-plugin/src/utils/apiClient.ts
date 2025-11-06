@@ -70,6 +70,9 @@ export class APIClient {
 
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
+      // 🔥 强制禁用缓存
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
     };
 
     if (requireAuth) {
@@ -84,6 +87,7 @@ export class APIClient {
     const fetchOptions: RequestInit = {
       method,
       headers,
+      cache: 'no-store', // 强制禁用 fetch API 缓存
     };
 
     if (data && method !== 'GET') {

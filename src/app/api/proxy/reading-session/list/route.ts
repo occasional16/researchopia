@@ -4,23 +4,57 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClientWithToken, createAnonClient } from '@/lib/supabase-server';
+import { unstable_noStore as noStore } from 'next/cache';
+import { createClientWithToken, createAnonClient, createAdminClient } from '@/lib/supabase-server';
 
-// 强制动态渲染(消除build警告)
-export const dynamic = 'force-dynamic'
-
-// 🔥 优化: 启用3分钟缓存 - 会话列表不需要秒级实时性
-// 生产环境启用3分钟缓存
-export const revalidate = 180;
+// 强制动态渲染,禁用缓存确保实时性
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export async function GET(request: NextRequest) {
+  // 🔥 关键修复: 禁用Next.js Data Cache
+  noStore();
+  
+  console.log('[Session List API] noStore() called - bypassing Data Cache');
+  console.log('[Session List API] Request URL:', request.url);
+  
   try {
     const searchParams = request.nextUrl.searchParams;
     const type = searchParams.get('type') || 'public'; // public, my, created
+    console.log(`[Session List API] Request type: ${type}`);
     const authHeader = request.headers.get('Authorization');
     const token = authHeader?.replace('Bearer ', '');
+    console.log('[Session List API] Has auth token:', !!token, token ? `(${token.substring(0, 10)}...)` : '');
 
-    const supabase = token ? createClientWithToken(token) : createAnonClient();
+    // 先判断是否需要认证，获取用户信息
+    let userId: string | null = null;
+    if (type === 'joined' || type === 'my' || type === 'created') {
+      if (!token) {
+        return NextResponse.json({
+          success: false,
+          error: '需要登录'
+        }, { status: 401 });
+      }
+
+      // 使用 token client 获取用户信息
+      const authClient = createClientWithToken(token);
+      const { data: { user }, error: userError } = await authClient.auth.getUser();
+      if (userError || !user) {
+        console.error('[Session List API] Auth error:', userError);
+        return NextResponse.json({
+          success: false,
+          error: '无效的认证token'
+        }, { status: 401 });
+      }
+      userId = user.id;
+      console.log('[Session List API] Authenticated user:', userId.substring(0, 8));
+    }
+
+    // 🔥 关键修复: 对于 public 和 joined 查询，使用 Admin Client 绕过 RLS
+    // 原因: RLS 策略会让用户看到自己创建的所有会话，导致应用层过滤失效
+    const supabase = (type === 'public' || type === 'joined' || type === 'my') 
+      ? createAdminClient() 
+      : (token ? createClientWithToken(token) : createAnonClient());
     
     let query = supabase
       .from('reading_sessions')
@@ -33,39 +67,39 @@ export async function GET(request: NextRequest) {
 
     if (type === 'public') {
       // 公开会话
+      console.log('[Session List API] Querying public sessions with filter: session_type=public, is_active=true');
       query = query.eq('session_type', 'public');
-    } else if (type === 'my' || type === 'created') {
-      // 需要认证
-      if (!token) {
-        return NextResponse.json({
-          success: false,
-          error: '需要登录'
-        }, { status: 401 });
-      }
-
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError || !user) {
-        return NextResponse.json({
-          success: false,
-          error: '无效的认证token'
-        }, { status: 401 });
-      }
-
+    } else if (type === 'joined' || type === 'my' || type === 'created') {
       if (type === 'created') {
         // 我创建的会话
-        query = query.eq('creator_id', user.id);
+        console.log('[Session List API] Querying created sessions for user:', userId!.substring(0, 8));
+        query = query.eq('creator_id', userId!);
       } else {
-        // 我参与的会话
+        // 我加入的会话 (参与但不是创建者) - type=joined 或 type=my
+        console.log('[Session List API] Querying joined sessions for user:', userId!.substring(0, 8));
+        
         const { data: memberSessions } = await supabase
           .from('session_members')
           .select('session_id')
-          .eq('user_id', user.id);
+          .eq('user_id', userId!);
+
+        console.log('[Session List API] User is member of', memberSessions?.length || 0, 'sessions');
 
         if (memberSessions && memberSessions.length > 0) {
           const sessionIds = memberSessions.map(m => m.session_id);
-          query = query.in('id', sessionIds);
+          console.log('[Session List API] Filtering to exclude sessions created by user:', userId!.substring(0, 8));
+          // 🔥 关键修复: 排除自己创建的会话
+          query = query
+            .in('id', sessionIds)
+            .neq('creator_id', userId!);
+          
+          console.log('[Session List API] Filter chain:', {
+            sessionIdsCount: sessionIds.length,
+            willExcludeCreator: userId!.substring(0, 8)
+          });
         } else {
           // 没有参与任何会话
+          console.log('[Session List API] User is not a member of any sessions');
           return NextResponse.json({
             success: true,
             data: []
@@ -75,6 +109,17 @@ export async function GET(request: NextRequest) {
     }
 
     const { data, error } = await query;
+    
+    console.log(`[Session List API] Query result for type=${type}:`, {
+      dataCount: data?.length || 0,
+      hasError: !!error,
+      sessionIds: data?.map(s => s.id.substring(0, 8)) || [],
+      firstSession: data && data.length > 0 ? {
+        id: data[0].id.substring(0, 8),
+        type: data[0].session_type,
+        active: data[0].is_active
+      } : null
+    });
 
     if (error) {
       console.error('[Session API] List sessions error:', error);
@@ -84,13 +129,16 @@ export async function GET(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // 🔥 优化: 返回响应并设置缓存
+    // 🔥 优化: 返回响应并设置强制禁用缓存
     return NextResponse.json({
       success: true,
       data: data || []
     }, {
       headers: {
-        'Cache-Control': 'public, s-maxage=180, stale-while-revalidate=360',
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+        'Surrogate-Control': 'no-store'
       }
     });
 
@@ -102,3 +150,8 @@ export async function GET(request: NextRequest) {
     }, { status: 500 });
   }
 }
+
+
+ 
+ 
+ 

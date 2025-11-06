@@ -2,6 +2,7 @@ import { config } from '../../package.json'
 import { envConfig } from '../config/env'
 import { AuthManager } from './auth'
 
+import { logger } from "../utils/logger";
 /**
  * 关注管理器
  * 处理用户关注相关的操作
@@ -46,7 +47,7 @@ export class FollowManager {
       const data = await response.json()
       return data.success
     } catch (error) {
-      console.error('Follow user error:', error)
+      logger.error('Follow user error:', error)
       throw error
     }
   }
@@ -78,7 +79,7 @@ export class FollowManager {
       const data = await response.json()
       return data.success
     } catch (error) {
-      console.error('Unfollow user error:', error)
+      logger.error('Unfollow user error:', error)
       throw error
     }
   }
@@ -106,7 +107,7 @@ export class FollowManager {
       const data = await response.json()
       return data.isFollowing || false
     } catch (error) {
-      console.error('Check following status error:', error)
+      logger.error('Check following status error:', error)
       return false
     }
   }
@@ -126,7 +127,7 @@ export class FollowManager {
 
       return await response.json()
     } catch (error) {
-      console.error('Get followers error:', error)
+      logger.error('Get followers error:', error)
       throw error
     }
   }
@@ -146,7 +147,7 @@ export class FollowManager {
 
       return await response.json()
     } catch (error) {
-      console.error('Get following error:', error)
+      logger.error('Get following error:', error)
       throw error
     }
   }

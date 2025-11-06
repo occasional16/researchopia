@@ -8,6 +8,7 @@ import type { ReadingSession } from '../readingSessionManager';
 import { formatDate } from './helpers';
 import { ServicesAdapter } from '../../adapters';
 
+import { logger } from "../../utils/logger";
 /**
  * 创建会话卡片（通用版本）
  */
@@ -115,7 +116,7 @@ export function createSessionCard(
         doiButton.textContent = session.paper_doi;
       }, 2000);
     } catch (error) {
-      console.error('Copy DOI failed:', error);
+      logger.error('Copy DOI failed:', error);
     }
   });
   
@@ -185,7 +186,7 @@ export function createSessionCard(
           inviteCodeButton.textContent = originalText;
         }, 1500);
       } catch (error) {
-        console.error('Copy failed:', error);
+        logger.error('Copy failed:', error);
       }
     });
     
@@ -196,7 +197,11 @@ export function createSessionCard(
   // 创建者信息
   if (options.showCreator) {
     const creatorDiv = doc.createElement('div');
-    const creatorName = (session as any).creator_name || '未知用户';
+    // 支持嵌套的creator对象和旧的creator_name字段
+    const creatorName = (session as any).creator?.username || 
+                       (session as any).creator?.email?.split('@')[0] || 
+                       (session as any).creator_name || 
+                       '未知用户';
     creatorDiv.textContent = `👤 主持人: ${creatorName}`;
     creatorDiv.style.cssText = `
       font-size: ${fontSize.sm};

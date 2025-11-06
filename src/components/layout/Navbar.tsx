@@ -259,12 +259,12 @@ export default function Navbar() {
                   <div className="relative">
                     <button
                       onClick={() => setShowUserMenu(!showUserMenu)}
-                      className="flex items-center space-x-2 px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                      className="flex items-center space-x-2 px-3 py-2 rounded-lg bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 dark:from-cyan-700 dark:to-blue-700 dark:hover:from-cyan-600 dark:hover:to-blue-600 transition-all shadow-md hover:shadow-lg transform hover:scale-105"
                     >
-                      <div className="w-8 h-8 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center">
-                        <User size={16} className="text-gray-600 dark:text-gray-300" />
+                      <div className="w-8 h-8 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center border-2 border-white dark:border-gray-700">
+                        <User size={16} className="text-cyan-600 dark:text-cyan-400" />
                       </div>
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      <span className="text-sm font-medium text-white">
                         {userState.displayName}
                       </span>
                     </button>

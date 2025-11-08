@@ -28,7 +28,6 @@
 ## 🧩 目录 Contents
 
 - [🧩 目录 Contents](#-目录-contents)
-- [🚀 最新动态](#-最新动态)
 - [📋 项目简介](#-项目简介)
 - [⚡ 快速开始](#-快速开始)
   - [✨ 核心功能](#-核心功能)
@@ -44,10 +43,6 @@
 - [📞 联系方式](#-联系方式)
 
 
-## 🚀 最新动态
-
-**2025.10.31** Zotero插件0.3.2版已上线，请前往zotero插件商店或github下载安装。详见 [修改日志 Changelog](/docs/CHANGELOG.md) 。
-
 ## 📋 项目简介
 
 欢迎来到 **研学港 Researchopia** ！ **研学港 Researchopia** 是一个开放的学术交流和共享平台（开源项目），旨在为研究者提供优质的学术资源和交流环境。我们致力于构建一个研究者的理想国，让学术智慧在这里汇聚和传播。
@@ -56,12 +51,13 @@
 
 本项目正式启动于2025-09-08，作者是一名刚博士毕业的科研狗（化学领域），没有编程基础，也没有报过AI课程，因此，**本项目的编程部分由AI工具生成** （项目整体架构、项目名称、logo和slogan也是AI给设计的）。一开始我还不懂什么叫网站前后端也不懂VS code，但第一天时间就完成了网站基本的界面设计和数据库搭建。浏览器扩展和zotero插件的第一版真的是各用一句话直接生成。当然，进一步的细节打磨和bug处理是花了更多的时间。这段时间也渐渐学到了一些编程知识，也积累了一些与AI对话的经验和小窍门。目前项目处于初期阶段，后续会持续优化和完善。
 
-想要近距离了解本项目开发意图和计划，有任何开发和使用上的建议和反馈，或者想了解AI开发的细节的小伙伴，欢迎加我的个人微信，也欢迎加入用户群。
+想要近距离了解本项目开发意图和计划，有任何开发和使用上的建议和反馈，或者想了解AI开发的细节的小伙伴，欢迎加我的个人微信、微信公众号（观物AI），也欢迎加入用户群。
 
 <div align="center">
-  <img src="./docs/res/wechat.png" alt="个人微信二维码" width="30%">
-  <img src="./docs/res/group-users-wechat.png" alt="微信二维码" width="28.8%">
-  <img src="./docs/res/group-users-qq.png" alt="qq群" width="29.5%">
+  <img src="./docs/res/wechat.png" alt="个人微信二维码" width="24%">
+  <img src="./docs/res/qr-guanwu-AI.png" alt="个人微信二维码" width="22.5%">  
+  <img src="./docs/res/group-users-wechat.png" alt="微信二维码" width="23%">
+  <img src="./docs/res/group-users-qq.png" alt="qq群" width="23.5%">
 </div> 
 
 ---

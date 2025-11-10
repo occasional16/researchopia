@@ -157,7 +157,7 @@ export default function AdminPage() {
       </div>
 
       {/* 快捷导航 */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
         <a 
           href="/admin/visit-stats" 
           className="bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-700 dark:to-purple-700 text-white rounded-lg p-6 shadow-md hover:shadow-lg transition-all"
@@ -169,6 +169,21 @@ export default function AdminPage() {
             <div>
               <h3 className="text-lg font-semibold">访问统计</h3>
               <p className="text-sm opacity-90">查看每日访问数据</p>
+            </div>
+          </div>
+        </a>
+        
+        <a 
+          href="/admin/plugin-version" 
+          className="bg-gradient-to-r from-orange-600 to-pink-600 dark:from-orange-700 dark:to-pink-700 text-white rounded-lg p-6 shadow-md hover:shadow-lg transition-all"
+        >
+          <div className="flex items-center gap-3">
+            <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <div>
+              <h3 className="text-lg font-semibold">版本控制</h3>
+              <p className="text-sm opacity-90">管理Zotero插件版本</p>
             </div>
           </div>
         </a>

@@ -1,36 +1,103 @@
 /* Researchopia Preferences Styles */
 
+/* ==================== 主题变量 ==================== */
+:root {
+  /* 浅色模式变量 (默认) */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8f9fa;
+  --bg-tertiary: #e9ecef;
+  --text-primary: #212529;
+  --text-secondary: #495057;
+  --text-muted: #6c757d;
+  --border-color: #dee2e6;
+  --shadow: rgba(0, 0, 0, 0.1);
+  
+  /* 状态颜色 */
+  --success-bg: #d4edda;
+  --success-text: #155724;
+  --success-border: #c3e6cb;
+  --error-bg: #f8d7da;
+  --error-text: #721c24;
+  --error-border: #f5c6cb;
+  --info-bg: #d1ecf1;
+  --info-text: #0c5460;
+  --info-border: #bee5eb;
+  
+  /* 按钮颜色 */
+  --btn-primary-bg: #007bff;
+  --btn-primary-hover: #0056b3;
+  --btn-secondary-bg: #6c757d;
+  --btn-secondary-hover: #545b62;
+  --btn-danger-bg: #dc3545;
+  --btn-danger-hover: #c82333;
+}
+
+/* 深色模式变量 */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-primary: #1a1a1a;
+    --bg-secondary: #2d2d2d;
+    --bg-tertiary: #3d3d3d;
+    --text-primary: #e5e5e5;
+    --text-secondary: #b4b4b4;
+    --text-muted: #8a8a8a;
+    --border-color: #404040;
+    --shadow: rgba(0, 0, 0, 0.4);
+    
+    /* 状态颜色 (深色模式优化) */
+    --success-bg: #1a3d2a;
+    --success-text: #6ee7b7;
+    --success-border: #2a5a3f;
+    --error-bg: #3d1a1f;
+    --error-text: #fca5a5;
+    --error-border: #5a2a2f;
+    --info-bg: #1a2f3d;
+    --info-text: #7dd3fc;
+    --info-border: #2a3f5a;
+    
+    /* 按钮颜色 (深色模式优化) */
+    --btn-primary-bg: #3b82f6;
+    --btn-primary-hover: #2563eb;
+    --btn-secondary-bg: #6b7280;
+    --btn-secondary-hover: #4b5563;
+    --btn-danger-bg: #ef4444;
+    --btn-danger-hover: #dc2626;
+  }
+}
+
+/* ==================== 按钮样式 ==================== */
 .researchopia-btn {
   padding: 8px 16px;
-  border: 1px solid #ccc;
+  border: 1px solid var(--border-color);
   border-radius: 4px;
-  background: #f8f9fa;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
   cursor: pointer;
   margin: 4px;
 }
 
 .researchopia-btn:hover {
-  background: #e9ecef;
+  background: var(--bg-tertiary);
 }
 
 .researchopia-btn.primary {
-  background: #007bff;
+  background: var(--btn-primary-bg);
   color: white;
-  border-color: #007bff;
+  border-color: var(--btn-primary-bg);
 }
 
 .researchopia-btn.primary:hover {
-  background: #0056b3;
+  background: var(--btn-primary-hover);
 }
 
 .researchopia-btn.secondary {
-  background: #6c757d;
+  background: var(--btn-secondary-bg);
   color: white;
-  border-color: #6c757d;
+  border-color: var(--btn-secondary-bg);
 }
 
 .researchopia-btn.secondary:hover {
-  background: #545b62;
+  background: var(--btn-secondary-hover);
 }
 
 .researchopia-btn:disabled {
@@ -40,18 +107,19 @@
 
 .login-status {
   padding: 16px;
-  border: 1px solid #dee2e6;
+  border: 1px solid var(--border-color);
   border-radius: 6px;
   margin: 8px 0;
+  background: var(--bg-primary);
 }
 
 .login-form h3 {
   margin-top: 0;
-  color: #495057;
+  color: var(--text-secondary);
 }
 
 .login-description {
-  color: #6c757d;
+  color: var(--text-muted);
   margin-bottom: 16px;
 }
 
@@ -69,10 +137,12 @@
 .form-group input[type="password"] {
   width: 250px;
   padding: 8px 12px;
-  border: 1px solid #ced4da;
+  border: 1px solid var(--border-color);
   border-radius: 4px;
   font-size: 14px;
   box-sizing: border-box;
+  background: var(--bg-primary);
+  color: var(--text-primary);
 }
 
 .form-group label {
@@ -117,21 +187,21 @@
 }
 
 .message.success {
-  background: #d4edda;
-  color: #155724;
-  border: 1px solid #c3e6cb;
+  background: var(--success-bg);
+  color: var(--success-text);
+  border: 1px solid var(--success-border);
 }
 
 .message.error {
-  background: #f8d7da;
-  color: #721c24;
-  border: 1px solid #f5c6cb;
+  background: var(--error-bg);
+  color: var(--error-text);
+  border: 1px solid var(--error-border);
 }
 
 .message.info {
-  background: #d1ecf1;
-  color: #0c5460;
-  border: 1px solid #bee5eb;
+  background: var(--info-bg);
+  color: var(--info-text);
+  border: 1px solid var(--info-border);
 }
 
 .help-links {
@@ -140,7 +210,7 @@
 }
 
 .help-links a {
-  color: #007bff;
+  color: var(--btn-primary-bg);
   text-decoration: none;
 }
 
@@ -149,7 +219,7 @@
 }
 
 .logged-in {
-  background: #d4edda;
+  background: var(--success-bg);
   padding: 16px;
   border-radius: 6px;
 }
@@ -160,13 +230,13 @@
 
 .user-email {
   font-weight: 500;
-  color: #155724;
+  color: var(--success-text);
 }
 
 .login-time {
   display: block;
   font-size: 12px;
-  color: #6c757d;
+  color: var(--text-muted);
   margin-top: 4px;
 }
 
@@ -177,15 +247,15 @@
 }
 
 .logged-in-status {
-  background: #d4edda;
-  border: 1px solid #c3e6cb;
+  background: var(--success-bg);
+  border: 1px solid var(--success-border);
   border-radius: 6px;
   padding: 16px;
 }
 
 .logged-in-status h3 {
   margin-top: 0;
-  color: #155724;
+  color: var(--success-text);
 }
 
 .user-details {
@@ -194,21 +264,22 @@
 
 .user-details > div {
   margin-bottom: 8px;
+  color: var(--text-primary);
 }
 
 .user-details strong {
-  color: #495057;
+  color: var(--text-secondary);
   min-width: 80px;
   display: inline-block;
 }
 
 .researchopia-btn.danger {
-  background: #dc3545;
+  background: var(--btn-danger-bg);
   color: white;
-  border-color: #dc3545;
+  border-color: var(--btn-danger-bg);
 }
 
 .researchopia-btn.danger:hover {
-  background: #c82333;
-  border-color: #bd2130;
+  background: var(--btn-danger-hover);
+  border-color: var(--btn-danger-hover);
 }

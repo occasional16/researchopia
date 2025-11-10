@@ -1,4 +1,4 @@
-import type { PaperInfo } from "./types";
+﻿import type { PaperInfo } from "./types";
 import { logger } from "../../utils/logger";
 import { containerPadding } from "./styles";
 
@@ -92,9 +92,9 @@ const searchSites: SearchSite[] = [
     name: 'Scholar Mirror',
     nameZh: '学术镜像',
     url: (query, type) => type === 'doi' 
-      ? `https://scholar.google.com.hk/scholar?q="${query}"` 
-      : `https://scholar.google.com.hk/scholar?q=${encodeURIComponent(query)}`,
-    description: 'Google Scholar 镜像站点',
+      ? `https://scholar.lanfanshu.cn/scholar?q="${query}"` 
+      : `https://scholar.lanfanshu.cn/scholar?q=${encodeURIComponent(query)}`,
+    description: 'Google Scholar 镜像站点 (蓝帆学术)',
     category: 'chinese'
   },
   {
@@ -423,9 +423,9 @@ export class QuickSearchView {
     const footer = doc.createElement('div');
     footer.style.cssText = `
       padding-top: 12px;
-      border-top: 1px solid var(--fill-quinary);
+      border-top: 1px solid #e9ecef;
       font-size: 11px;
-      color: var(--fill-tertiary);
+      color: #9ca3af;
     `;
 
     const filteredSites = searchSites.filter(site => this.selectedSites.includes(site.name));

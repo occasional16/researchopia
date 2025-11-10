@@ -79,6 +79,20 @@
     <!-- 开发者选项 -->
     <groupbox>
       <label><html:h2>🔧 开发者选项</html:h2></label>
+      
+      <!-- 诊断工具（暂不开放）
+      <html:div class="form-group" style="margin-bottom: 16px; padding: 12px; border: 1px solid #e5e7eb; border-radius: 6px; background: #f9fafb;">
+        <html:div style="margin-bottom: 8px;">
+          <html:strong>🩺 诊断工具</html:strong>
+        </html:div>
+        <html:p style="margin: 4px 0 8px 0; color: #666; font-size: 12px;">
+          一键生成诊断报告,包含插件版本、登录状态、网络连接等信息,用于故障排查和技术支持
+        </html:p>
+        <html:button id="generate-diagnostic-report-btn" class="researchopia-btn" style="font-size: 13px; padding: 8px 16px;">
+          📋 生成诊断报告
+        </html:button>
+      </html:div>  -->
+      
       <html:div class="form-group">
         <html:label class="checkbox-label">
           <html:input type="checkbox" id="use-dev-environment" />
@@ -88,13 +102,6 @@
       </html:div>
       <html:div class="form-group">
         <html:small style="color: #666;">💡 提示: 切换环境后,点击按钮或链接时会使用新环境地址</html:small>
-      </html:div>
-      <html:div class="form-group">
-        <html:label class="checkbox-label">
-          <html:input type="checkbox" id="enable-experimental-features" />
-          <html:span>🧪 开放实验性功能(共享标注)</html:span>
-          <html:small>启用测试中的共享标注功能,将在下一版本正式上线</html:small>
-        </html:label>
       </html:div>
       <html:div class="form-group" style="display: flex; align-items: center; gap: 8px;">
         <html:label for="custom-api-url" style="flex-shrink: 0;">自定义 API 地址:</html:label>

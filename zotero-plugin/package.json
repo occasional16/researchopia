@@ -1,7 +1,7 @@
 {
   "name": "researchopia",
   "type": "module",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "An open academic community. Academic annotation sharing and collaboration for Zotero",
   "config": {
     "addonName": "研学港 Researchopia",

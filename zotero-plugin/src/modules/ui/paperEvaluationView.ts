@@ -1,4 +1,4 @@
-import { logger } from "../../utils/logger";
+﻿import { logger } from "../../utils/logger";
 import { AuthManager } from "../auth";
 import { resolveCommentDisplayInfo, createToggleSwitch } from "./helpers";
 import { UserHoverCardManager } from "./userHoverCard";
@@ -33,7 +33,7 @@ export class PaperEvaluationView {
 
     if (!user) {
       const message = doc.createElement('div');
-      message.style.cssText = 'padding: 20px; text-align: center; color: var(--fill-secondary);';
+      message.style.cssText = 'padding: 20px; text-align: center; color: #6c757d;';
       message.textContent = '请先登录以评价论文';
       container.appendChild(message);
       return;
@@ -67,10 +67,10 @@ export class PaperEvaluationView {
     if (!paperId) {
       container.innerHTML = '';
       const message = doc.createElement('div');
-      message.style.cssText = 'padding: 20px; text-align: center; color: var(--fill-secondary);';
+      message.style.cssText = 'padding: 20px; text-align: center; color: #6c757d;';
       message.innerHTML = `
         <div style="margin-bottom: 8px;">📋 该论文尚未在Researchopia注册</div>
-        <div style="font-size: 11px; color: var(--fill-tertiary);">
+        <div style="font-size: 11px; color: #9ca3af;">
           请先在网站上添加该论文,才能进行评价
         </div>
       `;
@@ -153,12 +153,12 @@ export class PaperEvaluationView {
       display: block;
       width: 100%;
       padding: 16px;
-      border-bottom: 1px solid var(--fill-quinary);
+      border-bottom: 1px solid #e9ecef;
       box-sizing: border-box;
     `;
 
     const title = doc.createElement('h3');
-    title.style.cssText = 'margin: 0 0 12px 0; font-size: 14px; color: var(--fill-primary);';
+    title.style.cssText = 'margin: 0 0 12px 0; font-size: 14px; color: #212529;';
     title.textContent = '📊 论文评分';
     section.appendChild(title);
 
@@ -185,10 +185,10 @@ export class PaperEvaluationView {
       });
 
       const avgDiv = doc.createElement('div');
-      avgDiv.style.cssText = 'margin-bottom: 12px; padding: 8px; background: var(--fill-secondary); border-radius: 4px;';
+      avgDiv.style.cssText = 'margin-bottom: 12px; padding: 8px; background: #6c757d; border-radius: 4px;';
       avgDiv.innerHTML = `
-        <div style="font-size: 11px; color: var(--fill-secondary); margin-bottom: 4px;">平均分 (${ratings.length}人评价)</div>
-        <div style="font-size: 12px; color: var(--fill-primary);">
+        <div style="font-size: 11px; color: #6c757d; margin-bottom: 4px;">平均分 (${ratings.length}人评价)</div>
+        <div style="font-size: 12px; color: #212529;">
           创新性: ${avgScores.innovation.toFixed(1)} | 
           方法论: ${avgScores.methodology.toFixed(1)} | 
           结果质量: ${avgScores.results.toFixed(1)} | 
@@ -243,7 +243,7 @@ export class PaperEvaluationView {
 
       const label = doc.createElement('span');
       label.textContent = `${cat.icon} ${cat.label}:`;
-      label.style.cssText = 'min-width: 90px; color: var(--fill-primary);';
+      label.style.cssText = 'min-width: 90px; color: #212529;';
       row.appendChild(label);
 
       // 星星评分
@@ -253,11 +253,13 @@ export class PaperEvaluationView {
 
       for (let i = 1; i <= 5; i++) {
         const star = doc.createElement('span');
-        star.textContent = i <= scores[cat.key] ? '⭐' : '☆';
+        const isFilled = i <= scores[cat.key];
+        star.textContent = isFilled ? '⭐' : '☆';
         star.style.cssText = `
           cursor: pointer;
           font-size: 16px;
           transition: transform 0.1s;
+          color: ${isFilled ? '#ffc107' : '#9ca3af'};
         `;
         star.setAttribute('data-star-value', i.toString());
 
@@ -273,7 +275,9 @@ export class PaperEvaluationView {
           const parent = star.parentElement;
           if (parent) {
             Array.from(parent.children).forEach((child, index) => {
-              (child as HTMLElement).textContent = index < i ? '⭐' : '☆';
+              const isFilled = index < i;
+              (child as HTMLElement).textContent = isFilled ? '⭐' : '☆';
+              (child as HTMLElement).style.color = isFilled ? '#ffc107' : '#9ca3af';
             });
           }
           // 更新评分文本
@@ -289,7 +293,7 @@ export class PaperEvaluationView {
       const scoreText = doc.createElement('span');
       scoreText.className = 'score-text';
       scoreText.textContent = scores[cat.key] > 0 ? `${scores[cat.key]}/5` : '未评分';
-      scoreText.style.cssText = 'color: var(--fill-secondary); font-size: 11px; margin-left: 4px;';
+      scoreText.style.cssText = 'color: #6c757d; font-size: 11px; margin-left: 4px;';
       row.appendChild(scoreText);
 
       form.appendChild(row);
@@ -302,7 +306,7 @@ export class PaperEvaluationView {
     anonymousContainer.style.cssText = `
       margin-top: 12px;
       padding-top: 12px;
-      border-top: 1px solid var(--fill-quinary);
+      border-top: 1px solid #e9ecef;
       display: flex;
       flex-direction: column;
       gap: 8px;
@@ -330,7 +334,7 @@ export class PaperEvaluationView {
 
     const anonymousLabel = doc.createElement('label');
     anonymousLabel.textContent = '匿名评分';
-    anonymousLabel.style.cssText = 'font-size: 12px; color: var(--fill-primary); cursor: pointer;';
+    anonymousLabel.style.cssText = 'font-size: 12px; color: #212529; cursor: pointer;';
 
     anonymousRow.appendChild(anonymousSwitch);
     anonymousRow.appendChild(anonymousLabel);
@@ -415,7 +419,7 @@ export class PaperEvaluationView {
     `;
 
     const title = doc.createElement('h3');
-    title.style.cssText = 'margin: 0 0 12px 0; font-size: 14px; color: var(--fill-primary);';
+    title.style.cssText = 'margin: 0 0 12px 0; font-size: 14px; color: #212529;';
     title.textContent = `💬 论文评论 (${commentTree.length})`;
     section.appendChild(title);
 
@@ -448,14 +452,14 @@ export class PaperEvaluationView {
     textarea.placeholder = '发表你的评论...';
     textarea.style.cssText = `
       padding: 8px;
-      border: 1px solid var(--fill-quinary);
+      border: 1px solid #e9ecef;
       border-radius: 3px;
       font-size: 12px;
       font-family: inherit;
       resize: vertical;
       min-height: 80px;
-      background: var(--material-background);
-      color: var(--fill-primary);
+      background: #ffffff;
+      color: #212529;
     `;
 
     // 匿名选项
@@ -471,7 +475,7 @@ export class PaperEvaluationView {
 
     const anonymousLabel = doc.createElement('label');
     anonymousLabel.textContent = '匿名评论';
-    anonymousLabel.style.cssText = 'font-size: 12px; color: var(--fill-secondary); cursor: pointer;';
+    anonymousLabel.style.cssText = 'font-size: 12px; color: #6c757d; cursor: pointer;';
 
     anonymousContainer.appendChild(anonymousSwitch);
     anonymousContainer.appendChild(anonymousLabel);
@@ -554,7 +558,7 @@ export class PaperEvaluationView {
       emptyMessage.style.cssText = `
         text-align: center;
         padding: 20px;
-        color: var(--fill-tertiary);
+        color: #9ca3af;
         font-size: 12px;
       `;
       emptyMessage.textContent = '暂无评论,快来发表第一条评论吧!';
@@ -581,7 +585,7 @@ export class PaperEvaluationView {
     container.setAttribute('data-depth', depth.toString());
     container.style.cssText = `
       margin-left: ${depth * 20}px;
-      ${depth > 0 ? 'border-left: 2px solid var(--fill-quinary); padding-left: 8px;' : ''}
+      ${depth > 0 ? 'border-left: 2px solid #e9ecef; padding-left: 8px;' : ''}
       margin-bottom: ${depth > 0 ? '4px' : '8px'};
     `;
 
@@ -602,7 +606,7 @@ export class PaperEvaluationView {
     header.style.cssText = 'display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; flex-wrap: wrap; gap: 4px;';
 
     const userInfo = doc.createElement('div');
-    userInfo.style.cssText = 'color: var(--fill-secondary); display: flex; gap: 6px; align-items: center; font-size: 11px;';
+    userInfo.style.cssText = 'color: #6c757d; display: flex; gap: 6px; align-items: center; font-size: 11px;';
 
     const { name: userName, isAnonymous } = resolveCommentDisplayInfo(comment);
     const replyCount = comment.reply_count || comment.children?.length || 0;
@@ -622,10 +626,10 @@ export class PaperEvaluationView {
     // 添加匿名锁图标和其他信息
     const extraInfo = doc.createElement('span');
     extraInfo.innerHTML = `
-      ${isAnonymous ? '<span style="color: var(--fill-quaternary); font-size: 10px; margin-left: 2px;">🔒</span>' : ''}
-      <span style="color: var(--fill-quaternary);">·</span>
+      ${isAnonymous ? '<span style="color: #ced4da; font-size: 10px; margin-left: 2px;">🔒</span>' : ''}
+      <span style="color: #ced4da;">·</span>
       <span>${this.formatDate(comment.created_at)}</span>
-      ${replyCount > 0 ? `<span style="color: var(--accent-blue);">· ${replyCount} 回复</span>` : ''}
+      ${replyCount > 0 ? `<span style="color: #0d6efd;">· ${replyCount} 回复</span>` : ''}
     `;
     userInfo.appendChild(extraInfo);
 
@@ -641,7 +645,7 @@ export class PaperEvaluationView {
     replyBtn.style.cssText = `
       padding: 2px 8px;
       background: transparent;
-      color: var(--accent-blue);
+      color: #0d6efd;
       border: 1px solid currentColor;
       border-radius: 3px;
       cursor: pointer;
@@ -668,7 +672,7 @@ export class PaperEvaluationView {
       editBtn.style.cssText = `
         padding: 2px 8px;
         background: transparent;
-        color: var(--accent-blue);
+        color: #0d6efd;
         border: 1px solid currentColor;
         border-radius: 3px;
         cursor: pointer;
@@ -733,7 +737,7 @@ export class PaperEvaluationView {
     // 内容
     const content = doc.createElement('div');
     content.className = 'comment-content';
-    content.style.cssText = 'color: var(--fill-primary); line-height: 1.5; word-wrap: break-word;';
+    content.style.cssText = 'color: #212529; line-height: 1.5; word-wrap: break-word;';
     content.textContent = comment.content;
     commentBody.appendChild(content);
 
@@ -804,7 +808,7 @@ export class PaperEvaluationView {
       display: block;
       margin-top: 8px;
       padding: 8px;
-      background: var(--material-background);
+      background: #ffffff;
       border-radius: 4px;
     `;
 
@@ -820,14 +824,14 @@ export class PaperEvaluationView {
       min-height: 50px;
       font-size: 11px;
       font-family: inherit;
-      background: var(--material-background);
-      color: var(--fill-primary);
+      background: #ffffff;
+      color: #212529;
       box-sizing: border-box;
     `;
 
     // 匿名选项
     const anonymousContainer = doc.createElement('div');
-    anonymousContainer.style.cssText = 'display: flex; align-items: center; gap: 8px; margin-top: 6px; font-size: 11px; color: var(--fill-secondary);';
+    anonymousContainer.style.cssText = 'display: flex; align-items: center; gap: 8px; margin-top: 6px; font-size: 11px; color: #6c757d;';
 
     const anonymousSwitch = createToggleSwitch(
       doc,
@@ -852,8 +856,8 @@ export class PaperEvaluationView {
     cancelBtn.style.cssText = `
       padding: 4px 10px;
       background: transparent;
-      color: var(--fill-secondary);
-      border: 1px solid var(--fill-quinary);
+      color: #6c757d;
+      border: 1px solid #e9ecef;
       border-radius: 3px;
       cursor: pointer;
       font-size: 11px;
@@ -866,7 +870,7 @@ export class PaperEvaluationView {
     submitBtn.textContent = '发表回复';
     submitBtn.style.cssText = `
       padding: 4px 10px;
-      background: var(--accent-blue);
+      background: #0d6efd;
       color: white;
       border: none;
       border-radius: 3px;
@@ -943,8 +947,8 @@ export class PaperEvaluationView {
       min-height: 50px;
       font-size: 11px;
       font-family: inherit;
-      background: var(--material-background);
-      color: var(--fill-primary);
+      background: #ffffff;
+      color: #212529;
       box-sizing: border-box;
     `;
 
@@ -962,7 +966,7 @@ export class PaperEvaluationView {
     const anonymousLabel = doc.createElement('label');
     anonymousLabel.htmlFor = `toggle-paper-edit-anonymous-${comment.id}`;
     anonymousLabel.textContent = '匿名显示';
-    anonymousLabel.style.cssText = 'font-size: 11px; color: var(--fill-secondary); cursor: pointer;';
+    anonymousLabel.style.cssText = 'font-size: 11px; color: #6c757d; cursor: pointer;';
 
     const anonymousHint = doc.createElement('span');
     anonymousHint.textContent = '(将显示为"匿名用户")';
@@ -989,8 +993,8 @@ export class PaperEvaluationView {
     cancelBtn.style.cssText = `
       padding: 4px 10px;
       background: transparent;
-      color: var(--fill-secondary);
-      border: 1px solid var(--fill-quinary);
+      color: #6c757d;
+      border: 1px solid #e9ecef;
       border-radius: 3px;
       cursor: pointer;
       font-size: 11px;

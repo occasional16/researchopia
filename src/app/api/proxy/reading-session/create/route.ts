@@ -41,23 +41,34 @@ export async function POST(request: NextRequest) {
       }, { status: 401 });
     }
 
-    // 生成邀请码
-    const inviteCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+    // 判断会话类型
+    const sessionType = is_public ? 'public' : 'private';
+    
+    // 仅为私密会话生成邀请码
+    const inviteCode = sessionType === 'private' 
+      ? Math.random().toString(36).substring(2, 8).toUpperCase()
+      : null;
 
-    // 创建会话
+    // 创建会话(公共会话不记录创建者和邀请码)
+    const sessionData_insert: any = {
+      paper_doi,
+      paper_title,
+      max_participants: null, // 完全取消人数限制
+      session_type: sessionType,
+      is_active: true,
+      settings: {},
+      created_at: new Date().toISOString()
+    };
+    
+    // 仅私密会话记录创建者和邀请码
+    if (sessionType === 'private') {
+      sessionData_insert.creator_id = user.id;
+      sessionData_insert.invite_code = inviteCode;
+    }
+
     const { data: sessionData, error: sessionError } = await supabase
       .from('reading_sessions')
-      .insert([{
-        paper_doi,
-        paper_title,
-        creator_id: user.id,
-        max_participants: max_participants || 10,
-        session_type: is_public ? 'public' : 'private',
-        is_active: true,
-        invite_code: inviteCode,
-        settings: {},
-        created_at: new Date().toISOString()
-      }])
+      .insert([sessionData_insert])
       .select()
       .single();
 
@@ -69,13 +80,14 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // 自动加入会话(作为host)
+    // 自动加入会话(公共会话无host,都是participant)
+    const memberRole = sessionType === 'private' ? 'host' : 'participant';
     const { data: memberData, error: memberError } = await supabase
       .from('session_members')
       .insert([{
         session_id: sessionData.id,
         user_id: user.id,
-        role: 'host',
+        role: memberRole,
         is_online: true,
         current_page: 1,
         joined_at: new Date().toISOString()

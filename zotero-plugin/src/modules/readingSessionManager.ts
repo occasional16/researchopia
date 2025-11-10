@@ -284,6 +284,36 @@ export class ReadingSessionManager {
     }
   }
 
+  public async joinSessionById(sessionId: string): Promise<ReadingSession> {
+    logger.log(`[ReadingSessionManager] Joining session by ID: ${sessionId}`);
+    
+    try {
+      const response = await this.apiClient.post<{
+        data: { session: ReadingSession; member: SessionMember };
+      }>('/api/proxy/reading-session/join', {
+        session_id: sessionId,
+      });
+
+      if (!response.data || !response.data.session) {
+        throw new Error("API did not return a session object on join.");
+      }
+
+      const foundSession: ReadingSession = response.data.session;
+      const member: SessionMember = response.data.member;
+
+      this.currentSession = foundSession;
+      this.currentMember = member;
+
+      await this.initializeSession();
+      
+      logger.log(`[ReadingSessionManager] ✅ Successfully joined session: ${foundSession.id}`);
+      return foundSession;
+    } catch (error) {
+      logger.error('[ReadingSessionManager] Failed to join session by ID:', error);
+      throw error;
+    }
+  }
+
   private async initializeSession(): Promise<void> {
     if (!this.currentSession || !this.currentMember) {
       logger.warn('[ReadingSessionManager] Cannot initialize session, session or member is missing.');
@@ -294,8 +324,8 @@ export class ReadingSessionManager {
     await this.updateOnlineStatus(true);
     this.startHeartbeat();
     this.startPolling();
-    this.registerZoteroAnnotationListener();
-    await this.syncExistingAnnotations();
+    this.registerZoteroAnnotationListener(); // 只监听删除操作,不自动创建
+    // await this.syncExistingAnnotations(); // 禁用自动同步-标注需通过管理页面手动共享
 
     this.notifyPresenceListeners({
       type: 'user_joined',
@@ -669,47 +699,14 @@ export class ReadingSessionManager {
     const notifierCallback = {
       notify: async (event: string, type: string, ids: any[], extraData: any) => {
         if (!this.currentSession) return;
+        // 只处理删除事件,添加标注需通过管理页面手动共享
         if (event === 'delete' && type === 'item') {
           for (const id of ids) {
             const key = extraData?.[id]?.key;
             if (key) await this.deleteAnnotationByKey(key);
           }
-        } else if (event === 'add' && type === 'item') {
-          for (const id of ids) {
-            try {
-              const item = await (Zotero.Items as any).getAsync(id);
-              if (!item || !item.isAnnotation()) continue;
-              const pdfAttachment = item.parentItem;
-              if (!pdfAttachment) continue;
-              const paperItem = pdfAttachment.parentItem;
-              if (!paperItem) continue;
-              const doi = paperItem.getField('DOI');
-              if (doi !== this.currentSession.paper_doi) continue;
-
-              const user = this.authManager.getUser();
-              if (!user) continue;
-
-              const annotationPayload = {
-                session_id: this.currentSession.id,
-                user_id: user.id,
-                paper_doi: this.currentSession.paper_doi,
-                zotero_key: item.key,
-                annotation_data: {
-                  type: item.annotationType,
-                  text: item.annotationText || '',
-                  comment: item.annotationComment || '',
-                  color: item.annotationColor || '',
-                  position: item.annotationPosition || null,
-                  tags: item.getTags().map((t: any) => t.tag),
-                },
-                page_number: parseInt(item.annotationPageLabel || '1') || 1,
-              };
-              await this.createAnnotation(annotationPayload);
-            } catch (error) {
-              logger.error('[ReadingSessionManager] Failed to sync new annotation:', error);
-            }
-          }
         }
+        // 移除自动添加标注的逻辑-标注创建后默认private,需通过管理标注页面手动共享
       }
     };
     this.zoteroNotifierID = (Zotero as any).Notifier.registerObserver(notifierCallback, ['item']);

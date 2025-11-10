@@ -4,6 +4,7 @@
  */
 
 import { logger } from "../utils/logger";
+import { version as packageVersion } from "../../package.json";
 
 export class ConfigValidator {
   private static instance: ConfigValidator | null = null;
@@ -484,7 +485,7 @@ export class ConfigValidator {
       const addon = (globalThis as any).Zotero?.Researchopia;
       const report = {
         timestamp: new Date().toISOString(),
-        pluginVersion: (addon?.data.config as any)?.buildVersion || '0.2.0',
+        pluginVersion: (addon?.data.config as any)?.buildVersion || packageVersion,
         validation
       };
 

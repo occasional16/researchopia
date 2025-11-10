@@ -378,6 +378,27 @@ function bindPrefEvents() {
   // 绑定登录表单事件
   bindLoginFormEvents(doc);
   
+  // Diagnostic Report button
+  const diagnosticReportBtn = doc.querySelector("#generate-diagnostic-report-btn") as HTMLButtonElement;
+  if (diagnosticReportBtn) {
+    logger.log("[Researchopia] 🔧 Binding diagnostic report button");
+    diagnosticReportBtn.addEventListener("click", async () => {
+      setButtonLoading(diagnosticReportBtn, true);
+      showMessage(doc, "正在生成诊断报告...", "info");
+      
+      try {
+        const { UIManager } = await import("./ui-manager");
+        await UIManager.generateDiagnosticReport();
+        showMessage(doc, "✅ 诊断报告已生成并复制到剪贴板", "success");
+      } catch (error) {
+        logger.error("[Researchopia] Diagnostic report generation failed:", error);
+        showMessage(doc, "❌ 生成诊断报告失败", "error");
+      } finally {
+        setButtonLoading(diagnosticReportBtn, false);
+      }
+    });
+  }
+  
   // Auto-upload annotations checkbox
   const autoUploadCheckbox = doc.querySelector("#auto-upload-annotations") as HTMLInputElement;
   if (autoUploadCheckbox) {
@@ -463,17 +484,6 @@ function bindPrefEvents() {
       
       // Update API display
       updateCurrentApiDisplay(doc);
-    });
-  }
-
-  // Enable experimental features checkbox (仅用于共享标注)
-  const experimentalFeaturesCheckbox = doc.querySelector("#enable-experimental-features") as HTMLInputElement;
-  if (experimentalFeaturesCheckbox) {
-    experimentalFeaturesCheckbox.checked = getPref("enableExperimentalFeatures") as boolean || false;
-    experimentalFeaturesCheckbox.addEventListener("change", (e) => {
-      const checked = (e.target as HTMLInputElement).checked;
-      setPref("enableExperimentalFeatures", checked);
-      showMessage(doc, checked ? "✅ 已启用实验性功能(共享标注)" : "✅ 已关闭实验性功能", "success");
     });
   }
 

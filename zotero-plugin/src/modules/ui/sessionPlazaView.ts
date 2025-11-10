@@ -70,7 +70,7 @@ export class SessionPlazaView {
     `;
     content.appendChild(sessionsList);
 
-    // 加载公开会话
+    // 加载公共会话
     await this.loadPublicSessions(sessionsList, doc, 'latest');
   }
 
@@ -96,10 +96,10 @@ export class SessionPlazaView {
     toolbar.appendChild(label);
 
     const filterSelect = createSelect(doc, [
-      { value: 'latest', label: '🆕 最新创建' },
       { value: 'most-members', label: '👥 人数最多' },
-      { value: 'followed-users', label: '⭐ 关注的用户' },
-    ], 'latest');
+      { value: 'latest', label: '🆕 最新创建' },
+      { value: 'earliest', label: '📅 最早创建' },
+    ], 'most-members'); // 默认选择"人数最多"
 
     filterSelect.addEventListener('change', async () => {
       const sessionsList = doc.getElementById('plaza-sessions-list');
@@ -114,7 +114,7 @@ export class SessionPlazaView {
   }
 
   /**
-   * 加载公开会话
+   * 加载公共会话
    */
   private async loadPublicSessions(
     container: HTMLElement,
@@ -139,8 +139,8 @@ export class SessionPlazaView {
         const empty = createEmptyState(
           doc,
           '🌐',
-          '暂无公开会话',
-          '成为第一个创建公开会话的人吧！'
+          '暂无公共会话',
+          '成为第一个创建公共会话的人吧！'
         );
         container.appendChild(empty);
         return;
@@ -150,9 +150,10 @@ export class SessionPlazaView {
       
       for (const session of sessions) {
         logger.log(`[SessionPlazaView] 🎴 Creating card for session: ${session.id} - ${session.paper_title}`);
+        // 公共会话不显示邀请码和主持人
         const card = createSessionCard(doc, session, {
-          showInviteCode: true,
-          showCreator: true,
+          showInviteCode: false,
+          showCreator: false,
           showMemberCount: true,
           onClick: async () => {
             try {
@@ -178,10 +179,6 @@ export class SessionPlazaView {
    */
   private applySorting(sessions: ReadingSession[], filterType: string): ReadingSession[] {
     switch (filterType) {
-      case 'latest':
-        // 默认已按创建时间降序排序
-        return sessions;
-      
       case 'most-members':
         // 按成员数量降序排序
         return sessions.sort((a, b) => {
@@ -190,10 +187,17 @@ export class SessionPlazaView {
           return bCount - aCount;
         });
       
-      case 'followed-users':
-        // TODO: 需要实现关注用户列表功能后才能过滤
-        // 暂时返回全部会话
-        return sessions;
+      case 'latest':
+        // 按创建时间降序排序(最新的在前)
+        return sessions.sort((a, b) => {
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        });
+      
+      case 'earliest':
+        // 按创建时间升序排序(最早的在前)
+        return sessions.sort((a, b) => {
+          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        });
       
       default:
         return sessions;

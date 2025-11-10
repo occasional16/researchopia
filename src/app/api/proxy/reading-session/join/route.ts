@@ -88,18 +88,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // 检查是否满员
-    const { count: memberCount } = await supabase
-      .from('session_members')
-      .select('*', { count: 'exact', head: true })
-      .eq('session_id', sessionData.id);
-
-    if (memberCount && memberCount >= sessionData.max_participants) {
-      return NextResponse.json({
-        success: false,
-        error: '会话已满员'
-      }, { status: 400 });
-    }
+    // 人数限制已移除，不再检查max_participants
 
     // 加入会话
     const { data: memberData, error: memberError } = await supabase

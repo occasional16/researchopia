@@ -1,7 +1,7 @@
 import { AuthManager } from "../auth";
 import { highlightText, matchesSearch, createSearchBox, createToggleSwitch } from "./helpers";
 import type { BaseViewContext } from "./types";
-import { containerPadding } from "./styles";
+import { containerPadding, getThemeColors } from "./styles";
 import { ServicesAdapter } from '../../adapters';
 
 export class MyAnnotationsView {
@@ -27,6 +27,7 @@ export class MyAnnotationsView {
       container.innerHTML = "";
       
       // 重置容器样式,确保布局一致
+      const containerColors = getThemeColors();
       container.style.cssText = `
         display: flex;
         flex-direction: column;
@@ -35,9 +36,9 @@ export class MyAnnotationsView {
         overflow-y: auto;
         overflow-x: hidden;
         box-sizing: border-box;
-        background: #f9fafb;
+        background: ${containerColors.bgSecondary};
         border-radius: 10px;
-        box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+        box-shadow: inset 0 1px 3px ${containerColors.shadowSm};
       `;
 
       searchBox = createSearchBox(doc, (query) => {
@@ -69,7 +70,7 @@ export class MyAnnotationsView {
       if (!this.cachedAnnotations || isFirstRender) {
         listContainer.innerHTML = `
           <div style="display: flex; align-items: center; justify-content: center; padding: 40px;">
-            <div style="text-align: center; color: var(--fill-secondary);">
+            <div style="text-align: center; color: #6c757d;">
               <div style="margin-bottom: 8px;">⏳ 正在加载标注...</div>
             </div>
           </div>
@@ -87,7 +88,7 @@ export class MyAnnotationsView {
         if (annotations.length === 0) {
           listContainer.innerHTML = `
             <div style="display: flex; align-items: center; justify-content: center; padding: 40px;">
-              <div style="text-align: center; color: var(--fill-tertiary);">
+              <div style="text-align: center; color: #9ca3af;">
                 <div style="font-size: 14px;">📝 此文献暂无标注</div>
                 <div style="font-size: 12px; margin-top: 8px;">请在PDF阅读器中添加标注</div>
               </div>
@@ -132,10 +133,10 @@ export class MyAnnotationsView {
         const statsDiv = doc.createElementNS("http://www.w3.org/1999/xhtml", "div");
         statsDiv.style.cssText = `
           padding: 8px 12px;
-          background: var(--fill-quinary);
-          border-bottom: 1px solid var(--fill-quinary);
+          background: #e9ecef;
+          border-bottom: 1px solid #e9ecef;
           font-size: 12px;
-          color: var(--fill-secondary);
+          color: #6c757d;
         `;
         statsDiv.textContent = `找到 ${filteredAnnotations.length} / ${syncedAnnotations.length} 条标注`;
         listContainer.appendChild(statsDiv);
@@ -144,7 +145,7 @@ export class MyAnnotationsView {
       if (filteredAnnotations.length === 0) {
         listContainer.innerHTML = `
           <div style="display: flex; align-items: center; justify-content: center; padding: 40px;">
-            <div style="text-align: center; color: var(--fill-tertiary);">
+            <div style="text-align: center; color: #9ca3af;">
               <div style="font-size: 14px;">🔍 未找到匹配的标注</div>
               <div style="font-size: 12px; margin-top: 8px;">请尝试其他关键词</div>
             </div>
@@ -157,7 +158,7 @@ export class MyAnnotationsView {
     } catch (error) {
       listContainer.innerHTML = `
         <div style="display: flex; align-items: center; justify-content: center; padding: 40px;">
-          <div style="text-align: center; color: var(--accent-red);">
+          <div style="text-align: center; color: #dc3545;">
             <div>❌ 加载失败</div>
             <div style="font-size: 12px; margin-top: 8px;">${error instanceof Error ? error.message : "未知错误"}</div>
           </div>
@@ -180,17 +181,18 @@ export class MyAnnotationsView {
     container.style.flexDirection = "column";
     container.style.gap = "12px";
 
+    const toolbarColors = getThemeColors();
     const toolbar = doc.createElement("div");
     toolbar.style.cssText = `
       display: flex;
       gap: 10px;
       padding: 14px;
-      background: #ffffff;
+      background: ${toolbarColors.bgPrimary};
       border-radius: 10px;
       flex-wrap: wrap;
       align-items: center;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-      border: 1px solid #e5e7eb;
+      box-shadow: 0 2px 8px ${toolbarColors.shadowMd};
+      border: 1px solid ${toolbarColors.borderPrimary};
     `;
 
     // 创建全选开关
@@ -217,15 +219,16 @@ export class MyAnnotationsView {
       }
     );
 
+    const btnColors = getThemeColors();
     const selectAllLabel = doc.createElement("label");
     selectAllLabel.htmlFor = "select-all-annotations";
     selectAllLabel.textContent = "全选";
-    selectAllLabel.style.cssText = "cursor: pointer; font-size: 14px; user-select: none; font-weight: 600; color: #1f2937; line-height: 1; display: flex; align-items: center; margin-left: 8px;";
+    selectAllLabel.style.cssText = `cursor: pointer; font-size: 14px; user-select: none; font-weight: 600; color: ${btnColors.textPrimary}; line-height: 1; display: flex; align-items: center; margin-left: 8px;`;
 
     const batchButtons = [
-      { id: "batch-public", text: "📢 批量公开共享", visibility: "public" as const, showAuthorName: true, color: "#3b82f6" },
-      { id: "batch-anonymous", text: "🕶️ 批量匿名共享", visibility: "public" as const, showAuthorName: false, color: "#8b5cf6" },
-      { id: "batch-unshare", text: "🔒 批量取消共享", visibility: "private" as const, showAuthorName: true, color: "#ef4444" }
+      { id: "batch-public", text: "📢 批量公开共享", visibility: "public" as const, showAuthorName: true, color: btnColors.secondary },
+      { id: "batch-anonymous", text: "🕶️ 批量匿名共享", visibility: "public" as const, showAuthorName: false, color: btnColors.primary },
+      { id: "batch-unshare", text: "🔒 批量取消共享", visibility: "private" as const, showAuthorName: true, color: btnColors.danger }
     ];
 
     toolbar.appendChild(selectAllSwitch);
@@ -237,7 +240,7 @@ export class MyAnnotationsView {
       button.textContent = btn.text;
       button.style.cssText = `
         padding: 8px 16px;
-        background: #ffffff;
+        background: ${btnColors.bgPrimary};
         color: ${btn.color};
         border: 2px solid ${btn.color};
         border-radius: 8px;
@@ -315,27 +318,30 @@ export class MyAnnotationsView {
     userId: string,
     searchQuery: string
   ): HTMLElement {
+    const cardColors = getThemeColors();
     const card = doc.createElement("div");
     card.className = "annotation-card";
     card.setAttribute("data-annotation-id", annotation.id);
     card.style.cssText = `
       padding: 16px;
-      background: #ffffff;
+      background: ${cardColors.bgPrimary};
       border-radius: 10px;
       border-left: 5px solid ${annotation.color};
       display: flex;
       gap: 14px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      box-shadow: 0 2px 8px ${cardColors.shadowMd};
       transition: all 0.2s;
-      border: 1px solid #e5e7eb;
+      border: 1px solid ${cardColors.borderPrimary};
     `;
 
     card.addEventListener("mouseenter", () => {
-      card.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.12)";
+      const hoverColors = getThemeColors();
+      card.style.boxShadow = `0 4px 12px ${hoverColors.shadowLg}`;
       card.style.transform = "translateY(-2px)";
     });
     card.addEventListener("mouseleave", () => {
-      card.style.boxShadow = "0 2px 8px rgba(0, 0, 0, 0.08)";
+      const leaveColors = getThemeColors();
+      card.style.boxShadow = `0 2px 8px ${leaveColors.shadowMd}`;
       card.style.transform = "translateY(0)";
     });
 
@@ -382,7 +388,7 @@ export class MyAnnotationsView {
     contentDiv.style.cssText = `
       font-size: 13px;
       line-height: 1.5;
-      color: var(--fill-primary);
+      color: #212529;
     `;
 
     if (annotation.text) {
@@ -398,13 +404,13 @@ export class MyAnnotationsView {
 
     if (annotation.comment) {
       const commentDiv = doc.createElement("div");
-      commentDiv.style.cssText = "margin-top: 6px; font-style: italic; color: var(--fill-secondary);";
+      commentDiv.style.cssText = `margin-top: 6px; font-style: italic; color: #6c757d;`;
       commentDiv.innerHTML = searchQuery ? `💬 ${highlightText(annotation.comment, searchQuery)}` : `💬 ${annotation.comment}`;
       contentDiv.appendChild(commentDiv);
     }
 
     const metadataDiv = doc.createElement("div");
-    metadataDiv.style.cssText = "font-size: 11px; color: var(--fill-tertiary); display: flex; gap: 12px;";
+    metadataDiv.style.cssText = `font-size: 11px; color: #9ca3af; display: flex; gap: 12px;`;
 
     const typeMap: Record<string, string> = {
       highlight: "📝 高亮",
@@ -455,8 +461,8 @@ export class MyAnnotationsView {
     anonymousButton.textContent = isAnonymous ? "🎭 匿名" : "👤 公开";
     anonymousButton.style.cssText = `
       padding: 4px 8px;
-      background: var(--fill-tertiary);
-      color: var(--fill-primary);
+      background: #9ca3af;
+      color: #212529;
       border: none;
       border-radius: 3px;
       cursor: pointer;

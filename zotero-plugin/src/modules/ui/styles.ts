@@ -3,6 +3,37 @@
  * 统一管理所有视图的样式定义
  */
 
+import { themeManager, type ThemeColors } from './themeManager';
+
+/**
+ * 获取当前主题的颜色方案
+ * 动态根据浅色/深色模式返回相应颜色
+ * @param forceLight - 是否强制使用浅色模式，默认true（插件主面板强制浅色）
+ */
+export function getThemeColors(forceLight: boolean = true): ThemeColors {
+  return themeManager.getColors(forceLight);
+}
+
+/**
+ * 获取Zotero CSS变量的固定浅色值
+ * 用于替换 var(--fill-*) 等CSS变量，确保插件面板始终保持浅色
+ */
+export const lightVars = {
+  '--fill-primary': '#212529',           // 主要文本色
+  '--fill-secondary': '#6c757d',         // 次要文本色
+  '--fill-tertiary': '#9ca3af',          // 三级文本色（更浅）
+  '--fill-quaternary': '#ced4da',        // 四级文本色（最浅）
+  '--fill-quinary': '#e9ecef',           // 分隔线、边框色
+  '--material-background': '#ffffff',    // 背景色
+  '--accent-blue': '#0d6efd',            // 蓝色强调
+  '--accent-red': '#dc3545',             // 红色强调
+  '--accent-green': '#28a745',           // 绿色强调
+};
+
+/**
+ * 向后兼容的静态颜色对象
+ * @deprecated 推荐使用 getThemeColors() 获取主题敏感的颜色
+ */
 export const colors = {
   primary: '#0d6efd',
   primaryHover: '#0b5ed7',

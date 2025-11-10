@@ -32,6 +32,145 @@
   max-width: 65ch;
 }
 
+/* Markdown Content 样式 - 用于公告等全宽内容 */
+.markdown-content {
+  @apply text-gray-800;
+  width: 100%;
+  line-height: 1.4;
+}
+
+.markdown-content h1 {
+  @apply text-2xl font-bold text-gray-900 mt-4 mb-3;
+}
+
+.markdown-content h2 {
+  @apply text-xl font-bold text-gray-900 mt-3 mb-2;
+}
+
+.markdown-content h3 {
+  @apply text-lg font-semibold text-gray-900 mt-3 mb-2;
+}
+
+.markdown-content h4 {
+  @apply text-base font-semibold text-gray-900 mt-2 mb-1;
+}
+
+.markdown-content p {
+  @apply mb-3 text-base;
+}
+
+.markdown-content a {
+  @apply text-blue-600 hover:text-blue-700 underline;
+}
+
+.markdown-content ul {
+  @apply list-disc list-inside mb-3 space-y-1 ml-4;
+}
+
+.markdown-content ol {
+  @apply list-decimal list-inside mb-3 space-y-1 ml-4;
+}
+
+.markdown-content li {
+  @apply text-gray-700 text-base;
+}
+
+.markdown-content strong {
+  @apply font-semibold text-gray-900;
+}
+
+.markdown-content em {
+  @apply italic;
+}
+
+.markdown-content code {
+  @apply bg-gray-100 text-pink-600 px-1 py-0.5 rounded text-xs font-mono;
+}
+
+.markdown-content pre {
+  @apply bg-gray-900 text-gray-100 p-3 rounded-lg overflow-x-auto mb-3 text-xs;
+}
+
+.markdown-content pre code {
+  @apply bg-transparent text-gray-100 p-0;
+}
+
+.markdown-content blockquote {
+  @apply border-l-4 border-blue-500 pl-3 italic text-gray-700 my-3 text-base;
+}
+
+.markdown-content table {
+  @apply w-full border-collapse mb-3 text-base;
+}
+
+.markdown-content th {
+  @apply bg-gray-100 border border-gray-300 px-3 py-2 text-left font-semibold;
+}
+
+.markdown-content td {
+  @apply border border-gray-300 px-3 py-2;
+}
+
+.markdown-content img {
+  @apply rounded-lg shadow-md my-3 max-w-full h-auto inline-block;
+}
+
+.markdown-content div {
+  @apply block;
+}
+
+.markdown-content span {
+  display: inline;
+}
+
+.markdown-content hr {
+  @apply my-4 border-t border-gray-300;
+}
+
+/* Dark mode for markdown-content */
+.dark .markdown-content {
+  @apply text-gray-200;
+}
+
+.dark .markdown-content h1,
+.dark .markdown-content h2,
+.dark .markdown-content h3,
+.dark .markdown-content h4 {
+  @apply text-white;
+}
+
+.dark .markdown-content a {
+  @apply text-blue-400 hover:text-blue-300;
+}
+
+.dark .markdown-content code {
+  @apply bg-gray-800 text-pink-400;
+}
+
+.dark .markdown-content pre {
+  @apply bg-gray-950;
+}
+
+.dark .markdown-content blockquote {
+  @apply border-blue-400 text-gray-300;
+}
+
+.dark .markdown-content th {
+  @apply bg-gray-800 border-gray-700 text-white;
+}
+
+.dark .markdown-content td {
+  @apply border-gray-700;
+}
+
+.dark .markdown-content strong {
+  @apply text-white;
+}
+
+.dark .markdown-content li {
+  @apply text-gray-300 text-base;
+}
+
 .prose h1 {
   @apply text-4xl font-bold text-gray-900 mt-8 mb-4;
 }
@@ -229,6 +368,16 @@
 /* 隐藏 reCAPTCHA 徽章 */
 .grecaptcha-badge {
   visibility: hidden !important;
+}
+
+/* SimpleMDE 编辑器字体大小 */
+.announcement-editor .EasyMDEContainer .CodeMirror {
+  font-size: inherit !important;
+  line-height: 1.6 !important;
+}
+
+.announcement-editor .EasyMDEContainer .CodeMirror-scroll {
+  min-height: 200px;
 }
 
 /* Dark mode prose styling - better text contrast */

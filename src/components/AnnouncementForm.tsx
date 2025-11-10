@@ -1,8 +1,15 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { AlertCircle, CheckCircle, Info, AlertTriangle } from 'lucide-react'
 import { useAuthenticatedFetch } from '@/hooks/useAuthenticatedFetch'
+import dynamic from 'next/dynamic'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
+import 'easymde/dist/easymde.min.css'
+
+// 动态导入SimpleMDE以避免SSR问题
+const SimpleMDE = dynamic(() => import('react-simplemde-editor'), { ssr: false })
 
 interface AnnouncementFormProps {
   editingAnnouncement?: any
@@ -17,8 +24,18 @@ export default function AnnouncementForm({ editingAnnouncement, onSuccess, onCan
   const [type, setType] = useState<'info' | 'warning' | 'success' | 'error'>(editingAnnouncement?.type || 'info')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [showPreview, setShowPreview] = useState(false)
 
   const isEditing = !!editingAnnouncement
+
+  // SimpleMDE配置
+  const editorOptions = useMemo(() => ({
+    spellChecker: false,
+    placeholder: '支持Markdown格式...\n\n常用语法:\n# 标题\n**粗体** *斜体*\n- 列表项\n[链接](url)\n![图片](url)\n\n调整字号:\n<span style="font-size: 20px">大字</span>\n<span style="font-size: 12px">小字</span>',
+    maxHeight: '300px',
+    status: false,
+    toolbar: ['bold', 'italic', 'heading', '|', 'quote', 'unordered-list', 'ordered-list', '|', 'link', 'image', '|', 'preview', 'guide'] as any,
+  }), [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -137,20 +154,34 @@ export default function AnnouncementForm({ editingAnnouncement, onSuccess, onCan
       </div>
 
       <div>
-        <label htmlFor="announcement-content" className="block text-sm font-medium text-gray-700 mb-2">
-          公告内容
-        </label>
-        <textarea
-          id="announcement-content"
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          rows={6}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-          placeholder="输入公告内容..."
-          maxLength={1000}
-          required
-        />
-        <p className="mt-1 text-sm text-gray-500">{content.length}/1000</p>
+        <div className="flex items-center justify-between mb-2">
+          <label htmlFor="announcement-content" className="block text-sm font-medium text-gray-700">
+            公告内容 (支持Markdown)
+          </label>
+          <button
+            type="button"
+            onClick={() => setShowPreview(!showPreview)}
+            className="text-sm text-blue-600 hover:text-blue-800"
+          >
+            {showPreview ? '编辑' : '预览'}
+          </button>
+        </div>
+        
+        {showPreview ? (
+          <div className="w-full min-h-[300px] px-4 py-3 border border-gray-300 rounded-md bg-gray-50 prose prose-sm max-w-none">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {content || '*没有内容*'}
+            </ReactMarkdown>
+          </div>
+        ) : (
+          <SimpleMDE
+            value={content}
+            onChange={setContent}
+            options={editorOptions}
+          />
+        )}
+        
+        <p className="mt-1 text-sm text-gray-500">{content.length}/5000 字符</p>
       </div>
 
       <div>

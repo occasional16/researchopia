@@ -4,6 +4,9 @@ import { useState, useEffect } from 'react'
 import { Search, TrendingUp, Users, BookOpen, Star, MessageCircle, Eye } from 'lucide-react'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
+import rehypeRaw from 'rehype-raw'
 import { useLanguage } from '@/contexts/LanguageContext'
 import BrandLogo from '@/components/ui/BrandLogo'
 import { useSmartSearch } from '@/hooks/useSmartSearch'
@@ -105,6 +108,7 @@ export default function HomePage() {
   const [showAnnouncementHistory, setShowAnnouncementHistory] = useState(false)
   const [editingAnnouncement, setEditingAnnouncement] = useState<Announcement | null>(null)
   const [refreshingComments, setRefreshingComments] = useState(false) // 手动刷新状态
+  const [expandedAnnouncement, setExpandedAnnouncement] = useState(false) // 公告展开状态，默认折叠
 
   // 访问跟踪函数
   const trackVisit = async () => {
@@ -617,8 +621,8 @@ export default function HomePage() {
             'bg-gray-50 dark:bg-gray-800 border-gray-400 dark:border-gray-600'
           }`}
         >
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
+          <div>
+            <div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
                   <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
@@ -634,18 +638,49 @@ export default function HomePage() {
                     {currentAnnouncement.title}
                   </h3>
                 </div>
-                {/* 查看历史按钮 */}
-                {announcements.length > 1 && (
+                <div className="flex items-center gap-2">
+                  {/* 展开/收起按钮 */}
                   <button
-                    onClick={() => setShowAnnouncementHistory(!showAnnouncementHistory)}
-                    className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline flex items-center gap-1"
+                    onClick={() => setExpandedAnnouncement(!expandedAnnouncement)}
+                    className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-300 hover:underline"
                   >
-                    📜 查看历史公告 ({announcements.length - 1})
+                    {expandedAnnouncement ? '收起 ▲' : '展开 ▼'}
                   </button>
-                )}
+                  {/* 查看历史按钮 */}
+                  {announcements.length > 1 && (
+                    <button
+                      onClick={() => setShowAnnouncementHistory(!showAnnouncementHistory)}
+                      className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline flex items-center gap-1"
+                    >
+                      📜 查看历史公告 ({announcements.length - 1})
+                    </button>
+                  )}
+                </div>
               </div>
-              <div className="mt-2 text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
-                {currentAnnouncement.content}
+              <div 
+                className={`mt-2 text-gray-700 dark:text-gray-300 markdown-content transition-all duration-300 ${!expandedAnnouncement ? 'max-h-24 overflow-hidden relative' : ''}`}
+                style={{ fontSize: '15px' }}
+              >
+                <ReactMarkdown 
+                  remarkPlugins={[remarkGfm]}
+                  rehypePlugins={[rehypeRaw]}
+                  components={{
+                    a: ({ node, ...props }) => (
+                      <a {...props} target="_blank" rel="noopener noreferrer" />
+                    )
+                  }}
+                >
+                  {currentAnnouncement.content}
+                </ReactMarkdown>
+                {!expandedAnnouncement && (
+                  <div className={`absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t to-transparent pointer-events-none ${
+                    currentAnnouncement.type === 'info' ? 'from-blue-50 dark:from-blue-900/20' :
+                    currentAnnouncement.type === 'warning' ? 'from-yellow-50 dark:from-yellow-900/20' :
+                    currentAnnouncement.type === 'success' ? 'from-green-50 dark:from-green-900/20' :
+                    currentAnnouncement.type === 'error' ? 'from-red-50 dark:from-red-900/20' :
+                    'from-gray-50 dark:from-gray-800'
+                  }`}></div>
+                )}
               </div>
               <div className="mt-3 flex justify-between items-center">
                 <div className="text-sm text-gray-500 dark:text-gray-400">
@@ -718,8 +753,18 @@ export default function HomePage() {
                             {announcement.title}
                           </h3>
                         </div>
-                        <div className="mt-2 text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
-                          {announcement.content}
+                        <div className="mt-2 text-gray-700 dark:text-gray-300 markdown-content">
+                          <ReactMarkdown 
+                            remarkPlugins={[remarkGfm]}
+                            rehypePlugins={[rehypeRaw]}
+                            components={{
+                              a: ({ node, ...props }) => (
+                                <a {...props} target="_blank" rel="noopener noreferrer" />
+                              )
+                            }}
+                          >
+                            {announcement.content}
+                          </ReactMarkdown>
                         </div>
                         <div className="mt-3 flex justify-between items-center">
                           <div className="text-sm text-gray-500 dark:text-gray-400">

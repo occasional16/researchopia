@@ -1,3 +1,12 @@
+/**
+ * ⚠️ DEPRECATED: This API is deprecated and should not be used.
+ * Use POST /api/proxy/annotations instead (writes to annotations table)
+ * Then use POST /api/proxy/annotations/share-to-session (writes to annotation_shares table)
+ * 
+ * This API writes to the old session_annotations table which is being phased out.
+ * It is kept for backward compatibility but may be removed in the future.
+ */
+
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { createClientWithToken } from '@/lib/supabase-server';
@@ -9,6 +18,8 @@ const supabaseAdmin = createClient(
 );
 
 export async function POST(req: Request) {
+  // Return deprecation warning
+  console.warn('[API] DEPRECATED: /api/proxy/annotations/create is deprecated. Use /api/proxy/annotations + /api/proxy/annotations/share-to-session instead.');
   const authHeader = req.headers.get('Authorization');
   const token = authHeader?.replace('Bearer ', '');
 

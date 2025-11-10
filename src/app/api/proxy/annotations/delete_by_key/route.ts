@@ -1,12 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-import { createClientWithToken } from '@/lib/supabase-server';
-
-// 创建admin客户端
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import { createClientWithToken, createAdminClient } from '@/lib/supabase-server';
 
 export async function DELETE(req: Request) {
   const authHeader = req.headers.get('Authorization');
@@ -35,25 +28,34 @@ export async function DELETE(req: Request) {
       return NextResponse.json({ message: 'Session ID and Zotero Key are required' }, { status: 400 });
     }
 
-    // Find annotations with matching zotero_key in annotation_data
-    const { data: annotations } = await supabaseAdmin
-      .from('session_annotations')
-      .select('id, annotation_data')
-      .eq('session_id', sessionId);
+    const adminClient = createAdminClient();
 
-    const annotationToDelete = annotations?.find((ann: any) => 
-      ann.annotation_data?.zotero_key === zoteroKey
-    );
+    // 查找匹配original_id (zotero_key)的annotation
+    const { data: annotations } = await adminClient
+      .from('annotations')
+      .select('id')
+      .eq('original_id', zoteroKey)
+      .eq('user_id', user.id);
 
-    if (!annotationToDelete) {
+    if (!annotations || annotations.length === 0) {
       return NextResponse.json({ success: true, message: 'Annotation not found or already deleted' });
     }
 
-    // Delete the annotation
-    const { error } = await supabaseAdmin
-      .from('session_annotations')
+    const annotationId = annotations[0].id;
+
+    // 删除annotation_shares记录(如果有)
+    await adminClient
+      .from('annotation_shares')
       .delete()
-      .eq('id', annotationToDelete.id);
+      .eq('annotation_id', annotationId)
+      .eq('session_id', sessionId);
+
+    // 可选:也删除annotation本身(如果不想保留)
+    const { error } = await adminClient
+      .from('annotations')
+      .delete()
+      .eq('id', annotationId)
+      .eq('user_id', user.id);
 
     if (error) {
       console.error('Error deleting annotation:', error);

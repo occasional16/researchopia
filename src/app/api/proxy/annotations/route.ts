@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
     }
 
     const annotationData = await request.json();
-    const { document_id, type, content, comment, color, position, tags, visibility } = annotationData;
+    const { document_id, type, content, comment, color, position, tags, visibility, original_id, show_author_name } = annotationData;
 
     if (!document_id) {
       return NextResponse.json({
@@ -111,7 +111,8 @@ export async function POST(request: NextRequest) {
         position: position || {},
         tags: tags || [],
         visibility: visibility || 'private',
-        show_author_name: true,
+        show_author_name: show_author_name !== undefined ? show_author_name : true,
+        original_id: original_id || null,
         platform: 'zotero',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()

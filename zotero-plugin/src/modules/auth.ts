@@ -138,7 +138,7 @@ export class AuthManager {
           win.document.dispatchEvent(event);
           logger.log("[AuthManager] 📢 Login event dispatched on main window");
           
-          // 通知所有打开的窗口
+          // 通知所有打开的窗口(跳过主窗口,避免重复)
           const windowMediator = Components.classes["@mozilla.org/appshell/window-mediator;1"]
             .getService(Components.interfaces.nsIWindowMediator);
           const enumerator = windowMediator.getEnumerator(null);
@@ -146,7 +146,8 @@ export class AuthManager {
           while (enumerator.hasMoreElements()) {
             try {
               const w = enumerator.getNext();
-              if (w && w.document) {
+              // 跳过主窗口(已经在上面触发过了)
+              if (w && w.document && w !== win) {
                 const evt = w.document.createEvent('CustomEvent');
                 evt.initCustomEvent('researchopia:login', true, false, { user: instance.user });
                 w.document.dispatchEvent(evt);
@@ -508,7 +509,7 @@ export class AuthManager {
           win.document.dispatchEvent(event);
           logger.log("[AuthManager] 📢 Logout event dispatched on main window");
           
-          // 通知所有打开的窗口 (包括偏好设置窗口)
+          // 通知所有打开的窗口(跳过主窗口,避免重复)
           const windowMediator = Components.classes["@mozilla.org/appshell/window-mediator;1"]
             .getService(Components.interfaces.nsIWindowMediator);
           const enumerator = windowMediator.getEnumerator(null);
@@ -516,7 +517,8 @@ export class AuthManager {
           while (enumerator.hasMoreElements()) {
             try {
               const w = enumerator.getNext();
-              if (w && w.document) {
+              // 跳过主窗口(已经在上面触发过了)
+              if (w && w.document && w !== win) {
                 const evt = w.document.createEvent('CustomEvent');
                 evt.initCustomEvent('researchopia:logout', true, false, null);
                 w.document.dispatchEvent(evt);

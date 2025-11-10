@@ -90,7 +90,7 @@ export class UserHoverCardManager {
     // 匿名用户特殊处理
     if (isAnonymous) {
       container.innerHTML = `
-        <span style="color: var(--fill-secondary); font-size: 11px;">
+        <span style="color: #6c757d; font-size: 11px;">
           🔒 匿名用户
         </span>
       `;

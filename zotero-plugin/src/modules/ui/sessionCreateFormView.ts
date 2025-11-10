@@ -47,60 +47,27 @@ export class SessionCreateFormView {
     `;
     pageContainer.appendChild(title);
 
-    // 永久会话选项 (单独一行)
-    const permanentOption = this.createSessionTypeOption(
-      doc,
-      '永久会话',
-      '为论文创建永久讨论空间，任何人可首次创建',
-      '🌍',  // 与公开会话图标调换
-      '#f59e0b' // 橙色
-    );
-    // 确保不溢出：使用flex布局并限制最大宽度
-    permanentOption.style.cssText += `
-      width: 100%;
-      max-width: 100%;
-      box-sizing: border-box;
-      margin-bottom: ${spacing.lg};
-    `;
-    permanentOption.addEventListener('click', async () => {
-      // TODO: 等待后续开发
-      this.context.showMessage('永久会话功能开发中，敬请期待！', 'info');
-    });
-    pageContainer.appendChild(permanentOption);
-
-    // 临时会话选项容器 (2列)
+    // 只保留私密会话选项(公共会话通过点击预览卡片自动创建)
     const optionsContainer = doc.createElement('div');
     optionsContainer.style.cssText = `
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: ${spacing.lg};
+      display: flex;
+      justify-content: center;
+      width: 100%;
     `;
 
-    // 创建公开会话选项
-    const publicOption = this.createSessionTypeOption(
-      doc,
-      '公开会话',
-      '任何人都可以查看和加入',
-      '📚',  // 与永久会话图标调换
-      colors.primary
-    );
-    publicOption.addEventListener('click', async () => {
-      await this.createSessionWithType('public');
-    });
-
-    // 创建私密会话选项
+    // 创建私密会话选项(单个,居中显示)
     const privateOption = this.createSessionTypeOption(
       doc,
       '私密会话',
       '需要邀请码才能加入',
-      '🔒',
-      colors.gray
+      '�',
+      '#198754' // 使用绿色
     );
+    privateOption.style.maxWidth = '400px'; // 限制最大宽度
     privateOption.addEventListener('click', async () => {
       await this.createSessionWithType('private');
     });
 
-    optionsContainer.appendChild(publicOption);
     optionsContainer.appendChild(privateOption);
     pageContainer.appendChild(optionsContainer);
     container.appendChild(pageContainer);
@@ -190,7 +157,7 @@ export class SessionCreateFormView {
 
       const session = await this.sessionManager.createSession(doi, title, type, 10);
       this.context.showMessage(
-        `${type === 'public' ? '公开' : '私密'}会话已创建！邀请码: ${session.inviteCode}`,
+        `私密会话已创建！邀请码: ${session.inviteCode}`,
         'info'
       );
       await this.onCreated(type);

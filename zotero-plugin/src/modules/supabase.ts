@@ -227,10 +227,11 @@ export class SupabaseManager {
    */
   async getSharedAnnotations(documentId: string): Promise<SupabaseAnnotation[]> {
     try {
-      const annotations = await this.apiClient.get<SupabaseAnnotation[]>(`/api/proxy/annotations?document_id=${encodeURIComponent(documentId)}&type=shared`);
+      const response = await this.apiClient.get<{ success: boolean; data: SupabaseAnnotation[] }>(`/api/proxy/annotations?document_id=${encodeURIComponent(documentId)}&type=shared`);
       
+      const annotations = response.data || [];
       logger.log(`[SupabaseManager] Retrieved ${annotations.length} shared annotations`);
-      return annotations || [];
+      return annotations;
 
     } catch (error) {
       logger.error('[SupabaseManager] Error getting shared annotations:', error);
@@ -244,10 +245,11 @@ export class SupabaseManager {
   async getAnnotationsForDocument(documentId: string, userId?: string): Promise<SupabaseAnnotation[]> {
     try {
       const type = userId ? 'my' : 'all';
-      const annotations = await this.apiClient.get<SupabaseAnnotation[]>(`/api/proxy/annotations?document_id=${encodeURIComponent(documentId)}&type=${type}`);
+      const response = await this.apiClient.get<{ success: boolean; data: SupabaseAnnotation[] }>(`/api/proxy/annotations?document_id=${encodeURIComponent(documentId)}&type=${type}`);
       
+      const annotations = response.data || [];
       logger.log(`[SupabaseManager] Retrieved ${annotations.length} annotations for document ${documentId}`);
-      return annotations || [];
+      return annotations;
 
     } catch (error) {
       logger.error('[SupabaseManager] Error getting document annotations:', error);
@@ -329,9 +331,11 @@ export class SupabaseManager {
   async createAnnotation(annotation: any): Promise<any> {
     try {
       logger.log('[SupabaseManager] Creating annotation with data:', JSON.stringify(annotation).substring(0, 200));
-      const newAnnotation = await this.apiClient.post<any>('/api/proxy/annotations', annotation);
+      const response = await this.apiClient.post<{success: boolean, data: any}>('/api/proxy/annotations', annotation);
 
-      logger.log('[SupabaseManager] Created annotation:', newAnnotation);
+      // POST API返回格式: {success: true, data: {id, ...}}
+      const newAnnotation = response.data || response;
+      logger.log('[SupabaseManager] Created annotation:', newAnnotation.id);
       return newAnnotation;
 
     } catch (error) {

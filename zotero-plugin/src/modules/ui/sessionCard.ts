@@ -3,7 +3,7 @@
  * 统一的会话卡片创建和样式管理
  */
 
-import { colors, spacing, fontSize, borderRadius, cardStyle } from './styles';
+import { colors, spacing, fontSize, borderRadius, cardStyle, getThemeColors } from './styles';
 import type { ReadingSession } from '../readingSessionManager';
 import { formatDate } from './helpers';
 import { ServicesAdapter } from '../../adapters';
@@ -19,9 +19,7 @@ export function createSessionCard(
     showInviteCode?: boolean;
     showCreator?: boolean;
     showMemberCount?: boolean;
-    showJoinButton?: boolean;
     showDeleteButton?: boolean;
-    onJoinClick?: () => void;
     onDeleteClick?: () => void;
     onClick?: () => void;
   } = {}
@@ -230,15 +228,17 @@ export function createSessionCard(
     gap: ${spacing.xs};
   `;
   
-  // 创建时间
-  const timeDiv = doc.createElement('span');
-  timeDiv.textContent = `⏱️ ${formatDate(session.created_at)}`;
-  leftInfoDiv.appendChild(timeDiv);
+  // 创建时间(如果created_at为空则不显示)
+  if (session.created_at) {
+    const timeDiv = doc.createElement('span');
+    timeDiv.textContent = `⏱️ ${formatDate(session.created_at)}`;
+    leftInfoDiv.appendChild(timeDiv);
+  }
   
-  // 公开/私密属性
+  // 公共/私密属性
   const typeDiv = doc.createElement('span');
   const isPublic = session.session_type === 'public';
-  typeDiv.textContent = isPublic ? '🌐 公开' : '🔒 私密';
+  typeDiv.textContent = isPublic ? '🌐 公共' : '🔒 私密';
   typeDiv.style.cssText = `
     background: ${isPublic ? '#dbeafe' : '#fef3c7'};
     color: ${isPublic ? '#1e40af' : '#92400e'};
@@ -263,13 +263,14 @@ export function createSessionCard(
     const onlineCount = (session as any).online_count || 0;
     
     // 总人数
+    const themeColors = getThemeColors();
     const totalDiv = doc.createElement('span');
     totalDiv.textContent = `👥 ${totalCount}`;
     totalDiv.style.cssText = `
-      background: #e7f5ff;
+      background: ${themeColors.info}1A;
       padding: 2px ${spacing.sm};
       border-radius: ${borderRadius.sm};
-      color: ${colors.primary};
+      color: ${themeColors.info};
       font-weight: 600;
     `;
     memberCountDiv.appendChild(totalDiv);
@@ -278,10 +279,10 @@ export function createSessionCard(
     const onlineDiv = doc.createElement('span');
     onlineDiv.textContent = `🟢 ${onlineCount}`;
     onlineDiv.style.cssText = `
-      background: #d1fae5;
+      background: ${themeColors.success}1A;
       padding: 2px ${spacing.sm};
       border-radius: ${borderRadius.sm};
-      color: #059669;
+      color: ${themeColors.success};
       font-weight: 600;
     `;
     memberCountDiv.appendChild(onlineDiv);
@@ -291,48 +292,44 @@ export function createSessionCard(
   
   card.appendChild(footerDiv);
   
-  // 加入按钮
-  if (options.showJoinButton && options.onJoinClick) {
-    const joinButton = doc.createElement('button');
-    joinButton.textContent = '🚀 加入会话';
-    joinButton.style.cssText = `
-      width: 100%;
-      margin-top: ${spacing.md};
-      padding: ${spacing.sm} ${spacing.md};
-      background: ${colors.primary};
-      color: white;
-      border: none;
-      border-radius: ${borderRadius.md};
+  // 私密会话显示剩余时间(单独一行)
+  if (session.session_type === 'private' && (session as any).expires_at) {
+    const expiresAt = new Date((session as any).expires_at);
+    const now = new Date();
+    const remainingMs = expiresAt.getTime() - now.getTime();
+    const remainingHours = Math.floor(remainingMs / (1000 * 60 * 60));
+    
+    const expiryRow = doc.createElement('div');
+    expiryRow.style.cssText = `
+      margin-top: ${spacing.sm};
+      padding: ${spacing.xs} ${spacing.sm};
+      background: ${remainingHours > 0 ? '#fef3c7' : '#fee2e2'};
+      border-radius: ${borderRadius.sm};
+      font-size: ${fontSize.xs};
+      color: ${remainingHours > 0 ? '#92400e' : '#991b1b'};
       font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
+      text-align: center;
     `;
     
-    joinButton.addEventListener('mouseenter', () => {
-      joinButton.style.background = colors.primaryHover;
-    });
+    if (remainingHours > 0) {
+      expiryRow.textContent = `⏰ 剩余 ${remainingHours} 小时后过期`;
+    } else {
+      expiryRow.textContent = '❌ 会话已过期';
+    }
     
-    joinButton.addEventListener('mouseleave', () => {
-      joinButton.style.background = colors.primary;
-    });
-    
-    joinButton.addEventListener('click', (e) => {
-      e.stopPropagation();
-      options.onJoinClick!();
-    });
-    
-    card.appendChild(joinButton);
+    card.appendChild(expiryRow);
   }
   
   // 删除按钮
   if (options.showDeleteButton && options.onDeleteClick) {
+    const btnColors = getThemeColors();
     const deleteButton = doc.createElement('button');
     deleteButton.textContent = '🗑️ 删除会话';
     deleteButton.style.cssText = `
       width: 100%;
       margin-top: ${spacing.md};
       padding: ${spacing.sm} ${spacing.md};
-      background: #dc3545;
+      background: ${btnColors.danger};
       color: white;
       border: none;
       border-radius: ${borderRadius.md};
@@ -342,11 +339,15 @@ export function createSessionCard(
     `;
     
     deleteButton.addEventListener('mouseenter', () => {
-      deleteButton.style.background = '#c82333';
+      const hoverColors = getThemeColors();
+      deleteButton.style.background = hoverColors.danger;
+      deleteButton.style.filter = 'brightness(0.9)';
     });
     
     deleteButton.addEventListener('mouseleave', () => {
-      deleteButton.style.background = '#dc3545';
+      const leaveColors = getThemeColors();
+      deleteButton.style.background = leaveColors.danger;
+      deleteButton.style.filter = 'brightness(1)';
     });
     
     deleteButton.addEventListener('click', (e) => {

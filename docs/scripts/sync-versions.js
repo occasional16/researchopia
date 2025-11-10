@@ -11,7 +11,7 @@ const fs = require('fs');
 const path = require('path');
 
 // 读取根package.json
-const rootPkgPath = path.join(__dirname, '..', 'package.json');
+const rootPkgPath = path.join(__dirname, '..', '..', 'package.json');
 const rootPkg = JSON.parse(fs.readFileSync(rootPkgPath, 'utf8'));
 
 if (!rootPkg.components) {
@@ -31,7 +31,7 @@ console.log('');
 
 // 同步Zotero插件版本
 try {
-  const zoteroPath = path.join(__dirname, '..', 'zotero-plugin', 'package.json');
+  const zoteroPath = path.join(__dirname, '..', '..', 'zotero-plugin', 'package.json');
   
   if (fs.existsSync(zoteroPath)) {
     const zoteroPkg = JSON.parse(fs.readFileSync(zoteroPath, 'utf8'));
@@ -49,7 +49,7 @@ try {
 
 // 同步浏览器扩展版本
 try {
-  const extPath = path.join(__dirname, '..', 'extension', 'manifest.json');
+  const extPath = path.join(__dirname, '..', '..', 'extension', 'manifest.json');
   
   if (fs.existsSync(extPath)) {
     const extManifest = JSON.parse(fs.readFileSync(extPath, 'utf8'));
@@ -67,7 +67,7 @@ try {
 
 // 同步文档版本
 try {
-  const docsPath = path.join(__dirname, '..', 'docs', 'README.md');
+  const docsPath = path.join(__dirname, '..', 'README.md');
   
   if (fs.existsSync(docsPath)) {
     let docsContent = fs.readFileSync(docsPath, 'utf8');

@@ -247,7 +247,10 @@ export class SessionListView {
     container.appendChild(loading);
 
     try {
-      const sessions = await this.sessionManager.getMyCreatedSessions();
+      let sessions = await this.sessionManager.getMyCreatedSessions();
+      
+      // 只显示私密会话(公共会话不记录创建者)
+      sessions = sessions.filter(s => s.session_type === 'private');
 
       container.innerHTML = '';
 
@@ -255,8 +258,8 @@ export class SessionListView {
         const empty = createEmptyState(
           doc,
           '✨',
-          '还没有创建过会话',
-          '创建一个新会话开始吧！'
+          '还没有创建过私密会话',
+          '创建一个新的私密会话开始吧！'
         );
         container.appendChild(empty);
         return;
@@ -339,10 +342,12 @@ export class SessionListView {
       `;
 
       for (const session of sessions) {
+        // 公共会话不显示主持人和邀请码
+        const isPublic = session.session_type === 'public';
         const card = createSessionCard(doc, session, {
-          showInviteCode: true,
+          showInviteCode: !isPublic,
           showMemberCount: true,
-          showCreator: true,
+          showCreator: !isPublic,
           onClick: () => this.onSessionClick(session),
         });
         list.appendChild(card);

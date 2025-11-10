@@ -7,7 +7,37 @@
 
 var chromeHandle;
 
-function install(data, reason) {}
+function install(data, reason) {
+  // 提示用户需要重启 Zotero
+  // reason 可能的值: ADDON_INSTALL (新安装) 或 ADDON_UPGRADE (更新)
+  if (typeof Zotero !== 'undefined') {
+    const reasonText = reason === 'ADDON_INSTALL' ? '安装' : '更新';
+    Zotero.debug(`[Researchopia] 插件${reasonText}完成，需要重启 Zotero 才能生效`);
+    
+    // 使用 Zotero 的通知系统（如果可用）
+    if (Zotero.Notifier) {
+      try {
+        // 延迟显示提示，确保 UI 已准备好
+        setTimeout(() => {
+          if (Zotero.getMainWindow && Zotero.getMainWindow()) {
+            const win = Zotero.getMainWindow();
+            if (win && win.alert) {
+              win.alert(
+                `研学港 Researchopia 插件${reasonText}完成！\n\n` +
+                `请重启 Zotero 以使插件生效：\n` +
+                `1. 关闭所有 Zotero 窗口\n` +
+                `2. 重新打开 Zotero\n` +
+                `3. 验证插件功能是否正常`
+              );
+            }
+          }
+        }, 500);
+      } catch (e) {
+        Zotero.debug("[Researchopia] 无法显示重启提示: " + e);
+      }
+    }
+  }
+}
 
 async function startup({ id, version, resourceURI, rootURI }, reason) {
   Zotero.debug("[Researchopia Bootstrap] 🚀 Starting up plugin...");
@@ -52,6 +82,7 @@ async function startup({ id, version, resourceURI, rootURI }, reason) {
       Zotero.debug("[Researchopia Bootstrap] PreferencePanes API found, registering...");
       const paneConfig = {
         pluginID: "researchopia@zotero.plugin",
+        id: "researchopia-preferences",  // 明确指定pane ID for navigation
         src: rootURI + "content/preferences.xhtml",
         // Load the preferences.js script which will call registerPrefsScripts
         scripts: [rootURI + "content/preferences.js"],
@@ -60,7 +91,7 @@ async function startup({ id, version, resourceURI, rootURI }, reason) {
       Zotero.debug("[Researchopia Bootstrap] Pane config: " + JSON.stringify(paneConfig));
       
       const result = Zotero.PreferencePanes.register(paneConfig);
-      Zotero.debug("[Researchopia Bootstrap] ✅ Preference pane registered! Result: " + result);
+      Zotero.debug("[Researchopia Bootstrap] ✅ Preference pane registered with ID: researchopia-preferences. Result: " + result);
     } else {
       Zotero.debug("[Researchopia Bootstrap] ❌ PreferencePanes API not available");
       Zotero.debug("[Researchopia Bootstrap] Zotero object keys: " + Object.keys(Zotero || {}).slice(0, 10));

@@ -88,14 +88,15 @@ export async function GET(request: NextRequest) {
         if (memberSessions && memberSessions.length > 0) {
           const sessionIds = memberSessions.map(m => m.session_id);
           console.log('[Session List API] Filtering to exclude sessions created by user:', userId!.substring(0, 8));
-          // 🔥 关键修复: 排除自己创建的会话
+          // 🔥 关键修复: 排除自己创建的私密会话,但包含公共会话(creator_id为NULL)
           query = query
             .in('id', sessionIds)
-            .neq('creator_id', userId!);
+            .or(`creator_id.neq.${userId!},creator_id.is.null`);
           
           console.log('[Session List API] Filter chain:', {
             sessionIdsCount: sessionIds.length,
-            willExcludeCreator: userId!.substring(0, 8)
+            willExcludeCreator: userId!.substring(0, 8),
+            includePublicSessions: true
           });
         } else {
           // 没有参与任何会话
@@ -129,10 +130,32 @@ export async function GET(request: NextRequest) {
       }, { status: 400 });
     }
 
+    // 为每个会话添加成员数和在线人数统计
+    const sessionsWithCounts = await Promise.all((data || []).map(async (session) => {
+      // 查询总成员数
+      const { count: memberCount } = await supabase
+        .from('session_members')
+        .select('*', { count: 'exact', head: true })
+        .eq('session_id', session.id);
+
+      // 查询在线成员数
+      const { count: onlineCount } = await supabase
+        .from('session_members')
+        .select('*', { count: 'exact', head: true })
+        .eq('session_id', session.id)
+        .eq('is_online', true);
+
+      return {
+        ...session,
+        member_count: memberCount || 0,
+        online_count: onlineCount || 0
+      };
+    }));
+
     // 🔥 优化: 返回响应并设置强制禁用缓存
     return NextResponse.json({
       success: true,
-      data: data || []
+      data: sessionsWithCounts
     }, {
       headers: {
         'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',

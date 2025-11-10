@@ -1,4 +1,4 @@
-/**
+﻿/**
  * UI管理模块
  * 负责注册和管理Zotero item pane中的自定义面板
  * 使用Zotero 7/8的官方ItemPaneManager API
@@ -10,13 +10,11 @@ import { config, version as packageVersion } from "../../package.json";
 import { AuthManager } from "./auth";
 import { SupabaseManager } from "./supabase";
 import { MyAnnotationsView } from "./ui/myAnnotationsView";
-import { SharedAnnotationsView } from "./ui/sharedAnnotationsView";
 import { PaperEvaluationView } from "./ui/paperEvaluationView";
 import { QuickSearchView } from "./ui/quickSearchView";
 import { ProfilePreviewView } from "./ui/profilePreviewView";
-import { ReadingSessionHubView } from "./ui/readingSessionHubView";
+import { ReadingSessionView } from "./ui/readingSessionView";
 import { containerPadding } from "./ui/styles";
-import { AnnotationsHubView } from "./ui/annotationsHubView";
 import { createPaperInfoSection, createButtonsSection, createContentSection, createUserInfoBar } from "./ui/components";
 import type {
   BaseViewContext,
@@ -32,11 +30,9 @@ export class UIManager {
   private supabaseManager: SupabaseManager;
   private readonly viewContext: BaseViewContext;
   private readonly myAnnotationsView: MyAnnotationsView;
-  private readonly sharedAnnotationsView: SharedAnnotationsView;
   private readonly paperEvaluationView: PaperEvaluationView;
   private readonly profilePreviewView: ProfilePreviewView;
-  private readonly readingSessionHubView: ReadingSessionHubView;
-  private readonly annotationsHubView: AnnotationsHubView;
+  private readonly readingSessionView: ReadingSessionView;
   private currentItem: any = null;
   private currentViewMode: ViewMode = 'none';
   private panelId = 'researchopia-panel';
@@ -50,12 +46,10 @@ export class UIManager {
     this.supabaseManager = new SupabaseManager();
     this.viewContext = this.createViewContext();
     this.myAnnotationsView = new MyAnnotationsView(this.viewContext);
-    this.sharedAnnotationsView = new SharedAnnotationsView(this.viewContext);
     this.paperEvaluationView = new PaperEvaluationView(this.viewContext);
     this.profilePreviewView = new ProfilePreviewView(this.viewContext);
     this.quickSearchView = new QuickSearchView();
-    this.readingSessionHubView = new ReadingSessionHubView(this.viewContext);
-    this.annotationsHubView = new AnnotationsHubView(this.viewContext);
+    this.readingSessionView = new ReadingSessionView(this.viewContext);
   }
 
   private createViewContext(): BaseViewContext {
@@ -103,31 +97,19 @@ export class UIManager {
   }
 
   /**
-   * 检查实验性功能是否开启（仅用于共享标注）
-   */
-  private isExperimentalFeatureEnabled(): boolean {
-    try {
-      return Zotero.Prefs.get('extensions.zotero.researchopia.enableExperimentalFeatures', true) === true;
-    } catch (error) {
-      logger.error("[UIManager] Error checking experimental feature flag:", error);
-      return false;
-    }
-  }
-
-  /**
    * 显示"即将上线"提示
    */
   private showFeatureComingSoonMessage(container: HTMLElement, featureName: string): void {
     container.innerHTML = `
       <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 20px; text-align: center;">
         <div style="font-size: 48px; margin-bottom: 16px;">🚀</div>
-        <div style="font-size: 18px; font-weight: 600; color: var(--fill-primary); margin-bottom: 8px;">
+        <div style="font-size: 18px; font-weight: 600; color: #212529; margin-bottom: 8px;">
           ${featureName}功能即将上线
         </div>
-        <div style="font-size: 14px; color: var(--fill-secondary); margin-bottom: 20px;">
+        <div style="font-size: 14px; color: #6c757d; margin-bottom: 20px;">
           我们正在努力开发和测试中,敬请期待!
         </div>
-        <div style="font-size: 12px; color: var(--fill-tertiary); padding: 12px 20px; background: var(--material-background); border-radius: 8px;">
+        <div style="font-size: 12px; color: #9ca3af; padding: 12px 20px; background: #ffffff; border-radius: 8px;">
           💡 提示: 开发者可以在"偏好设置 → 开发者选项"中开启实验性功能进行测试
         </div>
       </div>
@@ -149,6 +131,16 @@ export class UIManager {
     logger.log("[UIManager] 🎨 Initializing UI Manager...");
 
     try {
+      // 版本检测（必须在最前面）
+      const { VersionChecker } = await import('./versionChecker');
+      const versionChecker = VersionChecker.getInstance();
+      const versionOk = await versionChecker.checkAndEnforce();
+      
+      if (!versionOk) {
+        logger.warn("[UIManager] ⚠️ Version check failed, plugin may be restricted");
+        // 不抛出错误，允许插件部分功能运行
+      }
+      
       // 确保ItemPaneManager可用 (Zotero 7+)
       if (!(Zotero as any).ItemPaneManager) {
         throw new Error("ItemPaneManager not available. Requires Zotero 7+");
@@ -327,7 +319,7 @@ export class UIManager {
                 const versionSpan = doc.createElement('span');
                 versionSpan.className = 'researchopia-version';
                 versionSpan.style.cssText = `
-                  color: var(--fill-secondary); 
+                  color: #6c757d; 
                   font-size: inherit; 
                   font-weight: 600;
                   margin-left: 4px;
@@ -342,7 +334,7 @@ export class UIManager {
                   websiteBtn.style.cssText = `
                     padding: 3px 8px;
                     background: transparent;
-                    color: var(--fill-secondary);
+                    color: #6c757d;
                     border: none;
                     border-radius: 3px;
                     cursor: pointer;
@@ -518,7 +510,7 @@ export class UIManager {
       flex-direction: column;
       gap: 12px;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: var(--material-background);
+      background: #ffffff;
       min-height: 400px;
       width: 100%;
       max-width: 100%;
@@ -536,8 +528,11 @@ export class UIManager {
     const paperInfoSection = createPaperInfoSection(doc);
     mainContainer.appendChild(paperInfoSection);
 
-    // 功能按钮区域
-    const buttonsSection = createButtonsSection(doc, this.handleButtonClick.bind(this));
+    // 功能按钮区域(传入禁用的功能列表)
+    const { VersionChecker } = await import('./versionChecker');
+    const versionChecker = VersionChecker.getInstance();
+    const disabledFeatures = versionChecker.getDisabledFeatures();
+    const buttonsSection = createButtonsSection(doc, this.handleButtonClick.bind(this), disabledFeatures);
     mainContainer.appendChild(buttonsSection);
 
     // 内容展示区域
@@ -686,7 +681,6 @@ export class UIManager {
           
           const features = [
             { icon: '📖', color: '#ec4899', title: '文献共读', desc: '创建或加入共读会话,与他人协同阅读' },
-            { icon: '👥', color: '#8b5cf6', title: '共享标注', desc: '浏览其他用户的标注,管理自己的标注' },
             { icon: '⭐', color: '#f97316', title: '论文评价', desc: '查看论文评分、评论及学术讨论' }, 
             { icon: '🔍', color: '#10b981', title: '快捷搜索', desc: '一键搜索相关论文和学术资源' }
           ];
@@ -1043,6 +1037,21 @@ export class UIManager {
     logger.log("[UIManager] currentItemId saved:", this.currentItemId);
 
     try {
+      // 检查功能是否被禁用
+      const { VersionChecker } = await import('./versionChecker');
+      const versionChecker = VersionChecker.getInstance();
+      const featureMap: { [key: string]: 'reading-session' | 'paper-evaluation' | 'quick-search' } = {
+        'reading-session': 'reading-session',
+        'paper-evaluation': 'paper-evaluation',
+        'quick-search': 'quick-search'
+      };
+      
+      if (mode in featureMap && versionChecker.isFeatureDisabled(featureMap[mode])) {
+        // 在内容区域显示禁用提示,而非弹窗
+        this.showFeatureDisabledView(featureMap[mode]);
+        return;
+      }
+      
       // 功能权限控制: 只有"快捷搜索"可以无登录使用,其他功能需要登录
       const requiresLogin = mode !== 'quick-search';
       
@@ -1175,7 +1184,7 @@ export class UIManager {
       logger.log("[UIManager] 🔄 Showing loading indicator...");
       contentSection.innerHTML = `
         <div style="display: flex; align-items: center; justify-content: center; padding: 40px;">
-          <div style="text-align: center; color: var(--fill-secondary);">
+          <div style="text-align: center; color: #6c757d;">
             <div style="margin-bottom: 8px;">⏳ 正在加载数据...</div>
           </div>
         </div>
@@ -1188,16 +1197,6 @@ export class UIManager {
             await this.renderMyAnnotations(contentSection);
             logger.log("[UIManager] ✅ My annotations rendered");
             break;
-          case 'shared-annotations':
-            // 检查实验性功能是否开启（共享标注仍为实验性功能）
-            if (this.isExperimentalFeatureEnabled()) {
-              // 渲染标注中心Hub视图(包含次级按钮)
-              await this.annotationsHubView.render();
-              logger.log("[UIManager] ✅ Annotations hub rendered");
-            } else {
-              this.showFeatureComingSoonMessage(contentSection, '共享标注');
-            }
-            break;
           case 'paper-evaluation':
             await this.paperEvaluationView.render(contentSection, paperInfo);
             logger.log("[UIManager] ✅ Paper evaluation rendered");
@@ -1207,8 +1206,8 @@ export class UIManager {
             logger.log("[UIManager] ✅ Quick search rendered");
             break;
           case 'reading-session':
-            await this.readingSessionHubView.render();
-            logger.log("[UIManager] ✅ Reading session hub rendered");
+            await this.readingSessionView.render();
+            logger.log("[UIManager] ✅ Reading session view rendered");
             break;
         }
 
@@ -1218,7 +1217,7 @@ export class UIManager {
           // 内容渲染到了错误的document,需要清空并显示提示
           contentSection.innerHTML = `
             <div style="display: flex; align-items: center; justify-content: center; padding: 40px;">
-              <div style="text-align: center; color: var(--fill-tertiary);">
+              <div style="text-align: center; color: #9ca3af;">
                 <div style="margin-bottom: 8px;">ℹ️ 请重新点击按钮</div>
                 <div style="font-size: 12px;">文献已切换</div>
               </div>
@@ -1249,7 +1248,7 @@ export class UIManager {
         logger.error("[UIManager] Error during rendering:", error);
         contentSection.innerHTML = `
           <div style="display: flex; align-items: center; justify-content: center; padding: 40px;">
-            <div style="text-align: center; color: var(--accent-red);">
+            <div style="text-align: center; color: #dc3545;">
               <div>❌ 加载失败</div>
               <div style="font-size: 12px; margin-top: 8px;">${error instanceof Error ? error.message : '未知错误'}</div>
             </div>
@@ -1271,14 +1270,7 @@ export class UIManager {
     await this.myAnnotationsView.render(container, searchQuery);
   }
 
-  /**
-   * 渲染"查看共享标注"视图
-   * 委托给SharedAnnotationsView处理
-   */
-  private async renderSharedAnnotations(container: HTMLElement, searchQuery = ''): Promise<void> {
-    logger.log("[UIManager] 👥 Delegating to SharedAnnotationsView.render()...");
-    await this.sharedAnnotationsView.render(container, searchQuery);
-  }
+
 
 
 
@@ -1324,12 +1316,69 @@ export class UIManager {
   }
 
   /**
+   * 在内容区域显示功能禁用提示
+   */
+  private async showFeatureDisabledView(feature: 'reading-session' | 'paper-evaluation' | 'quick-search'): Promise<void> {
+    try {
+      const featureNames = {
+        'reading-session': '文献共读',
+        'paper-evaluation': '论文评价',
+        'quick-search': '快捷搜索'
+      };
+      const featureName = featureNames[feature];
+      
+      const { VersionChecker } = await import('./versionChecker');
+      const versionChecker = VersionChecker.getInstance();
+      const versionConfig = versionChecker.getVersionConfig();
+      const latestVersion = versionConfig?.latest_version || '最新版本';
+      
+      // 获取所有面板的内容区域并更新
+      for (const [itemId, panelDoc] of this.itemDocuments) {
+        const contentSection = panelDoc.querySelector('#researchopia-content');
+        if (contentSection) {
+          const { envConfig } = await import('../config/env');
+          
+          contentSection.innerHTML = `
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; padding: 40px; text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px; color: white;">
+              <div style="font-size: 64px; margin-bottom: 20px;">🔒</div>
+              <h2 style="font-size: 20px; font-weight: 700; margin-bottom: 12px;">功能未开放</h2>
+              <p style="font-size: 14px; margin-bottom: 8px; opacity: 0.9;">${featureName} 功能在当前版本中不可用</p>
+              <p style="font-size: 14px; margin-bottom: 24px; opacity: 0.9;">请升级到 <span style="font-weight: 600;">v${latestVersion}</span> 以使用此功能</p>
+              <button id="btn-goto-update" style="padding: 12px 32px; background: white; color: #667eea; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);">
+                前往更新
+              </button>
+            </div>
+          `;
+          
+          const updateBtn = contentSection.querySelector('#btn-goto-update');
+          if (updateBtn) {
+            updateBtn.addEventListener('mouseenter', () => {
+              (updateBtn as HTMLElement).style.transform = 'scale(1.05)';
+              (updateBtn as HTMLElement).style.boxShadow = '0 6px 16px rgba(0, 0, 0, 0.2)';
+            });
+            updateBtn.addEventListener('mouseleave', () => {
+              (updateBtn as HTMLElement).style.transform = 'scale(1)';
+              (updateBtn as HTMLElement).style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+            });
+            updateBtn.addEventListener('click', () => {
+              const url = `${envConfig.apiBaseUrl}/updates`;
+              (Zotero as any).launchURL(url);
+            });
+          }
+        }
+      }
+      
+      logger.log(`[UIManager] Showed feature disabled view for: ${feature}`);
+    } catch (error) {
+      logger.error("[UIManager] Error showing feature disabled view:", error);
+    }
+  }
+
+  /**
    * 清理
    */
   public cleanup(): void {
     logger.log("[UIManager] 🧹 Cleaning up UI Manager...");
-    this.sharedAnnotationsView.cleanup();
-    this.annotationsHubView.cleanup();
     this.currentItem = null;
     this.currentViewMode = 'none';
   }
@@ -1553,10 +1602,25 @@ export class UIManager {
     }
   }
 
-
-
-
-
-
-
+  /**
+   * 生成诊断报告(静态方法,可从任何地方调用)
+   */
+  public static async generateDiagnosticReport(): Promise<void> {
+    try {
+      const { DiagnosticsManager } = await import('./diagnostics');
+      await DiagnosticsManager.generateReport();
+    } catch (error) {
+      logger.error('[UIManager] ❌ Failed to generate diagnostic report:', error);
+      
+      const ProgressWindow = (Zotero as any).ProgressWindow;
+      if (ProgressWindow) {
+        const progressWindow = new ProgressWindow({ closeOnClick: true });
+        progressWindow.changeHeadline('错误');
+        progressWindow.addDescription('❌ 生成诊断报告失败');
+        progressWindow.addDescription(String(error));
+        progressWindow.show();
+        progressWindow.startCloseTimer(3000);
+      }
+    }
+  }
 }

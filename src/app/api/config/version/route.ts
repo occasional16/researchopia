@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
     if (error || !data) {
       console.warn('[Version API] Config not found for plugin:', pluginName, error);
       // 返回默认配置，不阻止插件运行
-      return NextResponse.json({
+      const response = NextResponse.json({
         min_version: '0.0.0',
         latest_version: '999.999.999',
         download_url: 'https://github.com/your-repo/releases',
@@ -50,6 +50,10 @@ export async function GET(request: NextRequest) {
         message: '版本检测服务暂时不可用',
         disabled_features: []
       } as VersionConfig);
+      
+      // 禁用缓存
+      response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+      return response;
     }
     
     // 检查是否为灰度测试用户
@@ -75,7 +79,7 @@ export async function GET(request: NextRequest) {
     });
     
     // 返回版本配置（测试用户看到 beta 版本）
-    return NextResponse.json({
+    const response = NextResponse.json({
       min_version: data.min_version,
       latest_version: latestVersion,
       stable_version: data.latest_version, // 始终返回正式版本号
@@ -88,10 +92,17 @@ export async function GET(request: NextRequest) {
       beta_confirm_message: isBetaTester ? data.beta_confirm_message : undefined // 仅测试用户收到确认框信息
     } as VersionConfig);
     
+    // 禁用缓存，确保生产环境实时更新
+    response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    response.headers.set('Pragma', 'no-cache');
+    response.headers.set('Expires', '0');
+    
+    return response;
+    
   } catch (error) {
     console.error('[Version API] Error:', error);
     // 出错时返回宽松配置
-    return NextResponse.json({
+    const response = NextResponse.json({
       min_version: '0.0.0',
       latest_version: '999.999.999',
       download_url: 'https://github.com/your-repo/releases',
@@ -99,5 +110,9 @@ export async function GET(request: NextRequest) {
       message: '版本检测服务出错',
       disabled_features: []
     } as VersionConfig, { status: 200 });
+    
+    // 禁用缓存
+    response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+    return response;
   }
 }

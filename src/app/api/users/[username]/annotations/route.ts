@@ -25,8 +25,17 @@ export async function GET(
     const offset = parseInt(searchParams.get('offset') || '0')
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
+    
+    // 获取当前登录用户
+    const authHeader = request.headers.get('Authorization')
+    let currentUserId: string | null = null
+    if (authHeader?.startsWith('Bearer ')) {
+      const token = authHeader.substring(7)
+      const { data: { user: authUser } } = await supabase.auth.getUser(token)
+      currentUserId = authUser?.id || null
+    }
 
-    // 获取用户ID
+    // 获取目标用户ID
     const { data: user, error: userError } = await supabase
       .from('users')
       .select('id, username')
@@ -39,9 +48,12 @@ export async function GET(
         { status: 404 }
       )
     }
+    
+    // 判断是否查询自己的标注
+    const isOwnProfile = currentUserId === user.id
 
     // 获取用户的标注（通过documents关联到papers）
-    const { data: annotations, error: annotationsError } = await supabase
+    let annotationsQuery = supabase
       .from('annotations')
       .select(`
         id,
@@ -51,8 +63,15 @@ export async function GET(
         color,
         tags,
         visibility,
+        show_author_name,
         created_at,
         updated_at,
+        user_id,
+        users!inner (
+          id,
+          username,
+          display_name
+        ),
         documents (
           id,
           doi,
@@ -70,7 +89,13 @@ export async function GET(
         )
       `)
       .eq('user_id', user.id)
-      .eq('visibility', 'public')
+    
+    // 如果不是查询自己,只返回public标注
+    if (!isOwnProfile) {
+      annotationsQuery = annotationsQuery.eq('visibility', 'public')
+    }
+    
+    const { data: annotations, error: annotationsError } = await annotationsQuery
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1)
 
@@ -79,11 +104,16 @@ export async function GET(
     }
 
     // 获取总数
-    const { count } = await supabase
+    let countQuery = supabase
       .from('annotations')
       .select('*', { count: 'exact', head: true })
       .eq('user_id', user.id)
-      .eq('visibility', 'public')
+    
+    if (!isOwnProfile) {
+      countQuery = countQuery.eq('visibility', 'public')
+    }
+    
+    const { count } = await countQuery
 
     return NextResponse.json({
       success: true,

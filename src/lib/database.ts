@@ -632,10 +632,10 @@ export function calculateAverageRating(ratings: Rating[]) {
 
   const totals = ratings.reduce(
     (acc, rating) => ({
-      innovation: acc.innovation + rating.innovation_score,
-      methodology: acc.methodology + rating.methodology_score,
-      practicality: acc.practicality + rating.practicality_score,
-      overall: acc.overall + rating.overall_score,
+      innovation: acc.innovation + (rating.innovation_score || 0),
+      methodology: acc.methodology + (rating.methodology_score || 0),
+      practicality: acc.practicality + (rating.practicality_score || 0),
+      overall: acc.overall + (rating.overall_score || 0),
     }),
     { innovation: 0, methodology: 0, practicality: 0, overall: 0 }
   )

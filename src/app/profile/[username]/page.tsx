@@ -664,9 +664,39 @@ export default function UserProfilePage() {
 
                                 {/* 元信息 */}
                                 <div className="flex items-center gap-4 text-sm text-gray-500">
+                                  {/* 作者名显示:私密→"私密",匿名→"匿名用户",其他→真实用户名 */}
+                                  <span>
+                                    {annotation.visibility === 'private' ? (
+                                      '私密'
+                                    ) : annotation.show_author_name === false ? (
+                                      '匿名用户'
+                                    ) : (
+                                      annotation.users?.username || profile?.username || '未知用户'
+                                    )}
+                                  </span>
+                                  <span>•</span>
                                   <span className="flex items-center gap-1">
-                                    <Eye className="w-4 h-4" />
-                                    {annotation.visibility === 'public' ? '公开' : '私密'}
+                                    {annotation.visibility === 'public' && annotation.show_author_name !== false ? (
+                                      <>
+                                        <Eye className="w-4 h-4" />
+                                        公开
+                                      </>
+                                    ) : annotation.visibility === 'public' && annotation.show_author_name === false ? (
+                                      <>
+                                        🎭
+                                        匿名
+                                      </>
+                                    ) : annotation.visibility === 'private' ? (
+                                      <>
+                                        🔒
+                                        私密
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Eye className="w-4 h-4" />
+                                        {annotation.visibility || '未知'}
+                                      </>
+                                    )}
                                   </span>
                                   <span className="flex items-center gap-1">
                                     <Heart className="w-4 h-4" />

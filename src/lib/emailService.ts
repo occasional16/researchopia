@@ -1,5 +1,5 @@
-// Custom SMTP email service
-import nodemailer from 'nodemailer'
+// Email service with Resend API (recommended) and SMTP fallback
+import { Resend } from 'resend'
 
 export interface EmailTemplate {
   subject: string
@@ -16,13 +16,6 @@ export interface EmailSendResult {
 }
 
 export interface EmailConfig {
-  host: string
-  port: number
-  secure: boolean
-  auth: {
-    user: string
-    pass: string
-  }
   from: {
     email: string
     name: string
@@ -30,67 +23,77 @@ export interface EmailConfig {
 }
 
 class EmailService {
-  private transporter: nodemailer.Transporter | null = null
+  private resend: Resend | null = null
   private config: EmailConfig | null = null
+  private provider: 'resend' | 'smtp' | null = null
 
   /**
-   * Initialize the email service with SMTP configuration
+   * Initialize the email service with Resend API
    */
   async initialize(): Promise<void> {
     const config: EmailConfig = {
-      host: process.env.SMTP_HOST || 'smtp.sendgrid.net',
-      port: parseInt(process.env.SMTP_PORT || '587'),
-      secure: process.env.SMTP_PORT === '465', // true for 465, false for other ports
-      auth: {
-        user: process.env.SMTP_USER || 'apikey',
-        pass: process.env.SMTP_PASS || ''
-      },
       from: {
-        email: process.env.SMTP_FROM_EMAIL || 'noreply@researchopia.com',
-        name: process.env.SMTP_FROM_NAME || 'Researchopia'
+        email: process.env.EMAIL_FROM || 'noreply@researchopia.com',
+        name: process.env.EMAIL_FROM_NAME || 'Researchopia'
       }
-    }
-
-    // Log configuration status (without exposing sensitive data)
-    console.log('📧 Email Service Configuration:', {
-      host: config.host,
-      port: config.port,
-      secure: config.secure,
-      user: config.auth.user,
-      passConfigured: !!config.auth.pass && config.auth.pass !== 'your_sendgrid_api_key',
-      from: config.from.email
-    })
-
-    // Check if SMTP is configured
-    if (!config.auth.pass || config.auth.pass === 'your_sendgrid_api_key') {
-      console.warn('⚠️ SMTP not configured properly, email service will not be available')
-      console.warn('⚠️ Please set SMTP_PASS environment variable with your SendGrid API key')
-      return
     }
 
     this.config = config
 
-    // Create transporter
-    this.transporter = nodemailer.createTransport({
-      host: config.host,
-      port: config.port,
-      secure: config.secure,
-      auth: config.auth,
-      // Additional options for better deliverability
-      pool: true,
-      maxConnections: 5,
-      maxMessages: 100,
-      rateDelta: 1000, // 1 second between messages
-      rateLimit: 10 // max 10 messages per rateDelta
-    })
+    // Try Resend first (recommended)
+    const resendKey = process.env.RESEND_API_KEY
+    if (resendKey) {
+      try {
+        this.resend = new Resend(resendKey)
+        this.provider = 'resend'
+        console.log('✅ Email service initialized with Resend API')
+        console.log('📧 From:', `${config.from.name} <${config.from.email}>`)
+        return
+      } catch (error) {
+        console.error('❌ Resend initialization failed:', error)
+      }
+    }
 
-    // Verify connection
+    // If Resend not available, check SMTP (legacy fallback)
+    const smtpConfigured = process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS
+    if (smtpConfigured) {
+      console.warn('⚠️ Using legacy SMTP configuration. Consider migrating to Resend.')
+      console.warn('⚠️ Get free API key at: https://resend.com/api-keys')
+      this.provider = 'smtp'
+      await this.initializeSMTP()
+      return
+    }
+
+    console.error('❌ No email service configured!')
+    console.error('📌 To fix: Add RESEND_API_KEY to .env.local')
+    console.error('📌 Get free key: https://resend.com/api-keys')
+  }
+
+  /**
+   * Legacy SMTP initialization (kept for backward compatibility)
+   */
+  private async initializeSMTP(): Promise<void> {
+    // Dynamic import to avoid loading nodemailer if not needed
+    const nodemailer = await import('nodemailer')
+    
+    const smtpConfig = {
+      host: process.env.SMTP_HOST!,
+      port: parseInt(process.env.SMTP_PORT || '587'),
+      secure: process.env.SMTP_PORT === '465',
+      auth: {
+        user: process.env.SMTP_USER!,
+        pass: process.env.SMTP_PASS!
+      }
+    }
+
+    const transporter = nodemailer.default.createTransport(smtpConfig)
+    
     try {
-      await this.transporter.verify()
+      await transporter.verify()
       console.log('✅ SMTP server connection verified')
     } catch (error) {
       console.error('❌ SMTP server connection failed:', error)
-      this.transporter = null
+      this.provider = null
     }
   }
 
@@ -119,43 +122,92 @@ class EmailService {
   }
 
   /**
-   * Generic email sending method
+   * Generic email sending method with Resend API
    */
   private async sendEmail(to: string, template: EmailTemplate): Promise<EmailSendResult> {
-    if (!this.transporter || !this.config) {
+    if (!this.config) {
       return {
         success: false,
         error: 'Email service not configured'
       }
     }
 
+    // Try Resend API first
+    if (this.provider === 'resend' && this.resend) {
+      try {
+        const { data, error } = await this.resend.emails.send({
+          from: `${this.config.from.name} <${this.config.from.email}>`,
+          to: [to],
+          subject: template.subject,
+          html: template.html,
+          text: template.text,
+        })
+
+        if (error) {
+          console.error(`❌ Resend API error for ${to}:`, error)
+          return {
+            success: false,
+            error: error.message
+          }
+        }
+
+        console.log(`✅ Email sent via Resend to ${to}: ${data?.id}`)
+        return {
+          success: true,
+          messageId: data?.id
+        }
+      } catch (error: any) {
+        console.error(`❌ Failed to send via Resend to ${to}:`, error)
+        return {
+          success: false,
+          error: error.message
+        }
+      }
+    }
+
+    // Fallback to SMTP (legacy)
+    if (this.provider === 'smtp') {
+      return this.sendEmailSMTP(to, template)
+    }
+
+    return {
+      success: false,
+      error: 'No email provider configured'
+    }
+  }
+
+  /**
+   * Legacy SMTP sending (kept for backward compatibility)
+   */
+  private async sendEmailSMTP(to: string, template: EmailTemplate): Promise<EmailSendResult> {
     try {
-      const mailOptions = {
-        from: `"${this.config.from.name}" <${this.config.from.email}>`,
+      const nodemailer = await import('nodemailer')
+      const transporter = nodemailer.default.createTransport({
+        host: process.env.SMTP_HOST!,
+        port: parseInt(process.env.SMTP_PORT || '587'),
+        secure: process.env.SMTP_PORT === '465',
+        auth: {
+          user: process.env.SMTP_USER!,
+          pass: process.env.SMTP_PASS!
+        }
+      })
+
+      const info = await transporter.sendMail({
+        from: `"${this.config!.from.name}" <${this.config!.from.email}>`,
         to,
         subject: template.subject,
         text: template.text,
         html: template.html,
-        // Headers for better deliverability
-        headers: {
-          'X-Mailer': 'Researchopia',
-          'X-Priority': '3',
-          'List-Unsubscribe': `<mailto:unsubscribe@researchopia.com>`,
-        }
-      }
-
-      const info = await this.transporter.sendMail(mailOptions)
+      })
       
-      console.log(`📧 Email sent successfully to ${to}: ${info.messageId}`)
-      
+      console.log(`📧 Email sent via SMTP to ${to}: ${info.messageId}`)
       return {
         success: true,
         messageId: info.messageId,
-        rejected: info.rejected
+        rejected: info.rejected.map(addr => typeof addr === 'string' ? addr : addr.address)
       }
     } catch (error: any) {
-      console.error(`❌ Failed to send email to ${to}:`, error)
-      
+      console.error(`❌ Failed to send via SMTP to ${to}:`, error)
       return {
         success: false,
         error: error.message,
@@ -340,7 +392,7 @@ class EmailService {
    * Check if email service is available
    */
   isAvailable(): boolean {
-    return this.transporter !== null && this.config !== null
+    return this.provider !== null && this.config !== null
   }
 }
 

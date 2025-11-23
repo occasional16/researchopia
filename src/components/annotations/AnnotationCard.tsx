@@ -164,7 +164,14 @@ export const AnnotationCard: React.FC<AnnotationCardProps> = ({
             <span title={`类型: ${annotation.type}`}>
               {getTypeIcon(annotation.type)}
             </span>
-            <span>{annotation.metadata.author.name}</span>
+            {/* 作者名显示:根据visibility和show_author_name */}
+            <span>
+              {annotation.metadata.visibility === 'private' 
+                ? '私密' 
+                : (annotation.metadata as any).show_author_name === false
+                ? '匿名用户'
+                : annotation.metadata.author.name}
+            </span>
             <span>•</span>
             <span title={new Date(annotation.createdAt).toLocaleString()}>
               {formatTime(annotation.createdAt)}
@@ -404,12 +411,16 @@ export const AnnotationCard: React.FC<AnnotationCardProps> = ({
               {/* 可见性指示 */}
               <span className="flex items-center space-x-1">
                 <span>
-                  {annotation.metadata.visibility === 'public' ? '🌐' : 
-                   annotation.metadata.visibility === 'shared' ? '👥' : '🔒'}
+                  {annotation.metadata.visibility === 'public' && (annotation.metadata as any).show_author_name !== false ? '🌐' : 
+                   annotation.metadata.visibility === 'public' && (annotation.metadata as any).show_author_name === false ? '🎭' :
+                   annotation.metadata.visibility === 'shared' ? '👥' : 
+                   annotation.metadata.visibility === 'private' ? '🔒' : '🔒'}
                 </span>
                 <span>
-                  {annotation.metadata.visibility === 'public' ? '公开' : 
-                   annotation.metadata.visibility === 'shared' ? '共享' : '私有'}
+                  {annotation.metadata.visibility === 'public' && (annotation.metadata as any).show_author_name !== false ? '公开' : 
+                   annotation.metadata.visibility === 'public' && (annotation.metadata as any).show_author_name === false ? '匿名' :
+                   annotation.metadata.visibility === 'shared' ? '共享' : 
+                   annotation.metadata.visibility === 'private' ? '私密' : '私有'}
                 </span>
               </span>
             </div>

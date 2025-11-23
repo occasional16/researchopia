@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
-import { MockAuthService } from '@/lib/mockAuth'
 
 // GET /api/pdf/documents - 获取PDF文档列表
 export async function GET(request: NextRequest) {
@@ -11,38 +10,8 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '20')
     const offset = (page - 1) * limit
 
-    // Check if using Supabase or Mock mode
-    if (!supabase || MockAuthService.shouldUseMockAuth()) {
-      // Mock data for development
-      return NextResponse.json({
-        documents: [
-          {
-            id: 'mock-pdf-001',
-            title: '示例论文：机器学习在学术评估中的应用',
-            filename: 'sample-ml-paper.pdf',
-            file_url: '/api/pdf/sample.pdf',
-            total_pages: 15,
-            file_size: 2048000,
-            users: { username: 'demo', avatar_url: null },
-            papers: { title: '机器学习在学术评估中的应用', authors: ['张三', '李四'] },
-            stats: {
-              total_annotations: 5,
-              total_highlights: 3,
-              total_notes: 2,
-              total_bookmarks: 1,
-              unique_users: 2,
-              avg_annotations_per_page: 0.33
-            },
-            created_at: new Date().toISOString()
-          }
-        ],
-        pagination: {
-          page,
-          limit,
-          total: 1,
-          totalPages: 1
-        }
-      })
+    if (!supabase) {
+      return NextResponse.json({ error: 'Database not configured' }, { status: 500 })
     }
 
     // 查询PDF文档，包含上传者信息
@@ -126,24 +95,8 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
 
-    // Check if using Supabase or Mock mode
-    if (!supabase || MockAuthService.shouldUseMockAuth()) {
-      // Mock response for development
-      return NextResponse.json({
-        message: 'PDF document created successfully (mock mode)',
-        document: {
-          id: `mock-pdf-${Date.now()}`,
-          title,
-          filename,
-          file_url,
-          total_pages,
-          file_size,
-          paper_id: paper_id || null,
-          uploaded_by: 'mock-demo-001',
-          users: { username: 'demo', avatar_url: null },
-          created_at: new Date().toISOString()
-        }
-      }, { status: 201 })
+    if (!supabase) {
+      return NextResponse.json({ error: 'Database not configured' }, { status: 500 })
     }
 
     // 检查文件哈希是否已存在（避免重复上传）

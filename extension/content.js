@@ -80,17 +80,34 @@ class ResearchopiaContentScript {
       return this.detectedDOI;
     }
 
-    // 方法2: 从URL提取 
+    // 方法2: 从URL提取（增强支持arXiv, bioRxiv, SSRN等）
     const urlPatterns = [
       /doi\.org\/(.+)$/i,
       /\/doi\/(.+?)(?:\?|$)/i,
-      /doi[=:]([^&\s]+)/i
+      /doi[=:]([^&\s]+)/i,
+      // arXiv: arxiv.org/abs/2301.12345
+      /arxiv\.org\/(?:abs|pdf)\/(\d{4}\.\d{4,5})/i,
+      // bioRxiv/medRxiv: biorxiv.org/content/10.1101/2023.01.01.522000v1
+      /(?:bio|med)rxiv\.org\/content\/(10\.\d+\/[^?\s]+)/i,
+      // SSRN: ssrn.com/abstract=1234567 或 papers.ssrn.com/sol3/papers.cfm?abstract_id=1234567
+      /ssrn\.com\/(?:abstract=|papers\.cfm\?abstract_id=)(\d+)/i,
     ];
     
     for (const pattern of urlPatterns) {
       const match = window.location.href.match(pattern);
       if (match && match[1]) {
-        this.detectedDOI = this.cleanDOI(decodeURIComponent(match[1]));
+        let doi = decodeURIComponent(match[1]);
+        
+        // arXiv特殊处理：转换为DOI格式
+        if (pattern.source.includes('arxiv')) {
+          doi = `10.48550/arXiv.${doi}`;
+        }
+        // SSRN特殊处理
+        else if (pattern.source.includes('ssrn')) {
+          doi = `10.2139/ssrn.${doi}`;
+        }
+        
+        this.detectedDOI = this.cleanDOI(doi);
         console.log('✅ 从URL检测到DOI:', this.detectedDOI);
         return this.detectedDOI;
       }
@@ -127,10 +144,14 @@ class ResearchopiaContentScript {
     return null;
   }
 
-  // 清理DOI格式
+  // 清理DOI格式（使用共享DOI工具）
   cleanDOI(doi) {
     if (!doi) return null;
-    return doi.replace(/^(doi:|https?:\/\/(dx\.)?doi\.org\/)/, '').trim();
+    // 导入共享库的normalizeDOI逻辑
+    return doi
+      .replace(/^doi:/i, '')
+      .replace(/^https?:\/\/(dx\.)?doi\.org\//i, '')
+      .trim();
   }
 
   // 从JSON-LD结构化数据中提取DOI

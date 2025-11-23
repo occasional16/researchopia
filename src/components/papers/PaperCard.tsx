@@ -55,7 +55,7 @@ export default function PaperCard({ paper }: PaperCardProps) {
       <div className="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400 mb-3">
         <div className="flex items-center space-x-1">
           <Users className="w-4 h-4" />
-          <span>{paper.authors.join(', ')}</span>
+          <span>{paper.authors?.join(', ') || '未知作者'}</span>
         </div>
         
         {paper.publication_date && (

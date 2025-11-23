@@ -28,6 +28,13 @@
 15. [消息传递机制](#message-passing)
 16. [Storage API 使用](#storage-api)
 
+### 第四部分：共享库 (@researchopia/shared)
+17. [共享库概述](#shared-library)
+18. [核心模块详解](#core-modules-shared)
+19. [在各组件中使用](#using-in-components)
+20. [最佳实践](#shared-best-practices)
+21. [故障排查](#shared-troubleshooting)
+
 ---
 
 # 第一部分：Next.js 网站开发
@@ -627,7 +634,47 @@ class Addon {
 <a name="core-modules"></a>
 ## 7. 核心模块说明
 
+### 7.0 模块概览
+
+**当前模块数量**: 25个核心模块
+
+```
+zotero-plugin/src/modules/
+├── annotations.ts              # 标注管理
+├── auth.ts                     # 认证管理
+├── cacheManager.ts             # 缓存管理
+├── configValidator.ts          # 配置验证
+├── diagnostics.ts              # 诊断工具
+├── errorManager.ts             # 错误管理
+├── followManager.ts            # 关注管理
+├── onboarding.ts               # 新手引导
+├── paperEvaluation.ts          # 论文评价
+├── paperRegistry.ts            # 论文注册
+├── pdfReaderManager.ts         # PDF阅读器管理
+├── performanceManager.ts       # 性能监控
+├── preferenceScript.ts         # 偏好设置
+├── readingSessionManager.ts    # 共读会话管理
+├── sessionLogManager.ts        # 会话日志
+├── supabase.ts                 # Supabase数据库
+├── ui-manager.ts               # UI管理器 (⚠️ 600+行,待拆分)
+├── versionChecker.ts           # 版本检查
+├── core/                       # 核心子模块
+├── pdf/                        # PDF子模块
+└── ui/                         # UI视图层
+    ├── myAnnotationsView.ts
+    ├── paperEvaluationView.ts
+    ├── profilePreviewView.ts
+    ├── quickSearchView.ts
+    ├── readingSessionView.ts
+    ├── sessionAnnotationsView.ts
+    ├── currentSessionTabView.ts
+    ├── tools/                  # UI工具组件
+    └── utils/                  # UI工具函数
+```
+
 ### 7.1 AuthManager (认证管理器)
+
+**文件**: `src/modules/auth.ts`
 
 **职责**:
 - 用户登录/注册
@@ -642,6 +689,7 @@ export class AuthManager {
   private token: string | null = null;
 
   public async login(email: string, password: string): Promise<void> {
+    // 调用Next.js代理API (v2规范)
     const response = await apiClient.post('/api/proxy/auth/login', {
       email,
       password,
@@ -665,6 +713,19 @@ export class AuthManager {
     this.token = response.data.token;
     Zotero.Prefs.set('researchopia.token', this.token);
   }
+}
+```
+
+**API端点**: 
+- `POST /api/proxy/auth/login` - 用户登录
+- `POST /api/proxy/auth/refresh` - 刷新Token
+- `POST /api/proxy/auth/logout` - 用户登出
+
+**状态管理**:
+```typescript
+// 使用Zotero Prefs存储持久化数据
+Zotero.Prefs.set('researchopia.user', JSON.stringify(user));
+Zotero.Prefs.set('researchopia.token', token);
 
   public logout(): void {
     this.user = null;
@@ -681,10 +742,13 @@ export class AuthManager {
 
 ### 7.2 ReadingSessionManager (会话管理器)
 
+**文件**: `src/modules/readingSessionManager.ts`
+
 **职责**:
 - 创建/加入共读会话
 - 实时同步标注和聊天
 - 成员状态管理
+- 轮询机制(每5秒同步一次)
 
 **核心代码**:
 ```typescript
@@ -1433,6 +1497,673 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
   }
 });
 ```
+
+---
+
+# 第四部分：共享库 (@researchopia/shared)
+
+<a name="shared-library"></a>
+## 17. 共享库概述
+
+### 17.1 为什么需要共享库?
+
+在Researchopia项目中,Next.js网站、Zotero插件和浏览器扩展都需要处理:
+- **认证**: 邮箱验证、密码强度检查、Session管理
+- **DOI处理**: DOI验证、提取、规范化
+- **API通信**: 超时控制、错误处理、请求封装
+- **常量定义**: API端点、HTTP状态码、错误消息
+
+**问题**: 这些逻辑原本在三个组件中重复实现,导致:
+- 代码重复 (~170行重复代码)
+- 行为不一致 (如DOI规范化逻辑差异)
+- 维护成本高 (修改需要同步三处)
+
+**解决方案**: 创建 `@researchopia/shared` 库,统一管理共享逻辑。
+
+**成果**:
+- 代码复用: ~500行代码被三个组件共享
+- 类型安全: 所有TypeScript编译0错误
+- 行为一致: 统一的RFC 5322邮箱验证和DOI处理逻辑
+
+### 17.2 库结构
+
+```
+packages/shared/
+├── src/
+│   ├── auth/             # 认证模块
+│   │   ├── types.ts      # 类型定义 (User, Session, AuthState)
+│   │   ├── validation.ts # 验证函数 (validateEmail, validatePassword)
+│   │   └── index.ts      # 模块导出
+│   ├── api-client/       # API客户端模块
+│   │   ├── types.ts      # 类型定义 (HttpMethod, APIRequestConfig)
+│   │   ├── fetch-utils.ts # Fetch工具 (fetchWithTimeout)
+│   │   ├── errors.ts     # 错误类 (TimeoutError, APIError)
+│   │   └── index.ts
+│   ├── constants/        # 常量定义
+│   │   ├── api.ts        # API端点
+│   │   ├── http.ts       # HTTP状态码
+│   │   ├── errors.ts     # 错误消息
+│   │   ├── storage.ts    # 存储键名
+│   │   └── index.ts
+│   ├── utils/            # 工具函数
+│   │   ├── doi.ts        # DOI处理 (validateDOI, normalizeDOI)
+│   │   ├── date.ts       # 日期格式化
+│   │   ├── string.ts     # 字符串工具
+│   │   └── index.ts
+│   └── index.ts          # 根导出
+├── package.json          # 包配置
+├── tsconfig.json         # TypeScript配置
+├── tsup.config.ts        # 构建配置
+└── README.md             # 使用文档
+```
+
+### 17.3 使用方式
+
+#### Next.js 网站
+
+**1. 添加依赖** (`package.json`):
+```json
+{
+  "dependencies": {
+    "@researchopia/shared": "file:./packages/shared"
+  }
+}
+```
+
+**2. 导入使用**:
+```typescript
+// src/utils/security.ts
+import { validateEmail } from '@researchopia/shared/auth';
+
+export function validateEmailField(value: any) {
+  const isValid = validateEmail(value);
+  return isValid 
+    ? { isValid: true } 
+    : { isValid: false, message: '邮箱格式不正确' };
+}
+```
+
+```typescript
+// src/components/search/SmartSearch.tsx
+import { extractDOI, extractDOIFromURL } from '@researchopia/shared/utils';
+
+function extractDOIFromInput(input: string): string | null {
+  // 优先从URL提取
+  const fromUrl = extractDOIFromURL(input);
+  if (fromUrl) return fromUrl;
+  
+  // 从文本提取
+  return extractDOI(input);
+}
+```
+
+#### Zotero 插件
+
+**1. 添加依赖** (`zotero-plugin/package.json`):
+```json
+{
+  "dependencies": {
+    "@researchopia/shared": "file:../packages/shared"
+  }
+}
+```
+
+**2. API客户端集成**:
+```typescript
+// zotero-plugin/src/utils/apiClient.ts
+import { fetchWithTimeout } from '@researchopia/shared/api-client';
+
+export class APIClient {
+  async request<T>(url: string, options: RequestInit = {}): Promise<T> {
+    const fetchOptions: RequestInit = {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
+    };
+
+    // 使用共享的超时fetch (5秒超时)
+    const response = await fetchWithTimeout(url, fetchOptions, 5000);
+    
+    if (!response.ok) {
+      throw new Error(`API request failed: ${response.status}`);
+    }
+
+    return response.json();
+  }
+}
+```
+
+**3. DOI工具集成**:
+```typescript
+// zotero-plugin/src/modules/pdf/utils/readerFinder.ts
+import { normalizeDOI } from '@researchopia/shared/utils';
+
+// 直接导出共享版本
+export { normalizeDOI };
+
+export function findReaderByDOI(doi: string) {
+  const normalized = normalizeDOI(doi);
+  // ... 查找逻辑
+}
+```
+
+**4. 保持API兼容性**:
+```typescript
+// zotero-plugin/src/modules/pdf/PDFReaderManagerV2.ts
+import { normalizeDOI } from '@researchopia/shared/utils';
+
+export class PDFReaderManagerV2 {
+  // 保留私有方法API,内部调用共享版本
+  private normalizeDOI(doi: string): string {
+    return normalizeDOI(doi);
+  }
+}
+```
+
+#### 浏览器扩展
+
+**1. 添加依赖** (`extension/package.json`):
+```json
+{
+  "dependencies": {
+    "@researchopia/shared": "file:../packages/shared"
+  }
+}
+```
+
+**2. DOI检测集成**:
+```typescript
+// extension/src/content/doiDetector.ts
+import { validateDOI, normalizeDOI } from '@researchopia/shared/utils';
+
+export class DOIDetector {
+  /**
+   * 清理和验证DOI
+   */
+  private cleanDOI(doi: string): string | null {
+    if (!doi) return null;
+    
+    try {
+      // 使用共享的规范化函数
+      const cleaned = normalizeDOI(doi);
+      
+      // 使用共享的验证函数
+      if (!validateDOI(cleaned)) {
+        console.warn('⚠️ 清理后的DOI格式不正确:', cleaned);
+        return null;
+      }
+      
+      return cleaned;
+    } catch (error) {
+      console.warn('⚠️ 清理DOI失败:', error);
+      return null;
+    }
+  }
+
+  /**
+   * 静态方法: 验证DOI格式
+   */
+  public static isValidDOI(doi: string): boolean {
+    return validateDOI(doi);
+  }
+}
+```
+
+### 17.4 核心模块详解
+
+#### auth - 认证模块
+
+**邮箱验证** (RFC 5322标准):
+```typescript
+import { validateEmail } from '@researchopia/shared/auth';
+
+// 标准邮箱格式
+validateEmail('user@example.com'); // true
+validateEmail('user.name+tag@example.co.uk'); // true
+
+// 无效格式
+validateEmail('invalid'); // false
+validateEmail('@example.com'); // false
+validateEmail('user@'); // false
+```
+
+**密码强度检查**:
+```typescript
+import { validatePassword } from '@researchopia/shared/auth';
+
+// 最少8字符
+validatePassword('MyPass123'); // true
+validatePassword('short'); // false
+```
+
+**Session管理**:
+```typescript
+import { 
+  isSessionValid,
+  isSessionExpiringSoon 
+} from '@researchopia/shared/auth';
+
+const session = {
+  access_token: 'xxx',
+  refresh_token: 'yyy',
+  expires_at: Date.now() + 3600000, // 1小时后过期
+  user: { id: '1', email: 'user@example.com' }
+};
+
+// 检查Session是否有效
+isSessionValid(session); // true
+
+// 检查是否即将过期 (默认5分钟阈值)
+isSessionExpiringSoon(session); // false
+
+// 自定义阈值 (30分钟)
+isSessionExpiringSoon(session, 30 * 60 * 1000); // true
+```
+
+#### api-client - API客户端模块
+
+**超时控制**:
+```typescript
+import { fetchWithTimeout } from '@researchopia/shared/api-client';
+
+try {
+  // 5秒超时
+  const response = await fetchWithTimeout(
+    'https://api.example.com/data',
+    { method: 'GET' },
+    5000
+  );
+  
+  const data = await response.json();
+} catch (error) {
+  // TimeoutError: Request timeout after 5000ms
+  console.error(error.message);
+}
+```
+
+**错误处理**:
+```typescript
+import { 
+  handleAPIError,
+  TimeoutError,
+  NetworkError,
+  APIError,
+  AuthenticationError
+} from '@researchopia/shared/api-client';
+
+try {
+  const response = await fetch('https://api.example.com/data');
+  
+  if (!response.ok) {
+    throw await handleAPIError(response);
+  }
+  
+  return response.json();
+} catch (error) {
+  if (error instanceof TimeoutError) {
+    console.error('请求超时:', error.message);
+  } else if (error instanceof AuthenticationError) {
+    console.error('认证失败:', error.message);
+    // 重定向到登录页
+  } else if (error instanceof APIError) {
+    console.error(`API错误 (${error.statusCode}):`, error.message);
+  } else {
+    console.error('网络错误:', error.message);
+  }
+}
+```
+
+#### utils - 工具函数模块
+
+**DOI处理**:
+```typescript
+import { 
+  validateDOI,
+  extractDOI,
+  extractDOIFromURL,
+  normalizeDOI
+} from '@researchopia/shared/utils';
+
+// 验证DOI格式
+validateDOI('10.1234/example'); // true
+validateDOI('invalid'); // false
+
+// 从文本提取DOI
+extractDOI('Read this paper: doi:10.1234/example'); // '10.1234/example'
+extractDOI('The DOI is 10.5678/test'); // '10.5678/test'
+
+// 从URL提取DOI
+extractDOIFromURL('https://doi.org/10.1234/example'); // '10.1234/example'
+extractDOIFromURL('https://example.com/papers/doi/10.5678/test'); // '10.5678/test'
+
+// 规范化DOI (移除前缀、URL)
+normalizeDOI('doi:10.1234/example'); // '10.1234/example'
+normalizeDOI('https://doi.org/10.1234/example'); // '10.1234/example'
+normalizeDOI('DOI: 10.1234/example'); // '10.1234/example'
+```
+
+**日期格式化**:
+```typescript
+import { formatRelativeTime, formatDate } from '@researchopia/shared/utils';
+
+// 相对时间
+const now = new Date();
+formatRelativeTime(new Date(now.getTime() - 60000)); // '1 minute ago'
+formatRelativeTime(new Date(now.getTime() - 3600000)); // '1 hour ago'
+formatRelativeTime(new Date(now.getTime() - 86400000)); // '1 day ago'
+
+// 日期格式化
+formatDate(new Date(), 'YYYY-MM-DD'); // '2025-11-13'
+formatDate(new Date(), 'YYYY/MM/DD HH:mm:ss'); // '2025/11/13 21:45:30'
+```
+
+**字符串工具**:
+```typescript
+import { truncate, slugify, generateUUID } from '@researchopia/shared/utils';
+
+// 截断字符串
+truncate('This is a very long text that needs truncation', 20); 
+// 'This is a very long...'
+
+// 生成URL友好的slug
+slugify('Hello World! 你好世界'); // 'hello-world-你好世界'
+slugify('TypeScript & React.js'); // 'typescript-reactjs'
+
+// 生成UUID
+const id = generateUUID(); // 'a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6'
+```
+
+#### constants - 常量模块
+
+```typescript
+import { 
+  API_ENDPOINTS,
+  HTTP_STATUS,
+  ERROR_MESSAGES,
+  DEFAULT_CONFIG
+} from '@researchopia/shared/constants';
+
+// API端点
+const loginUrl = API_ENDPOINTS.AUTH.LOGIN; // '/api/auth/login'
+const paperUrl = API_ENDPOINTS.PAPERS.GET_BY_DOI.replace(':doi', '10.1234/example');
+
+// HTTP状态码
+if (response.status === HTTP_STATUS.UNAUTHORIZED) {
+  // 处理未授权
+}
+
+// 错误消息
+throw new Error(ERROR_MESSAGES.AUTH.INVALID_CREDENTIALS);
+
+// 默认配置
+const timeout = DEFAULT_CONFIG.API_TIMEOUT; // 5000 (ms)
+const retries = DEFAULT_CONFIG.RETRY_COUNT; // 3
+```
+
+### 17.5 最佳实践
+
+#### 1. 保持纯函数
+
+```typescript
+// ✅ 推荐: 纯函数,无副作用
+export function normalizeDOI(doi: string): string {
+  return doi
+    .toLowerCase()
+    .trim()
+    .replace(/^doi:\s*/i, '')
+    .replace(/^https?:\/\/(dx\.)?doi\.org\//i, '');
+}
+
+// ❌ 不推荐: 修改外部状态
+let cache = {};
+export function normalizeDOI(doi: string): string {
+  if (cache[doi]) return cache[doi];
+  const result = doi.toLowerCase().trim();
+  cache[doi] = result; // 副作用
+  return result;
+}
+```
+
+#### 2. 明确的类型定义
+
+```typescript
+// ✅ 推荐: 完整类型注解
+export function validateEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+}
+
+// ❌ 不推荐: 使用any
+export function validateEmail(email: any): any {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+```
+
+#### 3. 平台无关
+
+```typescript
+// ✅ 推荐: 跨平台兼容
+export function generateUUID(): string {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
+// ❌ 不推荐: Node.js专用
+import { randomUUID } from 'crypto';
+export function generateUUID(): string {
+  return randomUUID(); // 浏览器环境不可用
+}
+```
+
+#### 4. 详细的JSDoc
+
+```typescript
+/**
+ * 验证DOI格式是否正确
+ * 
+ * @param doi - DOI字符串 (如 '10.1234/example')
+ * @returns 是否为有效的DOI格式
+ * 
+ * @example
+ * ```typescript
+ * validateDOI('10.1234/example'); // true
+ * validateDOI('invalid'); // false
+ * ```
+ */
+export function validateDOI(doi: string): boolean {
+  const doiPattern = /^10\.\d{4,9}\/[^\s]+$/;
+  return doiPattern.test(doi);
+}
+```
+
+### 17.6 构建和发布
+
+**开发构建**:
+```bash
+cd packages/shared
+npm run build
+```
+
+**监听模式** (自动重新构建):
+```bash
+npm run build -- --watch
+```
+
+**版本管理**:
+```bash
+# 更新版本
+npm version patch  # 0.1.0 -> 0.1.1
+npm version minor  # 0.1.1 -> 0.2.0
+npm version major  # 0.2.0 -> 1.0.0
+
+# Git自动同步版本号
+git add -A
+git commit -m "chore: release v0.2.0"
+git push
+```
+
+**构建产物**:
+```
+dist/
+├── auth.js          # ESM模块
+├── auth.mjs         # ESM模块 (明确后缀)
+├── auth.cjs         # CJS模块
+├── auth.d.ts        # TypeScript声明
+├── api-client.js
+├── api-client.mjs
+├── api-client.cjs
+├── api-client.d.ts
+├── constants.js
+├── constants.mjs
+├── constants.cjs
+├── constants.d.ts
+├── utils.js
+├── utils.mjs
+├── utils.cjs
+└── utils.d.ts
+```
+
+### 17.7 故障排查
+
+#### 问题1: TypeScript找不到类型定义
+
+**症状**:
+```
+Cannot find module '@researchopia/shared/auth' or its corresponding type declarations
+```
+
+**解决方案**:
+
+1. **检查依赖安装**:
+```bash
+# 在项目根目录
+npm install
+
+# 在子项目目录 (如zotero-plugin/)
+npm install
+```
+
+2. **检查tsconfig.json的paths配置**:
+```json
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@researchopia/shared/*": ["./packages/shared/src/*"]
+    }
+  }
+}
+```
+
+3. **重新构建shared库**:
+```bash
+cd packages/shared
+npm run build
+```
+
+#### 问题2: Zotero插件找不到模块
+
+**症状**:
+```
+Error: Cannot find module '@researchopia/shared/api-client'
+```
+
+**解决方案**:
+
+1. **检查webpack配置**:
+```javascript
+// zotero-plugin/webpack.config.js (如果存在)
+module.exports = {
+  resolve: {
+    alias: {
+      '@researchopia/shared': path.resolve(__dirname, '../packages/shared/dist')
+    }
+  }
+};
+```
+
+2. **使用相对路径导入** (临时方案):
+```typescript
+// 从绝对路径
+import { fetchWithTimeout } from '@researchopia/shared/api-client';
+
+// 改为相对路径
+import { fetchWithTimeout } from '../../packages/shared/dist/api-client';
+```
+
+#### 问题3: 浏览器扩展Vite构建失败
+
+**症状**:
+```
+[vite] Pre-transform error: Cannot resolve '@researchopia/shared/utils'
+```
+
+**解决方案**:
+
+1. **检查vite.config.ts配置**:
+```typescript
+// extension/vite.config.ts
+import { defineConfig } from 'vite';
+import path from 'path';
+
+export default defineConfig({
+  resolve: {
+    alias: {
+      '@researchopia/shared': path.resolve(__dirname, '../packages/shared/dist')
+    }
+  }
+});
+```
+
+2. **确保依赖安装**:
+```bash
+cd extension
+npm install
+```
+
+#### 问题4: 构建后体积过大
+
+**症状**: 共享库打包后单个文件超过50KB
+
+**解决方案**:
+
+1. **检查tsup配置** (tree-shaking):
+```typescript
+// packages/shared/tsup.config.ts
+export default defineConfig({
+  format: ['esm', 'cjs'],
+  dts: true,
+  splitting: true,  // 启用代码分割
+  treeshake: true,  // 启用tree-shaking
+  clean: true
+});
+```
+
+2. **按需导入**:
+```typescript
+// ❌ 不推荐: 导入整个模块
+import * as utils from '@researchopia/shared/utils';
+
+// ✅ 推荐: 只导入需要的函数
+import { validateDOI, normalizeDOI } from '@researchopia/shared/utils';
+```
+
+### 17.8 未来规划
+
+**短期目标**:
+- [ ] 添加单元测试覆盖 (Jest + Vitest)
+- [ ] 创建CI/CD自动发布流程
+- [ ] 添加更多工具函数 (性能分析、日志格式化)
+
+**长期目标**:
+- [ ] 发布到npm公开仓库
+- [ ] 支持更多平台 (React Native、Electron)
+- [ ] 创建可视化API文档 (TypeDoc)
 
 ---
 

@@ -195,7 +195,14 @@ export class AnnotationManager {
             synced: true
           };
         }
-        return ann;
+        // 如果Supabase中没有该标注,清空共享状态
+        return {
+          ...ann,
+          supabaseId: undefined,
+          visibility: undefined,
+          showAuthorName: undefined,
+          synced: false
+        };
       });
       
       return updatedAnnotations;

@@ -134,10 +134,10 @@ export function calculateAdvancedRatingAnalytics(
 function calculateSimpleAverage(ratings: Rating[]) {
   const totals = ratings.reduce(
     (acc, rating) => ({
-      innovation: acc.innovation + rating.innovation_score,
-      methodology: acc.methodology + rating.methodology_score,
-      practicality: acc.practicality + rating.practicality_score,
-      overall: acc.overall + rating.overall_score,
+      innovation: acc.innovation + (rating.innovation_score || 0),
+      methodology: acc.methodology + (rating.methodology_score || 0),
+      practicality: acc.practicality + (rating.practicality_score || 0),
+      overall: acc.overall + (rating.overall_score || 0),
     }),
     { innovation: 0, methodology: 0, practicality: 0, overall: 0 }
   )
@@ -161,10 +161,10 @@ function calculateWeightedAverage(ratings: Rating[], userWeights: UserRatingWeig
     (acc, rating) => {
       const weight = weightMap.get(rating.user_id) || 0.5 // Default weight for unknown users
       return {
-        innovation: acc.innovation + (rating.innovation_score * weight),
-        methodology: acc.methodology + (rating.methodology_score * weight),
-        practicality: acc.practicality + (rating.practicality_score * weight),
-        overall: acc.overall + (rating.overall_score * weight),
+        innovation: acc.innovation + ((rating.innovation_score || 0) * weight),
+        methodology: acc.methodology + ((rating.methodology_score || 0) * weight),
+        practicality: acc.practicality + ((rating.practicality_score || 0) * weight),
+        overall: acc.overall + ((rating.overall_score || 0) * weight),
         totalWeight: acc.totalWeight + weight
       }
     },

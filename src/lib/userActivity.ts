@@ -1,5 +1,4 @@
 import { supabase } from './supabase'
-import { MockAuthService } from './mockAuth'
 import type { Paper, Rating, Comment } from './supabase'
 
 export interface UserRatingWithPaper extends Rating {
@@ -23,109 +22,13 @@ export interface UserActivity {
   stats: UserStats
 }
 
-// Mock storage for user activity
-const MOCK_RATINGS_KEY = 'academic_rating_mock_ratings'
-const MOCK_COMMENTS_KEY = 'academic_rating_mock_comments'
 
-class MockUserActivityService {
-  private getRatings(): Rating[] {
-    if (typeof window === 'undefined') return []
-    const stored = localStorage.getItem(MOCK_RATINGS_KEY)
-    return stored ? JSON.parse(stored) : []
-  }
-
-  private getComments(): Comment[] {
-    if (typeof window === 'undefined') return []
-    const stored = localStorage.getItem(MOCK_COMMENTS_KEY)
-    return stored ? JSON.parse(stored) : []
-  }
-
-  private getPapers(): Paper[] {
-    if (typeof window === 'undefined') return []
-    const stored = localStorage.getItem('academic_rating_mock_papers')
-    return stored ? JSON.parse(stored) : []
-  }
-
-  async getUserRatings(userId: string): Promise<UserRatingWithPaper[]> {
-    const ratings = this.getRatings().filter(r => r.user_id === userId)
-    const papers = this.getPapers()
-
-    return ratings.map(rating => ({
-      ...rating,
-      papers: papers.find(p => p.id === rating.paper_id) || {
-        id: rating.paper_id,
-        title: 'Unknown Paper',
-        authors: [],
-        doi: '',
-        abstract: '',
-        keywords: [],
-        journal: '',
-        publication_date: '',
-        created_at: '',
-        updated_at: '',
-        created_by: 'system',
-        ratings: []
-      }
-    }))
-  }
-
-  async getUserComments(userId: string): Promise<UserCommentWithPaper[]> {
-    const comments = this.getComments().filter(c => c.user_id === userId)
-    const papers = this.getPapers()
-
-    return comments.map(comment => ({
-      ...comment,
-      papers: papers.find(p => p.id === comment.paper_id) || {
-        id: comment.paper_id,
-        title: 'Unknown Paper',
-        authors: [],
-        doi: '',
-        abstract: '',
-        keywords: [],
-        journal: '',
-        publication_date: '',
-        created_at: '',
-        updated_at: '',
-        created_by: 'system',
-        ratings: []
-      }
-    }))
-  }
-
-  async getUserStats(userId: string): Promise<UserStats> {
-    const ratings = this.getRatings().filter(r => r.user_id === userId)
-    const comments = this.getComments().filter(c => c.user_id === userId)
-    const favorites = this.getFavorites().filter(f => f.user_id === userId)
-
-    const avgRating = ratings.length > 0
-      ? ratings.reduce((sum, r) => sum + r.overall_score, 0) / ratings.length
-      : 0
-
-    return {
-      total_ratings: ratings.length,
-      total_comments: comments.length,
-      total_favorites: favorites.length,
-      avg_rating: avgRating
-    }
-  }
-
-  private getFavorites(): any[] {
-    if (typeof window === 'undefined') return []
-    const stored = localStorage.getItem('academic_rating_mock_favorites')
-    return stored ? JSON.parse(stored) : []
-  }
-}
-
-const mockUserActivity = new MockUserActivityService()
 
 /**
  * Get user's ratings with paper information
  */
 export async function getUserRatings(userId: string): Promise<UserRatingWithPaper[]> {
   try {
-    if (MockAuthService.shouldUseMockAuth()) {
-      return await mockUserActivity.getUserRatings(userId)
-    }
 
     if (!supabase) return []
 
@@ -158,9 +61,6 @@ export async function getUserRatings(userId: string): Promise<UserRatingWithPape
  */
 export async function getUserComments(userId: string): Promise<UserCommentWithPaper[]> {
   try {
-    if (MockAuthService.shouldUseMockAuth()) {
-      return await mockUserActivity.getUserComments(userId)
-    }
 
     if (!supabase) return []
 
@@ -193,9 +93,6 @@ export async function getUserComments(userId: string): Promise<UserCommentWithPa
  */
 export async function getUserStats(userId: string): Promise<UserStats> {
   try {
-    if (MockAuthService.shouldUseMockAuth()) {
-      return await mockUserActivity.getUserStats(userId)
-    }
 
     if (!supabase) return {
       total_ratings: 0,
@@ -246,10 +143,7 @@ export async function getUserStats(userId: string): Promise<UserStats> {
  */
 export async function deleteUserRating(ratingId: string): Promise<boolean> {
   try {
-    if (MockAuthService.shouldUseMockAuth()) {
-      // Mock implementation
-      return true
-    }
+    
 
     if (!supabase) throw new Error('Database not available')
 
@@ -271,10 +165,7 @@ export async function deleteUserRating(ratingId: string): Promise<boolean> {
  */
 export async function deleteUserComment(commentId: string): Promise<boolean> {
   try {
-    if (MockAuthService.shouldUseMockAuth()) {
-      // Mock implementation
-      return true
-    }
+    
 
     if (!supabase) throw new Error('Database not available')
 
@@ -327,9 +218,7 @@ export async function getUserActivity(userId: string): Promise<UserActivity> {
  */
 export async function getUserVoteHistory(userId: string) {
   try {
-    if (MockAuthService.shouldUseMockAuth()) {
-      return []
-    }
+    
 
     if (!supabase) return []
 

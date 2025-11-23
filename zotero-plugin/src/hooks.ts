@@ -37,14 +37,49 @@ async function onStartup() {
     await AnnotationManager.initialize();
     logger.log("[Researchopia] AnnotationManager initialized ✅");
     
+    // Initialize AnnotationSharingPopup (4-button sharing in text selection popup)
+    const { AnnotationSharingPopup } = await import("./modules/annotationSharingPopup");
+    const sharingPopup = AnnotationSharingPopup.getInstance(AnnotationManager.getInstance());
+    sharingPopup.initialize();
+    logger.log("[Researchopia] AnnotationSharingPopup initialized ✅");
+    
     // Initialize UIManager (registers ItemPane)
     await UIManager.getInstance().initialize();
     logger.log("[Researchopia] UIManager initialized ✅");
     
     // Initialize PDFReaderManager
-    const { PDFReaderManager } = await import("./modules/pdfReaderManager");
-    await PDFReaderManager.getInstance().initialize();
-    logger.log("[Researchopia] PDFReaderManager initialized ✅");
+    try {
+      logger.log("[Researchopia] 🔄 Importing PDFReaderManager...");
+      const module = await import("./modules/pdf");
+      logger.log("[Researchopia] 🔍 Module keys:", Object.keys(module));
+      const { PDFReaderManager } = module;
+      logger.log("[Researchopia] 🔍 PDFReaderManager type:", typeof PDFReaderManager);
+      
+      if (!PDFReaderManager) {
+        throw new Error('PDFReaderManager is undefined after import');
+      }
+      
+      const pdfReaderManager = PDFReaderManager.getInstance();
+      await pdfReaderManager.initialize();
+      // 保存到全局对象，供其他模块使用（避免动态导入问题）
+      ((Zotero as any).Researchopia)._pdfReaderManager = pdfReaderManager;
+      logger.log("[Researchopia] PDFReaderManager initialized ✅");
+    } catch (error) {
+      const details = error instanceof Error ? `${error.message}\n${error.stack}` : JSON.stringify(error);
+      logger.error("[Researchopia] PDFReaderManager initialization failed:", details);
+      // 不要阻止插件继续启动，但标记为未初始化状态
+    }
+    
+    // Register Shared Annotations Tab (Phase 1)
+    try {
+      logger.log("[Researchopia] 🔄 Registering Shared Annotations Tab...");
+      const { SidebarSharedView } = await import("./modules/ui/sidebarSharedView");
+      SidebarSharedView.getInstance().register();
+      logger.log("[Researchopia] Shared Annotations Tab registered ✅");
+    } catch (error) {
+      const details = error instanceof Error ? `${error.message}\n${error.stack}` : JSON.stringify(error);
+      logger.error("[Researchopia] Shared Tab registration failed:", details);
+    }
     
     // Process existing windows (WITHOUT FTL insertion to avoid breaking context menu)
     const mainWindows = Zotero.getMainWindows();

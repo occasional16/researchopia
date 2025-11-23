@@ -133,7 +133,7 @@ export default function PaperDetailPage() {
         <div className="flex flex-wrap items-center gap-6 text-sm text-gray-600 dark:text-gray-400 mb-6">
           <div className="flex items-center space-x-2">
             <Users className="w-4 h-4" />
-            <span>{paper.authors.join(', ')}</span>
+            <span>{paper.authors?.join(', ') || '未知作者'}</span>
           </div>
           
           {paper.publication_date && (

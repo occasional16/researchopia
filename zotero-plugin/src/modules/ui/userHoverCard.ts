@@ -87,11 +87,13 @@ export class UserHoverCardManager {
       ${clickable && !isAnonymous ? 'cursor: pointer;' : ''}
     `;
 
-    // 匿名用户特殊处理
+    // 匿名用户或私密标注特殊处理
     if (isAnonymous) {
+      // 使用传入的 displayName (可能是"匿名用户"或"私密")
+      const anonymousLabel = displayName || '匿名用户';
       container.innerHTML = `
         <span style="color: #6c757d; font-size: 11px;">
-          🔒 匿名用户
+          🔒 ${anonymousLabel}
         </span>
       `;
       return container;

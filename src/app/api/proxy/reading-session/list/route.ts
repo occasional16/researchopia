@@ -130,7 +130,7 @@ export async function GET(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // 为每个会话添加成员数和在线人数统计
+    // 为每个会话添加成员数和论文元数据(在线人数由前端realtime presence计算)
     const sessionsWithCounts = await Promise.all((data || []).map(async (session) => {
       // 查询总成员数
       const { count: memberCount } = await supabase
@@ -138,17 +138,21 @@ export async function GET(request: NextRequest) {
         .select('*', { count: 'exact', head: true })
         .eq('session_id', session.id);
 
-      // 查询在线成员数
-      const { count: onlineCount } = await supabase
-        .from('session_members')
-        .select('*', { count: 'exact', head: true })
-        .eq('session_id', session.id)
-        .eq('is_online', true);
-
+      // 🎯 查询论文元数据(authors, journal, publication_date)
+      const { data: paperData } = await supabase
+        .from('papers')
+        .select('authors, journal, publication_date')
+        .eq('doi', session.paper_doi)
+        .single();
+      
       return {
         ...session,
         member_count: memberCount || 0,
-        online_count: onlineCount || 0
+        // 在线人数改由前端通过Realtime Presence实时计算
+        // 添加论文元数据字段
+        authors: paperData?.authors ? (Array.isArray(paperData.authors) ? paperData.authors.join(', ') : paperData.authors) : null,
+        journal: paperData?.journal || null,
+        year: paperData?.publication_date ? new Date(paperData.publication_date).getFullYear().toString() : null
       };
     }));
 

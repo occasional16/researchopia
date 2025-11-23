@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
-import { MockAuthService } from '@/lib/mockAuth'
 
 // GET /api/pdf/annotations/[id] - 获取特定标注详情
 export async function GET(
@@ -10,39 +9,8 @@ export async function GET(
   try {
     const { id } = await params
 
-    // Check if using Supabase or Mock mode
-    if (!supabase || MockAuthService.shouldUseMockAuth()) {
-      // Mock data for development
-      return NextResponse.json({
-        annotation: {
-          id,
-          pdf_document_id: 'mock-pdf-001',
-          user_id: 'mock-demo-001',
-          page_number: 1,
-          annotation_type: 'highlight',
-          position_data: {
-            x: 100,
-            y: 200,
-            width: 200,
-            height: 20,
-            bounds: { left: 100, top: 200, right: 300, bottom: 220 }
-          },
-          content: '这是一个重要的观点',
-          selected_text: '机器学习算法的准确性',
-          color: '#ffff00',
-          opacity: 0.3,
-          tags: ['重要', '算法'],
-          is_private: false,
-          users: { username: 'demo', avatar_url: null },
-          created_at: new Date().toISOString(),
-          interactions: {
-            likes: 2,
-            dislikes: 0,
-            helpful: 1,
-            flags: 0
-          }
-        }
-      })
+    if (!supabase) {
+      return NextResponse.json({ error: 'Database not configured' }, { status: 500 })
     }
 
     // 查询标注详情
@@ -115,21 +83,8 @@ export async function PUT(
       is_private
     } = body
 
-    // Check if using Supabase or Mock mode
-    if (!supabase || MockAuthService.shouldUseMockAuth()) {
-      // Mock response for development
-      return NextResponse.json({
-        message: 'Annotation updated successfully (mock mode)',
-        annotation: {
-          id,
-          content,
-          color,
-          opacity,
-          tags,
-          is_private,
-          updated_at: new Date().toISOString()
-        }
-      })
+    if (!supabase) {
+      return NextResponse.json({ error: 'Database not configured' }, { status: 500 })
     }
 
     // 先检查标注是否存在以及用户权限
@@ -201,12 +156,8 @@ export async function DELETE(
   try {
     const { id } = await params
 
-    // Check if using Supabase or Mock mode
-    if (!supabase || MockAuthService.shouldUseMockAuth()) {
-      // Mock response for development
-      return NextResponse.json({
-        message: 'Annotation deleted successfully (mock mode)'
-      })
+    if (!supabase) {
+      return NextResponse.json({ error: 'Database not configured' }, { status: 500 })
     }
 
     // 先检查标注是否存在以及用户权限

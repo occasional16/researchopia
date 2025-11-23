@@ -16,6 +16,7 @@ import { ProfilePreviewView } from "./ui/profilePreviewView";
 import { ReadingSessionView } from "./ui/readingSessionView";
 import { containerPadding } from "./ui/styles";
 import { createPaperInfoSection, createButtonsSection, createContentSection, createUserInfoBar } from "./ui/components";
+import { ServicesAdapter } from "../adapters";
 import type {
   BaseViewContext,
   PanelElements,
@@ -33,6 +34,7 @@ export class UIManager {
   private readonly paperEvaluationView: PaperEvaluationView;
   private readonly profilePreviewView: ProfilePreviewView;
   private readonly readingSessionView: ReadingSessionView;
+  private readonly readingSessionManager: any; // ReadingSessionManager实例
   private currentItem: any = null;
   private currentViewMode: ViewMode = 'none';
   private panelId = 'researchopia-panel';
@@ -50,6 +52,10 @@ export class UIManager {
     this.profilePreviewView = new ProfilePreviewView(this.viewContext);
     this.quickSearchView = new QuickSearchView();
     this.readingSessionView = new ReadingSessionView(this.viewContext);
+    
+    // 导入并初始化ReadingSessionManager
+    const { ReadingSessionManager } = require('./readingSessionManager');
+    this.readingSessionManager = ReadingSessionManager.getInstance();
   }
 
   private createViewContext(): BaseViewContext {
@@ -152,6 +158,9 @@ export class UIManager {
 
       // 监听PDF页面标注点击事件，高亮插件面板中的对应卡片
       this.setupAnnotationClickListener();
+
+      // 监听Reader tab打开/关闭事件,触发presence订阅
+      this.registerReaderTabListener();
 
       this.isInitialized = true;
       logger.log("[UIManager] ✅ UI Manager initialized successfully");
@@ -268,6 +277,121 @@ export class UIManager {
   }
 
   /**
+   * 检查是否已有打开的PDF Reader,如有则订阅presence
+   * 场景2: 用户已打开PDF,此时打开插件面板应直接判定在线
+   */
+  private async checkAndSubscribeExistingReader(): Promise<void> {
+    logger.log('[UIManager] 🔍 checkAndSubscribeExistingReader() called');
+    try {
+      const { ReadingSessionManager } = await import('./readingSessionManager');
+      const sessionManager = ReadingSessionManager.getInstance();
+      logger.log('[UIManager] ReadingSessionManager imported');
+      
+      // 获取当前会话
+      const currentSession = sessionManager.getCurrentSession();
+      logger.log('[UIManager] Current session:', currentSession?.id || 'null');
+      if (!currentSession) {
+        logger.log('[UIManager] No current session, skip checking existing reader');
+        return;
+      }
+      
+      // 查找已打开的匹配PDF
+      const doi = currentSession.paper_doi;
+      if (!doi) {
+        logger.warn('[UIManager] Current session has no DOI');
+        return;
+      }
+      
+      logger.log(`[UIManager] 🔍 Checking for existing reader with DOI: ${doi}`);
+      
+      // 获取所有打开的reader实例
+      let readers: any[] = [];
+      if ((Zotero as any).Reader && typeof (Zotero as any).Reader.getAll === 'function') {
+        readers = (Zotero as any).Reader.getAll();
+        logger.log(`[UIManager] Found ${readers.length} open readers`);
+      }
+      
+      // 标准化DOI用于匹配
+      const normalizeDOI = (doi: string): string => {
+        return doi.toLowerCase().replace(/^https?:\/\/(dx\.)?doi\.org\//i, '').trim();
+      };
+      const normalizedSessionDOI = normalizeDOI(doi);
+      
+      // 查找匹配的reader
+      for (const reader of readers) {
+        try {
+          const itemID = reader.itemID;
+          if (!itemID) continue;
+          
+          const item = (Zotero as any).Items.get(itemID);
+          if (!item) continue;
+          
+          const parentItem = item.parentItem;
+          if (!parentItem) continue;
+          
+          const itemDOI = parentItem.getField('DOI');
+          if (itemDOI && normalizeDOI(itemDOI) === normalizedSessionDOI) {
+            logger.log(`[UIManager] ✅ Found existing reader for session, subscribing presence`);
+            await sessionManager.onReaderOpen(itemID);
+            return;
+          }
+        } catch (error) {
+          logger.error('[UIManager] Error checking reader:', error);
+        }
+      }
+      
+      logger.log('[UIManager] No matching reader found');
+    } catch (error) {
+      logger.error('[UIManager] Error checking existing reader:', error);
+    }
+  }
+  
+  /**
+   * 注册Reader tab打开/关闭监听器
+   * 当打开/关闭PDF Reader时,触发ReadingSessionManager的presence订阅/取消订阅
+   */
+  private registerReaderTabListener(): void {
+    try {
+      const notifierCallback = {
+        notify: async (event: string, type: string, ids: any[], extraData: any) => {
+          // 只关注tab类型的add/remove事件
+          if (type !== 'tab') return;
+
+          // 导入ReadingSessionManager(懒加载避免循环依赖)
+          const { ReadingSessionManager } = await import('./readingSessionManager');
+          const sessionManager = ReadingSessionManager.getInstance();
+
+          for (const tabId of ids) {
+            const tabData = extraData?.[tabId];
+            
+            // 只处理reader类型的tab
+            if (tabData?.type === 'reader' && tabData?.itemID) {
+              const attachmentId = tabData.itemID;
+
+              if (event === 'add') {
+                logger.log(`[UIManager] 📖 Reader tab opened: ${tabId}, attachment: ${attachmentId}`);
+                await sessionManager.onReaderOpen(attachmentId);
+              } else if (event === 'remove' || event === 'close') {
+                logger.log(`[UIManager] 📕 Reader tab closed: ${tabId}, attachment: ${attachmentId}`);
+                await sessionManager.onReaderClose(attachmentId);
+              }
+            }
+          }
+        }
+      };
+
+      // 注册Notifier Observer
+      const notifierId = (Zotero as any).Notifier.registerObserver(notifierCallback, ['tab']);
+      logger.log(`[UIManager] ✅ Reader tab listener registered (ID: ${notifierId})`);
+
+      // 保存notifierId供cleanup使用
+      (this as any)._readerTabNotifierId = notifierId;
+    } catch (error) {
+      logger.error('[UIManager] ❌ Error registering reader tab listener:', error);
+    }
+  }
+
+  /**
    * 注册Item Pane Section
    */
   private registerItemPaneSection(): void {
@@ -327,25 +451,86 @@ export class UIManager {
                 versionSpan.textContent = `v${packageVersion}`;
                 titleSpan.appendChild(versionSpan);
 
-                // 官网按钮添加到head右侧 - 在twisty按钮之前
-                if (!head.querySelector('.researchopia-website-btn')) {
-                  const websiteBtn = doc.createElement('button');
-                  websiteBtn.className = 'researchopia-website-btn';
-                  websiteBtn.style.cssText = `
-                    padding: 3px 8px;
+                // 设置按钮添加到head右侧 - 在官网按钮之前
+                if (!head.querySelector('.researchopia-settings-btn')) {
+                  const settingsBtn = doc.createElement('button');
+                  settingsBtn.className = 'researchopia-settings-btn';
+                  settingsBtn.style.cssText = `
+                    padding: 4px 8px;
                     background: transparent;
                     color: #6c757d;
                     border: none;
                     border-radius: 3px;
                     cursor: pointer;
-                    font-size: inherit;
-                    font-weight: 600;
+                    font-size: 14px;
                     transition: all 0.2s;
                     white-space: nowrap;
                     margin-right: 4px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
                   `;
-                  websiteBtn.textContent = '🌐 官网';
-                  websiteBtn.title = 'Visit Researchopia Website';
+                  settingsBtn.textContent = '⚙️';
+                  settingsBtn.title = '打开偏好设置面板';
+                  settingsBtn.addEventListener('mouseenter', () => {
+                    settingsBtn.style.background = 'var(--fill-quinary)';
+                  });
+                  settingsBtn.addEventListener('mouseleave', () => {
+                    settingsBtn.style.background = 'transparent';
+                  });
+                  settingsBtn.addEventListener('click', (e) => {
+                    e.stopPropagation(); // 防止触发section折叠
+                    
+                    // 打开偏好设置面板并定位到Researchopia插件选项
+                    try {
+                      if ((Zotero as any).Utilities?.Internal?.openPreferences) {
+                        (Zotero as any).Utilities.Internal.openPreferences('researchopia-preferences');
+                        logger.log('[UIManager] ✅ Opened Researchopia preferences');
+                      } else {
+                        // 如果API不可用，使用备用方法
+                        const Services = (Zotero as any).getMainWindow().Services;
+                        Services.prompt.alert(
+                          null,
+                          '打开设置',
+                          '请在菜单栏: 编辑 → 设置 → Researchopia 中修改插件设置'
+                        );
+                        logger.log('[UIManager] ℹ️ Showed settings alert (Zotero.Utilities.Internal.openPreferences not available)');
+                      }
+                    } catch (error) {
+                      logger.error('[UIManager] ❌ Error opening preferences:', error);
+                    }
+                  });
+                  
+                  // 将设置按钮插入到twisty之前
+                  const twisty = head.querySelector('.twisty');
+                  if (twisty) {
+                    head.insertBefore(settingsBtn, twisty);
+                  } else {
+                    head.appendChild(settingsBtn);
+                  }
+                }
+
+                // 官网按钮添加到head右侧 - 在twisty按钮之前
+                if (!head.querySelector('.researchopia-website-btn')) {
+                  const websiteBtn = doc.createElement('button');
+                  websiteBtn.className = 'researchopia-website-btn';
+                  websiteBtn.style.cssText = `
+                    padding: 4px 8px;
+                    background: transparent;
+                    color: #6c757d;
+                    border: none;
+                    border-radius: 3px;
+                    cursor: pointer;
+                    font-size: 14px;
+                    transition: all 0.2s;
+                    white-space: nowrap;
+                    margin-right: 4px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                  `;
+                  websiteBtn.textContent = '🌐';
+                  websiteBtn.title = '在官网中打开';
                   websiteBtn.addEventListener('mouseenter', () => {
                     websiteBtn.style.background = 'var(--fill-quinary)';
                   });
@@ -354,7 +539,23 @@ export class UIManager {
                   });
                   websiteBtn.addEventListener('click', (e) => {
                     e.stopPropagation(); // 防止触发section折叠
-                    (Zotero as any).launchURL(envConfig.apiBaseUrl);
+                    
+                    // 获取当前论文的DOI
+                    let targetUrl = envConfig.apiBaseUrl;
+                    if (this.currentItem) {
+                      try {
+                        const doi = this.currentItem.getField('DOI');
+                        if (doi) {
+                          // 将DOI作为URL参数传递
+                          targetUrl = `${envConfig.apiBaseUrl}?doi=${encodeURIComponent(doi)}`;
+                          logger.log(`[UIManager] Opening website with DOI: ${doi}`);
+                        }
+                      } catch (error) {
+                        logger.warn('[UIManager] Failed to get DOI:', error);
+                      }
+                    }
+                    
+                    (Zotero as any).launchURL(targetUrl);
                   });
                   
                   // 将按钮插入到twisty之前
@@ -626,7 +827,10 @@ export class UIManager {
 
     this.currentItem = targetItem;
     this.currentItemId = targetItem?.id || null; // 保存当前item ID
-    this.currentViewMode = 'none';
+    
+    // 🔧 修复: 不立即重置currentViewMode,保持用户当前视图
+    const preservedViewMode = this.currentViewMode;
+    logger.log(`[UIManager] 📍 Current view mode: ${preservedViewMode}`);
 
     // 🔧 关键修复：优先使用explicitDoc（onRender传递的最新document）
     // 其次使用panelDocument（最近更新的document引用）
@@ -655,9 +859,39 @@ export class UIManager {
       this.clearPaperInfo(itemDoc);
     }
 
-    // 重置内容区域
+    // 🔧 修复: 根据当前视图模式决定是否重置内容区域
     if (itemDoc) {
       const panels = this.getPanelElements(itemDoc);
+      
+      // 如果用户在特定视图中(如管理标注、会话等),刷新该视图内容
+      if (preservedViewMode !== 'none') {
+        logger.log(`[UIManager] ✅ Preserving view mode '${preservedViewMode}', refreshing content...`);
+        
+        // 保持当前视图,刷新内容(例如删除标注后刷新标注列表)
+        for (const [index, panel] of panels.entries()) {
+          if (panel.contentSection) {
+            logger.log(`[UIManager] 🔄 Refreshing content for panel ${index} in mode '${preservedViewMode}'`);
+            
+            // 根据不同视图模式刷新内容
+            if (preservedViewMode === 'reading-session') {
+              // 阅读会话模式:重新渲染会话页面
+              const readingSessionView = this.readingSessionView;
+              if (readingSessionView) {
+                await readingSessionView.render();
+              }
+            } else {
+              // 其他视图:保持不变(不重新渲染)
+              logger.log(`[UIManager] ℹ️ View mode '${preservedViewMode}' does not require refresh on item change`);
+            }
+          }
+        }
+        return; // 跳过默认的功能介绍渲染
+      }
+      
+      // 只有在 currentViewMode === 'none' 时,才重置到功能介绍页面
+      logger.log("[UIManager] 📋 View mode is 'none', showing features intro...");
+      this.currentViewMode = 'none'; // 确认重置
+      
       for (const [index, panel] of panels.entries()) {
         if (panel.contentSection) {
           logger.log(`[UIManager] 🔄 Resetting content section for panel ${index}`);
@@ -679,13 +913,12 @@ export class UIManager {
             max-width: 420px;
           `;
           
-          const features = [
-            { icon: '📖', color: '#ec4899', title: '文献共读', desc: '创建或加入共读会话,与他人协同阅读' },
-            { icon: '⭐', color: '#f97316', title: '论文评价', desc: '查看论文评分、评论及学术讨论' }, 
-            { icon: '🔍', color: '#10b981', title: '快捷搜索', desc: '一键搜索相关论文和学术资源' }
-          ];
-          
-          features.forEach(feature => {
+    const features = [
+      { icon: '📖', color: '#ec4899', title: '文献共读', desc: '创建或加入共读会话,与他人协同阅读' },
+      { icon: '🤝', color: '#8b5cf6', title: '文献互助', desc: '旨在提供全面、便捷的文献互助平台，降低知识获取的门槛' },
+      { icon: '⭐', color: '#f97316', title: '论文评价', desc: '查看论文评分、评论及学术讨论' },
+      { icon: '🔍', color: '#10b981', title: '快捷搜索', desc: '一键搜索相关论文和学术资源' }
+    ];          features.forEach(feature => {
             const featureItem = itemDoc.createElement('div');
             featureItem.style.cssText = `
               display: flex;
@@ -736,7 +969,7 @@ export class UIManager {
           panel.contentSection.appendChild(featuresContainer);
         }
       }
-      }
+    }
     } catch (error) {
       logger.error("[UIManager] ❌ Error in handleItemChange:", error);
       // 即使出错也不要抛出,防止影响Zotero核心功能
@@ -746,7 +979,7 @@ export class UIManager {
   /**
    * 更新论文信息显示
    */
-  private updatePaperInfo(item: any, targetDoc?: Document, attempt = 0): void {
+  private async updatePaperInfo(item: any, targetDoc?: Document, attempt = 0): Promise<void> {
     const paperInfo = this.extractPaperInfo(item);
 
     logger.log("[UIManager] Updating paper info:", paperInfo);
@@ -797,73 +1030,27 @@ export class UIManager {
         root
       } = panel;
 
-      if (!titleElement || !titleElement.parentElement) {
+      if (!paperInfoSection || !paperInfoSection.parentElement) {
         logger.log(`[UIManager] ⏳ Panel ${index} DOM not ready yet (no parent), skipping update for this panel`);
         return;
       }
 
-      titleElement.textContent = paperInfo.title || '无标题';
-      logger.log(`[UIManager] Updated title for panel ${index} to:`, paperInfo.title);
-      logger.log(`[UIManager] 🔍 Panel ${index} titleElement textContent after update:`, titleElement.textContent);
-
-      if (paperInfoSection) {
-        paperInfoSection.style.visibility = 'visible';
-        logger.log(`[UIManager] 🎨 Panel ${index} paper-info section set to visible`);
-      }
-
+      // 清空现有内容，使用新的卡片式布局
+      paperInfoSection.innerHTML = '';
+      
+      // 创建论文信息卡片
+      const { getThemeColors } = require('./ui/styles');
+      const themeColors = getThemeColors();
+      const paperCard = this.createPaperInfoCard(doc, paperInfo, themeColors);
+      
+      paperInfoSection.appendChild(paperCard);
+      paperInfoSection.style.visibility = 'visible';
+      
       if (root) {
         root.style.visibility = 'visible';
-        logger.log(`[UIManager] 🎨 Panel ${index} main container set to visible`);
       }
-
-      if (authorsElement && authorsTextElement) {
-        if (paperInfo.authors && paperInfo.authors.length > 0) {
-          authorsElement.style.display = 'block';
-          const displayAuthors = paperInfo.authors.length > 3
-            ? paperInfo.authors.slice(0, 3).join(', ') + ` 等 ${paperInfo.authors.length} 人`
-            : paperInfo.authors.join(', ');
-          authorsTextElement.textContent = displayAuthors;
-        } else {
-          authorsElement.style.display = 'none';
-        }
-      }
-
-      if (yearElement) {
-        if (paperInfo.year) {
-          yearElement.style.display = 'inline';
-          yearElement.innerHTML = `<strong>年份:</strong> ${paperInfo.year}`;
-        } else {
-          yearElement.style.display = 'none';
-        }
-      }
-
-      if (journalElement) {
-        if (paperInfo.journal) {
-          journalElement.style.display = 'inline';
-          journalElement.innerHTML = `<strong>期刊:</strong> ${paperInfo.journal}`;
-        } else {
-          journalElement.style.display = 'none';
-        }
-      }
-
-      if (doiElement) {
-        if (paperInfo.doi) {
-          doiElement.style.display = 'inline';
-          const doiTextSpan = doiElement.querySelector('.doi-text');
-          if (doiTextSpan) {
-            doiTextSpan.textContent = `DOI: ${paperInfo.doi}`;
-          } else {
-            // 如果没有找到.doi-text元素，则创建完整结构
-            doiElement.innerHTML = `<span class="doi-text">DOI: ${paperInfo.doi}</span>`;
-          }
-
-          // 添加点击复制功能
-          this.attachDoiCopyHandler(doiElement, paperInfo.doi);
-        } else {
-          doiElement.style.display = 'none';
-        }
-      }
-
+      
+      logger.log(`[UIManager] 📄 Rendered paper info card for panel ${index}`);
       updatedCount += 1;
     });
 
@@ -965,6 +1152,351 @@ export class UIManager {
 
       logger.log(`[UIManager] Cleared paper info for panel ${index}`);
     });
+  }
+
+  /**
+   * 创建论文信息卡片（独立于会话，纯论文信息展示）
+   * 包含：论文信息 + 打开PDF按钮 + 全局统计（总阅读人数/在线人数）
+   */
+  private createPaperInfoCard(doc: Document, paperInfo: PaperInfo, themeColors: any): HTMLElement {
+    const card = doc.createElement('div');
+    card.style.cssText = `
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      width: 100%;
+      cursor: pointer;
+      transition: all 0.2s;
+    `;
+    
+    // 添加hover效果
+    card.addEventListener('mouseenter', () => {
+      card.style.background = `${themeColors.bgSecondary}`;
+      card.style.borderRadius = '6px';
+      card.style.padding = '4px';
+      card.style.margin = '-4px';
+    });
+    
+    card.addEventListener('mouseleave', () => {
+      card.style.background = 'transparent';
+      card.style.padding = '0';
+      card.style.margin = '0';
+    });
+    
+    // 添加点击事件:打开论文PDF
+    card.addEventListener('click', async () => {
+      await this.handlePaperCardClick();
+    });
+    
+    // 标题
+    const titleDiv = doc.createElement('div');
+    titleDiv.textContent = paperInfo.title || '无标题';
+    titleDiv.title = paperInfo.title || '无标题'; // hover提示
+    titleDiv.style.cssText = `
+      font-weight: 700;
+      font-size: 13px;
+      color: ${themeColors.textPrimary};
+      word-break: break-word;
+      line-height: 1.4;
+    `;
+    card.appendChild(titleDiv);
+    
+    // 元数据区域
+    const metadataDiv = doc.createElement('div');
+    metadataDiv.style.cssText = `
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 13px;
+    `;
+    
+    // 作者信息
+    if (paperInfo.authors && paperInfo.authors.length > 0) {
+      const displayAuthors = paperInfo.authors.length > 3
+        ? paperInfo.authors.slice(0, 3).join(', ') + ` 等 ${paperInfo.authors.length} 人`
+        : paperInfo.authors.join(', ');
+      
+      const authorsSpan = doc.createElement('span');
+      authorsSpan.title = `作者: ${paperInfo.authors.join(', ')}`; // hover提示完整作者列表
+      authorsSpan.style.cssText = `
+        display: inline-block;
+        padding: 3px 8px;
+        background: #3b82f633;
+        color: #3b82f6;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 500;
+        word-break: break-word;
+      `;
+      authorsSpan.innerHTML = `👤 ${displayAuthors}`;
+      metadataDiv.appendChild(authorsSpan);
+    }
+    
+    // 年份、期刊、DOI详情行
+    const detailsDiv = doc.createElement('div');
+    detailsDiv.style.cssText = `
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      align-items: center;
+    `;
+    
+    // 年份
+    if (paperInfo.year) {
+      const yearSpan = doc.createElement('span');
+      yearSpan.textContent = `📅 ${paperInfo.year}`;
+      yearSpan.title = `出版年份: ${paperInfo.year}`;
+      yearSpan.style.cssText = `
+        padding: 3px 8px;
+        background: #10b98122;
+        color: #10b981;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 500;
+      `;
+      detailsDiv.appendChild(yearSpan);
+    }
+    
+    // 期刊
+    if (paperInfo.journal) {
+      const journalSpan = doc.createElement('span');
+      journalSpan.textContent = `📰 ${paperInfo.journal}`;
+      journalSpan.title = `期刊: ${paperInfo.journal}`;
+      journalSpan.style.cssText = `
+        padding: 3px 8px;
+        background: #f59e0b22;
+        color: #f59e0b;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 500;
+        word-break: break-word;
+      `;
+      detailsDiv.appendChild(journalSpan);
+    }
+    
+    // DOI
+    if (paperInfo.doi) {
+      const doiSpan = doc.createElement('span');
+      doiSpan.title = `点击复制DOI: ${paperInfo.doi}`;
+      doiSpan.style.cssText = `
+        padding: 3px 8px;
+        background: ${themeColors.primary}22;
+        color: ${themeColors.primary};
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        word-break: break-all;
+      `;
+      doiSpan.textContent = `DOI: ${paperInfo.doi}`;
+      
+      // DOI hover和点击
+      doiSpan.addEventListener('mouseenter', () => {
+        doiSpan.style.background = `${themeColors.primary}44`;
+        doiSpan.style.transform = 'scale(1.05)';
+      });
+      
+      doiSpan.addEventListener('mouseleave', () => {
+        doiSpan.style.background = `${themeColors.primary}22`;
+        doiSpan.style.transform = 'scale(1)';
+      });
+      
+      doiSpan.addEventListener('click', (e) => {
+        e.stopPropagation();
+        try {
+          const clipboardHelper = (Components as any).classes["@mozilla.org/widget/clipboardhelper;1"]
+            .getService((Components as any).interfaces.nsIClipboardHelper);
+          clipboardHelper.copyString(paperInfo.doi);
+          
+          doiSpan.style.background = themeColors.success;
+          doiSpan.style.color = themeColors.textInverse;
+          doiSpan.textContent = '✓ 已复制';
+          
+          setTimeout(() => {
+            doiSpan.style.background = `${themeColors.primary}22`;
+            doiSpan.style.color = themeColors.primary;
+            doiSpan.textContent = `DOI: ${paperInfo.doi}`;
+          }, 1500);
+        } catch (error) {
+          logger.error('Copy DOI failed:', error);
+        }
+      });
+      
+      detailsDiv.appendChild(doiSpan);
+    }
+    
+    metadataDiv.appendChild(detailsDiv);
+    card.appendChild(metadataDiv);
+    
+    // 底部信息行(左侧按钮+右侧人数统计)
+    const footerDiv = doc.createElement('div');
+    footerDiv.style.cssText = `
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 4px;
+    `;
+    
+    // 左侧:"打开PDF"按钮
+    const enterButton = doc.createElement('button');
+    enterButton.textContent = '📖 打开PDF';
+    enterButton.title = '点击打开论文PDF阅读器';
+    enterButton.style.cssText = `
+      background: ${themeColors.primary};
+      color: ${themeColors.textInverse};
+      border: none;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    `;
+    
+    enterButton.addEventListener('mouseenter', () => {
+      enterButton.style.transform = 'scale(1.05)';
+      enterButton.style.filter = 'brightness(1.1)';
+    });
+    
+    enterButton.addEventListener('mouseleave', () => {
+      enterButton.style.transform = 'scale(1)';
+      enterButton.style.filter = 'brightness(1)';
+    });
+    
+    enterButton.addEventListener('click', async (e) => {
+      e.stopPropagation(); // 阻止事件冒泡到card
+      await this.handlePaperCardClick();
+    });
+    
+    footerDiv.appendChild(enterButton);
+    
+    // 右侧:全局统计（总阅读人数/在线人数）
+    const statsDiv = doc.createElement('div');
+    statsDiv.style.cssText = `
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    `;
+    
+    // 总阅读人数
+    const totalReadersDiv = doc.createElement('span');
+    totalReadersDiv.textContent = `👥 加载中...`;
+    totalReadersDiv.title = `读过此论文的总人数`;
+    totalReadersDiv.style.cssText = `
+      background: ${themeColors.info}1A;
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: ${themeColors.info};
+      font-weight: 600;
+      font-size: 10px;
+    `;
+    statsDiv.appendChild(totalReadersDiv);
+    
+    // 在线人数
+    const onlineReadersDiv = doc.createElement('span');
+    onlineReadersDiv.textContent = `🟢 加载中...`;
+    onlineReadersDiv.title = `当前正在阅读此论文的人数`;
+    onlineReadersDiv.style.cssText = `
+      background: ${themeColors.success}1A;
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: ${themeColors.success};
+      font-weight: 600;
+      font-size: 10px;
+    `;
+    statsDiv.appendChild(onlineReadersDiv);
+    
+    footerDiv.appendChild(statsDiv);
+    
+    // 异步获取统计数据
+    if (paperInfo.doi) {
+      this.fetchPaperStats(paperInfo.doi, totalReadersDiv, onlineReadersDiv, themeColors);
+    }
+    card.appendChild(footerDiv);
+    
+    return card;
+  }
+
+  /**
+   * 异步获取论文统计数据并更新UI
+   */
+  private async fetchPaperStats(
+    doi: string,
+    totalReadersElement: HTMLElement,
+    onlineReadersElement: HTMLElement,
+    themeColors: any
+  ): Promise<void> {
+    try {
+      logger.log(`[UIManager] Fetching paper stats for DOI: ${doi}`);
+      const { APIClient } = await import('../utils/apiClient');
+      const apiClient = APIClient.getInstance();
+      
+      const response: any = await apiClient.get(`/api/proxy/papers/stats?doi=${encodeURIComponent(doi)}`);
+      logger.log('[UIManager] Paper stats API response:', response);
+      
+      if (response.success && response.data) {
+        const { total_readers, online_readers } = response.data as { total_readers: number; online_readers: number };
+        
+        logger.log(`[UIManager] Stats received - Total: ${total_readers}, Online: ${online_readers}`);
+        
+        // 更新总阅读人数
+        totalReadersElement.textContent = `👥 ${total_readers}`;
+        totalReadersElement.title = `读过此论文的总人数: ${total_readers}`;
+        
+        // 更新在线人数
+        onlineReadersElement.textContent = `🟢 ${online_readers}`;
+        onlineReadersElement.title = `当前正在阅读此论文的人数: ${online_readers}`;
+      } else {
+        // 加载失败，显示0
+        logger.warn('[UIManager] Paper stats API failed, response:', response);
+        totalReadersElement.textContent = `👥 0`;
+        onlineReadersElement.textContent = `🟢 0`;
+      }
+    } catch (error) {
+      logger.error('[UIManager] Failed to fetch paper stats:', error);
+      totalReadersElement.textContent = `👥 -`;
+      onlineReadersElement.textContent = `🟢 -`;
+      totalReadersElement.title = '加载失败';
+      onlineReadersElement.title = '加载失败';
+    }
+  }
+
+  /**
+   * 处理论文卡片点击:检测并打开PDF附件
+   */
+  private async handlePaperCardClick(): Promise<void> {
+    if (!this.currentItem) {
+      this.showMessage('未选择论文条目', 'error');
+      return;
+    }
+    
+    try {
+      // 检测是否有PDF附件
+      const attachments = (Zotero as any).Items.get(this.currentItem.getAttachments());
+      const pdfAttachment = attachments.find((att: any) => att.attachmentContentType === 'application/pdf');
+      
+      if (pdfAttachment) {
+        // 有PDF附件,显示确认弹窗
+        const confirmed = ServicesAdapter.confirm(
+          '打开论文',
+          `是否打开论文PDF?\n\n论文: ${this.currentItem.getField('title')}`
+        );
+        
+        if (confirmed) {
+          // 打开PDF
+          (Zotero as any).Reader.open(pdfAttachment.id);
+          logger.log('[UIManager] Opened PDF attachment:', pdfAttachment.id);
+        }
+      } else {
+        // 没有PDF附件,提示下载
+        this.showMessage('请先下载论文PDF并添加为附件', 'warning');
+        logger.log('[UIManager] No PDF attachment found for item:', this.currentItem.id);
+      }
+    } catch (error) {
+      logger.error('[UIManager] Failed to check PDF attachment:', error);
+      this.showMessage('检查PDF附件失败', 'error');
+    }
   }
 
   /**
@@ -1206,8 +1738,46 @@ export class UIManager {
             logger.log("[UIManager] ✅ Quick search rendered");
             break;
           case 'reading-session':
-            await this.readingSessionView.render();
-            logger.log("[UIManager] ✅ Reading session view rendered");
+            // 🔥 检查用户偏好设置中的开发者选项
+            const currentApiUrl = (Zotero as any).Prefs.get('extensions.researchopia.apiBaseUrl', true) as string;
+            const isDevEnv = currentApiUrl === 'http://localhost:3000';
+            
+            if (!isDevEnv) {
+              // 生产环境下暂不开放，提示用户使用侧边栏
+              contentSection.innerHTML = `
+                <div style="display: flex; align-items: center; justify-content: center; padding: 40px;">
+                  <div style="text-align: center; color: #6c757d;">
+                    <div style="font-size: 48px; margin-bottom: 16px;">📖</div>
+                    <div style="font-size: 16px; font-weight: 600; margin-bottom: 8px;">请使用侧边栏</div>
+                    <div style="font-size: 14px; color: #9ca3af;">
+                      请直接在Zotero阅读器左侧边栏中使用<br/>
+                      其他功能正在开发中
+                    </div>
+                  </div>
+                </div>
+              `;
+              logger.log("[UIManager] ℹ️ Reading session view disabled in production");
+            } else {
+              // 开发环境保留完整功能
+              await this.readingSessionView.render();
+              logger.log("[UIManager] ✅ Reading session view rendered (development)");
+            }
+            break;
+          case 'literature-help':
+            // 功能开发中提示
+            contentSection.innerHTML = `
+              <div style="display: flex; align-items: center; justify-content: center; padding: 40px;">
+                <div style="text-align: center; color: #6c757d;">
+                  <div style="font-size: 48px; margin-bottom: 16px;">🤝</div>
+                  <div style="font-size: 16px; font-weight: 600; margin-bottom: 8px;">文献互助</div>
+                  <div style="font-size: 14px; color: #9ca3af; line-height: 1.8;">
+                    旨在提供全面、便捷的文献互助平台，降低知识获取门槛。<br/><br/>
+                    功能正在开发中，敬请期待！
+                  </div>
+                </div>
+              </div>
+            `;
+            logger.log("[UIManager] ℹ️ Literature help view (coming soon)");
             break;
         }
 
@@ -1381,6 +1951,12 @@ export class UIManager {
     logger.log("[UIManager] 🧹 Cleaning up UI Manager...");
     this.currentItem = null;
     this.currentViewMode = 'none';
+
+    // 注销reader tab监听器
+    if ((this as any)._readerTabNotifierId) {
+      (Zotero as any).Notifier.unregisterObserver((this as any)._readerTabNotifierId);
+      logger.log("[UIManager] ✅ Reader tab listener unregistered");
+    }
   }
 
 
@@ -1414,7 +1990,7 @@ export class UIManager {
       }
 
       // 导入PDF Reader Manager
-      const { PDFReaderManager } = await import('./pdfReaderManager');
+      const { PDFReaderManager } = await import('./pdf');
       const readerManager = PDFReaderManager.getInstance();
       await readerManager.initialize();
 

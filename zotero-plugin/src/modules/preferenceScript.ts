@@ -700,7 +700,10 @@ function loadSavedCredentials(doc: Document): void {
       
       logger.log("[Researchopia] 🔧 savedEmail:", savedEmail, "savedPassword:", !!savedPassword);
       
-      if (savedEmail && savedPassword) {
+      // 验证email格式，防止加密数据被错误填充
+      const isValidEmail = savedEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(savedEmail);
+      
+      if (isValidEmail && savedPassword) {
         const emailInput = doc.getElementById("email-input") as HTMLInputElement;
         const passwordInput = doc.getElementById("password-input") as HTMLInputElement;
         const rememberCheckbox = doc.getElementById("remember-credentials") as HTMLInputElement;
@@ -712,6 +715,9 @@ function loadSavedCredentials(doc: Document): void {
         if (rememberCheckbox) rememberCheckbox.checked = true;
         
         logger.log("[Researchopia] ✅ 凭证已加载");
+      } else if (!isValidEmail && savedEmail) {
+        logger.warn("[Researchopia] ⚠️ 检测到无效邮箱格式，清除凭证:", savedEmail);
+        clearSavedCredentials();
       }
     }
   } catch (error) {

@@ -119,6 +119,14 @@ const nextConfig: NextConfig = {
       };
     }
     
+    // 排除Debug目录，避免扫描备份代码
+    config.module = config.module || {};
+    config.module.rules = config.module.rules || [];
+    config.module.rules.push({
+      test: /\.tsx?$/,
+      exclude: /Debug[\\/]/,
+    });
+    
     return config;
   },
 

@@ -28,12 +28,44 @@ export class SessionAnnotationsView {
   private lastFilterType: string = 'others'; // 记录上次筛选类型
   private selectedMemberIds: Set<string> = new Set(); // 自定义选择的成员ID
   private userHoverCardManager: UserHoverCardManager;
+  private pdfReaderManager: any | null = null; // 懒加载PDFReaderManager实例
 
   constructor(
     private sessionManager: ReadingSessionManager,
     private context: BaseViewContext
   ) {
     this.userHoverCardManager = new UserHoverCardManager(context);
+  }
+
+  /**
+   * 获取PDFReaderManager实例（懒加载）
+   * 从全局Zotero对象获取，避免动态导入的打包问题
+   */
+  private async getPDFReaderManager(): Promise<any | null> {
+    if (this.pdfReaderManager) {
+      return this.pdfReaderManager;
+    }
+
+    const addon = (Zotero as any).Researchopia;
+    if (addon?._pdfReaderManager) {
+      this.pdfReaderManager = addon._pdfReaderManager;
+      return this.pdfReaderManager;
+    }
+
+    try {
+      const { PDFReaderManager } = await import("../pdf");
+      const manager = PDFReaderManager.getInstance();
+      await manager.initialize();
+      if (addon) {
+        addon._pdfReaderManager = manager;
+      }
+      this.pdfReaderManager = manager;
+      return manager;
+    } catch (error) {
+      const details = error instanceof Error ? `${error.message}\n${error.stack}` : JSON.stringify(error);
+      logger.error("[SessionAnnotationsView] Failed to initialize PDFReaderManager on demand:", details);
+      return null;
+    }
   }
 
   /**
@@ -233,14 +265,24 @@ export class SessionAnnotationsView {
       annotations = this.deduplicateAnnotations(annotations);
       logger.log(`[SessionAnnotationsView] 🔄 去重: ${beforeDedupeCount} -> ${annotations.length} (移除了${beforeDedupeCount - annotations.length}个重复标注)`);
       
-      // 🆕 visibility过滤 - 只显示已公开的标注
+      // 🆕 visibility过滤 - 显示公开/共享标注,以及当前用户的私密标注
+      const currentUser = AuthManager.getCurrentUser();
+      const currentUserId = currentUser?.id;
+      
       const beforeVisibilityFilter = annotations.length;
       annotations = annotations.filter((ann: any) => {
         // 如果没有visibility属性,默认为公开(兼容旧数据)
         const visibility = ann.visibility || 'public';
-        return visibility === 'public' || visibility === 'shared';
+        // public/shared: 所有人可见
+        // private: 仅作者本人可见
+        if (visibility === 'public' || visibility === 'shared') {
+          return true;
+        } else if (visibility === 'private') {
+          return ann.user_id === currentUserId;
+        }
+        return false;
       });
-      logger.log(`[SessionAnnotationsView] 👁️ Visibility过滤: ${beforeVisibilityFilter} -> ${annotations.length} (移除了${beforeVisibilityFilter - annotations.length}个私有标注)`);
+      logger.log(`[SessionAnnotationsView] 👁️ Visibility过滤: ${beforeVisibilityFilter} -> ${annotations.length} (移除了${beforeVisibilityFilter - annotations.length}个不可见标注)`);
       
       // 标题和数量
       const headerDiv = doc.createElement('div');
@@ -505,14 +547,28 @@ export class SessionAnnotationsView {
     selectAllLabel.textContent = "全选";
     selectAllLabel.style.cssText = "cursor: pointer; font-size: 14px; user-select: none; font-weight: 600; color: #1f2937; line-height: 1; display: flex; align-items: center; margin-left: 8px;";
 
+    // 批量操作分隔符
+    const separator = doc.createElement("div");
+    separator.textContent = "|";
+    separator.style.cssText = "color: #d1d5db; font-size: 14px; margin: 0 4px;";
+
+    // 批量操作标签
+    const batchLabel = doc.createElement("div");
+    batchLabel.textContent = "批量:";
+    batchLabel.style.cssText = "font-size: 14px; font-weight: 700; color: #1f2937; line-height: 1; display: flex; align-items: center;";
+
+    // 4个批量操作按钮(与单个标注卡片按钮一致)
     const batchButtons = [
-      { id: "batch-public", text: "📢 批量公开共享", visibility: "public" as const, showAuthorName: true, color: "#3b82f6" },
-      { id: "batch-anonymous", text: "🕶️ 批量匿名共享", visibility: "public" as const, showAuthorName: false, color: "#8b5cf6" },
-      { id: "batch-unshare", text: "🔒 批量取消共享", visibility: "private" as const, showAuthorName: true, color: "#ef4444" }
+      { id: "batch-public", text: "🌐 公开", visibility: "public" as const, showAuthorName: true, color: "#2196F3" },
+      { id: "batch-anonymous", text: "🎭 匿名", visibility: "anonymous" as const, showAuthorName: false, color: "#FF9800" },
+      { id: "batch-private", text: "🔒 私密", visibility: "private" as const, showAuthorName: true, color: "#9E9E9E" },
+      { id: "batch-unshare", text: "🗑️ 取消", visibility: "unshared" as const, showAuthorName: false, color: "#ef4444" }
     ];
 
     toolbar.appendChild(selectAllSwitch);
     toolbar.appendChild(selectAllLabel);
+    toolbar.appendChild(separator);
+    toolbar.appendChild(batchLabel);
 
     batchButtons.forEach((btn) => {
       const button = doc.createElement("button");
@@ -731,20 +787,18 @@ export class SessionAnnotationsView {
       return button;
     };
 
-    // 当前状态
-    const isShared = annotation.visibility === "public" || annotation.visibility === "shared";
-    const isAnonymous = annotation.showAuthorName === false;
-
-    // 共享按钮
-    const shareButton = createButton(
-      isShared ? "✅ 已共享" : "📤 共享",
-      isShared,
-      isShared ? "#10b981" : "#3b82f6"
-    );
-    shareButton.setAttribute("data-button-type", "share");
-
-    shareButton.addEventListener("click", async () => {
-      // 重新sync以获取最新状态
+    // 当前状态(支持新的visibility枚举)
+    const currentVisibility = annotation.visibility || "unshared";
+    
+    // 创建4个共享模式按钮
+    const shareModes = [
+      { id: "public", label: "🌐 公开", color: "#2196F3", visibility: "public" },
+      { id: "anonymous", label: "🎭 匿名", color: "#FF9800", visibility: "anonymous" },
+      { id: "private", label: "🔒 私密", color: "#9E9E9E", visibility: "private" },
+    ];
+    
+    const handleModeClick = async (targetVisibility: string) => {
+      // 重新sync获取最新状态
       const currentItem = this.context.getCurrentItem();
       if (!currentItem) return;
       
@@ -763,89 +817,155 @@ export class SessionAnnotationsView {
         return;
       }
       
-      const currentIsShared = latestAnnotation.visibility === "public" || latestAnnotation.visibility === "shared";
-      
-      if (currentIsShared) {
-        // 已共享 -> 取消共享
-        await this.handleManageSingleAnnotationShare(
-          latestAnnotation,
-          documentId,
-          userId,
-          "private",
-          latestAnnotation.showAuthorName !== false
-        );
-      } else {
-        // 未共享 -> 共享，使用当前匿名按钮的状态
-        const anonymousBtn = actionsDiv.querySelector('[data-button-type="anonymous"]') as HTMLElement;
-        const shouldBeAnonymous = anonymousBtn?.textContent?.includes("🎭");
-        
-        await this.handleManageSingleAnnotationShare(
-          latestAnnotation,
-          documentId,
-          userId,
-          "public",
-          !shouldBeAnonymous
-        );
-      }
-    });
-
-    // 匿名按钮
-    const anonymousButton = createButton(
-      isAnonymous ? "🎭 匿名" : "👤 公开",
-      isAnonymous,
-      "#8b5cf6"
-    );
-    anonymousButton.setAttribute("data-button-type", "anonymous");
-    anonymousButton.title = isShared 
-      ? (isAnonymous ? "切换为公开身份" : "切换为匿名") 
-      : "选择共享时的身份显示方式";
-
-    anonymousButton.addEventListener("click", async () => {
-      const currentItem = this.context.getCurrentItem();
-      if (!currentItem) return;
-      
-      const { AnnotationManager } = await import("../annotations");
-      const annotations = await AnnotationManager.getItemAnnotations(currentItem);
-      const documentInfo = await this.context.supabaseManager.findOrCreateDocument(currentItem);
-      const syncedAnnotations = await AnnotationManager.syncAnnotationsWithSupabase(
-        annotations,
-        documentInfo.id,
-        userId
+      // 共享到目标模式(public显示真实用户名,anonymous隐藏)
+      const showAuthorName = targetVisibility === "public";
+      await this.handleManageSingleAnnotationShare(
+        latestAnnotation,
+        documentId,
+        userId,
+        targetVisibility as "private" | "shared" | "public" | "anonymous",
+        showAuthorName
       );
+    };
+    
+    // 渲染3个模式按钮(支持换行避免溢出)
+    actionsDiv.style.display = "flex";
+    actionsDiv.style.flexWrap = "wrap";  // 关键:允许换行
+    actionsDiv.style.gap = "4px";
+    
+    shareModes.forEach(mode => {
+      const isActive = currentVisibility === mode.visibility;
+      const button = createButton(
+        mode.label,
+        isActive,
+        mode.color
+      );
+      button.setAttribute("data-button-type", mode.id);
+      button.title = isActive 
+        ? `当前为${mode.label}模式` 
+        : `切换到${mode.label}模式`;
       
-      const latestAnnotation = syncedAnnotations.find(a => a.key === annotation.key);
-      if (!latestAnnotation) {
-        logger.error("[SessionAnnotationsView] ❌ Cannot find annotation after sync!");
-        return;
-      }
+      button.addEventListener("click", async () => {
+        // 禁用按钮避免重复点击
+        button.disabled = true;
+        
+        try {
+          await handleModeClick(mode.visibility);
+          
+          // ✅ 更新annotation对象的visibility(重要!避免下次渲染显示旧状态)
+          annotation.visibility = mode.visibility;
+          annotation.showAuthorName = (mode.visibility === "public"); // anonymous由handleManageSingleAnnotationShare修正为false
+          
+          // 局部更新按钮状态,避免整页刷新
+          actionsDiv.querySelectorAll("button").forEach(btn => {
+            const btnType = btn.getAttribute("data-button-type");
+            if (shareModes.find(m => m.id === btnType)) {
+              // 移除所有active样式
+              btn.style.border = "1px solid #ccc";
+              btn.style.fontWeight = "normal";
+            }
+          });
+          
+          // 激活当前按钮
+          button.style.border = `2px solid ${mode.color}`;
+          button.style.fontWeight = "bold";
+          
+          // 如果之前没有取消按钮,添加它
+          if (!actionsDiv.querySelector('[data-button-type="cancel"]')) {
+            const cancelButton = createButton("🗑️ 取消", false, "#ef4444");
+            cancelButton.setAttribute("data-button-type", "cancel");
+            cancelButton.title = "取消共享并删除相关数据(点赞/评论)";
+            cancelButton.addEventListener("click", async () => {
+              const currentItem = this.context.getCurrentItem();
+              if (!currentItem) return;
+              
+              const { AnnotationManager } = await import("../annotations");
+              const annotations = await AnnotationManager.getItemAnnotations(currentItem);
+              const documentInfo = await this.context.supabaseManager.findOrCreateDocument(currentItem);
+              const syncedAnnotations = await AnnotationManager.syncAnnotationsWithSupabase(
+                annotations,
+                documentInfo.id,
+                userId
+              );
+              
+              const latestAnnotation = syncedAnnotations.find(a => a.key === annotation.key);
+              if (!latestAnnotation) {
+                logger.error("[SessionAnnotationsView] ❌ Cannot find annotation after sync!");
+                return;
+              }
+              
+              await this.handleManageSingleAnnotationShare(
+                latestAnnotation,
+                documentId,
+                userId,
+                "unshared",
+                false
+              );
+              
+              // 更新annotation对象
+              annotation.visibility = undefined;
+              annotation.supabaseId = undefined;
+              
+              // 移除取消按钮
+              cancelButton.remove();
+            });
+            
+            actionsDiv.appendChild(cancelButton);
+          }
+          
+        } finally {
+          button.disabled = false;
+        }
+      });
       
-      const currentIsShared = latestAnnotation.visibility === "public" || latestAnnotation.visibility === "shared";
-      const currentIsAnonymous = latestAnnotation.showAuthorName === false;
+      actionsDiv.appendChild(button);
+    });
+    
+    // 取消共享按钮(仅在已共享时显示)
+    const isShared = ["public", "anonymous", "private", "shared"].includes(currentVisibility);
+    if (isShared) {
+      const cancelButton = createButton("🗑️ 取消", false, "#ef4444");
+      cancelButton.setAttribute("data-button-type", "cancel");
+      cancelButton.title = "取消共享并删除相关数据(点赞/评论)";
       
-      if (currentIsShared) {
-        // 已共享：切换匿名状态
+      cancelButton.addEventListener("click", async () => {
+        const currentItem = this.context.getCurrentItem();
+        if (!currentItem) return;
+        
+        const { AnnotationManager } = await import("../annotations");
+        const annotations = await AnnotationManager.getItemAnnotations(currentItem);
+        const documentInfo = await this.context.supabaseManager.findOrCreateDocument(currentItem);
+        const syncedAnnotations = await AnnotationManager.syncAnnotationsWithSupabase(
+          annotations,
+          documentInfo.id,
+          userId
+        );
+        
+        const latestAnnotation = syncedAnnotations.find(a => a.key === annotation.key);
+        if (!latestAnnotation) {
+          logger.error("[SessionAnnotationsView] ❌ Cannot find annotation after sync!");
+          return;
+        }
+        
+        // 取消共享(删除Supabase记录及关联数据)
         await this.handleManageSingleAnnotationShare(
           latestAnnotation,
           documentId,
           userId,
-          latestAnnotation.visibility as "shared" | "public" | "private",
-          currentIsAnonymous // 翻转：当前匿名变公开，当前公开变匿名
+          "unshared",
+          false
         );
-      } else {
-        // 未共享：只更新UI状态，不实际操作
-        const newIsAnonymous = !currentIsAnonymous;
-        anonymousButton.textContent = newIsAnonymous ? "🎭 匿名" : "👤 公开";
-        anonymousButton.style.background = newIsAnonymous ? "#8b5cf6" : "#ffffff";
-        anonymousButton.style.color = newIsAnonymous ? "#ffffff" : "#8b5cf6";
-        anonymousButton.title = "选择共享时的身份显示方式";
         
-        // 更新annotation对象以便下次共享时使用
-        annotation.showAuthorName = !newIsAnonymous;
-      }
-    });
-
-    actionsDiv.appendChild(shareButton);
-    actionsDiv.appendChild(anonymousButton);
+        // 移除取消按钮并重置所有按钮状态
+        cancelButton.remove();
+        actionsDiv.querySelectorAll("button").forEach(btn => {
+          btn.style.border = "1px solid #ccc";
+          btn.style.fontWeight = "normal";
+        });
+      });
+      
+      actionsDiv.appendChild(cancelButton);
+    }
 
     contentArea.appendChild(contentDiv);
     contentArea.appendChild(metadataDiv);
@@ -858,17 +978,18 @@ export class SessionAnnotationsView {
   }
 
   /**
-   * 处理单个标注共享/取消共享 - 从MyAnnotationsView完整移植
+   * 处理单个标注共享/取消共享 - 支持4级共享模式(public/anonymous/private/unshared)
    */
   private async handleManageSingleAnnotationShare(
     annotation: any,
     documentId: string,
     userId: string,
-    visibility: "private" | "shared" | "public",
+    visibility: "private" | "shared" | "public" | "anonymous" | "unshared",
     showAuthorName: boolean
   ): Promise<void> {
     try {
-      if (visibility === "private" && annotation.supabaseId) {
+      // 🆕 完全取消共享(删除Supabase记录及关联数据)
+      if (visibility === "unshared" && annotation.supabaseId) {
         const relatedData = await this.context.supabaseManager.getAnnotationRelatedData(annotation.supabaseId);
 
         if (relatedData.likes_count > 0 || relatedData.comments_count > 0) {
@@ -890,20 +1011,65 @@ export class SessionAnnotationsView {
             return;
           }
         }
+        
+        // 级联删除标注及关联数据
+        const success = await this.context.supabaseManager.deleteSharedAnnotation(annotation.supabaseId);
+        if (success) {
+          this.context.showMessage("已取消共享并删除相关数据", "info");
+          // 清除本地缓存
+          const { AnnotationManager } = await import("../annotations");
+          const currentItem = this.context.getCurrentItem();
+          if (currentItem) {
+            AnnotationManager.clearCache(currentItem.id);
+          }
+          this.cachedAnnotations = null;
+          
+          // 延迟后重新渲染
+          await new Promise(resolve => setTimeout(resolve, 800));
+          if (this.context.isActive()) {
+            for (const panel of this.context.getPanelsForCurrentItem()) {
+              if (panel.contentSection) {
+                await this.render(panel.contentSection, panel.contentSection.ownerDocument, '');
+              }
+            }
+          }
+        } else {
+          this.context.showMessage("取消共享失败", "error");
+        }
+        return;
       }
 
       const { AnnotationManager } = await import("../annotations");
+      
+      // 映射visibility: anonymous→public, 其他保持不变
+      let targetVisibility: "shared" | "public" | "private";
+      if (visibility === "anonymous") {
+        targetVisibility = "public";
+      } else if (visibility === "unshared") {
+        // 不应该走到这里,unshared已在上面单独处理
+        logger.error("[SessionAnnotationsView] Unexpected unshared visibility in updateAnnotationSharing");
+        return;
+      } else {
+        targetVisibility = visibility;
+      }
+      
       const success = await AnnotationManager.updateAnnotationSharing(
         annotation,
         documentId,
         userId,
-        visibility,
-        showAuthorName
+        targetVisibility,
+        visibility === "anonymous" ? false : showAuthorName  // anonymous强制隐藏作者
       );
+      
+      // 🆕 修正本地visibility状态(anonymous映射为public后需要还原)
+      if (success && visibility === "anonymous") {
+        annotation.visibility = "anonymous";
+        annotation.showAuthorName = false;
+      }
 
       if (success) {
-        // 🆕 如果是共享到public/shared,且有当前session,则添加到session_annotations表
-        if (visibility !== 'private') {
+        // 🆕 如果是共享到public/anonymous(显示在社区),且有当前session,则添加到session_annotations表
+        if (visibility === 'public' || visibility === 'anonymous') {
           const session = this.sessionManager.getCurrentSession();
           if (session) {
             // updateAnnotationSharing会设置annotation.supabaseId,直接使用
@@ -927,24 +1093,17 @@ export class SessionAnnotationsView {
           }
         }
         
-        this.context.showMessage("更新成功", "info");
+        // 不显示成功消息,避免打断用户操作
+        // this.context.showMessage("更新成功", "info");
+        
         const currentItem = this.context.getCurrentItem();
         if (currentItem) {
           AnnotationManager.clearCache(currentItem.id);
         }
         this.cachedAnnotations = null;
 
-        // 等待充足延迟确保Supabase创建标注+share-to-session+索引更新+syncAnnotationsWithSupabase获取最新数据
-        await new Promise(resolve => setTimeout(resolve, 1000));
-
-        // 重新渲染整个管理标注视图
-        if (this.context.isActive()) {
-          for (const panel of this.context.getPanelsForCurrentItem()) {
-            if (panel.contentSection) {
-              await this.render(panel.contentSection, panel.contentSection.ownerDocument, '');
-            }
-          }
-        }
+        // ✅ 不调用 render(),避免整页刷新
+        // 按钮状态已在点击事件中局部更新,无需重新渲染
       } else {
         this.context.showMessage("更新失败", "error");
       }
@@ -961,7 +1120,7 @@ export class SessionAnnotationsView {
     allAnnotations: any[],
     documentId: string,
     userId: string,
-    visibility: "private" | "shared" | "public",
+    visibility: "private" | "shared" | "public" | "anonymous" | "unshared",
     showAuthorName: boolean
   ): Promise<void> {
     try {
@@ -982,7 +1141,8 @@ export class SessionAnnotationsView {
         return allAnnotations[index];
       });
 
-      if (visibility === "private") {
+      // 取消共享(unshared):需要确认删除
+      if (visibility === "unshared") {
         let totalLikes = 0;
         let totalComments = 0;
         let hasNested = false;
@@ -1022,21 +1182,72 @@ export class SessionAnnotationsView {
       }
 
       const { AnnotationManager } = await import("../annotations");
+      
+      // 处理unshared:批量删除
+      if (visibility === "unshared") {
+        const deleteResults = await Promise.all(
+          selectedAnnotations.map(async (ann) => {
+            if (ann.supabaseId) {
+              return await this.context.supabaseManager.deleteSharedAnnotation(ann.supabaseId);
+            }
+            return true; // 本地标注无需删除
+          })
+        );
+        
+        if (deleteResults.every(Boolean)) {
+          this.context.showMessage("批量取消共享完成", "info");
+          const currentItem = this.context.getCurrentItem();
+          if (currentItem) {
+            AnnotationManager.clearCache(currentItem.id);
+          }
+          this.cachedAnnotations = null;
+          
+          // 延迟后重新渲染
+          await new Promise(resolve => setTimeout(resolve, 800));
+          if (this.context.isActive()) {
+            for (const panel of this.context.getPanelsForCurrentItem()) {
+              if (panel.contentSection) {
+                await this.render(panel.contentSection, panel.contentSection.ownerDocument, '');
+              }
+            }
+          }
+        } else {
+          this.context.showMessage("部分取消共享失败", "error");
+        }
+        return;
+      }
+      
+      // 映射visibility: anonymous → public
+      let targetVisibility: "shared" | "public" | "private";
+      if (visibility === "anonymous") {
+        targetVisibility = "public";
+      } else {
+        targetVisibility = visibility as "shared" | "public" | "private";
+      }
+      
       const results = await Promise.all(
         selectedAnnotations.map((ann) =>
           AnnotationManager.updateAnnotationSharing(
             ann,
             documentId,
             userId,
-            visibility,
-            showAuthorName
+            targetVisibility,
+            visibility === "anonymous" ? false : showAuthorName  // anonymous强制隐藏
           )
         )
       );
+      
+      // 🆕 修正本地visibility状态(anonymous映射为public后需要还原)
+      if (visibility === "anonymous") {
+        selectedAnnotations.forEach(ann => {
+          ann.visibility = "anonymous";
+          ann.showAuthorName = false;
+        });
+      }
 
       if (results.every(Boolean)) {
-        // 🆕 批量添加到session(如果是共享操作)
-        if (visibility !== 'private') {
+        // 🆕 批量添加到session(仅public/anonymous)
+        if (visibility === 'public' || visibility === 'anonymous') {
           const session = this.sessionManager.getCurrentSession();
           if (session) {
             // 检查哪些标注有supabaseId
@@ -1221,10 +1432,12 @@ export class SessionAnnotationsView {
         return;
       }
 
-      // 动态导入PDFReaderManager
-      const { PDFReaderManager } = await import("../pdfReaderManager");
-      const readerManager = PDFReaderManager.getInstance();
-      await readerManager.initialize();
+      // 获取PDFReaderManager实例
+      const readerManager = await this.getPDFReaderManager();
+      if (!readerManager) {
+        this.context.showMessage('PDF阅读器管理器未初始化，请重启Zotero', 'error');
+        return;
+      }
 
       // 处理toggle-native
       if (filterType === "toggle-native") {
@@ -1429,14 +1642,14 @@ export class SessionAnnotationsView {
     `;
 
     const filterOptions = [
-      { value: 'others', label: '👥 其他成员' },
       { value: 'all', label: '🌐 所有成员（包括我）' },
+      { value: 'others', label: '👥 其他成员' },
       { value: 'followed', label: '⭐ 关注成员（不包括我）' },
       { value: 'select', label: '👤 选择成员...' },
     ];
 
-    // 默认选中"其他成员"
-    filterSelect.value = 'others';
+    // 默认选中"所有成员(包括我)"
+    filterSelect.value = 'all';
     
     filterOptions.forEach(opt => {
       const option = doc.createElement('option');
@@ -1518,17 +1731,44 @@ export class SessionAnnotationsView {
     const userInfo = doc.createElement("div");
     userInfo.style.cssText = "display: flex; align-items: center; gap: 8px; font-size: 12px; color: #6c757d;";
 
-    // 使用SharedAnnotationsView的resolveAnnotationDisplayName
-    const displayName = annotation.user_name || annotation.user_email || '未知用户';
-    const username = annotation.username || '';
-    const isAnonymous = !annotation.show_author_name;
+    // 根据visibility和show_author_name决定显示
+    const visibility = annotation.visibility || 'public';
+    const showAuthorName = annotation.show_author_name;
+    
+    // Debug log
+    logger.log(`[SessionAnnotationsView] 🔍 Annotation ${annotation.id}: visibility=${visibility}, show_author_name=${showAuthorName}`);
+    
+    const isPrivate = visibility === 'private';
+    const isAnonymous = showAuthorName === false && visibility !== 'private';
+    
+    let displayName: string;
+    let username: string;
+    let clickable: boolean;
+    
+    if (isPrivate) {
+      // 私密标注显示"私密"
+      displayName = '私密';
+      username = '';
+      clickable = false;
+    } else if (isAnonymous) {
+      // 匿名标注显示"匿名用户"
+      displayName = '匿名用户';
+      username = '';
+      clickable = false;
+    } else {
+      // 公开标注显示真实用户名
+      displayName = annotation.user_name || annotation.user_email || '未知用户';
+      username = annotation.username || '';
+      clickable = true;
+    }
 
     // ✨ 使用UserHoverCardManager创建用户元素
+    // isPrivate也需要特殊渲染(无头像、无点击),传入displayName会显示"私密"
     const userElement = this.userHoverCardManager.createUserElement(
       doc,
       username,
       displayName,
-      { isAnonymous, clickable: !isAnonymous, avatarUrl: annotation.avatar_url }
+      { isAnonymous: isAnonymous || isPrivate, clickable, avatarUrl: annotation.avatar_url }
     );
     userInfo.appendChild(userElement);
 
@@ -1675,37 +1915,54 @@ export class SessionAnnotationsView {
   
   /**
    * 处理点赞标注
+   * 修复: 点赞后重新获取数据库的真实 likes_count,避免计数错误
    */
   private async handleLikeAnnotation(
     annotationId: string,
     userId: string,
     cardElement?: HTMLElement
   ): Promise<void> {
+    if (!cardElement) return;
+    
+    const likeButton = cardElement.querySelector(
+      "button[data-like-button]"
+    ) as HTMLButtonElement | null;
+    
+    if (!likeButton) return;
+    
+    // 防止并发点击
+    if (likeButton.disabled) return;
+    
     try {
-      await this.context.supabaseManager.likeAnnotation(annotationId, userId);
-
-      if (cardElement) {
-        const likeButton = cardElement.querySelector(
-          "button[data-like-button]"
-        ) as HTMLButtonElement | null;
-        if (likeButton) {
-          const wasLiked = likeButton.innerHTML.includes("❤️");
-          const currentCount = parseInt(likeButton.textContent?.match(/\d+/)?.[0] || "0", 10);
-
-          if (wasLiked) {
-            likeButton.innerHTML = `🤍 ${Math.max(0, currentCount - 1)}`;
-            likeButton.style.color = "#6c757d";
-            likeButton.style.borderColor = "#e9ecef";
-          } else {
-            likeButton.innerHTML = `❤️ ${currentCount + 1}`;
-            likeButton.style.color = "#dc3545";
-            likeButton.style.borderColor = "#dc3545";
-          }
-        }
+      // 禁用按钮,显示加载状态
+      likeButton.disabled = true;
+      const currentCount = parseInt(likeButton.textContent?.match(/\d+/)?.[0] || "0", 10);
+      likeButton.innerHTML = `<span style="opacity: 0.5;">...</span>`;
+      
+      // 执行点赞/取消点赞操作
+      const isNowLiked = await this.context.supabaseManager.likeAnnotation(annotationId, userId);
+      
+      // 直接根据操作结果计算新的点赞数 (不依赖数据库查询,避免 trigger 延迟/历史数据问题)
+      const newCount = isNowLiked ? currentCount + 1 : currentCount - 1;
+      
+      // 更新UI
+      if (isNowLiked) {
+        likeButton.innerHTML = `❤️ ${newCount}`;
+        likeButton.style.color = "#dc3545";
+        likeButton.style.borderColor = "#dc3545";
+      } else {
+        likeButton.innerHTML = `🤍 ${newCount}`;
+        likeButton.style.color = "#6c757d";
+        likeButton.style.borderColor = "#e9ecef";
       }
     } catch (error) {
       logger.error("[SessionAnnotationsView] Error liking annotation:", error);
       this.context.showMessage("操作失败", "error");
+    } finally {
+      // 恢复按钮可用状态
+      if (likeButton) {
+        likeButton.disabled = false;
+      }
     }
   }
   
@@ -2418,26 +2675,19 @@ export class SessionAnnotationsView {
 
       let annotations = await this.sessionManager.getSessionAnnotations(sessionId, 1, 100);
       
-      // 获取在线成员列表用于过滤
-      const members = await this.sessionManager.getSessionMembers(sessionId, false);
-      const onlineUserIds = new Set(members.filter((m: any) => m.is_online).map((m: any) => m.user_id));
-      
-      // 仅显示在线成员的标注
-      annotations = annotations.filter((a: any) => onlineUserIds.has(a.user_id));
-      
       // 获取当前用户ID
       const currentUser = AuthManager.getCurrentUser();
       const currentUserId = currentUser?.id;
       
       // 根据筛选类型过滤
       if (filterType === 'others') {
-        // 其他成员:排除当前用户
+        // 其他成员:只显示其他用户的标注(排除当前用户)
         if (currentUserId) {
           annotations = annotations.filter((a: any) => a.user_id !== currentUserId);
         }
       } else if (filterType === 'all') {
-        // 所有成员(包括我):显示所有在线成员的标注
-        // 已经在上面过滤过了,无需额外操作
+        // 所有成员(包括我):显示session中所有共享的标注
+        // 无需过滤
       } else if (filterType === 'followed') {
         // 关注成员(不包括我):显示关注的用户,但排除自己
         // TODO: 实现关注功能需要后端支持(创建user_follows表)
@@ -2517,10 +2767,12 @@ export class SessionAnnotationsView {
         return;
       }
 
-      // 使用PDFReaderManager来高亮显示标注
-      const { PDFReaderManager } = await import('../pdfReaderManager');
-      const readerManager = PDFReaderManager.getInstance();
-      await readerManager.initialize();
+      // 获取PDFReaderManager实例
+      const readerManager = await this.getPDFReaderManager();
+      if (!readerManager) {
+        this.context.showMessage('PDF阅读器管理器未初始化，请重启Zotero', 'error');
+        return;
+      }
 
       let reader = await readerManager.findOpenReader(doi);
 

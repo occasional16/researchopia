@@ -28,6 +28,10 @@ export interface ReadingSession {
   settings: Record<string, any>;
   created_at: string;
   ended_at?: string;
+  // 📝 论文元数据(从papers表关联查询)
+  authors?: string;
+  journal?: string;
+  year?: string;
 }
 
 /**
@@ -94,6 +98,7 @@ export class ReadingSessionManager {
   private apiClient: APIClient;
   private authManager: AuthManager;
   private logManager: SessionLogManager;
+  private supabaseManager: any = null; // 延迟加载SupabaseManager
 
   private currentSession: ReadingSession | null = null;
   private currentMember: SessionMember | null = null;
@@ -108,10 +113,15 @@ export class ReadingSessionManager {
   private zoteroNotifierID: any = null;
   private heartbeatInterval: any = null;
   private pollingInterval: any = null;
+  private readingHistoryHeartbeatInterval: any = null; // 阅读历史心跳
+  private currentOpenedPaperDoi: string | null = null; // 当前打开的论文DOI
 
   private annotationListeners: ((event: RealtimeAnnotationEvent) => void)[] = [];
   private presenceListeners: ((event: RealtimePresenceEvent) => void)[] = [];
   private memberListeners: ((members: SessionMember[]) => void)[] = [];
+  
+  // Realtime Presence相关
+  private currentSessionOnlineCount: number = 0; // 当前会话在线人数
 
   private constructor() {
     this.apiClient = APIClient.getInstance();
@@ -326,6 +336,10 @@ export class ReadingSessionManager {
     this.startPolling();
     this.registerZoteroAnnotationListener(); // 只监听删除操作,不自动创建
     // await this.syncExistingAnnotations(); // 禁用自动同步-标注需通过管理页面手动共享
+    
+    // ⚠️ 不在此订阅presence,改为打开PDF时订阅(onReaderOpen)
+    // 🔍 但需要检查是否已有打开的PDF Reader
+    this.checkExistingReaderAndSubscribe();
 
     this.notifyPresenceListeners({
       type: 'user_joined',
@@ -413,6 +427,9 @@ export class ReadingSessionManager {
       this.stopHeartbeat();
       this.stopPolling();
       this.unregisterZoteroAnnotationListener();
+      
+      // 取消订阅presence
+      await this.unsubscribeCurrentSessionPresence();
       
       await this.updateOnlineStatus(false);
       
@@ -768,6 +785,247 @@ export class ReadingSessionManager {
       }
     } catch (error) {
       logger.error('[ReadingSessionManager] ❌ Error during sync of existing annotations:', error);
+    }
+  }
+
+  // ==================== Realtime Presence Methods ====================
+  
+  /**
+   * 延迟加载SupabaseManager(避免循环依赖)
+   */
+  private async getSupabaseManager(): Promise<any> {
+    if (!this.supabaseManager) {
+      const { SupabaseManager } = await import('./supabase');
+      this.supabaseManager = new SupabaseManager();
+    }
+    return this.supabaseManager;
+  }
+
+  /**
+   * 订阅当前会话的realtime presence
+   */
+  private async subscribeCurrentSessionPresence(): Promise<void> {
+    if (!this.currentSession) {
+      logger.warn('[ReadingSessionManager] No current session to subscribe presence');
+      return;
+    }
+
+    try {
+      const supabase = await this.getSupabaseManager();
+      await supabase.subscribeSessionPresence(
+        this.currentSession.id,
+        (onlineCount: number) => {
+          this.currentSessionOnlineCount = onlineCount;
+          logger.log(`[ReadingSessionManager] 🟢 Online count updated: ${onlineCount}`);
+        }
+      );
+    } catch (error) {
+      logger.error('[ReadingSessionManager] Failed to subscribe presence:', error);
+    }
+  }
+
+  /**
+   * 取消订阅当前会话的presence
+   */
+  private async unsubscribeCurrentSessionPresence(): Promise<void> {
+    if (!this.currentSession) return;
+
+    try {
+      const supabase = await this.getSupabaseManager();
+      await supabase.unsubscribeSessionPresence(this.currentSession.id);
+      this.currentSessionOnlineCount = 0;
+    } catch (error) {
+      logger.error('[ReadingSessionManager] Failed to unsubscribe presence:', error);
+    }
+  }
+
+  /**
+   * 获取当前会话在线人数
+   */
+  public getCurrentSessionOnlineCount(): number {
+    return this.currentSessionOnlineCount;
+  }
+  
+  /**
+   * 检查是否已有打开的PDF Reader并订阅presence
+   * 用于场景2: 用户已打开PDF，加入/恢复会话时自动订阅
+   */
+  private async checkExistingReaderAndSubscribe(): Promise<void> {
+    if (!this.currentSession) {
+      logger.log('[ReadingSessionManager] No current session in checkExistingReader');
+      return;
+    }
+    
+    const doi = this.currentSession.paper_doi;
+    if (!doi) {
+      logger.warn('[ReadingSessionManager] Current session has no DOI');
+      return;
+    }
+    
+    logger.log(`[ReadingSessionManager] 🔍 Checking for existing reader with DOI: ${doi}`);
+    
+    try {
+      // 获取所有打开的reader
+      let readers: any[] = [];
+      if ((Zotero as any).Reader && typeof (Zotero as any).Reader.getAll === 'function') {
+        readers = (Zotero as any).Reader.getAll();
+        logger.log(`[ReadingSessionManager] Found ${readers.length} open readers`);
+      }
+      
+      // 标准化DOI用于匹配
+      const normalizeDOI = (doi: string): string => {
+        return doi.toLowerCase().replace(/^https?:\/\/(dx\.)?doi\.org\//i, '').trim();
+      };
+      const normalizedSessionDOI = normalizeDOI(doi);
+      
+      // 查找匹配的reader
+      for (const reader of readers) {
+        try {
+          const itemID = reader.itemID;
+          if (!itemID) continue;
+          
+          const item = (Zotero as any).Items.get(itemID);
+          if (!item) continue;
+          
+          const parentItem = item.parentItem;
+          if (!parentItem) continue;
+          
+          const itemDOI = parentItem.getField('DOI');
+          if (itemDOI && normalizeDOI(itemDOI) === normalizedSessionDOI) {
+            logger.log(`[ReadingSessionManager] ✅ Found existing reader, subscribing presence`);
+            await this.onReaderOpen(itemID);
+            return;
+          }
+        } catch (error) {
+          logger.error('[ReadingSessionManager] Error checking reader:', error);
+        }
+      }
+      
+      logger.log('[ReadingSessionManager] No matching reader found');
+    } catch (error) {
+      logger.error('[ReadingSessionManager] Error in checkExistingReaderAndSubscribe:', error);
+    }
+  }
+
+  /**
+   * 打开Reader时调用(订阅presence)
+   * @param attachmentItemId PDF附件的Zotero itemID
+   */
+  public async onReaderOpen(attachmentItemId: number): Promise<void> {
+    logger.log(`[ReadingSessionManager] 🔔 onReaderOpen called for attachment ID: ${attachmentItemId}`);
+    try {
+      const item = (Zotero as any).Items.get(attachmentItemId);
+      const parentItem = item?.parentItem;
+      if (!parentItem) {
+        logger.warn('[ReadingSessionManager] No parent item found for attachment');
+        return;
+      }
+
+      const doi = parentItem.getField('DOI');
+      if (!doi) {
+        logger.warn('[ReadingSessionManager] No DOI found for paper');
+        return;
+      }
+
+      // 1. 记录阅读历史（独立于会话）
+      await this.recordReadingHistory(doi);
+
+      // 2. 启动阅读历史心跳（保持在线状态）
+      this.currentOpenedPaperDoi = doi;
+      this.startReadingHistoryHeartbeat();
+
+      // 3. 如果有活跃会话，订阅presence
+      if (this.currentSession && doi === this.currentSession.paper_doi) {
+        logger.log(`[ReadingSessionManager] 📖 Reader opened for session ${this.currentSession.id}`);
+        await this.subscribeCurrentSessionPresence();
+      } else {
+        logger.log('[ReadingSessionManager] 📖 Reader opened without active session');
+      }
+    } catch (error) {
+      logger.error('[ReadingSessionManager] Error handling reader open:', error);
+    }
+  }
+
+  /**
+   * 记录用户打开论文的阅读历史
+   * @param doi 论文DOI
+   */
+  private async recordReadingHistory(doi: string): Promise<void> {
+    try {
+      logger.log(`[ReadingSessionManager] Recording reading history for DOI: ${doi}`);
+      
+      const { APIClient } = await import('../utils/apiClient');
+      const apiClient = APIClient.getInstance();
+      
+      const response: any = await apiClient.post('/api/proxy/papers/reading-history', {
+        doi,
+      });
+
+      if (response?.success) {
+        logger.log('[ReadingSessionManager] Reading history recorded successfully');
+      } else {
+        logger.warn('[ReadingSessionManager] Failed to record reading history:', response);
+      }
+    } catch (error) {
+      logger.error('[ReadingSessionManager] Error recording reading history:', error);
+    }
+  }
+
+  /**
+   * 启动阅读历史心跳（每2分钟更新一次last_read_at）
+   */
+  private startReadingHistoryHeartbeat(): void {
+    if (this.readingHistoryHeartbeatInterval) {
+      return; // 已在运行
+    }
+
+    logger.log('[ReadingSessionManager] Starting reading history heartbeat');
+    
+    this.readingHistoryHeartbeatInterval = setInterval(() => {
+      if (this.currentOpenedPaperDoi) {
+        this.recordReadingHistory(this.currentOpenedPaperDoi).catch(err =>
+          logger.error('[ReadingSessionManager] Reading history heartbeat failed:', err)
+        );
+      }
+    }, 2 * 60 * 1000); // 每2分钟更新一次
+  }
+
+  /**
+   * 停止阅读历史心跳
+   */
+  private stopReadingHistoryHeartbeat(): void {
+    if (this.readingHistoryHeartbeatInterval) {
+      clearInterval(this.readingHistoryHeartbeatInterval);
+      this.readingHistoryHeartbeatInterval = null;
+      logger.log('[ReadingSessionManager] Reading history heartbeat stopped');
+    }
+  }
+
+  /**
+   * 关闭Reader时调用(取消订阅presence)
+   * @param attachmentItemId PDF附件的Zotero itemID
+   */
+  public async onReaderClose(attachmentItemId: number): Promise<void> {
+    try {
+      const item = (Zotero as any).Items.get(attachmentItemId);
+      const parentItem = item?.parentItem;
+      if (parentItem) {
+        const doi = parentItem.getField('DOI');
+        
+        // 1. 停止阅读历史心跳
+        if (doi === this.currentOpenedPaperDoi) {
+          this.stopReadingHistoryHeartbeat();
+          this.currentOpenedPaperDoi = null;
+        }
+
+        // 2. 如果有活跃会话，取消订阅presence
+        if (this.currentSession && doi === this.currentSession.paper_doi) {
+          logger.log(`[ReadingSessionManager] 📕 Reader closed for session ${this.currentSession.id}`);
+          await this.unsubscribeCurrentSessionPresence();
+        }
+      }
+    } catch (error) {
+      logger.error('[ReadingSessionManager] Error handling reader close:', error);
     }
   }
 }

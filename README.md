@@ -29,11 +29,19 @@
 
 - [🧩 目录 Contents](#-目录-contents)
 - [📋 项目简介](#-项目简介)
+  - [🌟 项目组成](#-项目组成)
+  - [🤖 AI驱动开发](#-ai驱动开发)
+  - [💬 社区与交流](#-社区与交流)
 - [⚡ 快速开始](#-快速开始)
   - [✨ 核心功能](#-核心功能)
   - [🌐 网站平台](#-网站平台)
   - [📱 浏览器扩展](#-浏览器扩展)
   - [📚 Zotero 插件](#-zotero-插件)
+- [🚀 开发环境搭建](#-开发环境搭建)
+  - [前置要求](#前置要求)
+  - [快速开始](#快速开始)
+  - [Zotero插件开发 (可选)](#zotero插件开发-可选)
+  - [浏览器扩展开发 (可选)](#浏览器扩展开发-可选)
 - [📝 相关文档](#-相关文档)
 - [🔧 开发指南](#-开发指南)
   - [🤝 贡献指南](#-贡献指南)
@@ -47,17 +55,42 @@
 
 欢迎来到 **研学港 Researchopia** ！ **研学港 Researchopia** 是一个开放的学术交流和共享平台（开源项目），旨在为研究者提供优质的学术资源和交流环境。我们致力于构建一个研究者的理想国，让学术智慧在这里汇聚和传播。
 
-本项目主要呈现方式是一个 **[网站](https://www.researchopia.com)** ，以及于此网站关联的 **[浏览器扩展](https://microsoftedge.microsoft.com/addons/detail/%E7%A0%94%E5%AD%A6%E6%B8%AF-researchopia/hjijphegihgkddcmdmfjpflpcdaadbio)** 和 **Zotero插件** （官网或 [Releases](https://github.com/occasional16/researchopia/releases) 下载）。具体功能参考下方描述，以及网站上的 [用户指南](https://www.researchopia.com/guide) 。
+### 🌟 项目组成
 
-本项目正式启动于2025-09-08，作者是一名刚博士毕业的科研狗（化学领域），没有编程基础，也没有报过AI课程，因此，**本项目的编程部分由AI工具生成** （项目整体架构、项目名称、logo和slogan也是AI给设计的）。一开始我还不懂什么叫网站前后端也不懂VS code，但第一天时间就完成了网站基本的界面设计和数据库搭建。浏览器扩展和zotero插件的第一版真的是各用一句话直接生成。当然，进一步的细节打磨和bug处理是花了更多的时间。这段时间也渐渐学到了一些编程知识，也积累了一些与AI对话的经验和小窍门。目前项目处于初期阶段，后续会持续优化和完善。
+本项目采用**Monorepo架构**，包含三个核心组件：
 
-想要近距离了解本项目开发意图和计划，有任何开发和使用上的建议和反馈，或者想了解AI开发的细节的小伙伴，欢迎加我的个人微信、微信公众号（观物AI），也欢迎加入用户群。
+1. **🌐 网站（Next.js）** ([www.researchopia.com](https://www.researchopia.com))
+   - 在线论文搜索和评价平台
+   - 学术标注社区
+   
+2. **📚 Zotero 插件** (https://www.researchopia.com/updates)
+   - 嵌入 Zotero 8/7 的原生插件
+   - 实时文献共读会话
+   - 自动同步 PDF 标注到云端
+   - 实时会话协作功能
+   
+3. **📱 浏览器扩展** ([Edge Store](https://microsoftedge.microsoft.com/addons/detail/%E7%A0%94%E5%AD%A6%E6%B8%AF-researchopia/hjijphegihgkddcmdmfjpflpcdaadbio))
+   - 智能 DOI 检测
+   - 侧边栏快速预览
+   - 一键搜索论文
+
+具体功能请参考 [用户指南](https://www.researchopia.com/guide)。
+
+### 🤖 AI驱动开发
+
+本项目正式启动于2025-09-08，作者是一名刚博士毕业的科研狗（化学领域），没有编程基础，也没有报过AI课程。**本项目的编程部分100%由AI工具生成** （项目架构、名称、logo和slogan也由AI设计）。
+
+一开始我还不懂什么叫网站前后端也不懂VS code，但第一天时间就完成了网站基本的界面设计和数据库搭建。浏览器扩展和zotero插件的第一版真的是各用一句话直接生成。当然，进一步的细节打磨和bug处理是花了更多的时间。这段时间也渐渐学到了一些编程知识，也积累了一些与AI对话的经验和小窍门。目前项目处于初期阶段，后续会持续优化和完善。
+
+### 💬 社区与交流
+
+想要近距离了解本项目开发意图和计划，有任何开发和使用上的建议和反馈，或者想了解AI开发的细节的小伙伴，欢迎加我的个人微信、微信公众号（观物AI），也欢迎加入用户群：
 
 <div align="center">
   <img src="./docs/res/wechat.png" alt="个人微信二维码" width="24%">
-  <img src="./docs/res/qr-guanwu-AI.png" alt="个人微信二维码" width="22.5%">  
-  <img src="./docs/res/group-users-wechat.png" alt="微信二维码" width="23%">
-  <img src="./docs/res/group-users-qq.png" alt="qq群" width="23.5%">
+  <img src="./docs/res/qr-guanwu-AI.png" alt="微信公众号二维码" width="22.5%">  
+  <img src="./docs/res/group-users-wechat.png" alt="微信群二维码" width="23%">
+  <img src="./docs/res/group-users-qq.png" alt="qq群二维码" width="23.5%">
 </div> 
 
 ---
@@ -133,6 +166,56 @@
 
 ---
 
+## 🚀 开发环境搭建
+
+### 前置要求
+- **Node.js**: v18.0.0+ 
+- **npm**: v9.0.0+
+- **Zotero**: v7 或 v8 Beta (插件开发)
+
+### 快速开始
+
+```bash
+# 1. 克隆仓库并安装依赖
+git clone https://github.com/occasional16/researchopia.git
+cd researchopia
+npm install
+
+# 2. 配置环境变量
+cp .env.example .env.local
+# 编辑 .env.local 填写必填项:
+# - NEXT_PUBLIC_SUPABASE_URL
+# - SUPABASE_SERVICE_ROLE_KEY
+
+# 3. 启动开发服务器
+npm run dev
+# 访问 http://localhost:3000
+```
+
+### Zotero插件开发 (可选)
+```bash
+cd zotero-plugin
+npm install
+
+# 配置Zotero路径
+cp .env.template .env
+# 编辑 .env: ZOTERO_PLUGIN_ZOTERO_BIN_PATH=C:\Program Files\Zotero\zotero.exe
+
+# 启动热重载
+npm start
+```
+
+### 浏览器扩展开发 (可选)
+```bash
+# Chrome/Edge: 扩展管理 → 开发者模式 → 加载已解压的扩展
+# 选择 extension/ 目录
+```
+
+**详细开发指南**: [DEVELOPMENT.md](./docs/DEVELOPMENT.md)  
+**贡献流程**: [CONTRIBUTING.md](./docs/CONTRIBUTING.md)
+
+---
+
 ## 📝 相关文档
 
 > **🗂️ 完整文档导航**: [文档索引和规范](./docs/README.md) - 查看所有文档和编写规范
@@ -162,45 +245,67 @@
 ### 📁 项目结构
 
 ```
-📁 Researchopia/
-├── 📁 src/                  # Next.js 网站源码
+📁 Researchopia/ (Monorepo)
+├── 📁 src/                  # 🌐 Next.js 网站源码 (278 文件)
 │   ├── 📁 app/              # App Router 页面
 │   ├── 📁 components/       # React 组件
 │   ├── 📁 lib/              # 工具库和配置
+│   ├── 📁 hooks/            # 自定义 Hooks
+│   ├── 📁 utils/            # 工具函数
 │   └── 📁 types/            # TypeScript 类型定义
-├── 📁 zotero-plugin/        # Zotero 插件
+├── 📁 zotero-plugin/        # 📚 Zotero 插件 (168 文件) ⭐
 │   ├── 📁 src/              # 插件源码
-│   │   ├── 📁 modules/      # 核心功能模块
+│   │   ├── 📁 modules/      # 业务模块 (46+ 子模块)
+│   │   │   ├── 📁 ui/       # UI视图层 (高度模块化)
+│   │   │   ├── 📁 pdf/      # PDF管理 (V2架构)
+│   │   │   └── ...
 │   │   ├── 📁 utils/        # 工具函数
-│   │   └── 📁 config/       # 配置文件
-│   └── 📁 addon/            # 插件资源文件
-├── 📁 extension/            # 浏览器扩展
-│   ├── 📁 manifest.json     # 扩展清单
-│   ├── 📁 background.js     # 后台脚本
-│   ├── 📁 content.js        # 内容脚本
+│   │   ├── 📁 config/       # 配置文件
+│   │   └── 📁 adapters/     # 适配器层
+│   ├── 📁 addon/            # 插件资源文件
+│   ├── package.json         # 插件依赖
+│   └── tsconfig.json        # TypeScript 配置
+├── 📁 extension/            # 📱 浏览器扩展 (12 文件)
+│   ├── manifest.json        # 扩展清单 (MV3)
+│   ├── background.js        # 后台脚本
+│   ├── content.js           # 内容脚本
+│   ├── popup.html/js        # 弹窗界面
+│   ├── sidebar.html/js      # 侧边栏
 │   └── 📁 icons/            # 图标资源
-├── 📁 docs/                 # 项目文档 
-└── 📁 public/               # 静态资源文件
+├── 📁 docs/                 # 📖 项目文档
+│   ├── 📁 docs-dev/         # 开发文档 (架构、重构记录)
+│   ├── ARCHITECTURE.md      # 架构说明
+│   ├── DEVELOPMENT.md       # 开发指南
+│   ├── CONTRIBUTING.md      # 贡献指南
+│   └── USER-GUIDE.md        # 用户指南
+├── 📁 public/               # 静态资源文件
+├── 📁 .github/              # GitHub 配置
+│   └── copilot-instructions.md  # AI开发指南
+├── package.json             # 根依赖 (统一版本管理)
+└── tsconfig.json            # 根 TypeScript 配置
 ```
 
 ### 🛠 技术栈
 
-**网站**
-- **Next.js 15** - React 框架，App Router
+**🌐 Next.js 网站**
+- **Next.js 16.0.1** - React 框架，App Router
 - **TypeScript** - 类型安全
 - **Tailwind CSS** - 样式框架
-- **Supabase** - 后端服务和实时数据库
+- **Supabase** - 后端服务 (Auth + Database + Realtime)
+- **React Query** - 数据获取和状态管理
+- **WebSocket** - 实时通信
 - **Vercel** - 部署平台
 
-**Zotero 插件**
-- **[Zotero Plugin Template](https://github.com/windingwind/zotero-plugin-template)** - Zotero 插件模版
+**📚 Zotero 插件**
+- **[Zotero Plugin Template](https://github.com/windingwind/zotero-plugin-template)** - 官方插件模版
 - **TypeScript** - 插件开发语言
-- **Zotero Plugin Toolkit** - 官方工具库
+- **Zotero Plugin Toolkit 5.1** - 官方工具库
 - **Mozilla/XUL** - Zotero UI 框架
+- **Supabase JS SDK** - 云端数据同步
 
-**浏览器扩展**
+**📱 浏览器扩展**
 - **Manifest V3** - Chrome 扩展最新标准
-- **Vanilla JavaScript** - 轻量高效
+- **Vanilla JavaScript** - 轻量高效 (计划迁移至 TypeScript + Vite)
 
 ---
 

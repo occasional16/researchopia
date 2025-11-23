@@ -305,18 +305,19 @@ export class CurrentSessionTabView {
       gap: ${spacing.xs};
     `;
     
-    // 从members获取实际的总人数和在线人数
+    // 从members获取总人数,从realtime presence获取在线人数
     let totalCount = 1;
     let onlineCount = 0;
     try {
       const membersResponse = await this.sessionManager.getSessionMembers(session.id);
       totalCount = membersResponse.length || 1;
-      onlineCount = membersResponse.filter(m => m.is_online).length || 0;
+      // 从realtime presence获取在线人数
+      onlineCount = this.sessionManager.getCurrentSessionOnlineCount();
     } catch (e) {
       logger.warn('[CurrentSessionTabView] Failed to get member counts:', e);
       // Fallback to session object values if API fails
       totalCount = (session as any).member_count || 1;
-      onlineCount = (session as any).online_count || 0;
+      onlineCount = 0;
     }
     
     // 总人数
@@ -501,7 +502,8 @@ export class CurrentSessionTabView {
     try {
       const members = await this.sessionManager.getSessionMembers(session.id, false);
       logger.log(`[CurrentSessionTabView] 获取到${members.length}个成员:`, members);
-      const onlineCount = members.filter(m => m.is_online).length;
+      // 从realtime presence获取在线人数
+      const onlineCount = this.sessionManager.getCurrentSessionOnlineCount();
       const totalCount = members.length;
 
       // 标题

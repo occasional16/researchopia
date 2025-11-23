@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
-import { MockAuthService } from '@/lib/mockAuth'
 import { getPapers } from '@/lib/database'
 
 export async function GET(
@@ -10,17 +9,8 @@ export async function GET(
   try {
     const { id } = await params
 
-    // Check if using Supabase or Mock mode
-    if (!supabase || MockAuthService.shouldUseMockAuth()) {
-      // Return mock data
-      const papers = await getPapers()
-      const paper = papers.find(p => p.id === id)
-      
-      if (!paper) {
-        return NextResponse.json({ error: 'Paper not found' }, { status: 404 })
-      }
-      
-      return NextResponse.json(paper)
+    if (!supabase) {
+      return NextResponse.json({ error: 'Database not configured' }, { status: 500 })
     }
 
     // Use Supabase
@@ -39,15 +29,11 @@ export async function GET(
 
     if (error) {
       console.error('Supabase error:', error)
-      // Fallback to mock data
-      const papers = await getPapers()
-      const mockPaper = papers.find(p => p.id === id)
-      
-      if (!mockPaper) {
-        return NextResponse.json({ error: 'Paper not found' }, { status: 404 })
-      }
-      
-      return NextResponse.json(mockPaper)
+      return NextResponse.json({ error: error.message }, { status: 400 })
+    }
+
+    if (!paper) {
+      return NextResponse.json({ error: 'Paper not found' }, { status: 404 })
     }
 
     return NextResponse.json(paper)
@@ -65,10 +51,8 @@ export async function PUT(
     const { id } = await params
     const body = await request.json()
     
-    // Check if using Supabase or Mock mode
-    if (!supabase || MockAuthService.shouldUseMockAuth()) {
-      // Mock mode - return success response
-      return NextResponse.json({ success: true, message: 'Paper updated (Mock mode)' })
+    if (!supabase) {
+      return NextResponse.json({ error: 'Database not configured' }, { status: 500 })
     }
 
     // Use Supabase
@@ -97,10 +81,8 @@ export async function DELETE(
   try {
     const { id } = await params
     
-    // Check if using Supabase or Mock mode
-    if (!supabase || MockAuthService.shouldUseMockAuth()) {
-      // Mock mode - return success response
-      return NextResponse.json({ success: true, message: 'Paper deleted (Mock mode)' })
+    if (!supabase) {
+      return NextResponse.json({ error: 'Database not configured' }, { status: 500 })
     }
 
     // Use Supabase

@@ -122,13 +122,13 @@ export default function UserRatingHistory({ userId, ratings, papers = [] }: User
     if (filteredRatings.length === 0) return null
 
     const totalRatings = filteredRatings.length
-    const averageOverall = filteredRatings.reduce((sum, r) => sum + r.overall_score, 0) / totalRatings
-    const averageInnovation = filteredRatings.reduce((sum, r) => sum + r.innovation_score, 0) / totalRatings
-    const averageMethodology = filteredRatings.reduce((sum, r) => sum + r.methodology_score, 0) / totalRatings
-    const averagePracticality = filteredRatings.reduce((sum, r) => sum + r.practicality_score, 0) / totalRatings
+    const averageOverall = filteredRatings.reduce((sum, r) => sum + (r.overall_score || 0), 0) / totalRatings
+    const averageInnovation = filteredRatings.reduce((sum, r) => sum + (r.innovation_score || 0), 0) / totalRatings
+    const averageMethodology = filteredRatings.reduce((sum, r) => sum + (r.methodology_score || 0), 0) / totalRatings
+    const averagePracticality = filteredRatings.reduce((sum, r) => sum + (r.practicality_score || 0), 0) / totalRatings
 
     const ratingDistribution = filteredRatings.reduce((acc, r) => {
-      const rounded = Math.round(r.overall_score)
+      const rounded = Math.round(r.overall_score || 0)
       acc[rounded] = (acc[rounded] || 0) + 1
       return acc
     }, {} as { [key: number]: number })
@@ -283,29 +283,29 @@ export default function UserRatingHistory({ userId, ratings, papers = [] }: User
                       <div>
                         <div className="text-xs text-gray-500 mb-1">创新性</div>
                         <div className="flex items-center space-x-1">
-                          <span className="font-medium">{rating.innovation_score}</span>
-                          <div className="flex">{renderStars(rating.innovation_score)}</div>
+                          <span className="font-medium">{rating.innovation_score || 0}</span>
+                          <div className="flex">{renderStars(rating.innovation_score || 0)}</div>
                         </div>
                       </div>
                       <div>
                         <div className="text-xs text-gray-500 mb-1">方法论</div>
                         <div className="flex items-center space-x-1">
-                          <span className="font-medium">{rating.methodology_score}</span>
-                          <div className="flex">{renderStars(rating.methodology_score)}</div>
+                          <span className="font-medium">{rating.methodology_score || 0}</span>
+                          <div className="flex">{renderStars(rating.methodology_score || 0)}</div>
                         </div>
                       </div>
                       <div>
                         <div className="text-xs text-gray-500 mb-1">实用性</div>
                         <div className="flex items-center space-x-1">
-                          <span className="font-medium">{rating.practicality_score}</span>
-                          <div className="flex">{renderStars(rating.practicality_score)}</div>
+                          <span className="font-medium">{rating.practicality_score || 0}</span>
+                          <div className="flex">{renderStars(rating.practicality_score || 0)}</div>
                         </div>
                       </div>
                       <div>
                         <div className="text-xs text-gray-500 mb-1">总体评价</div>
                         <div className="flex items-center space-x-1">
-                          <span className="font-medium">{rating.overall_score}</span>
-                          <div className="flex">{renderStars(rating.overall_score)}</div>
+                          <span className="font-medium">{rating.overall_score || 0}</span>
+                          <div className="flex">{renderStars(rating.overall_score || 0)}</div>
                         </div>
                       </div>
                     </div>

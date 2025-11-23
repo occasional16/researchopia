@@ -36,6 +36,9 @@ export class SupabaseManager {
   private apiClient = APIClient.getInstance();
   private baseUrl: string;
   private apiKey: string;
+  private realtimeWs: WebSocket | null = null; // 原生WebSocket连接
+  private presenceChannels: Map<string, any> = new Map(); // 管理presence channels
+  private heartbeatInterval: any = null;
   
   constructor() {
     // 从环境变量获取配置，在插件环境中可能需要硬编码或通过其他方式配置
@@ -278,6 +281,21 @@ export class SupabaseManager {
     } catch (error) {
       logger.error('[SupabaseManager] Error updating annotation sharing:', error);
       throw error;
+    }
+  }
+
+  /**
+   * 获取单个标注的最新数据 (包括 likes_count 等统计字段)
+   */
+  async getAnnotationById(annotationId: string): Promise<any | null> {
+    try {
+      const result = await this.apiRequest(
+        `annotations?id=eq.${annotationId}&select=*`
+      );
+      return result && result.length > 0 ? result[0] : null;
+    } catch (error) {
+      logger.error(`[SupabaseManager] Error getting annotation by ID:`, error);
+      return null;
     }
   }
 
@@ -962,6 +980,356 @@ export class SupabaseManager {
     } catch (error) {
       logger.error(`[SupabaseManager] Error getting related data:`, error);
       return { likes_count: 0, comments_count: 0, has_nested_comments: false };
+    }
+  }
+
+  /**
+   * 级联删除共享标注及其关联数据(点赞、评论)
+   */
+  async deleteSharedAnnotation(annotationId: string): Promise<boolean> {
+    try {
+      // 使用RPC函数级联删除(需在Supabase中创建该函数)
+      // 如果RPC不存在,则依次手动删除
+      try {
+        await this.apiRequest(
+          `rpc/delete_annotation_cascade`,
+          {
+            method: 'POST',
+            body: JSON.stringify({ p_annotation_id: annotationId })
+          }
+        );
+        logger.log(`[SupabaseManager] ✅ Cascade deleted annotation ${annotationId} via RPC`);
+        return true;
+      } catch (rpcError) {
+        // RPC函数不存在,降级到手动删除
+        logger.warn(`[SupabaseManager] RPC cascade delete failed, using manual deletion:`, rpcError);
+        
+        // 1. 删除分享记录
+        await this.apiRequest(
+          `annotation_shares?annotation_id=eq.${annotationId}`,
+          { method: 'DELETE' }
+        );
+        
+        // 2. 删除评论
+        await this.apiRequest(
+          `annotation_comments?annotation_id=eq.${annotationId}`,
+          { method: 'DELETE' }
+        );
+        
+        // 3. 删除点赞
+        await this.apiRequest(
+          `annotation_likes?annotation_id=eq.${annotationId}`,
+          { method: 'DELETE' }
+        );
+        
+        // 4. 删除标注本身
+        await this.apiRequest(
+          `annotations?id=eq.${annotationId}`,
+          { method: 'DELETE' }
+        );
+        
+        logger.log(`[SupabaseManager] ✅ Manually deleted annotation ${annotationId} and related data`);
+        return true;
+      }
+    } catch (error) {
+      logger.error(`[SupabaseManager] ❌ Failed to delete annotation:`, error);
+      return false;
+    }
+  }
+
+  // ==================== Realtime Presence Methods (Native WebSocket) ====================
+
+  /**
+   * 连接到Supabase Realtime WebSocket
+   */
+  private async connectRealtimeWs(): Promise<WebSocket> {
+    if (this.realtimeWs && this.realtimeWs.readyState === WebSocket.OPEN) {
+      return this.realtimeWs;
+    }
+
+    // 获取access token
+    let accessToken = this.apiKey;
+    try {
+      const { AuthManager } = await import('./auth');
+      const isLoggedIn = await AuthManager.isLoggedIn();
+      if (isLoggedIn) {
+        const session = AuthManager.getSession();
+        if (session?.access_token) {
+          accessToken = session.access_token;
+        }
+      }
+    } catch (error) {
+      logger.warn('[SupabaseManager] Error getting auth token for realtime:', error);
+    }
+
+    const wsUrl = `wss://obcblvdtqhwrihoddlez.supabase.co/realtime/v1/websocket?apikey=${this.apiKey}&vsn=1.0.0`;
+    logger.log('[SupabaseManager] Connecting to Supabase Realtime:', wsUrl.replace(/apikey=[^&]+/, 'apikey=***'));
+
+    return new Promise((resolve, reject) => {
+      const ws = new WebSocket(wsUrl);
+      
+      ws.onopen = () => {
+        logger.log('[SupabaseManager] ✅ Realtime WebSocket connected');
+        this.realtimeWs = ws;
+        this.startHeartbeat(ws);
+        resolve(ws);
+      };
+
+      ws.onerror = (error) => {
+        logger.error('[SupabaseManager] ❌ Realtime WebSocket error:', error);
+        reject(error);
+      };
+
+      ws.onclose = (event) => {
+        logger.log(`[SupabaseManager] Realtime WebSocket closed: ${event.code} ${event.reason}`);
+        this.stopHeartbeat();
+        this.realtimeWs = null;
+      };
+    });
+  }
+
+  /**
+   * 启动心跳
+   */
+  private startHeartbeat(ws: WebSocket): void {
+    this.stopHeartbeat();
+    this.heartbeatInterval = setInterval(() => {
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({
+          topic: 'phoenix',
+          event: 'heartbeat',
+          payload: {},
+          ref: Date.now().toString()
+        }));
+      }
+    }, 30000); // 30秒心跳
+  }
+
+  /**
+   * 停止心跳
+   */
+  private stopHeartbeat(): void {
+    if (this.heartbeatInterval) {
+      clearInterval(this.heartbeatInterval);
+      this.heartbeatInterval = null;
+    }
+  }
+
+  /**
+   * 订阅会话presence channel,实时追踪在线人数
+   * @param sessionId 会话ID
+   * @param onSync 同步回调,返回当前在线用户数
+   * @returns channel实例(用于后续unsubscribe)
+   */
+  async subscribeSessionPresence(
+    sessionId: string, 
+    onSync: (onlineCount: number) => void
+  ): Promise<any | null> {
+    try {
+      const ws = await this.connectRealtimeWs();
+      const channelTopic = `realtime:session:${sessionId}`;
+
+      // 如果已存在该channel,先取消订阅
+      if (this.presenceChannels.has(channelTopic)) {
+        logger.log(`[SupabaseManager] Channel ${channelTopic} already exists, unsubscribing first`);
+        await this.unsubscribeSessionPresence(sessionId);
+      }
+
+      // 获取用户ID
+      let userId: string | undefined;
+      try {
+        const { AuthManager } = await import('./auth');
+        const authInstance = AuthManager.getInstance();
+        const user = authInstance.getUser();
+        userId = user?.id;
+      } catch (error) {
+        logger.error('[SupabaseManager] Error getting user ID:', error);
+      }
+
+      if (!userId) {
+        logger.warn('[SupabaseManager] No user ID, cannot track presence');
+        return null;
+      }
+
+      // 存储channel信息
+      const channelInfo: any = {
+        topic: channelTopic,
+        userId,
+        presenceState: new Map<string, any>(), // 存储所有在线用户
+        onSync,
+        joinRef: `${Date.now()}`,
+        messageHandler: null as any // 稍后赋值
+      };
+
+      this.presenceChannels.set(channelTopic, channelInfo);
+
+      // 监听WebSocket消息
+      const messageHandler = (event: MessageEvent) => {
+        try {
+          const msg = JSON.parse(event.data);
+          
+          // 只处理当前channel的消息
+          if (msg.topic !== channelTopic) return;
+
+          logger.log(`[SupabaseManager] Received message for ${channelTopic}:`, msg.event);
+
+          // 处理JOIN成功
+          if (msg.event === 'phx_reply' && msg.payload.status === 'ok') {
+            logger.log(`[SupabaseManager] ✅ Joined channel ${channelTopic}`);
+            // 发送presence track消息
+            this.trackPresence(ws, channelTopic, userId!);
+          }
+
+          // 处理presence sync
+          if (msg.event === 'presence_state' || msg.event === 'presence_diff') {
+            this.handlePresenceSync(channelInfo, msg.payload);
+          }
+        } catch (error) {
+          logger.error('[SupabaseManager] Error parsing WebSocket message:', error);
+        }
+      };
+
+      ws.addEventListener('message', messageHandler);
+      channelInfo.messageHandler = messageHandler;
+
+      // 发送JOIN消息
+      ws.send(JSON.stringify({
+        topic: channelTopic,
+        event: 'phx_join',
+        payload: {
+          config: {
+            broadcast: { self: false },
+            presence: { key: userId }
+          }
+        },
+        ref: channelInfo.joinRef
+      }));
+
+      logger.log(`[SupabaseManager] Sent JOIN for ${channelTopic}`);
+      return channelInfo;
+
+    } catch (error) {
+      logger.error(`[SupabaseManager] Failed to subscribe presence for session ${sessionId}:`, error);
+      return null;
+    }
+  }
+
+  /**
+   * 发送presence track消息
+   */
+  private trackPresence(ws: WebSocket, topic: string, userId: string): void {
+    ws.send(JSON.stringify({
+      topic,
+      event: 'presence',
+      payload: {
+        event: 'track',
+        payload: {
+          user_id: userId,
+          online_at: new Date().toISOString()
+        }
+      },
+      ref: `${Date.now()}`
+    }));
+    logger.log(`[SupabaseManager] ✅ Tracking presence for user ${userId} in ${topic}`);
+  }
+
+  /**
+   * 处理presence状态同步
+   */
+  private handlePresenceSync(channelInfo: any, payload: any): void {
+    // 更新presence state
+    if (payload.joins) {
+      for (const key in payload.joins) {
+        channelInfo.presenceState.set(key, payload.joins[key]);
+      }
+    }
+    if (payload.leaves) {
+      for (const key in payload.leaves) {
+        channelInfo.presenceState.delete(key);
+      }
+    }
+
+    // 如果是完整状态
+    if (payload.state) {
+      channelInfo.presenceState.clear();
+      for (const key in payload.state) {
+        channelInfo.presenceState.set(key, payload.state[key]);
+      }
+    }
+
+    const onlineCount = channelInfo.presenceState.size;
+    logger.log(`[SupabaseManager] Presence sync for ${channelInfo.topic}: ${onlineCount} online`);
+    channelInfo.onSync(onlineCount);
+  }
+
+  /**
+   * 取消订阅会话presence channel
+   */
+  async unsubscribeSessionPresence(sessionId: string): Promise<void> {
+    try {
+      const channelTopic = `realtime:session:${sessionId}`;
+      const channelInfo = this.presenceChannels.get(channelTopic);
+
+      if (channelInfo && this.realtimeWs) {
+        // 移除message监听器
+        if (channelInfo.messageHandler) {
+          this.realtimeWs.removeEventListener('message', channelInfo.messageHandler);
+        }
+
+        // 发送LEAVE消息
+        if (this.realtimeWs.readyState === WebSocket.OPEN) {
+          this.realtimeWs.send(JSON.stringify({
+            topic: channelTopic,
+            event: 'phx_leave',
+            payload: {},
+            ref: `${Date.now()}`
+          }));
+        }
+
+        this.presenceChannels.delete(channelTopic);
+        logger.log(`[SupabaseManager] ✅ Unsubscribed from ${channelTopic}`);
+      }
+    } catch (error) {
+      logger.error(`[SupabaseManager] Error unsubscribing presence:`, error);
+    }
+  }
+
+  /**
+   * 清理所有presence subscriptions (在插件关闭时调用)
+   */
+  async cleanupAllPresence(): Promise<void> {
+    logger.log(`[SupabaseManager] Cleaning up ${this.presenceChannels.size} presence channels`);
+    
+    for (const [channelTopic, channelInfo] of this.presenceChannels.entries()) {
+      try {
+        // 移除message监听器
+        if (channelInfo.messageHandler && this.realtimeWs) {
+          this.realtimeWs.removeEventListener('message', channelInfo.messageHandler);
+        }
+
+        // 发送LEAVE消息
+        if (this.realtimeWs && this.realtimeWs.readyState === WebSocket.OPEN) {
+          this.realtimeWs.send(JSON.stringify({
+            topic: channelTopic,
+            event: 'phx_leave',
+            payload: {},
+            ref: `${Date.now()}`
+          }));
+        }
+
+        logger.log(`[SupabaseManager] ✅ Cleaned up ${channelTopic}`);
+      } catch (error) {
+        logger.error(`[SupabaseManager] Error cleaning up ${channelTopic}:`, error);
+      }
+    }
+    
+    this.presenceChannels.clear();
+
+    // 关闭WebSocket连接
+    if (this.realtimeWs) {
+      this.stopHeartbeat();
+      this.realtimeWs.close();
+      this.realtimeWs = null;
     }
   }
 }

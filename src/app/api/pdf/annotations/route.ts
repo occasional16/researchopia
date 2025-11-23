@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
-import { MockAuthService } from '@/lib/mockAuth'
 
 // GET /api/pdf/annotations - 获取PDF标注列表
 export async function GET(request: NextRequest) {
@@ -22,82 +21,8 @@ export async function GET(request: NextRequest) {
       }, { status: 400 })
     }
 
-    // Check if using Supabase or Mock mode
-    if (!supabase || MockAuthService.shouldUseMockAuth()) {
-      // Mock data for development
-      const mockAnnotations = [
-        {
-          id: 'mock-annotation-001',
-          pdf_document_id: documentId,
-          user_id: 'mock-demo-001',
-          page_number: 1,
-          annotation_type: 'highlight',
-          position_data: {
-            x: 100,
-            y: 200,
-            width: 200,
-            height: 20,
-            bounds: { left: 100, top: 200, right: 300, bottom: 220 }
-          },
-          content: '这是一个重要的观点',
-          selected_text: '机器学习算法的准确性',
-          color: '#ffff00',
-          opacity: 0.3,
-          tags: ['重要', '算法'],
-          is_private: false,
-          users: { username: 'demo', avatar_url: null },
-          created_at: new Date().toISOString(),
-          interactions: {
-            likes: 2,
-            dislikes: 0,
-            helpful: 1
-          }
-        },
-        {
-          id: 'mock-annotation-002',
-          pdf_document_id: documentId,
-          user_id: 'mock-demo-001',
-          page_number: 2,
-          annotation_type: 'note',
-          position_data: {
-            x: 50,
-            y: 150,
-            width: 30,
-            height: 30
-          },
-          content: '需要进一步研究这个方法的适用范围',
-          selected_text: null,
-          color: '#ff9500',
-          opacity: 0.8,
-          tags: ['疑问', '研究'],
-          is_private: false,
-          users: { username: 'demo', avatar_url: null },
-          created_at: new Date().toISOString(),
-          interactions: {
-            likes: 1,
-            dislikes: 0,
-            helpful: 3
-          }
-        }
-      ]
-
-      // Filter by page number if specified
-      let filteredAnnotations = mockAnnotations
-      if (pageNumber) {
-        filteredAnnotations = mockAnnotations.filter(
-          a => a.page_number === parseInt(pageNumber)
-        )
-      }
-
-      return NextResponse.json({
-        annotations: filteredAnnotations,
-        pagination: {
-          page,
-          limit,
-          total: filteredAnnotations.length,
-          totalPages: Math.ceil(filteredAnnotations.length / limit)
-        }
-      })
+    if (!supabase) {
+      return NextResponse.json({ error: 'Database not configured' }, { status: 500 })
     }
 
     // Build query
@@ -212,31 +137,8 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
 
-    // Check if using Supabase or Mock mode
-    if (!supabase || MockAuthService.shouldUseMockAuth()) {
-      // Mock response for development
-      const mockAnnotation = {
-        id: `mock-annotation-${Date.now()}`,
-        pdf_document_id,
-        user_id: 'mock-demo-001',
-        page_number,
-        annotation_type,
-        position_data,
-        content,
-        selected_text,
-        color,
-        opacity,
-        tags,
-        is_private,
-        reply_to,
-        users: { username: 'demo', avatar_url: null },
-        created_at: new Date().toISOString()
-      }
-
-      return NextResponse.json({
-        message: 'Annotation created successfully (mock mode)',
-        annotation: mockAnnotation
-      }, { status: 201 })
+    if (!supabase) {
+      return NextResponse.json({ error: 'Database not configured' }, { status: 500 })
     }
 
     // 验证PDF文档是否存在

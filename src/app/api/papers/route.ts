@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
-import { MockAuthService } from '@/lib/mockAuth'
-import { getPapers } from '@/lib/database'
 
 // 🔥 优化: Vercel边缘缓存10分钟
 export const revalidate = 600;
@@ -23,14 +21,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(cachedPapers)
     }
 
-    // Check if using Supabase or Mock mode
-    if (!supabase || MockAuthService.shouldUseMockAuth()) {
-      console.log('🔧 使用Mock模式')
-      const papers = await getPapers()
-      cachedPapers = papers
-      cacheTimestamp = now
-      console.log(`✅ Mock数据返回 - ${(performance.now() - startTime).toFixed(2)}ms`)
-      return NextResponse.json(papers)
+    if (!supabase) {
+      console.log('❌ 数据库未配置')
+      return NextResponse.json({ error: 'Database not configured' }, { status: 500 })
     }
 
     console.log('🗄️ 查询Supabase数据库...')
@@ -58,10 +51,7 @@ export async function GET(request: NextRequest) {
 
     if (error) {
       console.error('❌ Supabase查询错误:', error)
-      // Fallback to mock data
-      const mockPapers = await getPapers()
-      console.log(`🔄 降级到Mock数据 - ${(performance.now() - startTime).toFixed(2)}ms`)
-      return NextResponse.json(mockPapers)
+      return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
     // 缓存结果
@@ -73,10 +63,7 @@ export async function GET(request: NextRequest) {
     
   } catch (error) {
     console.error('❌ API处理异常:', error)
-    // Fallback to mock data
-    const mockPapers = await getPapers()
-    console.log(`🔄 异常降级到Mock数据 - ${(performance.now() - startTime).toFixed(2)}ms`)
-    return NextResponse.json(mockPapers)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
@@ -88,11 +75,9 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     console.log('📦 接收到论文数据:', { title: body.title, doi: body.doi })
     
-    // Check if using Supabase or Mock mode
-    if (!supabase || MockAuthService.shouldUseMockAuth()) {
-      console.log('🔧 使用Mock模式创建论文')
-      console.log(`✅ Mock创建成功 - ${(performance.now() - startTime).toFixed(2)}ms`)
-      return NextResponse.json({ success: true, message: 'Paper added (Mock mode)' })
+    if (!supabase) {
+      console.log('❌ 数据库未配置')
+      return NextResponse.json({ error: 'Database not configured' }, { status: 500 })
     }
 
     console.log('🗄️ 插入到Supabase数据库...')

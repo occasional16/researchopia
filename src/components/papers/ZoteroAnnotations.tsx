@@ -29,6 +29,7 @@ interface ZoteroAnnotation {
   comment?: string
   color: string
   position: any
+  page_number?: number
   tags: string[]
   visibility: string
   likes_count: number
@@ -58,6 +59,8 @@ export default function ZoteroAnnotations({ paperId, paperTitle, paperDOI }: Zot
   const [annotationComments, setAnnotationComments] = useState<Record<string, Comment[]>>({})
   const [loadingComments, setLoadingComments] = useState<Set<string>>(new Set())
   const [accessToken, setAccessToken] = useState<string | null>(null)
+  const [userLikes, setUserLikes] = useState<Set<string>>(new Set()) // 用户点赞的标注ID集合
+  const [likingAnnotations, setLikingAnnotations] = useState<Set<string>>(new Set()) // 正在处理点赞的标注
   
   // 🆕 使用AuthContext获取user和role
   const { user: currentUser } = useAuth()
@@ -73,11 +76,31 @@ export default function ZoteroAnnotations({ paperId, paperTitle, paperDOI }: Zot
   useEffect(() => {
     loadAnnotations()
     loadAccessToken()
-  }, [paperId])
+    if (currentUser) {
+      loadUserLikes()
+    }
+  }, [paperId, currentUser])
 
   const loadAccessToken = async () => {
     const { data: { session } } = await supabase.auth.getSession()
     setAccessToken(session?.access_token || null)
+  }
+
+  const loadUserLikes = async () => {
+    if (!currentUser) return
+    
+    try {
+      const { data, error } = await supabase
+        .from('annotation_likes')
+        .select('annotation_id')
+        .eq('user_id', currentUser.id)
+      
+      if (!error && data) {
+        setUserLikes(new Set(data.map((like: any) => like.annotation_id)))
+      }
+    } catch (error) {
+      console.error('[ZoteroAnnotations] Error loading user likes:', error)
+    }
   }
 
   const loadAnnotations = async () => {
@@ -278,6 +301,69 @@ export default function ZoteroAnnotations({ paperId, paperTitle, paperDOI }: Zot
     } catch (err) {
       console.error('[ZoteroAnnotations] Error deleting comment:', err)
       alert('删除失败')
+    }
+  }
+
+  const handleLike = async (annotationId: string) => {
+    if (!currentUser || !accessToken) {
+      alert('请先登录')
+      return
+    }
+
+    setLikingAnnotations(prev => new Set(prev).add(annotationId))
+
+    try {
+      const userLiked = userLikes.has(annotationId)
+      
+      const response = await fetch('/api/proxy/annotations/like', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`
+        },
+        body: JSON.stringify({
+          annotation_id: annotationId,
+          action: userLiked ? 'unlike' : 'like'
+        })
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        // 更新本地状态
+        setUserLikes(prev => {
+          const newSet = new Set(prev)
+          if (userLiked) {
+            newSet.delete(annotationId)
+          } else {
+            newSet.add(annotationId)
+          }
+          return newSet
+        })
+
+        // 更新点赞计数
+        setAnnotations(prev => prev.map(ann => {
+          if (ann.annotation_id === annotationId) {
+            return {
+              ...ann,
+              likes_count: userLiked 
+                ? Math.max(0, ann.likes_count - 1) 
+                : ann.likes_count + 1
+            }
+          }
+          return ann
+        }))
+      } else {
+        console.error('Like action failed:', result)
+      }
+    } catch (error) {
+      console.error('Error handling like:', error)
+    } finally {
+      setLikingAnnotations(prev => {
+        const newSet = new Set(prev)
+        newSet.delete(annotationId)
+        return newSet
+      })
     }
   }
 
@@ -511,24 +597,40 @@ export default function ZoteroAnnotations({ paperId, paperTitle, paperDOI }: Zot
                   <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
                     <div className="flex items-center space-x-4">
                       <UserDisplay
-                        username={annotation.username || 'zotero_user'}
-                        avatarUrl={annotation.user_avatar}
-                        isAnonymous={false}
+                        username={annotation.visibility === 'anonymous' ? '' : (annotation.username || 'zotero_user')}
+                        avatarUrl={annotation.visibility === 'anonymous' ? undefined : annotation.user_avatar}
+                        isAnonymous={annotation.visibility === 'anonymous' || annotation.visibility === 'private'}
                         avatarSize="xs"
-                        showHoverCard={!!annotation.username}
+                        showHoverCard={annotation.visibility !== 'anonymous' && annotation.visibility !== 'private' && !!annotation.username}
                       />
+                      {annotation.position?.pageIndex !== undefined || annotation.page_number ? (
+                        <span className="bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-full font-semibold text-[10px]">
+                          p.{annotation.position?.pageIndex !== undefined ? annotation.position.pageIndex + 1 : annotation.page_number}
+                        </span>
+                      ) : null}
                       <span className="text-purple-600 dark:text-purple-400 font-medium">
                         Zotero
                       </span>
                     </div>
                     
                     <div className="flex items-center space-x-3">
-                      {annotation.likes_count > 0 && (
-                        <div className="flex items-center space-x-1">
-                          <Heart className="w-3 h-3" />
-                          <span>{annotation.likes_count}</span>
-                        </div>
-                      )}
+                      <button
+                        onClick={() => handleLike(annotation.annotation_id)}
+                        disabled={!currentUser || likingAnnotations.has(annotation.annotation_id)}
+                        className={`flex items-center space-x-1 transition-colors ${
+                          !currentUser 
+                            ? 'cursor-not-allowed opacity-50'
+                            : userLikes.has(annotation.annotation_id)
+                              ? 'text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300'
+                              : 'hover:text-red-500 dark:hover:text-red-400'
+                        }`}
+                        title={!currentUser ? '登录后可点赞' : userLikes.has(annotation.annotation_id) ? '取消点赞' : '点赞'}
+                      >
+                        <Heart 
+                          className={`w-3 h-3 ${userLikes.has(annotation.annotation_id) ? 'fill-current' : ''}`}
+                        />
+                        <span>{annotation.likes_count || 0}</span>
+                      </button>
                       <button
                         onClick={() => toggleComments(annotation.annotation_id)}
                         className="flex items-center space-x-1 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"

@@ -46,10 +46,10 @@ export default function RatingForm({ paperId, onRatingSubmitted }: RatingFormPro
       if (rating) {
         setExistingRating(rating)
         setScores({
-          innovation_score: rating.innovation_score,
-          methodology_score: rating.methodology_score,
-          practicality_score: rating.practicality_score,
-          overall_score: rating.overall_score,
+          innovation_score: rating.innovation_score || 0,
+          methodology_score: rating.methodology_score || 0,
+          practicality_score: rating.practicality_score || 0,
+          overall_score: rating.overall_score || 0,
         })
         // 🆕 加载匿名设置
         setIsAnonymous(rating.is_anonymous || false)

@@ -386,6 +386,15 @@ export function createButtonsSection(
       hoverColor: colors.pinkDark
     },
     {
+      id: 'btn-literature-help',
+      text: '文献互助',
+      icon: '🤝',
+      mode: 'literature-help' as ViewMode,
+      disabled: disabledFeatures.has('literature-help'),
+      color: '#8b5cf6',
+      hoverColor: '#7c3aed'
+    },
+    {
       id: 'btn-paper-evaluation',
       text: '论文评价',
       icon: '⭐',
@@ -566,13 +575,12 @@ async function renderInitialContent(container: HTMLElement): Promise<void> {
       text-align: left;
     `;
 
-    const features = [
-      { icon: '📖', color: colors.pink, title: '文献共读', desc: '创建或加入共读会话,与他人协同阅读' },
-      { icon: '⭐', color: colors.orange, title: '论文评价', desc: '查看论文评分、评论及学术讨论' },
-      { icon: '🔍', color: colors.success, title: '快捷搜索', desc: '一键搜索相关论文和学术资源' }
-    ];
-
-    features.forEach(feature => {
+  const features = [
+    { icon: '📖', color: colors.pink, title: '文献共读', desc: '创建或加入共读会话,与他人协同阅读' },
+    { icon: '🤝', color: '#8b5cf6', title: '文献互助', desc: '旨在提供全面、便捷的文献互助平台，降低知识获取的门槛' },
+    { icon: '⭐', color: colors.orange, title: '论文评价', desc: '查看论文评分、评论及学术讨论' },
+    { icon: '🔍', color: colors.success, title: '快捷搜索', desc: '一键搜索相关论文和学术资源' }
+  ];    features.forEach(feature => {
       const featureItem = doc.createElement('div');
       featureItem.style.cssText = `
         display: flex;

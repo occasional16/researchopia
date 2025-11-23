@@ -2,8 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { CheckCircle, X } from 'lucide-react'
-import { MockAuthService } from '@/lib/mockAuth'
-
 /**
  * 配置状态组件 - 显示系统状态
  */
@@ -12,11 +10,10 @@ export default function ConfigWarning() {
   const [dismissed, setDismissed] = useState(false)
 
   useEffect(() => {
-    const shouldUseMock = MockAuthService.shouldUseMockAuth()
     const wasDismissed = localStorage.getItem('config-status-dismissed') === 'true'
     
-    // 只在成功连接Supabase时显示成功提示
-    setShowStatus(!shouldUseMock && !wasDismissed)
+    // 显示Supabase连接成功提示
+    setShowStatus(!wasDismissed)
   }, [])
 
   const handleDismiss = () => {
@@ -34,8 +31,7 @@ export default function ConfigWarning() {
           <CheckCircle className="w-5 h-5 text-green-600" />
           <div className="flex-1">
             <p className="text-sm font-medium text-green-800">
-              ✅ 已连接到在线数据库 - 数据将实时同步
-            </p>
+              �?已连接到在线数据�?- 数据将实时同�?            </p>
             <p className="text-xs text-green-700 mt-1">
               论文、评分、评论等数据现在在所有用户间同步
             </p>

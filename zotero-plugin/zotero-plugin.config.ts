@@ -37,6 +37,8 @@ export default defineConfig({
         format: "esm",
         platform: "browser",
         outfile: `.scaffold/build/addon/content/scripts/${pkg.config.addonRef}.js`,
+        // 🔥 Bundle @researchopia/shared into the plugin
+        external: [], // Don't mark as external, bundle it
       },
     ],
   },

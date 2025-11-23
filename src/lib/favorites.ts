@@ -1,5 +1,4 @@
 import { supabase } from './supabase'
-import { mockAuth, MockAuthService } from './mockAuth'
 import type { Paper } from './supabase'
 
 export interface PaperFavorite {
@@ -101,9 +100,7 @@ const mockFavorites = new MockFavoritesService()
  */
 export async function addToFavorites(userId: string, paperId: string): Promise<boolean> {
   try {
-    if (MockAuthService.shouldUseMockAuth()) {
-      return await mockFavorites.addFavorite(userId, paperId)
-    }
+    
 
     if (!supabase) throw new Error('Database not available')
 
@@ -134,9 +131,7 @@ export async function addToFavorites(userId: string, paperId: string): Promise<b
  */
 export async function removeFromFavorites(userId: string, paperId: string): Promise<boolean> {
   try {
-    if (MockAuthService.shouldUseMockAuth()) {
-      return await mockFavorites.removeFavorite(userId, paperId)
-    }
+    
 
     if (!supabase) throw new Error('Database not available')
 
@@ -177,9 +172,7 @@ export async function toggleFavorite(userId: string, paperId: string): Promise<b
  */
 export async function isFavorited(userId: string, paperId: string): Promise<boolean> {
   try {
-    if (MockAuthService.shouldUseMockAuth()) {
-      return await mockFavorites.isFavorited(userId, paperId)
-    }
+    
 
     if (!supabase) return false
 
@@ -207,16 +200,6 @@ export async function isFavorited(userId: string, paperId: string): Promise<bool
  */
 export async function getUserFavorites(userId: string): Promise<PaperWithFavorite[]> {
   try {
-    if (MockAuthService.shouldUseMockAuth()) {
-      const favorites = await mockFavorites.getUserFavorites(userId)
-      const papers = mockFavorites.getPapers()
-
-      return favorites.map(favorite => {
-        const paper = papers.find(p => p.id === favorite.paper_id)
-        return paper ? { ...paper, is_favorited: true } : null
-      }).filter(Boolean) as PaperWithFavorite[]
-    }
-
     if (!supabase) return []
 
     const { data, error } = await supabase
@@ -256,12 +239,7 @@ export async function getUserFavorites(userId: string): Promise<PaperWithFavorit
  */
 export async function getFavoriteCount(paperId: string): Promise<number> {
   try {
-    if (MockAuthService.shouldUseMockAuth()) {
-      // Use localStorage directly since getFavorites is private
-      const stored = typeof window !== 'undefined' ? localStorage.getItem('academic_rating_mock_favorites') : null
-      const favorites = stored ? JSON.parse(stored) : []
-      return favorites.filter((f: any) => f.paper_id === paperId).length
-    }
+    
 
     if (!supabase) return 0
 
@@ -290,16 +268,6 @@ export async function getPapersWithFavoriteStatus(
   }
 
   try {
-    if (MockAuthService.shouldUseMockAuth()) {
-      const favorites = await mockFavorites.getUserFavorites(userId)
-      const favoriteIds = new Set(favorites.map(f => f.paper_id))
-      
-      return papers.map(paper => ({
-        ...paper,
-        is_favorited: favoriteIds.has(paper.id)
-      }))
-    }
-
     if (!supabase) return papers.map(paper => ({ ...paper, is_favorited: false }))
 
     const { data: favorites, error } = await supabase

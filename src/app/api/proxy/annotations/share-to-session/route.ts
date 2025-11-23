@@ -48,25 +48,29 @@ export async function POST(request: NextRequest) {
     // session_id可以为null(全局共享)或UUID(会话内共享)
     
     // 检查是否已经存在该条共享记录
-    const { data: existing, error: checkError } = await supabase
+    let existingQuery = supabase
       .from('annotation_shares')
-      .select('id')
+      .select('id, session_id')
       .eq('annotation_id', annotation_id)
       .eq('user_id', user.id);
     
-    // 根据session_id是否为null进行不同的查询
-    let existingShare = null;
-    if (session_id === null) {
-      // 全局共享:session_id为null
-      existingShare = existing?.find((s: any) => s.session_id === null);
+    // 根据session_id是否为null进行过滤
+    if (session_id === null || session_id === undefined) {
+      existingQuery = existingQuery.is('session_id', null);
     } else {
-      // 会话内共享:session_id匹配
-      existingShare = existing?.find((s: any) => s.session_id === session_id);
+      existingQuery = existingQuery.eq('session_id', session_id);
+    }
+    
+    const { data: existing, error: checkError } = await existingQuery;
+
+    if (checkError) {
+      console.error('[API] Error checking existing share:', checkError);
     }
 
-    if (existingShare) {
+    if (existing && existing.length > 0) {
+      console.log('[API] Annotation already shared to this session:', existing[0].id);
       return NextResponse.json(
-        { message: 'Annotation already shared to this session', share_id: existingShare.id },
+        { message: 'Annotation already shared to this session', share_id: existing[0].id },
         { status: 200 }
       );
     }
@@ -91,6 +95,17 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (insertError) {
+      // 如果是唯一性约束冲突,说明已存在,返回成功
+      if (insertError.code === '23505') {
+        console.log('[API] Annotation already shared (caught by insert):', insertError.message);
+        // 再次查询获取已存在的share_id
+        const { data: existingShare } = await existingQuery;
+        return NextResponse.json(
+          { message: 'Annotation already shared to this session', share_id: existingShare?.[0]?.id },
+          { status: 200 }
+        );
+      }
+      
       console.error('[API] Error inserting annotation share:', insertError);
       console.error('[API] Insert details:', {
         code: insertError.code,

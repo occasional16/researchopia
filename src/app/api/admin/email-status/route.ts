@@ -14,10 +14,10 @@ export async function GET(request: NextRequest) {
     const status = {
       isAvailable: emailService.isAvailable(),
       config: {
-        smtpHost: process.env.SMTP_HOST || 'smtp.sendgrid.net',
+        smtpHost: process.env.SMTP_HOST || 'smtp-relay.brevo.com',
         smtpPort: process.env.SMTP_PORT || '587',
-        smtpUser: process.env.SMTP_USER || 'apikey',
-        smtpPassConfigured: !!(process.env.SMTP_PASS && process.env.SMTP_PASS !== 'your_sendgrid_api_key'),
+        smtpUser: process.env.SMTP_USER || '',
+        smtpPassConfigured: !!(process.env.SMTP_PASS),
         fromEmail: process.env.SMTP_FROM_EMAIL || 'noreply@researchopia.com',
         fromName: process.env.SMTP_FROM_NAME || 'Researchopia'
       },

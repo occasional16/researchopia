@@ -40,6 +40,8 @@
     "node_modules",
     "zotero-plugin",
     "zotero-plugin-backup",
-    "zotero-plugin-template"
+    "zotero-plugin-template",
+    "Debug",
+    "Debug/**/*"
   ]
 }

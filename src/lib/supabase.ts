@@ -1,4 +1,11 @@
 import { createClient } from '@supabase/supabase-js'
+import type {
+  User as SharedUser,
+  Paper as SharedPaper,
+  Rating as SharedRating,
+  Comment as SharedComment,
+  PaperWithStats,
+} from '@researchopia/shared/types'
 
 // 创建客户端Supabase客户端的函数
 export function createSupabaseClient() {
@@ -33,55 +40,24 @@ export function getSupabase() {
 // 向后兼容的导出
 export const supabase = getSupabase()
 
-// Types for our database tables
-export interface User {
-  id: string
-  email: string
-  username: string
-  avatar_url?: string
-  role: 'user' | 'admin' | 'moderator'
-  created_at: string
-  updated_at: string
+// ========== 类型定义：使用共享库类型 ==========
+
+// 基础类型：直接使用共享库
+export type User = SharedUser;
+export type Paper = SharedPaper;
+export type Comment = SharedComment;
+
+// 扩展类型：添加项目特定字段
+export interface Rating extends SharedRating {
+  innovation_score?: number;
+  methodology_score?: number;
+  practicality_score?: number;
+  is_anonymous?: boolean;
+  show_username?: boolean;
 }
 
-export interface Paper {
-  id: string
-  title: string
-  authors: string[]
-  doi?: string
-  abstract?: string
-  keywords: string[]
-  publication_date?: string
-  journal?: string
-  view_count?: number
-  created_at: string
-  updated_at: string
-  created_by: string
-}
-
-export interface Rating {
-  id: string
-  user_id: string
-  paper_id: string
-  innovation_score: number
-  methodology_score: number
-  practicality_score: number
-  overall_score: number
-  is_anonymous?: boolean // 🆕 是否匿名评分
-  show_username?: boolean // 🆕 是否显示用户名(可随时切换)
-  created_at: string
-  updated_at: string
-}
-
-export interface Comment {
-  id: string
-  user_id: string
-  paper_id: string
-  content: string
-  created_at: string
-  updated_at: string
-  user?: User
-}
+// 重新导出共享类型
+export type { PaperWithStats }
 
 export interface PaperReport {
   id: string

@@ -281,7 +281,7 @@ function PaperDisplay({
         <div className="flex-1">
           <h3 className="text-lg font-semibold text-gray-900 mb-2">{paper.title}</h3>
           <p className="text-sm text-gray-600 mb-2">
-            作者: {paper.authors.join(', ')}
+            作者: {paper.authors?.join(', ') || '未知'}
           </p>
           <p className="text-sm text-gray-600 mb-2">
             期刊: {paper.journal} | 发表日期: {paper.publication_date}
@@ -405,7 +405,7 @@ function EditPaperForm({
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">作者 (每行一个)</label>
         <textarea
-          value={paper.authors.join('\n')}
+          value={paper.authors?.join('\n') || ''}
           onChange={(e) => onChange('authors', e.target.value.split('\n').filter(a => a.trim()))}
           rows={3}
           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -426,7 +426,7 @@ function EditPaperForm({
         <label className="block text-sm font-medium text-gray-700 mb-1">关键词 (逗号分隔)</label>
         <input
           type="text"
-          value={paper.keywords.join(', ')}
+          value={paper.keywords?.join(', ') || ''}
           onChange={(e) => onChange('keywords', e.target.value.split(',').map(k => k.trim()).filter(k => k))}
           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         />

@@ -202,7 +202,7 @@ interface QuickSearchProps {
   paper: {
     title: string
     doi?: string | null
-    authors: string[]
+    authors?: string[]
   }
 }
 

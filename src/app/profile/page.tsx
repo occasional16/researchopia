@@ -827,16 +827,38 @@ export default function ProfilePage() {
                                 <FileText className="w-4 h-4" />
                                 {annotation.type === 'highlight' ? '高亮' : annotation.type === 'note' ? '笔记' : '文本'}
                               </span>
+                              {/* 作者名显示:私密→"私密",匿名→"匿名用户",其他→真实用户名 */}
+                              <span>
+                                {annotation.visibility === 'private' ? (
+                                  '私密'
+                                ) : annotation.show_author_name === false ? (
+                                  '匿名用户'
+                                ) : (
+                                  annotation.users?.display_name || annotation.users?.username || '未知用户'
+                                )}
+                              </span>
+                              <span>•</span>
                               <span>{new Date(annotation.created_at).toLocaleString()}</span>
-                              {annotation.visibility === 'public' ? (
+                              {/* 可见性+作者名显示 */}
+                              {annotation.visibility === 'public' && annotation.show_author_name !== false ? (
                                 <span className="flex items-center gap-1 text-green-600">
                                   <Globe className="w-4 h-4" />
                                   公开
                                 </span>
+                              ) : annotation.visibility === 'public' && annotation.show_author_name === false ? (
+                                <span className="flex items-center gap-1 text-orange-600">
+                                  🎭
+                                  匿名
+                                </span>
+                              ) : annotation.visibility === 'private' ? (
+                                <span className="flex items-center gap-1 text-gray-600">
+                                  🔒
+                                  私密
+                                </span>
                               ) : (
                                 <span className="flex items-center gap-1 text-gray-600">
                                   <Eye className="w-4 h-4" />
-                                  私密
+                                  {annotation.visibility || '未知'}
                                 </span>
                               )}
                               {annotation.likes_count > 0 && (

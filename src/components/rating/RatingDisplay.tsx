@@ -122,22 +122,22 @@ export default function RatingDisplay({ ratings, showAdvanced = true }: RatingDi
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div>
                 <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">创新性</div>
-                {renderStars(rating.innovation_score)}
+                {renderStars(rating.innovation_score || 0)}
               </div>
               
               <div>
                 <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">方法论</div>
-                {renderStars(rating.methodology_score)}
+                {renderStars(rating.methodology_score || 0)}
               </div>
               
               <div>
                 <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">实用性</div>
-                {renderStars(rating.practicality_score)}
+                {renderStars(rating.practicality_score || 0)}
               </div>
               
               <div>
                 <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">总体</div>
-                {renderStars(rating.overall_score)}
+                {renderStars(rating.overall_score || 0)}
               </div>
             </div>
           </div>

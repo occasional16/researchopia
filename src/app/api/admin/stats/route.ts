@@ -1,29 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
-import { MockAuthService } from '@/lib/mockAuth'
 
 export async function GET(request: NextRequest) {
   try {
-    // Check if using Supabase or Mock mode
-    if (!supabase || MockAuthService.shouldUseMockAuth()) {
-      // Return mock stats
-      const mockStats = {
-        totalUsers: 10,
-        totalPapers: 25,
-        totalRatings: 150,
-        totalComments: 75
-      }
-      
-      const mockActivity = [
-        { type: 'paper', action: '添加了新论文', user: 'admin', time: '2小时前' },
-        { type: 'rating', action: '发表了评分', user: 'user1', time: '3小时前' },
-        { type: 'comment', action: '发表了评论', user: 'user2', time: '5小时前' }
-      ]
-
-      return NextResponse.json({ 
-        stats: mockStats, 
-        activity: mockActivity 
-      })
+    if (!supabase) {
+      return NextResponse.json({ error: 'Database not configured' }, { status: 500 })
     }
 
     // Use Supabase to get real stats

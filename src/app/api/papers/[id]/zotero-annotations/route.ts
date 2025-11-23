@@ -50,7 +50,7 @@ export async function GET(
       })
     }
 
-    // 获取该文档的所有公开标注
+    // 获取该文档的所有公开标注（包括 public 和 anonymous）
     const { data: annotations, error: annotationsError } = await supabase
       .from('annotations')
       .select(`
@@ -77,7 +77,7 @@ export async function GET(
         )
       `)
       .eq('document_id', document.id)
-      .eq('visibility', 'public')
+      .in('visibility', ['public', 'anonymous'])
       .order('created_at', { ascending: false })
 
     if (annotationsError) {

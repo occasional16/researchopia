@@ -205,14 +205,14 @@ export class CurrentSessionView {
       settings: {}
     };
 
-    // 为预览会话添加member_count和online_count字段(都为0)
+    // 为预览会话添加member_count字段(预览时为0)
     (previewSession as any).member_count = 0;
-    (previewSession as any).online_count = 0;
     
     const card = createSessionCard(doc, previewSession, {
       showInviteCode: false, // 不显示邀请码
       showCreator: false,    // 不显示创建者
       showMemberCount: true,  // 显示成员数(预览卡片显示为0)
+      onlineCount: 0, // 预览卡片在线人数为0
       onClick: async () => {
         await this.handleCreateAndJoinSession(doi, title);
       }

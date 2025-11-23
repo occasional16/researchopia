@@ -22,6 +22,7 @@ export function createSessionCard(
     showDeleteButton?: boolean;
     onDeleteClick?: () => void;
     onClick?: () => void;
+    onlineCount?: number; // 新增:从外部传入在线人数
   } = {}
 ): HTMLElement {
   const card = doc.createElement('div');
@@ -49,77 +50,180 @@ export function createSessionCard(
   const titleDiv = doc.createElement('div');
   titleDiv.textContent = session.paper_title;
   titleDiv.style.cssText = `
-    font-weight: 600;
-    font-size: ${fontSize.base};
-    margin-bottom: ${spacing.sm};
+    font-weight: 700;
+    font-size: 14px;
+    margin-bottom: ${spacing.md};
     color: ${colors.dark};
     word-break: break-word;
+    line-height: 1.5;
   `;
   card.appendChild(titleDiv);
   
-  // DOI(可点击复制,与邀请码样式一致)
-  const doiDiv = doc.createElement('div');
-  doiDiv.style.cssText = `
+  // 元数据区域(与paper-info保持一致的设计)
+  const metadataDiv = doc.createElement('div');
+  metadataDiv.style.cssText = `
     display: flex;
-    align-items: center;
+    flex-direction: column;
     gap: ${spacing.sm};
-    margin-bottom: ${spacing.sm};
+    margin-bottom: ${spacing.md};
+    font-size: 13px;
+  `;
+  
+  // 作者信息(如果存在)
+  if (session.authors) {
+    const authorsDiv = doc.createElement('div');
+    authorsDiv.style.cssText = `
+      display: block;
+      width: 100%;
+      box-sizing: border-box;
+    `;
+    
+    const authorsSpan = doc.createElement('span');
+    authorsSpan.style.cssText = `
+      display: inline-block;
+      padding: 4px 10px;
+      background: #3b82f633;
+      color: #3b82f6;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      max-width: 100%;
+      box-sizing: border-box;
+      word-break: break-word;
+    `;
+    
+    // 处理3个以上作者的情况
+    const authorsArray = session.authors.split(',').map((a: string) => a.trim());
+    const displayAuthors = authorsArray.length > 3
+      ? authorsArray.slice(0, 3).join(', ') + ` 等 ${authorsArray.length} 人`
+      : session.authors;
+    
+    authorsSpan.innerHTML = `👤 <span style="word-break: break-word;">${displayAuthors}</span>`;
+    
+    authorsDiv.appendChild(authorsSpan);
+    metadataDiv.appendChild(authorsDiv);
+  }
+  
+  // 年份、期刊、DOI详情行
+  const detailsDiv = doc.createElement('div');
+  detailsDiv.style.cssText = `
+    display: flex;
+    gap: ${spacing.sm};
     flex-wrap: wrap;
+    align-items: center;
+    width: 100%;
+    box-sizing: border-box;
   `;
   
-  const doiLabel = doc.createElement('span');
-  doiLabel.textContent = '📄 DOI:';
-  doiLabel.style.cssText = `
-    font-size: ${fontSize.sm};
-    color: ${colors.gray};
-  `;
-  doiDiv.appendChild(doiLabel);
+  // 年份(如果存在)
+  if (session.year) {
+    const yearSpan = doc.createElement('span');
+    yearSpan.textContent = `📅 ${session.year}`;
+    yearSpan.style.cssText = `
+      display: inline;
+      padding: 4px 10px;
+      background: #10b98122;
+      color: #10b981;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      max-width: 100%;
+      box-sizing: border-box;
+    `;
+    detailsDiv.appendChild(yearSpan);
+  }
   
-  const doiButton = doc.createElement('button');
-  doiButton.textContent = session.paper_doi;
-  doiButton.style.cssText = `
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-    color: white;
-    padding: 4px 12px;
-    border: none;
-    border-radius: ${borderRadius.sm};
-    font-weight: 600;
-    font-size: ${fontSize.xs};
+  // 期刊(如果存在)
+  if (session.journal) {
+    const journalSpan = doc.createElement('span');
+    journalSpan.textContent = `📰 ${session.journal}`;
+    journalSpan.style.cssText = `
+      display: inline;
+      padding: 4px 10px;
+      background: #f59e0b22;
+      color: #f59e0b;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      max-width: 100%;
+      box-sizing: border-box;
+      word-break: break-word;
+    `;
+    detailsDiv.appendChild(journalSpan);
+  }
+  
+  // DOI(点击复制,与paper-info保持一致)
+  const themeColors = getThemeColors();
+  const doiSpan = doc.createElement('span');
+  doiSpan.style.cssText = `
+    display: inline;
+    padding: 4px 10px;
+    background: ${themeColors.primary}22;
+    color: ${themeColors.primary};
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
     cursor: pointer;
     transition: all 0.2s;
+    user-select: none;
     word-break: break-all;
-    text-align: left;
+    overflow-wrap: anywhere;
+    max-width: 100%;
+    box-sizing: border-box;
   `;
   
-  doiButton.addEventListener('mouseenter', () => {
-    doiButton.style.transform = 'scale(1.05)';
-    doiButton.style.boxShadow = `0 2px 8px ${colors.shadow}`;
+  const doiText = doc.createElement('span');
+  doiText.textContent = `DOI: ${session.paper_doi}`;
+  doiText.style.cssText = 'word-break: break-all; overflow-wrap: anywhere;';
+  doiSpan.appendChild(doiText);
+  
+  // DOI悬停和点击效果
+  doiSpan.addEventListener('mouseenter', () => {
+    doiSpan.style.background = `${themeColors.primary}44`;
+    doiSpan.style.transform = 'scale(1.05)';
   });
   
-  doiButton.addEventListener('mouseleave', () => {
-    doiButton.style.transform = 'scale(1)';
-    doiButton.style.boxShadow = 'none';
+  doiSpan.addEventListener('mouseleave', () => {
+    doiSpan.style.background = `${themeColors.primary}22`;
+    doiSpan.style.transform = 'scale(1)';
   });
   
-  doiButton.addEventListener('click', (e) => {
+  doiSpan.addEventListener('click', (e) => {
     e.stopPropagation();
-    // 复制DOI到剪贴板
     try {
       const clipboardHelper = (Components as any).classes["@mozilla.org/widget/clipboardhelper;1"]
         .getService((Components as any).interfaces.nsIClipboardHelper);
       clipboardHelper.copyString(session.paper_doi);
       
-      doiButton.textContent = '✓ 已复制';
+      const originalBg = doiSpan.style.background;
+      const originalColor = doiSpan.style.color;
+      const originalText = doiSpan.innerHTML;
+      
+      doiSpan.style.background = themeColors.success;
+      doiSpan.style.color = themeColors.textInverse;
+      doiSpan.textContent = '✓ 已复制到剪贴板';
+      
       setTimeout(() => {
-        doiButton.textContent = session.paper_doi;
-      }, 2000);
+        doiSpan.style.background = originalBg;
+        doiSpan.style.color = originalColor;
+        doiSpan.innerHTML = originalText;
+      }, 1500);
     } catch (error) {
       logger.error('Copy DOI failed:', error);
+      doiSpan.style.background = themeColors.danger;
+      doiSpan.style.color = themeColors.textInverse;
+      doiSpan.textContent = '✗ 复制失败';
+      setTimeout(() => {
+        doiSpan.style.background = `${themeColors.primary}22`;
+        doiSpan.style.color = themeColors.primary;
+        doiText.textContent = `DOI: ${session.paper_doi}`;
+      }, 1500);
     }
   });
   
-  doiDiv.appendChild(doiButton);
-  card.appendChild(doiDiv);
+  detailsDiv.appendChild(doiSpan);
+  metadataDiv.appendChild(detailsDiv);
+  card.appendChild(metadataDiv);
   
   // 邀请码
   if (options.showInviteCode && session.invite_code) {
@@ -260,7 +364,7 @@ export function createSessionCard(
     `;
     
     const totalCount = (session as any).member_count || 1;
-    const onlineCount = (session as any).online_count || 0;
+    const onlineCount = options.onlineCount ?? 0; // 从参数获取,默认0
     
     // 总人数
     const themeColors = getThemeColors();

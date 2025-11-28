@@ -81,6 +81,61 @@ async function onStartup() {
       logger.error("[Researchopia] Shared Tab registration failed:", details);
     }
     
+    // Initialize CustomSearch Module (NEW: Use Zotero.Notes.registerItemPaneHeaderEventListener)
+    logger.log("[Researchopia] ⏱️ BEFORE CustomSearch initialization");
+    try {
+      logger.log("[Researchopia] 🔄 Initializing CustomSearch Module...");
+      const { CustomSearchModule } = await import("./modules/noteEditor/search/customSearchModule");
+      logger.log("[Researchopia] 📦 CustomSearchModule imported");
+      const customSearchModule = CustomSearchModule.getInstance();
+      logger.log("[Researchopia] 🏭 CustomSearchModule instance created");
+      await customSearchModule.initialize();
+      logger.log("[Researchopia] CustomSearch Module initialized ✅");
+      
+      // Register editor toolbar integration using Proxy pattern (like better-notes)
+      logger.log("[Researchopia] 🔄 Registering editor instance hook...");
+      const { initEditorToolbar } = await import("./modules/noteEditor/toolbar");
+      
+      // Hook into Zotero.Notes.registerEditorInstance using Proxy
+      // Reference: https://github.com/windingwind/zotero-better-notes/blob/main/src/modules/editor/initalize.ts#L9-L28
+      const originalRegisterEditorInstance = Zotero.Notes.registerEditorInstance;
+      Zotero.Notes.registerEditorInstance = new Proxy(originalRegisterEditorInstance, {
+        apply: (target, thisArg, argumentsList: [Zotero.EditorInstance]) => {
+          // Call original function first
+          target.apply(thisArg, argumentsList);
+          
+          // Then initialize toolbar for each editor instance
+          argumentsList.forEach(async (editor: Zotero.EditorInstance) => {
+            logger.log("[Researchopia] 🔍 Editor instance created, ID:", editor.instanceID);
+            try {
+              await initEditorToolbar(editor);
+              logger.log("[Researchopia] ✅ Toolbar initialized for editor:", editor.instanceID);
+            } catch (error) {
+              logger.error("[Researchopia] Toolbar init error:", error);
+            }
+          });
+        },
+      });
+      
+      // Process existing editor instances
+      Zotero.Notes._editorInstances.forEach(async (editor: Zotero.EditorInstance) => {
+        logger.log("[Researchopia] 📝 Processing existing editor:", editor.instanceID);
+        try {
+          await initEditorToolbar(editor);
+          logger.log("[Researchopia] ✅ Toolbar initialized for existing editor:", editor.instanceID);
+        } catch (error) {
+          logger.error("[Researchopia] Existing editor toolbar init error:", error);
+        }
+      });
+      
+      logger.log("[Researchopia] ✅ Editor instance hook registered");
+      
+    } catch (error) {
+      const details = error instanceof Error ? `${error.message}\n${error.stack}` : JSON.stringify(error);
+      logger.error("[Researchopia] CustomSearch Module initialization failed:", details);
+    }
+    logger.log("[Researchopia] ⏱️ AFTER CustomSearch initialization");
+    
     // Process existing windows (WITHOUT FTL insertion to avoid breaking context menu)
     const mainWindows = Zotero.getMainWindows();
     logger.log(`[Researchopia] Found ${mainWindows.length} main windows`);
@@ -137,6 +192,10 @@ async function onMainWindowLoad(win: Window): Promise<void> {
     // if (win.MozXULElement?.insertFTLIfNeeded) {
     //   win.MozXULElement.insertFTLIfNeeded(`${addon.data.config.addonRef}-mainWindow.ftl`);
     // }
+    
+    // ⚠️ CustomSearch now handled by Zotero.Notes.registerItemPaneHeaderEventListener in onStartup()
+    // No need to observe windows or wait for document.body here anymore
+    logger.log("[Researchopia] ✅ CustomSearch uses Zotero.Notes API, no window observation needed");
     
     logger.log("[Researchopia] Main window loaded successfully");
   } catch (error) {
@@ -218,7 +277,7 @@ async function onMainWindowUnload(win: Window): Promise<void> {
 /**
  * Shutdown hook - cleanup when plugin is disabled/removed
  */
-function onShutdown(): void {
+async function onShutdown(): Promise<void> {
   try {
     const addon = (Zotero as any).Researchopia;
     const ztoolkit = addon?.data?.ztoolkit;
@@ -284,6 +343,17 @@ function onShutdown(): void {
     } catch (error) {
       if (ztoolkit) {
         ztoolkit.log("UIManager cleanup error:", error);
+      }
+    }
+    
+    // Clean up CustomSearch Module
+    try {
+      const { CustomSearchModule } = require("./modules/noteEditor/search/customSearchModule");
+      const customSearchModule = CustomSearchModule.getInstance();
+      await customSearchModule.cleanup();
+    } catch (error) {
+      if (ztoolkit) {
+        ztoolkit.log("CustomSearch cleanup error:", error);
       }
     }
     

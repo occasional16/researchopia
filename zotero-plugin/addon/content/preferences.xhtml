@@ -76,6 +76,46 @@
       </html:div>
     </groupbox>
 
+    <!-- Zotero Notes 增强工具 -->
+    <groupbox>
+      <label><html:h2>📝 Zotero Notes 增强工具</html:h2></label>
+      <html:p class="description" style="margin: 0 0 12px 0; color: #666; font-size: 12px;">为 Zotero 笔记编辑器提供额外增强功能</html:p>
+      
+      <!-- 自定义搜索按钮 -->
+      <html:div class="form-group">
+        <html:label class="checkbox-label">
+          <html:input type="checkbox" id="custom-search" preference="extensions.zotero.researchopia.customSearch" />
+          <html:span>🔍 自定义搜索按钮</html:span>
+          <html:small>在笔记工具栏添加增强搜索按钮,支持 Ctrl+F 快捷键</html:small>
+        </html:label>
+      </html:div>
+      
+      <!-- 禁用原生搜索按钮 -->
+      <html:div class="form-group" style="margin-left: 24px;">
+        <html:label class="checkbox-label">
+          <html:input type="checkbox" id="disable-native-search" preference="extensions.zotero.researchopia.disableNativeSearch" />
+          <html:span>🚫 禁用原生搜索按钮</html:span>
+          <html:small>隐藏工具栏中的 Zotero 原生搜索按钮 (推荐在启用自定义搜索后使用)</html:small>
+        </html:label>
+      </html:div>
+      
+      <!-- 统计功能 -->
+      <html:div class="form-group">
+        <html:label class="checkbox-label">
+          <html:input type="checkbox" id="word-count" preference="extensions.zotero.researchopia.wordCount" />
+          <html:span>📊 统计功能</html:span>
+          <html:small>在编辑器右下角显示行数、字数、字符数统计信息</html:small>
+        </html:label>
+      </html:div>
+      
+      <html:div class="form-group" style="margin-top: 8px; padding: 8px; background: #f0f7ff; border-radius: 6px;">
+        <html:small style="color: #4CAF50; font-weight: 500;">✅ 推荐配置</html:small>
+        <html:p style="margin: 4px 0; color: #666; font-size: 12px;">
+          同时启用「自定义搜索」和「禁用原生搜索」以获得最佳体验。统计功能可独立使用。
+        </html:p>
+      </html:div>
+    </groupbox>
+
     <!-- 开发者选项 -->
     <groupbox>
       <label><html:h2>🔧 开发者选项</html:h2></label>

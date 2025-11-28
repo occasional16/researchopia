@@ -47,6 +47,7 @@ declare global {
     uiReadyPromise: Promise<void>;
     getMainWindows(): any[];
     getMainWindow(): any;
+    getActiveZoteroPane(): any;
     locale: string;
     Promise: {
       delay(ms: number): Promise<void>;
@@ -62,6 +63,28 @@ declare global {
     ItemPaneManager?: {
       registerSection(config: any): void;
     };
+    Notifier: {
+      registerObserver(
+        observer: {
+          notify: (
+            event: string,
+            type: string,
+            ids: number[] | string[],
+            extraData: any
+          ) => Promise<void> | void;
+        },
+        types: string[]
+      ): string;
+      unregisterObserver(id: string): void;
+    };
+    Reader?: {
+      getByTabID(tabID: string): any;
+    };
+  };
+
+  // Zotero Tabs 全局变量
+  var Zotero_Tabs: {
+    selectedID: string;
   };
 
   var Services: {

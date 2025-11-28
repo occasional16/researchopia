@@ -399,6 +399,128 @@ function bindPrefEvents() {
     });
   }
   
+  // Custom Search checkbox
+  const customSearchCheckbox = doc.querySelector("#custom-search") as HTMLInputElement;
+  const disableNativeSearchCheckbox = doc.querySelector("#disable-native-search") as HTMLInputElement;
+  
+  if (customSearchCheckbox) {
+    // 默认值为 true
+    const customSearchEnabled = getPref("customSearch");
+    customSearchCheckbox.checked = customSearchEnabled === undefined ? true : !!customSearchEnabled;
+    
+    customSearchCheckbox.addEventListener("change", async (e) => {
+      const checked = (e.target as HTMLInputElement).checked;
+      setPref("customSearch", checked);
+      
+      // 联动逻辑
+      if (checked && disableNativeSearchCheckbox) {
+        // 勾选自定义搜索时，自动勾选禁用原生搜索
+        disableNativeSearchCheckbox.checked = true;
+        setPref("disableNativeSearch", true);
+      } else if (!checked && disableNativeSearchCheckbox) {
+        // 取消自定义搜索时，也取消禁用原生搜索
+        disableNativeSearchCheckbox.checked = false;
+        setPref("disableNativeSearch", false);
+      }
+      
+      // 动态启用/禁用 customSearch 模块
+      try {
+        logger.log("[Researchopia] Toggling custom search to:", checked);
+        const { CustomSearchModule } = await import("./noteEditor/search/customSearchModule");
+        const module = CustomSearchModule.getInstance();
+        logger.log("[Researchopia] Got CustomSearchModule instance");
+        
+        if (checked) {
+          await module.enable();
+          logger.log("[Researchopia] Custom search enabled");
+        } else {
+          logger.log("[Researchopia] Calling module.disable()...");
+          await module.disable();
+          logger.log("[Researchopia] Custom search disabled");
+        }
+        
+        // 更新工具栏状态
+        const { initEditorToolbar } = await import("./noteEditor/toolbar");
+        initEditorToolbar();
+        showMessage(doc, checked ? "✅ 自定义搜索功能已启用" : "✅ 自定义搜索功能已禁用", "success");
+      } catch (error) {
+        logger.error("[Researchopia] Failed to toggle custom search:", error);
+        // 打印完整的错误信息
+        if (error instanceof Error) {
+          logger.error("[Researchopia] Error message:", error.message);
+          logger.error("[Researchopia] Error stack:", error.stack);
+        }
+        showMessage(doc, "❌ 切换自定义搜索功能失败", "error");
+        // 恢复复选框状态
+        (e.target as HTMLInputElement).checked = !checked;
+        setPref("customSearch", !checked);
+      }
+    });
+  }
+
+  // Disable Native Search checkbox
+  if (disableNativeSearchCheckbox) {
+    // 默认值为 false
+    const disableNativeSearchEnabled = getPref("disableNativeSearch");
+    disableNativeSearchCheckbox.checked = disableNativeSearchEnabled === undefined ? false : !!disableNativeSearchEnabled;
+    
+    disableNativeSearchCheckbox.addEventListener("change", async (e) => {
+      const checked = (e.target as HTMLInputElement).checked;
+      
+      // 联动逻辑：启用禁用原生搜索时，自动启用自定义搜索
+      if (checked && customSearchCheckbox && !customSearchCheckbox.checked) {
+        customSearchCheckbox.checked = true;
+        setPref("customSearch", true);
+        
+        // 启用自定义搜索模块
+        try {
+          const { CustomSearchModule } = await import("./noteEditor/search/customSearchModule");
+          const module = CustomSearchModule.getInstance();
+          await module.enable();
+        } catch (error) {
+          logger.error("[Researchopia] Failed to enable custom search:", error);
+        }
+      }
+      
+      setPref("disableNativeSearch", checked);
+      
+      try {
+        const { initEditorToolbar } = await import("./noteEditor/toolbar");
+        // 更新所有已打开编辑器的工具栏
+        initEditorToolbar();
+        showMessage(doc, checked ? "✅ 原生搜索按钮已隐藏" : "✅ 原生搜索按钮已显示", "success");
+      } catch (error) {
+        logger.error("[Researchopia] Failed to toggle native search:", error);
+        showMessage(doc, "❌ 切换原生搜索按钮失败", "error");
+        (e.target as HTMLInputElement).checked = !checked;
+      }
+    });
+  }
+
+  // Word Count checkbox
+  const wordCountCheckbox = doc.querySelector("#word-count") as HTMLInputElement;
+  if (wordCountCheckbox) {
+    // 默认值为 true
+    const wordCountEnabled = getPref("wordCount");
+    wordCountCheckbox.checked = wordCountEnabled === undefined ? true : !!wordCountEnabled;
+    
+    wordCountCheckbox.addEventListener("change", async (e) => {
+      const checked = (e.target as HTMLInputElement).checked;
+      setPref("wordCount", checked);
+      
+      try {
+        const { initEditorToolbar } = await import("./noteEditor/toolbar");
+        // 更新所有已打开编辑器的工具栏
+        initEditorToolbar();
+        showMessage(doc, checked ? "✅ 统计功能已启用" : "✅ 统计功能已禁用", "success");
+      } catch (error) {
+        logger.error("[Researchopia] Failed to toggle word count:", error);
+        showMessage(doc, "❌ 切换统计功能失败", "error");
+        (e.target as HTMLInputElement).checked = !checked;
+      }
+    });
+  }
+
   // Auto-upload annotations checkbox
   const autoUploadCheckbox = doc.querySelector("#auto-upload-annotations") as HTMLInputElement;
   if (autoUploadCheckbox) {

@@ -9,6 +9,7 @@ declare namespace _ZoteroTypes {
     PluginPrefsMap: {
       "autoUploadAnnotations": boolean;
       "showNotifications": boolean;
+      "customSearch": boolean;
       "userEmail": string;
       "isLoggedIn": boolean;
       "rememberCredentials": boolean;

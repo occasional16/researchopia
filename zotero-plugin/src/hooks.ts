@@ -4,6 +4,7 @@ import { createZToolkit } from "./utils/ztoolkit";
 import { AuthManager } from "./modules/auth";
 import { UIManager } from "./modules/ui-manager";
 import { logger } from "./utils/logger";
+import { getPref } from "./utils/prefs";
 
 // Enable strict mode for Zotero 8 compatibility
 "use strict";
@@ -91,6 +92,27 @@ async function onStartup() {
       logger.log("[Researchopia] 🏭 CustomSearchModule instance created");
       await customSearchModule.initialize();
       logger.log("[Researchopia] CustomSearch Module initialized ✅");
+      
+      // Initialize ScrollPreserver system for multi-window note editing (if enabled)
+      const scrollPreserverEnabled = getPref("scrollPreserver");
+      if (scrollPreserverEnabled !== false) {
+        logger.log("[Researchopia] 🔄 Initializing ScrollPreserver system...");
+        const { initScrollPreserverSystem } = await import("./modules/noteEditor/enhancements/scrollPreserver");
+        initScrollPreserverSystem();
+        logger.log("[Researchopia] ScrollPreserver system initialized ✅");
+      } else {
+        logger.log("[Researchopia] ScrollPreserver disabled by preference");
+      }
+      
+      // Initialize HeadingCollapse system for collapsible headings (if enabled)
+      const headingCollapseEnabled = getPref("headingCollapse");
+      if (headingCollapseEnabled !== false) {
+        const { initHeadingCollapseSystem } = await import("./modules/noteEditor/enhancements/headingCollapse");
+        initHeadingCollapseSystem();
+        logger.log("[Researchopia] HeadingCollapse system initialized ✅");
+      } else {
+        logger.log("[Researchopia] HeadingCollapse disabled by preference");
+      }
       
       // Register editor toolbar integration using Proxy pattern (like better-notes)
       logger.log("[Researchopia] 🔄 Registering editor instance hook...");
@@ -354,6 +376,26 @@ async function onShutdown(): Promise<void> {
     } catch (error) {
       if (ztoolkit) {
         ztoolkit.log("CustomSearch cleanup error:", error);
+      }
+    }
+    
+    // Clean up ScrollPreserver system
+    try {
+      const { destroyScrollPreserverSystem } = require("./modules/noteEditor/scrollPreserver");
+      destroyScrollPreserverSystem();
+    } catch (error) {
+      if (ztoolkit) {
+        ztoolkit.log("ScrollPreserver cleanup error:", error);
+      }
+    }
+    
+    // Clean up HeadingCollapse system
+    try {
+      const { destroyHeadingCollapseSystem } = require("./modules/noteEditor/headingCollapse");
+      destroyHeadingCollapseSystem();
+    } catch (error) {
+      if (ztoolkit) {
+        ztoolkit.log("HeadingCollapse cleanup error:", error);
       }
     }
     

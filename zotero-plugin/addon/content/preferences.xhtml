@@ -86,16 +86,7 @@
         <html:label class="checkbox-label">
           <html:input type="checkbox" id="custom-search" preference="extensions.zotero.researchopia.customSearch" />
           <html:span>🔍 自定义搜索按钮</html:span>
-          <html:small>在笔记工具栏添加增强搜索按钮,支持 Ctrl+F 快捷键</html:small>
-        </html:label>
-      </html:div>
-      
-      <!-- 禁用原生搜索按钮 -->
-      <html:div class="form-group" style="margin-left: 24px;">
-        <html:label class="checkbox-label">
-          <html:input type="checkbox" id="disable-native-search" preference="extensions.zotero.researchopia.disableNativeSearch" />
-          <html:span>🚫 禁用原生搜索按钮</html:span>
-          <html:small>隐藏工具栏中的 Zotero 原生搜索按钮 (推荐在启用自定义搜索后使用)</html:small>
+          <html:small>在笔记工具栏添加增强搜索按钮，支持 Ctrl+F 快捷键，并自动隐藏原生搜索按钮</html:small>
         </html:label>
       </html:div>
       
@@ -108,10 +99,46 @@
         </html:label>
       </html:div>
       
+      <!-- 显示行号 -->
+      <html:div class="form-group">
+        <html:label class="checkbox-label">
+          <html:input type="checkbox" id="line-numbers" preference="extensions.zotero.researchopia.lineNumbers" />
+          <html:span>📏 显示行号</html:span>
+          <html:small>在笔记编辑器左侧显示行号</html:small>
+        </html:label>
+      </html:div>
+      
+      <!-- 阻止笔记窗口跳转到首行 -->
+      <html:div class="form-group">
+        <html:label class="checkbox-label">
+          <html:input type="checkbox" id="scroll-preserver" preference="extensions.zotero.researchopia.scrollPreserver" />
+          <html:span>📍 保持笔记视图位置</html:span>
+          <html:small>编辑笔记时保持所有窗口的视图位置，防止自动跳转到首行</html:small>
+        </html:label>
+      </html:div>
+      
+      <!-- 标题折叠功能 -->
+      <html:div class="form-group">
+        <html:label class="checkbox-label">
+          <html:input type="checkbox" id="heading-collapse" preference="extensions.zotero.researchopia.headingCollapse" />
+          <html:span>📂 标题折叠</html:span>
+          <html:small>为 H1-H3 标题添加折叠/展开按钮</html:small>
+        </html:label>
+      </html:div>
+      
+      <!-- 自定义颜色选择 -->
+      <html:div class="form-group">
+        <html:label class="checkbox-label">
+          <html:input type="checkbox" id="color-picker" preference="extensions.zotero.researchopia.colorPicker" />
+          <html:span>🎨 自定义颜色</html:span>
+          <html:small>在字体/高亮颜色面板添加「更多颜色」选项，支持任意颜色选择</html:small>
+        </html:label>
+      </html:div>
+      
       <html:div class="form-group" style="margin-top: 8px; padding: 8px; background: #f0f7ff; border-radius: 6px;">
-        <html:small style="color: #4CAF50; font-weight: 500;">✅ 推荐配置</html:small>
+        <html:small style="color: #4CAF50; font-weight: 500;">✅ 功能说明</html:small>
         <html:p style="margin: 4px 0; color: #666; font-size: 12px;">
-          同时启用「自定义搜索」和「禁用原生搜索」以获得最佳体验。统计功能可独立使用。
+          所有功能可独立开关，完美兼容Better Notes插件，修改后需重新打开笔记编辑器或重启Zotero后生效。
         </html:p>
       </html:div>
     </groupbox>

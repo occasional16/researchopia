@@ -5,6 +5,8 @@
  * - Custom Search (Ctrl+F inline findbar with highlight)
  * - Line Numbers (CSS Counter based)
  * - Word Count (Status bar with lines/words/chars)
+ * - Scroll Position Preserver (Multi-window editing support)
+ * - Heading Collapse (Collapsible H1-H3 headings)
  * 
  * @module noteEditor
  */
@@ -19,9 +21,19 @@ export {
   InlineFindbar 
 } from "./search";
 
-// Re-export enhancements
+// Re-export all enhancements (including scrollPreserver and headingCollapse)
 export { 
   initLineNumbers, 
   removeLineNumbers,
-  initWordCount 
+  initWordCount,
+  initScrollPreserverSystem,
+  registerEditorForScrollPreservation,
+  unregisterEditorFromScrollPreservation,
+  destroyScrollPreserverSystem,
+  initHeadingCollapseSystem,
+  destroyHeadingCollapseSystem
 } from "./enhancements";
+
+// Re-export classes for direct access (if needed)
+export { ScrollPreserver } from "./enhancements/scrollPreserver";
+export { HeadingCollapse } from "./enhancements/headingCollapse";

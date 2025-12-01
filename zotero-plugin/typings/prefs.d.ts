@@ -15,6 +15,10 @@ declare namespace _ZoteroTypes {
       "rememberCredentials": boolean;
       "savedEmail": string;
       "savedPassword": string;
+      "lineNumbers": boolean;
+      "scrollPreserver": boolean;
+      "headingCollapse": boolean;
+      "colorPicker": boolean;
     };
   }
 }

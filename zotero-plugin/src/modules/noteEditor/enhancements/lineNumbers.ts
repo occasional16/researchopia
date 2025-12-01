@@ -56,19 +56,25 @@ export async function initLineNumbers(editor: Zotero.EditorInstance) {
     logger.log("[LineNumbers] Updating existing style element");
   }
 
-  // STRATEGY: Use ::after pseudo-element instead of ::before
-  // REASON: Zotero's note-editor already uses ::before on p, h1-h6, pre, blockquote
-  //         for drag handle area (see _core.scss: .primary-editor > p, h1... &:before)
-  // KEY INSIGHT: padding-left on container creates space, but ::after is positioned
-  //              relative to the element's content box. We need negative left.
+  // STRATEGY: Use ::before pseudo-element for li items to fix counter timing issue
+  // REASON 1: Zotero's note-editor uses ::before on p, h1-h6, pre, blockquote for drag handle,
+  //           but NOT on li elements - so we can use ::before for li
+  // REASON 2: For nested lists, using ::after causes counter to show the FINAL value
+  //           because CSS counters evaluate at render time from top-to-bottom.
+  //           With nested li, when parent li's ::after renders, the counter already
+  //           includes increments from child li elements.
+  // SOLUTION: Use ::before for li (counter-increment happens AFTER the ::before displays)
+  //           This ensures each li shows its own counter value, not the nested total.
+  // 
+  // For non-list elements (p, h1-h6, etc.), we still use ::after because:
+  // - Zotero uses ::before for drag handles on these elements
+  // - These elements don't have nested structures, so ::after works fine
   // 
   // DOM Structure Analysis:
   // - .ProseMirror is also .primary-editor (has both classes)
   // - Elements like p, h1 are direct children with position: relative already
   // - ul/ol need explicit position: relative
   // - blockquote has margin-left: 1em and padding-left: .75em
-  // - IMPORTANT: Zotero uses li::after with content: "" for selection styling
-  //   We need to override this with higher specificity
   
   styleEl.textContent = `
     /* Container setup - create space for line numbers on the left */
@@ -78,8 +84,8 @@ export async function initLineNumbers(editor: Zotero.EditorInstance) {
       position: relative !important;
     }
 
-    /* Ensure all direct children have position relative for ::after positioning */
-    /* For non-list elements */
+    /* Ensure all direct children have position relative for pseudo-element positioning */
+    /* For non-list elements - use counter-increment here */
     .ProseMirror > p,
     .ProseMirror > h1,
     .ProseMirror > h2,
@@ -101,13 +107,13 @@ export async function initLineNumbers(editor: Zotero.EditorInstance) {
       /* Do NOT increment counter on list container - we'll count items instead */
     }
     
-    /* Each list item (including nested) increments counter */
+    /* Each list item - use ::before which displays BEFORE counter-increment */
     .ProseMirror li {
-      counter-increment: researchopia-line-number !important;
+      position: relative !important;
     }
 
-    /* Base line number styling - common properties */
-    /* Light mode colors (default) */
+    /* Base line number styling for non-list elements - using ::after */
+    /* These don't have nesting, so ::after works fine */
     .ProseMirror > p::after,
     .ProseMirror > h1::after,
     .ProseMirror > h2::after,
@@ -137,14 +143,14 @@ export async function initLineNumbers(editor: Zotero.EditorInstance) {
       box-sizing: border-box !important;
     }
     
-    /* List items: Override Zotero's li::after which has content: "" */
-    /* Use higher specificity: .primary-editor ul li::after, .primary-editor ol li::after */
-    .primary-editor ul li::after,
-    .primary-editor ol li::after {
+    /* List items: Use ::before to fix nested list counter issue */
+    /* ::before displays BEFORE the counter-increment takes effect for this element */
+    /* So we use counter-increment on ::before itself to increment then display */
+    .primary-editor ul li::before,
+    .primary-editor ol li::before {
+      counter-increment: researchopia-line-number !important;
       content: counter(researchopia-line-number) !important;
       position: absolute !important;
-      /* Reset Zotero's default margin-left: -100px and width: 100px */
-      margin-left: 0 !important;
       /* ul/ol has padding-left: 2rem. Position line number in container's padding area */
       left: calc(-2rem - 45px) !important;
       width: 40px !important;
@@ -167,27 +173,31 @@ export async function initLineNumbers(editor: Zotero.EditorInstance) {
     
     /* Nested lists: li > ul/ol > li need more negative offset */
     /* Each nesting level adds another 2rem of indent */
-    .primary-editor ul li li::after,
-    .primary-editor ol li li::after,
-    .primary-editor ul ul li::after,
-    .primary-editor ol ol li::after {
+    .primary-editor ul li li::before,
+    .primary-editor ol li li::before,
+    .primary-editor ul ul li::before,
+    .primary-editor ol ol li::before {
       left: calc(-4rem - 45px) !important;
     }
     
-    .primary-editor ul li li li::after,
-    .primary-editor ol li li li::after,
-    .primary-editor ul ul ul li::after,
-    .primary-editor ol ol ol li::after {
+    .primary-editor ul li li li::before,
+    .primary-editor ol li li li::before,
+    .primary-editor ul ul ul li::before,
+    .primary-editor ol ol ol li::before {
       left: calc(-6rem - 45px) !important;
     }
     
-    .primary-editor ul li li li li::after,
-    .primary-editor ol li li li li::after {
+    .primary-editor ul li li li li::before,
+    .primary-editor ol li li li li::before {
       left: calc(-8rem - 45px) !important;
     }
     
-    /* blockquote has margin-left: 1em, padding-left: .75em */
-    /* Adjusted: was left about 4.2px too far left, so reduce the offset slightly */
+    /* ============================================ */
+    /* Blockquote - complex cases                  */
+    /* ============================================ */
+    
+    /* Blockquote direct ::after - only for simple single-line blockquote */
+    /* For blockquote with multiple p children or lists, we handle differently */
     .ProseMirror > blockquote::after {
       content: counter(researchopia-line-number) !important;
       position: absolute !important;
@@ -208,6 +218,114 @@ export async function initLineNumbers(editor: Zotero.EditorInstance) {
       top: 0 !important;
       z-index: 9999 !important;
       box-sizing: border-box !important;
+    }
+    
+    /* ============================================ */
+    /* Blockquote with multiple paragraphs         */
+    /* ============================================ */
+    
+    /* Blockquote with child p elements should NOT show its own ::after line number */
+    /* Each p inside will have its own line number */
+    .ProseMirror > blockquote:has(> p)::after {
+      content: none !important;
+    }
+    
+    /* Blockquote with p children should NOT increment counter itself */
+    .ProseMirror > blockquote:has(> p) {
+      counter-increment: none !important;
+    }
+    
+    /* p elements inside blockquote need line numbers */
+    .ProseMirror > blockquote > p {
+      position: relative !important;
+      counter-increment: researchopia-line-number !important;
+    }
+    
+    .ProseMirror > blockquote > p::after {
+      content: counter(researchopia-line-number) !important;
+      position: absolute !important;
+      /* blockquote has margin-left: 1em, padding-left: 0.75em */
+      /* User feedback: need to move left by about 11.2px more */
+      left: calc(-45px - 1em - 0.75em + 4px - 11.2px) !important;
+      width: 40px !important;
+      text-align: right !important;
+      padding-right: 5px !important;
+      color: var(--fill-tertiary, #999) !important;
+      background: transparent !important;
+      font-size: 12px !important;
+      font-weight: normal !important;
+      font-family: monospace !important;
+      line-height: inherit !important;
+      user-select: none !important;
+      pointer-events: none !important;
+      top: 0 !important;
+      z-index: 9999 !important;
+      box-sizing: border-box !important;
+    }
+    
+    /* ============================================ */
+    /* Blockquote containing lists - special case  */
+    /* ============================================ */
+    
+    /* Blockquote with nested lists should NOT show its own line number */
+    /* when it contains lists (the lists will have their own line numbers) */
+    .ProseMirror > blockquote:has(> ul)::after,
+    .ProseMirror > blockquote:has(> ol)::after {
+      content: none !important;
+    }
+    
+    /* Blockquote with nested lists should NOT increment counter itself */
+    /* The list items will handle counting */
+    .ProseMirror > blockquote:has(> ul),
+    .ProseMirror > blockquote:has(> ol) {
+      counter-increment: none !important;
+    }
+    
+    /* Lists inside blockquote: position relative */
+    .ProseMirror > blockquote > ul,
+    .ProseMirror > blockquote > ol {
+      position: relative !important;
+    }
+    
+    /* List items inside blockquote: need special offset calculation */
+    /* blockquote has margin-left: 1em, padding-left: 0.75em */
+    /* ul/ol inside has padding-left: 2rem */
+    .ProseMirror > blockquote ul li::before,
+    .ProseMirror > blockquote ol li::before {
+      counter-increment: researchopia-line-number !important;
+      content: counter(researchopia-line-number) !important;
+      position: absolute !important;
+      /* Offset: 2rem (ul padding) + 1em (blockquote margin) + 0.75em (blockquote padding) + 45px (line number area) */
+      /* User feedback: need to move left by about 7.2px more */
+      left: calc(-2rem - 1em - 0.75em - 45px - 7.2px) !important;
+      width: 40px !important;
+      height: auto !important;
+      text-align: right !important;
+      padding-right: 5px !important;
+      color: var(--fill-tertiary, #999) !important;
+      background: transparent !important;
+      font-size: 12px !important;
+      font-weight: normal !important;
+      font-family: monospace !important;
+      line-height: 1.5 !important;
+      user-select: none !important;
+      pointer-events: none !important;
+      top: 0 !important;
+      z-index: 9999 !important;
+      box-sizing: border-box !important;
+    }
+    
+    /* Nested lists inside blockquote */
+    .ProseMirror > blockquote ul li li::before,
+    .ProseMirror > blockquote ol li li::before,
+    .ProseMirror > blockquote ul ul li::before,
+    .ProseMirror > blockquote ol ol li::before {
+      left: calc(-4rem - 1em - 0.75em - 45px - 7.2px) !important;
+    }
+    
+    .ProseMirror > blockquote ul li li li::before,
+    .ProseMirror > blockquote ol li li li::before {
+      left: calc(-6rem - 1em - 0.75em - 45px - 7.2px) !important;
     }
   `;
   

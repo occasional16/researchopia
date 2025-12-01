@@ -7,8 +7,18 @@
 import { logger } from "../../utils/logger";
 import { getPref } from "../../utils/prefs";
 import { SearchManager } from "./search/manager";
-import { initLineNumbers } from "./enhancements/lineNumbers";
+import { initLineNumbers, removeLineNumbers } from "./enhancements/lineNumbers";
 import { initWordCount, removeWordCount } from "./enhancements/wordCount";
+import { initColorPicker, removeColorPicker } from "./enhancements/colorPicker";
+import { registerEditorForScrollPreservation as _registerEditorForScrollPreservation } from "./enhancements/scrollPreserver";
+
+/**
+ * Register a noteEditor element for scroll preservation
+ * This wraps the ScrollPreserver singleton method
+ */
+function registerEditorForScrollPreservation(noteEditor: any): void {
+  _registerEditorForScrollPreservation(noteEditor);
+}
 
 // 跟踪已初始化的编辑器，避免重复初始化
 const initializedEditors = new WeakSet<Zotero.EditorInstance>();
@@ -23,6 +33,138 @@ function getNoteItemId(editor: Zotero.EditorInstance): number | null {
   try {
     return (editor as any).itemID || (editor as any)._item?.id || null;
   } catch {
+    return null;
+  }
+}
+
+/**
+ * Get the noteEditor XUL element from an EditorInstance
+ * 
+ * STRATEGY (Priority Order):
+ * 1. Use EditorInstance._iframeWindow to find the containing noteEditor (MOST RELIABLE)
+ * 2. Fall back to searching by _editorInstance reference match
+ * 3. Fall back to itemID match (least accurate - may match wrong window)
+ * 
+ * Key Challenge: Multiple windows can have noteEditors for the SAME itemID!
+ * - Item Pane noteEditor (main window)
+ * - Separate Window noteEditor (standalone window)
+ * These are DIFFERENT noteEditor XUL elements but share the same itemID.
+ * 
+ * WHY _iframeWindow.frameElement works:
+ * - Each EditorInstance has a unique _iframeWindow (the iframe's contentWindow)
+ * - iframe.frameElement is the <iframe> DOM element
+ * - iframe's parent is inside the noteEditor XUL element
+ * - This method ALWAYS finds the correct noteEditor, regardless of timing!
+ */
+function getNoteEditorElement(editor: Zotero.EditorInstance): any | null {
+  try {
+    const editorAny = editor as any;
+    const instanceID = editor.instanceID;
+
+    // Method 1 (BEST): Use _iframeWindow.frameElement to find containing noteEditor
+    // This is the most reliable method because:
+    // - Each EditorInstance owns a unique iframe
+    // - iframe.frameElement.closest('note-editor') finds the exact parent noteEditor
+    // - Works regardless of when _editorInstance was assigned
+    const iframeWindow = editorAny._iframeWindow;
+    logger.log(`[EditorToolbar] 🔍 Method 1: _iframeWindow exists: ${!!iframeWindow}, frameElement: ${!!iframeWindow?.frameElement}`);
+    
+    if (iframeWindow?.frameElement) {
+      // The iframe is inside the noteEditor XUL element
+      // Structure: <note-editor> -> <box> -> <div#note-editor> -> <iframe#editor-view>
+      const iframe = iframeWindow.frameElement;
+      logger.log(`[EditorToolbar] 🔍 iframe tagName: ${iframe.tagName}, id: ${iframe.id}, parentElement: ${iframe.parentElement?.tagName}`);
+      
+      // Try closest() first (works if noteEditor is in the same document)
+      let noteEditor = iframe.closest?.('note-editor');
+      logger.log(`[EditorToolbar] 🔍 closest('note-editor') result: ${!!noteEditor}`);
+      
+      // If closest() doesn't work, traverse up manually through DOM
+      if (!noteEditor) {
+        let parent = iframe.parentElement;
+        let maxDepth = 10; // Prevent infinite loops
+        let depth = 0;
+        while (parent && maxDepth-- > 0) {
+          depth++;
+          logger.log(`[EditorToolbar] 🔍 Traversing depth ${depth}: ${parent.tagName || parent.localName || parent.nodeName}`);
+          if (parent.tagName?.toLowerCase() === 'note-editor' || 
+              parent.localName === 'note-editor') {
+            noteEditor = parent;
+            break;
+          }
+          parent = parent.parentElement;
+        }
+      }
+      
+      if (noteEditor) {
+        logger.log(`[EditorToolbar] ✅ Found noteEditor via _iframeWindow.frameElement (instanceID: ${instanceID})`);
+        return noteEditor;
+      } else {
+        logger.warn(`[EditorToolbar] ⚠️ iframe.frameElement exists but couldn't find parent noteEditor`);
+      }
+    }
+
+    // Method 2: Try direct _noteEditor reference (if available)
+    if (editorAny._noteEditor) {
+      logger.log(`[EditorToolbar] Found noteEditor via _noteEditor reference`);
+      return editorAny._noteEditor;
+    }
+
+    // Method 3: Global DOM search as fallback
+    const itemID = editorAny._item?.id;
+    
+    if (!itemID) {
+      logger.warn("[EditorToolbar] Cannot search: editor._item.id is undefined");
+      return null;
+    }
+    logger.log(`[EditorToolbar] Searching for note-editor with itemID: ${itemID}, instanceID: ${instanceID}`);
+
+    const allCandidates: { noteEditor: any; isExactMatch: boolean; windowType: string }[] = [];
+
+    // Search in standalone note windows FIRST (they are more specific)
+    const noteWindows = ((Zotero as any).Notes?.getWindows?.() || []) as any[];
+    for (const noteWin of noteWindows) {
+      if (!noteWin?.document) continue;
+      const noteEditors = noteWin.document.querySelectorAll('note-editor');
+      for (const ne of Array.from(noteEditors)) {
+        const noteEditor = ne as any;
+        if (noteEditor._editorInstance === editor) {
+          logger.log(`[EditorToolbar] ✅ Found note-editor in standalone window (EXACT match by editorInstance)`);
+          return noteEditor;
+        }
+        if (noteEditor._item?.id === itemID) {
+          allCandidates.push({ noteEditor, isExactMatch: false, windowType: 'standalone' });
+        }
+      }
+    }
+
+    // Search in main windows
+    const windows = (Zotero as any).getMainWindows() as Window[];
+    for (const win of windows) {
+      const noteEditors = win.document.querySelectorAll('note-editor');
+      for (const ne of Array.from(noteEditors)) {
+        const noteEditor = ne as any;
+        if (noteEditor._editorInstance === editor) {
+          logger.log(`[EditorToolbar] ✅ Found note-editor in main window (EXACT match by editorInstance)`);
+          return noteEditor;
+        }
+        if (noteEditor._item?.id === itemID) {
+          allCandidates.push({ noteEditor, isExactMatch: false, windowType: 'main' });
+        }
+      }
+    }
+
+    // Fall back to itemID match if no exact match found
+    if (allCandidates.length > 0) {
+      const best = allCandidates[0];
+      logger.warn(`[EditorToolbar] ⚠️ Fallback: using itemID match in ${best.windowType} window (instanceID: ${instanceID})`);
+      return best.noteEditor;
+    }
+
+    logger.warn(`[EditorToolbar] ❌ No note-editor found for itemID: ${itemID}`);
+    return null;
+  } catch (error) {
+    logger.error("[EditorToolbar] Error in getNoteEditorElement:", error);
     return null;
   }
 }
@@ -148,16 +290,18 @@ export async function initEditorToolbar(editor?: Zotero.EditorInstance) {
 
     // Toolbar found
 
-    // 根据偏好设置控制原生搜索按钮
-    const disableNativeSearch = getPref("disableNativeSearch");
-    const nativeFindButton = findNativeFindButton(toolbar);
-    if (nativeFindButton) {
-      nativeFindButton.style.display = disableNativeSearch ? 'none' : '';
-    }
-
     // 根据偏好设置决定是否添加自定义搜索按钮
     const customSearchEnabled = getPref("customSearch");
     // 默认为 true（undefined 时也启用）
+    
+    // 原生搜索按钮与自定义搜索按钮完全绑定：
+    // 启用自定义搜索 = 隐藏原生搜索按钮
+    // 禁用自定义搜索 = 显示原生搜索按钮
+    const nativeFindButton = findNativeFindButton(toolbar);
+    if (nativeFindButton) {
+      nativeFindButton.style.display = (customSearchEnabled !== false) ? 'none' : '';
+    }
+
     if (customSearchEnabled !== false) {
       // Use CustomSearchManager to register toolbar button (like better-notes)
       const manager = SearchManager.getInstance();
@@ -170,9 +314,56 @@ export async function initEditorToolbar(editor?: Zotero.EditorInstance) {
       }
     }
 
-    // Initialize line numbers (always enabled)
-    await initLineNumbers(editor);
-    // Line numbers initialized
+    // Initialize line numbers based on preference
+    const lineNumbersEnabled = getPref("lineNumbers");
+    if (lineNumbersEnabled !== false) {
+      await initLineNumbers(editor);
+      // Line numbers initialized
+    } else {
+      removeLineNumbers(editor);
+    }
+
+    // Initialize color picker enhancement based on preference
+    const colorPickerEnabled = getPref("colorPicker");
+    if (colorPickerEnabled !== false) {
+      await initColorPicker(editor);
+      // Color picker initialized
+    } else {
+      removeColorPicker(editor);
+    }
+
+    // Register noteEditor element for scroll position preservation (multi-window editing support)
+    // CRITICAL: Must patch BEFORE initEditor is called (happens during noteEditor.item = xxx)
+    // Strategy: Find noteEditor immediately and patch its initEditor method
+    // Only register if scrollPreserver is enabled
+    const scrollPreserverEnabled = getPref("scrollPreserver");
+    if (scrollPreserverEnabled !== false) {
+      try {
+        // Try to find noteEditor element immediately (before _initPromise resolves)
+        const noteEditor = getNoteEditorElement(editor);
+        if (noteEditor) {
+          // Patch initEditor IMMEDIATELY before it's called
+          registerEditorForScrollPreservation(noteEditor);
+          logger.log(`[EditorToolbar] ✅ Patched noteEditor.initEditor BEFORE first call (item: ${noteEditor._item?.id})`);
+        } else {
+          // Fallback: wait for init and try again
+          logger.warn("[EditorToolbar] Could not find noteEditor immediately, waiting for init...");
+          editor._initPromise?.then(() => {
+            const noteEditorDelayed = getNoteEditorElement(editor);
+            if (noteEditorDelayed) {
+              registerEditorForScrollPreservation(noteEditorDelayed);
+              logger.log(`[EditorToolbar] ⚠️ Patched noteEditor.initEditor AFTER init (item: ${noteEditorDelayed._item?.id})`);
+            } else {
+              logger.error("[EditorToolbar] ❌ Could not find noteEditor even after init");
+            }
+          }).catch((error: Error) => {
+            logger.error("[EditorToolbar] Error waiting for editor init:", error);
+          });
+        }
+      } catch (error) {
+        logger.warn("[EditorToolbar] Could not set up noteEditor registration:", error);
+      }
+    }
 
     // 根据偏好设置决定是否启用统计功能
     const wordCountEnabled = getPref("wordCount");
@@ -231,15 +422,13 @@ export async function initEditorToolbar(editor?: Zotero.EditorInstance) {
             if (newToolbar && newToolbar !== toolbar) {
               // Toolbar replaced, re-registering
               
-              // 根据偏好设置控制原生搜索按钮
-              const hideNative = getPref("disableNativeSearch");
+              // 根据偏好设置注册自定义搜索按钮（与原生搜索按钮完全绑定）
+              const customEnabled = getPref("customSearch");
               const nativeFindBtn = findNativeFindButton(newToolbar);
               if (nativeFindBtn) {
-                nativeFindBtn.style.display = hideNative ? 'none' : '';
+                nativeFindBtn.style.display = (customEnabled !== false) ? 'none' : '';
               }
               
-              // 根据偏好设置注册自定义搜索按钮
-              const customEnabled = getPref("customSearch");
               if (customEnabled !== false) {
                 const manager = SearchManager.getInstance();
                 if (typeof (manager as any).registerToolbarButton === 'function') {
@@ -253,18 +442,17 @@ export async function initEditorToolbar(editor?: Zotero.EditorInstance) {
             
             // Check if button still exists in current toolbar
             if (toolbar) {
-              // 根据偏好设置控制原生搜索按钮
-              const hideNative = getPref("disableNativeSearch");
+              // 原生搜索按钮与自定义搜索完全绑定
+              const customEnabled = getPref("customSearch");
               const nativeFindBtn = findNativeFindButton(toolbar);
               if (nativeFindBtn) {
-                const shouldHide = hideNative ? 'none' : '';
+                const shouldHide = (customEnabled !== false) ? 'none' : '';
                 if (nativeFindBtn.style.display !== shouldHide) {
                   nativeFindBtn.style.display = shouldHide;
                 }
               }
               
               // Check custom button
-              const customEnabled = getPref("customSearch");
               if (customEnabled !== false) {
                 const toolbarMiddle = toolbar.querySelector('.middle');
                 const buttonExists = toolbarMiddle?.querySelector('[data-researchopia-custom-search]');
@@ -301,18 +489,17 @@ async function updateEditorToolbarState(editor: Zotero.EditorInstance) {
 
   logger.log("[EditorToolbar] Updating toolbar state for editor:", editor.instanceID);
 
-  // 更新原生搜索按钮可见性
-  const disableNativeSearch = getPref("disableNativeSearch");
-  const nativeFindButton = findNativeFindButton(toolbar);
-  if (nativeFindButton) {
-    nativeFindButton.style.display = disableNativeSearch ? 'none' : '';
-    logger.log("[EditorToolbar] Native search button display:", disableNativeSearch ? 'none' : 'visible');
-  }
-
-  // 更新自定义搜索按钮
+  // 更新自定义搜索按钮和原生搜索按钮（完全绑定）
   const customSearchEnabled = getPref("customSearch");
+  const nativeFindButton = findNativeFindButton(toolbar);
   const toolbarMiddle = toolbar.querySelector('.middle');
   const existingSearchBtn = toolbarMiddle?.querySelector('[data-researchopia-custom-search]');
+  
+  // 原生搜索按钮与自定义搜索完全绑定
+  if (nativeFindButton) {
+    nativeFindButton.style.display = (customSearchEnabled !== false) ? 'none' : '';
+    logger.log("[EditorToolbar] Native search button display:", (customSearchEnabled !== false) ? 'hidden' : 'visible');
+  }
   
   if (customSearchEnabled !== false) {
     // 应该显示自定义搜索按钮
@@ -338,6 +525,22 @@ async function updateEditorToolbarState(editor: Zotero.EditorInstance) {
     await initWordCount(editor);
   } else {
     removeWordCount(editor);
+  }
+
+  // 更新行号功能
+  const lineNumbersEnabled = getPref("lineNumbers");
+  if (lineNumbersEnabled !== false) {
+    await initLineNumbers(editor);
+  } else {
+    removeLineNumbers(editor);
+  }
+
+  // 更新颜色选择器功能
+  const colorPickerEnabled = getPref("colorPicker");
+  if (colorPickerEnabled !== false) {
+    await initColorPicker(editor);
+  } else {
+    removeColorPicker(editor);
   }
 }
 

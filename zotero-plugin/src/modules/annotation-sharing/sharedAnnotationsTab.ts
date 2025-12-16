@@ -1,19 +1,22 @@
 /**
- * Sidebar Shared Annotations View
+ * Sidebar Shared Annotations View (共享标注Tab)
  * 
  * 功能: 在Zotero Reader sidebar创建"Shared Annotations"自定义tab
  * 设计文档: docs/docs-dev/1.4.12-SHARED_ANNOTATIONS_TAB_DESIGN.md
  * 参考: Jasminum插件的sidebar tab实现 (docs-dev/1.4.11)
+ * 
+ * @version 2.0.0 - 重构至 annotation-sharing 模块
  */
 
 import { config } from "../../../package.json";
 import { logger } from "../../utils/logger";
 import { APIClient } from "../../utils/apiClient";
 import { SupabaseManager } from "../supabase";
-import { UserHoverCardManager } from "./userHoverCard";
+import { UserHoverCardManager } from "../ui/userHoverCard";
 import { AuthManager } from "../auth";
-import { formatDate, resolveCommentDisplayInfo, createToggleSwitch } from "./helpers";
+import { formatDate, resolveCommentDisplayInfo, createToggleSwitch } from "../ui/helpers";
 import { ServicesAdapter } from "../../adapters/services-adapter";
+import { annotationSharingCache } from "./cache";
 
 export class SidebarSharedView {
   private static instance: SidebarSharedView;
@@ -22,7 +25,8 @@ export class SidebarSharedView {
   // Phase 2: 数据相关
   private apiClient = APIClient.getInstance();
   private supabaseManager = new SupabaseManager(); // 参考ui-manager.ts:46
-  private documentCache: Map<string, string> = new Map(); // DOI → document_id
+  // 🚀 使用共享缓存管理器
+  private cache = annotationSharingCache;
   private currentReader: any = null; // 当前reader引用
   private pdfReaderManager: any | null = null; // PDFReaderManager实例(懒加载)
   private loadingAnnotations: Set<string> = new Set(); // 正在加载的reader IDs
@@ -58,7 +62,9 @@ export class SidebarSharedView {
         try {
           await this.init(doc, reader);
         } catch (error) {
-          logger.error("[SidebarSharedView] Failed to init shared tab:", error);
+          // 降级为warn,因为初始化失败通常不会影响主要功能
+          const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+          logger.warn(`[SidebarSharedView] ⚠️ Tab init skipped: ${errorMsg}`);
         }
       },
       config.addonID
@@ -792,8 +798,8 @@ export class SidebarSharedView {
         return;
       }
       
-      // 2. 查询Supabase Document ID (带缓存)
-      let documentId = this.documentCache.get(doi);
+      // 2. 查询Supabase Document ID (使用共享缓存)
+      let documentId = this.cache.getDocumentId(doi);
       if (!documentId) {
         logger.log(`[SidebarSharedView] Finding or creating document for item ${item.id}`);
         
@@ -806,7 +812,7 @@ export class SidebarSharedView {
         }
         
         documentId = documentInfo.id as string;
-        this.documentCache.set(doi, documentId);
+        this.cache.setDocumentId(doi, documentId);
         logger.log(`[SidebarSharedView] Document ID: ${documentId}`);
       }
       

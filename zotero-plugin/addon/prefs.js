@@ -7,6 +7,10 @@ pref("rememberCredentials", false);
 pref("savedEmail", "");
 pref("savedPassword", "");
 
+// Annotation Sharing Settings (default to true)
+pref("annotationSharingManage", true);
+pref("annotationSharingView", true);
+
 // Note Editor Enhancements (all default to true)
 pref("lineNumbers", true);
 pref("scrollPreserver", true);

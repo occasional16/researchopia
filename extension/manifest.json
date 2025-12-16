@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "研学港 Researchopia",
   "default_locale": "zh_CN",
-  "version": "0.2.0",
+  "version": "0.1.1",
   "description": "研学港 Researchopia 浏览器扩展 - 智能检测学术论文DOI并快速搜索，研学并进，智慧共享",
   "icons": {
     "16": "icons/icon16.png",

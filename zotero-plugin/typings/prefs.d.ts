@@ -15,6 +15,8 @@ declare namespace _ZoteroTypes {
       "rememberCredentials": boolean;
       "savedEmail": string;
       "savedPassword": string;
+      "annotationSharingManage": boolean;
+      "annotationSharingView": boolean;
       "lineNumbers": boolean;
       "scrollPreserver": boolean;
       "headingCollapse": boolean;

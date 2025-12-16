@@ -39,10 +39,16 @@ async function onStartup() {
     logger.log("[Researchopia] AnnotationManager initialized ✅");
     
     // Initialize AnnotationSharingPopup (4-button sharing in text selection popup)
-    const { AnnotationSharingPopup } = await import("./modules/annotationSharingPopup");
-    const sharingPopup = AnnotationSharingPopup.getInstance(AnnotationManager.getInstance());
-    sharingPopup.initialize();
-    logger.log("[Researchopia] AnnotationSharingPopup initialized ✅");
+    // Only if annotationSharingManage is enabled
+    const annotationSharingManageEnabled = getPref("annotationSharingManage");
+    if (annotationSharingManageEnabled !== false) {
+      const { AnnotationSharingPopup } = await import("./modules/annotation-sharing");
+      const sharingPopup = AnnotationSharingPopup.getInstance(AnnotationManager.getInstance());
+      sharingPopup.initialize();
+      logger.log("[Researchopia] AnnotationSharingPopup initialized ✅");
+    } else {
+      logger.log("[Researchopia] AnnotationSharingPopup disabled by user preference");
+    }
     
     // Initialize UIManager (registers ItemPane)
     await UIManager.getInstance().initialize();
@@ -72,14 +78,20 @@ async function onStartup() {
     }
     
     // Register Shared Annotations Tab (Phase 1)
-    try {
-      logger.log("[Researchopia] 🔄 Registering Shared Annotations Tab...");
-      const { SidebarSharedView } = await import("./modules/ui/sidebarSharedView");
-      SidebarSharedView.getInstance().register();
-      logger.log("[Researchopia] Shared Annotations Tab registered ✅");
-    } catch (error) {
-      const details = error instanceof Error ? `${error.message}\n${error.stack}` : JSON.stringify(error);
-      logger.error("[Researchopia] Shared Tab registration failed:", details);
+    // Only if annotationSharingView is enabled
+    const annotationSharingViewEnabled = getPref("annotationSharingView");
+    if (annotationSharingViewEnabled !== false) {
+      try {
+        logger.log("[Researchopia] 🔄 Registering Shared Annotations Tab...");
+        const { SidebarSharedView } = await import("./modules/annotation-sharing");
+        SidebarSharedView.getInstance().register();
+        logger.log("[Researchopia] Shared Annotations Tab registered ✅");
+      } catch (error) {
+        const details = error instanceof Error ? `${error.message}\n${error.stack}` : JSON.stringify(error);
+        logger.error("[Researchopia] Shared Tab registration failed:", details);
+      }
+    } else {
+      logger.log("[Researchopia] Shared Annotations Tab disabled by user preference");
     }
     
     // Initialize CustomSearch Module (NEW: Use Zotero.Notes.registerItemPaneHeaderEventListener)

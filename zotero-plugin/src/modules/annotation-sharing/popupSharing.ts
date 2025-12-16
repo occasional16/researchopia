@@ -9,20 +9,16 @@
  * 参考文档: docs/docs-dev/1.4.3-FOUR_TIER_SHARING_MODE_DESIGN.md
  */
 
-import { logger } from "../utils/logger";
-import { AnnotationManager } from "./annotations";
-import { AuthManager } from "./auth";
-import { CommentRenderer } from "./ui/utils/CommentRenderer";
+import { logger } from "../../utils/logger";
+import { AnnotationManager } from "../annotations";
+import { AuthManager } from "../auth";
+import { CommentRenderer } from "../ui/utils/CommentRenderer";
+import { SHARE_MODES, CACHE_EXPIRY_MS, SHARE_STATUS_COLORS } from "./constants";
+import { annotationSharingCache } from "./cache";
+import type { ShareMode, ShareModeButton, SharedAnnotationCacheEntry } from "./types";
 
-export type ShareMode = 'public' | 'anonymous' | 'private' | null;
-
-interface ShareModeButton {
-  id: ShareMode;
-  label: string;
-  icon: string;
-  color: string;
-  title: string;
-}
+// Re-export ShareMode for backwards compatibility
+export type { ShareMode };
 
 /**
  * 原生标注弹窗共享按钮管理器
@@ -33,47 +29,11 @@ export class AnnotationSharingPopup {
   private zoteroNotifierID?: string;
   private isInitialized = false;
   
-  // 🚀 性能优化: 缓存document ID (DOI -> document_id)
-  private documentCache: Map<string, string> = new Map();
+  // 🚀 使用共享缓存管理器 (替代本地 documentCache 和 sharedInfoCache)
+  private cache = annotationSharingCache;
 
-  // 🚀 共享信息缓存 (annotation_id -> {likes, comments, cachedAt})
-  private sharedInfoCache: Map<string, {
-    likes: any[];
-    comments: any[];
-    cachedAt: number;
-  }> = new Map();
-
-  // 4种共享模式配置
-  private shareModes: ShareModeButton[] = [
-    {
-      id: 'public',
-      label: '公开',
-      icon: '🌐',
-      color: '#2196F3',
-      title: '公开共享 - 显示真实用户名'
-    },
-    {
-      id: 'anonymous',
-      label: '匿名',
-      icon: '🎭',
-      color: '#FF9800',
-      title: '匿名共享 - 显示"匿名用户"'
-    },
-    {
-      id: 'private',
-      label: '私密',
-      icon: '🔒',
-      color: '#9E9E9E',
-      title: '私密共享 - 仅自己可见'
-    },
-    {
-      id: null,
-      label: '取消',
-      icon: '🗑️',
-      color: '#F44336',
-      title: '取消共享 - 仅本地保存'
-    }
-  ];
+  // 4种共享模式配置 (使用统一常量)
+  private shareModes = SHARE_MODES;
 
   // 🆕 Sidebar标注增强器实例
   private sidebarEnhancer?: any; // SidebarAnnotationEnhancer类型,延迟导入避免循环依赖
@@ -178,12 +138,14 @@ export class AnnotationSharingPopup {
   private createButtonContainer(doc: Document): HTMLElement {
     const container = doc.createElement('div');
     container.id = 'researchopia-sharing-buttons';
+    // 🆕 按钮左右分散对齐
     container.style.cssText = `
       display: flex;
-      gap: 6px;
+      gap: 4px;
       padding: 6px 0;
       border-top: 1px solid #e0e0e0;
       margin-top: 6px;
+      justify-content: space-between;
     `;
 
     // 获取当前选中的模式
@@ -216,40 +178,47 @@ export class AnnotationSharingPopup {
     const button = doc.createElement('button');
     button.className = 'toolbar-button researchopia-share-mode-btn';
     button.id = `researchopia-share-${mode.id || 'unshare'}`;
-    button.setAttribute('data-mode', mode.id || 'unshare'); // 添加data-mode属性
-    button.title = mode.title;
+    button.setAttribute('data-mode', mode.id || 'unshare');
+    button.title = mode.title; // tooltip显示完整标题
 
     const isActive = currentMode === mode.id;
 
+    // 🆕 复用侧边栏按钮样式 (只显示图标，与 sidebarEnhancer.ts 一致)
     button.style.cssText = `
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 4px;
-      padding: 6px 8px;
-      border: 1px solid ${isActive ? mode.color : '#ccc'};
+      width: 28px;
+      height: 28px;
+      border: 2px solid ${isActive ? mode.color : '#ccc'};
       border-radius: 4px;
       background: ${isActive ? `${mode.color}20` : '#fff'};
       color: ${isActive ? mode.color : '#333'};
-      font-size: 11px;
-      font-weight: ${isActive ? '600' : '400'};
+      font-size: 14px;
       cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: ${isActive ? '600' : '400'};
       transition: all 0.2s;
+      padding: 0;
     `;
 
-    button.innerHTML = `<span>${mode.icon}</span><span>${mode.label}</span>`;
+    // 只显示图标，不显示文字
+    button.textContent = mode.icon;
 
-    // 鼠标悬停效果
+    // 标记当前激活状态 (供hover事件动态检查)
+    button.setAttribute('data-active', isActive ? 'true' : 'false');
+
+    // 鼠标悬停效果 (动态检查激活状态)
     button.addEventListener('mouseenter', () => {
-      if (!isActive) {
+      const isCurrentlyActive = button.getAttribute('data-active') === 'true';
+      if (!isCurrentlyActive) {
         button.style.borderColor = mode.color;
         button.style.background = `${mode.color}10`;
       }
     });
 
     button.addEventListener('mouseleave', () => {
-      if (!isActive) {
+      const isCurrentlyActive = button.getAttribute('data-active') === 'true';
+      if (!isCurrentlyActive) {
         button.style.borderColor = '#ccc';
         button.style.background = '#fff';
       }
@@ -294,6 +263,10 @@ export class AnnotationSharingPopup {
 
       const isActive = selectedMode === mode.id;
 
+      // 🆕 更新 data-active 属性 (供hover事件动态检查)
+      button.setAttribute('data-active', isActive ? 'true' : 'false');
+      
+      // 更新样式 (与 createShareButton 中的样式保持一致)
       button.style.borderColor = isActive ? mode.color : '#ccc';
       button.style.background = isActive ? `${mode.color}20` : '#fff';
       button.style.color = isActive ? mode.color : '#333';
@@ -375,7 +348,7 @@ export class AnnotationSharingPopup {
   private async registerSidebarEnhancer(): Promise<void> {
     try {
       // 动态导入 SidebarAnnotationEnhancer 避免循环依赖
-      const { SidebarAnnotationEnhancer } = await import('./sidebarAnnotationEnhancer');
+      const { SidebarAnnotationEnhancer } = await import('./sidebarEnhancer');
       
       // 创建实例 (传入annotationManager以复用缓存和API逻辑)
       this.sidebarEnhancer = new SidebarAnnotationEnhancer(this.annotationManager);
@@ -502,16 +475,22 @@ export class AnnotationSharingPopup {
 
       logger.log(`[AnnotationSharingPopup] ✅ Annotation ${item.key} shared as ${pendingMode}`);
 
+      // 🆕 通知侧边栏更新按钮状态 (共享完成后立即更新UI)
+      if (this.sidebarEnhancer) {
+        logger.log(`[AnnotationSharingPopup] 🔄 Notifying sidebar to update button states for ${item.key}`);
+        this.sidebarEnhancer.updateAnnotationButtonStates(item.key, pendingMode);
+      }
+
       // 🆕 如果是public/anonymous且有当前session,添加到session (与管理标注页面逻辑一致)
       if (visibilityValue === 'public' && annotation.supabaseId) {
-        const { ReadingSessionManager } = await import('./readingSessionManager');
+        const { ReadingSessionManager } = await import('../readingSessionManager');
         const sessionManager = ReadingSessionManager.getInstance();
         const session = sessionManager.getCurrentSession();
         
         if (session) {
           logger.log('[AnnotationSharingPopup] Step 6: Adding annotation to current session...');
           try {
-            const { APIClient } = await import('../utils/apiClient');
+            const { APIClient } = await import('../../utils/apiClient');
             const apiClient = APIClient.getInstance();
             await apiClient.post('/api/proxy/annotations/share-to-session', {
               annotation_id: annotation.supabaseId,
@@ -737,19 +716,19 @@ export class AnnotationSharingPopup {
           const doi = paperItem.getField?.('DOI');
           if (!doi) return;
           
-          // Step 3: 获取document (使用缓存)
-          let documentId: string | undefined = this.documentCache.get(doi);
+          // Step 3: 获取document (使用共享缓存)
+          let documentId: string | undefined = this.cache.getDocumentId(doi);
           if (!documentId) {
             const document = await (this.annotationManager as any).supabaseManager.findOrCreateDocument(paperItem);
             if (!document?.id) return;
             documentId = document.id as string;
-            this.documentCache.set(doi, documentId); // 缓存document ID
+            this.cache.setDocumentId(doi, documentId); // 缓存document ID
           }
           
           if (!documentId) return; // TypeScript类型守卫
           
           // Step 4: 通过API查询该document下的所有annotations
-          const { APIClient } = await import('../utils/apiClient');
+          const { APIClient } = await import('../../utils/apiClient');
           const apiClient = APIClient.getInstance();
           const params = new URLSearchParams();
           params.append('document_id', documentId);
@@ -767,11 +746,13 @@ export class AnnotationSharingPopup {
             );
             
             if (existingAnnotation) {
-              // 推断当前模式 (使用visibility字段)
+              // 推断当前模式 (使用visibility字段 + show_author_name字段)
               let currentMode: ShareMode = null;
               const visibility = existingAnnotation.visibility;
+              const showAuthorName = existingAnnotation.show_author_name;
               
-              if (visibility === 'anonymous') {
+              // 匿名模式: visibility='public' + show_author_name=false
+              if (visibility === 'public' && showAuthorName === false) {
                 currentMode = 'anonymous';
               } else if (visibility === 'public') {
                 currentMode = 'public';
@@ -873,7 +854,7 @@ export class AnnotationSharingPopup {
       let existingAnnotation: any = null;
       try {
         // 🔧 FIX: 使用API Client查询annotations表 (不是直接查Supabase client)
-        const { APIClient } = await import('../utils/apiClient');
+        const { APIClient } = await import('../../utils/apiClient');
         const apiClient = APIClient.getInstance();
         
         // 查询该document下的所有annotations,然后过滤出匹配的
@@ -937,7 +918,7 @@ export class AnnotationSharingPopup {
             this.showAnnotationPopupFeedback(doc, '✅ 已取消共享', true);
             
             // 刷新视图
-            const { UIManager } = await import('./ui-manager');
+            const { UIManager } = await import('../ui-manager');
             const uiManager = UIManager.getInstance();
             const viewMode = (uiManager as any).currentViewMode;
             if (viewMode === 'annotations-manage' || viewMode === 'annotations-shared') {
@@ -988,14 +969,14 @@ export class AnnotationSharingPopup {
         if (!annotation.supabaseId) {
           logger.error('[AnnotationSharingPopup] ❌ annotation.supabaseId is undefined, cannot add to session!');
         } else {
-          const { ReadingSessionManager } = await import('./readingSessionManager');
+          const { ReadingSessionManager } = await import('../readingSessionManager');
           const sessionManager = ReadingSessionManager.getInstance();
           const session = sessionManager.getCurrentSession();
 
           if (session) {
             logger.log(`[AnnotationSharingPopup] Adding annotation ${annotation.supabaseId} to session ${session.id}...`);
             try {
-              const { APIClient } = await import('../utils/apiClient');
+              const { APIClient } = await import('../../utils/apiClient');
               const apiClient = APIClient.getInstance();
               await apiClient.post('/api/proxy/annotations/share-to-session', {
                 annotation_id: annotation.supabaseId,
@@ -1019,7 +1000,7 @@ export class AnnotationSharingPopup {
 
       // Step 10: 刷新视图 (如果在管理标注模式)
       try {
-        const { UIManager } = await import('./ui-manager');
+        const { UIManager } = await import('../ui-manager');
         const uiManager = UIManager.getInstance();
         const viewMode = (uiManager as any).currentViewMode;
         
@@ -1038,11 +1019,11 @@ export class AnnotationSharingPopup {
 
       logger.log(`[AnnotationSharingPopup] ✅ Annotation ${annotationItem.key} updated to ${shareMode || 'unshare'} mode`);
       
-      // Step 11: 更新annotation-popup中的按钮状态
+      // Step 11: 更新annotation-popup中的按钮状态和共享信息区域
       try {
         // 在doc中查找包含该annotation key的popup
         const popups = doc.querySelectorAll('.annotation-popup');
-        popups.forEach((popup: Element) => {
+        popups.forEach(async (popup: Element) => {
           const contentElement = popup.querySelector('.comment .content') as HTMLElement;
           if (contentElement?.id === annotationItem.key) {
             // 找到了对应的popup,更新其中的按钮状态
@@ -1056,9 +1037,31 @@ export class AnnotationSharingPopup {
                   button.style.background = isActive ? `${mode.color}20` : '#fff';
                   button.style.color = isActive ? mode.color : '#333';
                   button.style.fontWeight = isActive ? '600' : '400';
+                  // 🆕 同步更新 data-active 属性
+                  button.setAttribute('data-active', isActive ? 'true' : 'false');
                 }
               });
               logger.log(`[AnnotationSharingPopup] 🎨 Updated button states in popup for ${annotationItem.key}`);
+            }
+            
+            // 🆕 刷新 shared-info 区域
+            const sharedInfoContainer = popup.querySelector('#researchopia-shared-info') as HTMLElement;
+            if (sharedInfoContainer) {
+              // 显示加载状态
+              sharedInfoContainer.innerHTML = '<div style="text-align: center; color: #999; padding: 8px; font-size: 11px;">⏳ 刷新共享信息...</div>';
+              
+              // 获取 reader 对象
+              const readerWindows = (Zotero as any).Reader.getWindowStates();
+              const reader = readerWindows?.length > 0 ? (Zotero as any).Reader._readers?.[0] : null;
+              
+              if (reader) {
+                // 清除缓存并重新加载
+                this.cache.clearSharedInfoCache();
+                await this.loadSharedInfo(annotationItem.key, sharedInfoContainer, doc, reader, true);
+                logger.log(`[AnnotationSharingPopup] 📊 Refreshed shared-info for ${annotationItem.key}`);
+              } else {
+                sharedInfoContainer.innerHTML = '<div style="color: #999; font-style: italic;">刷新失败</div>';
+              }
             }
           }
         });
@@ -1168,12 +1171,14 @@ export class AnnotationSharingPopup {
 
   /**
    * 🆕 加载并渲染共享信息 (异步)
+   * @param forceRefresh 是否强制刷新 (跳过缓存)
    */
   private async loadSharedInfo(
     annotationKey: string,
     container: HTMLElement,
     doc: Document,
-    reader: any
+    reader: any,
+    forceRefresh: boolean = false
   ): Promise<void> {
     try {
       // Step 1: 获取annotation item
@@ -1206,8 +1211,10 @@ export class AnnotationSharingPopup {
         return;
       }
 
-      // Step 3: 获取document ID (使用缓存)
-      let documentId: string | undefined = this.documentCache.get(doi);
+      // Step 3: 获取document ID 和 paper_id (使用共享缓存)
+      let documentId: string | undefined = this.cache.getDocumentId(doi);
+      let paperId: string | undefined = this.cache.getPaperId(doi);
+      
       if (!documentId) {
         const document = await (this.annotationManager as any).supabaseManager.findOrCreateDocument(paperItem);
         if (!document?.id) {
@@ -1215,11 +1222,17 @@ export class AnnotationSharingPopup {
           return;
         }
         documentId = document.id as string;
-        this.documentCache.set(doi, documentId);
+        this.cache.setDocumentId(doi, documentId);
+        
+        // 同时缓存 paper_id (用于打开论文详情页)
+        if (document.paper_id) {
+          paperId = document.paper_id as string;
+          this.cache.setPaperId(doi, paperId);
+        }
       }
 
       // Step 4: 查询标注详情
-      const { APIClient } = await import('../utils/apiClient');
+      const { APIClient } = await import('../../utils/apiClient');
       const apiClient = APIClient.getInstance();
       const params = new URLSearchParams();
       params.append('document_id', documentId);
@@ -1241,18 +1254,18 @@ export class AnnotationSharingPopup {
         return;
       }
 
-      // Step 5: 检查缓存 (5秒有效期)
+      // Step 5: 检查缓存 (使用共享缓存, 5秒有效期), forceRefresh=true时跳过缓存
       let likes: any[] = [];
       let comments: any[] = [];
 
-      const cached = this.sharedInfoCache.get(annotation.id);
-      if (cached && Date.now() - cached.cachedAt < 5000) {
+      const cached = !forceRefresh ? this.cache.getSharedInfo(annotation.id) : null;
+      if (cached) {
         logger.log('[AnnotationSharingPopup] Using cached shared info');
         likes = cached.likes;
         comments = cached.comments;
       } else {
         // 并行查询点赞和评论
-        const { UIManager } = await import('./ui-manager');
+        const { UIManager } = await import('../ui-manager');
         const uiManager = UIManager.getInstance();
         const supabaseManager = (uiManager as any).supabaseManager;
 
@@ -1265,12 +1278,8 @@ export class AnnotationSharingPopup {
           // 🔍 调试: 打印评论数据结构
           logger.log('[AnnotationSharingPopup] 📝 Comments data:', JSON.stringify(comments?.slice(0, 1), null, 2));
 
-          // 存入缓存
-          this.sharedInfoCache.set(annotation.id, {
-            likes: likes || [],
-            comments: comments || [],
-            cachedAt: Date.now()
-          });
+          // 存入共享缓存
+          this.cache.setSharedInfo(annotation.id, likes || [], comments || []);
         }
       }
 
@@ -1293,8 +1302,13 @@ export class AnnotationSharingPopup {
         likesDiv.style.color = '#666';
       });
       likesDiv.addEventListener('click', () => {
-        const url = `https://researchopia.com/annotations/${annotation.id}#likes`;
-        (Zotero as any).launchURL(url);
+        // 打开论文详情页 (使用 paper_id)
+        if (paperId) {
+          const url = `https://researchopia.com/papers/${paperId}`;
+          (Zotero as any).launchURL(url);
+        } else {
+          logger.warn('[AnnotationSharingPopup] No paper_id available, cannot open paper detail page');
+        }
       });
       container.appendChild(likesDiv);
 
@@ -1318,7 +1332,8 @@ export class AnnotationSharingPopup {
         if (comments.length > 3) {
           const viewAllLink = doc.createElement('a');
           viewAllLink.textContent = '查看全部评论 →';
-          viewAllLink.href = `https://researchopia.com/annotations/${annotation.id}`;
+          // 打开论文详情页 (使用 paper_id)
+          viewAllLink.href = paperId ? `https://researchopia.com/papers/${paperId}` : '#';
           viewAllLink.target = '_blank';
           viewAllLink.style.cssText = `
             display: block;

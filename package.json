@@ -8,8 +8,8 @@
     ],
     "components": {
         "website": "0.4.0",
-        "zotero-plugin": "0.8.0",
-        "browser-extension": "0.2.0",
+        "zotero-plugin": "0.8.1",
+        "browser-extension": "0.1.1",
         "docs": "0.1"
     },
     "scripts": {

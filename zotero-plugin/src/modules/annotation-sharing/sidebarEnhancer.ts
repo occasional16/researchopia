@@ -4,58 +4,45 @@
  * 功能:
  * - 在sidebar的"Show Annotations"中为每个标注卡片注入共享按钮
  * - 使用Zotero官方 renderSidebarAnnotationHeader API
- * - 复用 annotationSharingPopup.ts 的按钮创建和API逻辑
+ * - 复用共享模块的缓存和常量配置
  * 
  * 架构设计:
  * - 事件驱动 (无需polling)
- * - 复用现有缓存 (documentCache, sharedInfoCache)
- * - 职责单一 (只负责sidebar注入,popup逻辑保留在 annotationSharingPopup.ts)
+ * - 使用统一的 AnnotationSharingCache 管理缓存
+ * - 职责单一 (只负责sidebar注入)
  * 
- * @version 1.0.0
+ * @version 2.0.0
  * @author AI Assistant
  * @date 2025-01-XX
  */
 
-import { logger } from '../utils/logger';
-import { AuthManager } from './auth';
-import { createToggleSwitch, formatDate, resolveCommentDisplayInfo } from './ui/helpers';
-import { UserHoverCardManager } from './ui/userHoverCard';
-import { ServicesAdapter } from '../adapters/services-adapter';
-
-// 共享模式类型 (⚠️ 必须与 annotationSharingPopup.ts 完全一致)
-// 注意: 'anonymous' 实际上是 visibility='public' + show_author_name=false
-type ShareMode = 'public' | 'anonymous' | 'private' | null;
+import { logger } from '../../utils/logger';
+import { AuthManager } from '../auth';
+import { createToggleSwitch, formatDate, resolveCommentDisplayInfo } from '../ui/helpers';
+import { UserHoverCardManager } from '../ui/userHoverCard';
+import { ServicesAdapter } from '../../adapters/services-adapter';
+import { SHARE_MODES, CACHE_EXPIRY_MS } from './constants';
+import { annotationSharingCache } from './cache';
+import type { ShareMode } from './types';
 
 /**
  * Sidebar标注增强类
  */
 export class SidebarAnnotationEnhancer {
   private annotationManager: any;
-  private documentCache: Map<string, string>; // DOI → document_id
   private userHoverCardManager: UserHoverCardManager;
   
-  // 🚀 共享信息缓存 (与annotationSharingPopup.ts完全相同)
-  private sharedInfoCache: Map<string, {
-    likes: any[];
-    comments: any[];
-    cachedAt: number;
-  }> = new Map();
+  // 🚀 使用共享缓存管理器
+  private cache = annotationSharingCache;
   
   // 🆕 批量操作工具栏插入标志 (确保每个reader只插入一次)
   private batchToolbarInjected: Set<string> = new Set(); // reader._instanceID → boolean
   
-  // 共享模式配置 (⚠️ 必须与 annotationSharingPopup.ts 完全一致)
-  private shareModes: Array<{ id: ShareMode; label: string; icon: string; color: string; title: string }> = [
-    { id: 'public', label: '公开', icon: '🌐', color: '#2196F3', title: '公开共享 - 显示真实用户名' },
-    { id: 'anonymous', label: '匿名', icon: '🎭', color: '#FF9800', title: '匿名共享 - 显示"匿名用户"' },
-    { id: 'private', label: '私密', icon: '🔒', color: '#9E9E9E', title: '私密共享 - 仅自己可见' },
-    { id: null, label: '取消', icon: '🗑️', color: '#F44336', title: '取消共享 - 仅本地保存' },
-  ];
+  // 共享模式配置 (使用统一常量)
+  private shareModes = SHARE_MODES;
 
   constructor(annotationManager: any) {
     this.annotationManager = annotationManager;
-    this.documentCache = new Map();
-    this.sharedInfoCache = new Map();
     
     // 初始化 UserHoverCardManager (参考 sidebarSharedView.ts:32)
     this.userHoverCardManager = new UserHoverCardManager(null as any);
@@ -79,6 +66,64 @@ export class SidebarAnnotationEnhancer {
       logger.log('[SidebarAnnotationEnhancer] ✅ Registered renderSidebarAnnotationHeader event');
     } catch (error) {
       logger.error('[SidebarAnnotationEnhancer] ❌ Failed to register event:', error);
+    }
+  }
+
+  /**
+   * 🆕 公开方法: 更新指定标注的按钮状态和共享信息区 (用于共享完成后通知UI更新)
+   * @param annotationKey Annotation key
+   * @param mode 共享模式
+   */
+  updateAnnotationButtonStates(annotationKey: string, mode: ShareMode): void {
+    try {
+      logger.log(`[SidebarAnnotationEnhancer] 🔍 Searching for button container: ${annotationKey}`);
+      
+      // 🆕 通过 Zotero Reader API 获取所有打开的 reader 实例
+      const readers = (Zotero as any).Reader._readers || [];
+      
+      for (const reader of readers) {
+        try {
+          // 获取 reader 的 internal 窗口
+          const readerWindow = reader._iframeWindow || reader._window;
+          if (!readerWindow?.document) continue;
+          
+          const doc = readerWindow.document;
+          const wrapper = doc.getElementById(`researchopia-buttons-${annotationKey}`);
+          
+          if (wrapper) {
+            const container = wrapper.querySelector('.researchopia-sidebar-share-buttons') as HTMLElement;
+            if (container) {
+              logger.log(`[SidebarAnnotationEnhancer] 🔄 Found and updating button states for ${annotationKey} to ${mode}`);
+              this.updateButtonStates(container, mode);
+            }
+            
+            // 🆕 刷新共享信息区 (点赞/评论) - 使用强制刷新跳过缓存
+            const sharedInfoContainer = doc.getElementById(`researchopia-shared-info-${annotationKey}`) as HTMLElement;
+            if (sharedInfoContainer && mode !== null) {
+              // 延迟一下再刷新,确保数据库写入完成
+              setTimeout(() => {
+                logger.log(`[SidebarAnnotationEnhancer] 🔄 Force refreshing shared info for ${annotationKey}`);
+                this.loadSharedInfo(annotationKey, sharedInfoContainer, doc, reader, true); // 强制刷新
+              }, 500);
+            }
+          }
+        } catch (e) {
+          // 某些 reader 实例可能没有加载完成,静默忽略
+        }
+      }
+      
+      // 备用方案: 尝试在主窗口文档中搜索
+      const mainContainers = document.querySelectorAll(`#researchopia-buttons-${annotationKey}`);
+      mainContainers.forEach((wrapper) => {
+        const container = wrapper.querySelector('.researchopia-sidebar-share-buttons') as HTMLElement;
+        if (container) {
+          logger.log(`[SidebarAnnotationEnhancer] 🔄 Updating button states (main doc) for ${annotationKey} to ${mode}`);
+          this.updateButtonStates(container, mode);
+        }
+      });
+      
+    } catch (error) {
+      logger.error('[SidebarAnnotationEnhancer] ❌ Error updating annotation button states:', error);
     }
   }
 
@@ -403,20 +448,20 @@ export class SidebarAnnotationEnhancer {
         return;
       }
       
-      // Step 3: 获取document (使用缓存)
-      let documentId: string | undefined = this.documentCache.get(doi);
+      // Step 3: 获取document (使用共享缓存)
+      let documentId: string | undefined = this.cache.getDocumentId(doi);
       if (!documentId) {
         const document = await (this.annotationManager as any).supabaseManager.findOrCreateDocument(paperItem);
         if (!document?.id) return;
         documentId = document.id as string;
-        this.documentCache.set(doi, documentId);
+        this.cache.setDocumentId(doi, documentId);
         logger.log(`[SidebarAnnotationEnhancer] 📦 Cached document ID: ${documentId} for DOI: ${doi}`);
       }
       
       if (!documentId) return;
       
       // Step 4: 通过API查询该document下的所有annotations
-      const { APIClient } = await import('../utils/apiClient');
+      const { APIClient } = await import('../../utils/apiClient');
       const apiClient = APIClient.getInstance();
       const params = new URLSearchParams();
       params.append('document_id', documentId);
@@ -434,19 +479,23 @@ export class SidebarAnnotationEnhancer {
         );
         
         if (existingAnnotation) {
-          // 推断当前模式 (使用visibility字段)
+          // 推断当前模式 (使用visibility和show_author_name字段)
+          // 🆕 修复: anonymous 模式存储为 visibility='public' + show_author_name=false
           let currentMode: ShareMode = null;
           const visibility = existingAnnotation.visibility;
+          const showAuthorName = existingAnnotation.show_author_name;
           
-          if (visibility === 'anonymous') {
+          if (visibility === 'public' && showAuthorName === false) {
+            // 匿名模式: visibility='public' + show_author_name=false
             currentMode = 'anonymous';
           } else if (visibility === 'public') {
+            // 公开模式: visibility='public' + show_author_name=true (or undefined)
             currentMode = 'public';
           } else if (visibility === 'private') {
             currentMode = 'private';
           }
           
-          logger.log(`[SidebarAnnotationEnhancer] 🎨 Found existing annotation, mode: ${currentMode}`);
+          logger.log(`[SidebarAnnotationEnhancer] 🎨 Found existing annotation, visibility=${visibility}, showAuthorName=${showAuthorName}, mode: ${currentMode}`);
           
           // 更新按钮状态
           this.updateButtonStates(container, currentMode);
@@ -538,10 +587,10 @@ export class SidebarAnnotationEnhancer {
       }
       
       // 缓存document ID
-      this.documentCache.set(doi, document.id as string);
+      this.cache.setDocumentId(doi, document.id as string);
       
       // Step 4: 查询现有annotation (判断是创建还是更新)
-      const { APIClient } = await import('../utils/apiClient');
+      const { APIClient } = await import('../../utils/apiClient');
       const apiClient = APIClient.getInstance();
       const params = new URLSearchParams();
       params.append('document_id', document.id as string);
@@ -576,7 +625,7 @@ export class SidebarAnnotationEnhancer {
       });
       
       // Step 6: 获取userId (调用AnnotationManager.updateAnnotationSharing静态方法需要)
-      const { AuthManager } = await import('./auth');
+      const { AuthManager } = await import('../auth');
       const user = AuthManager.getCurrentUser();
       if (!user?.id) {
         logger.error('[SidebarAnnotationEnhancer] User not logged in');
@@ -621,7 +670,7 @@ export class SidebarAnnotationEnhancer {
         }
       } else {
         // 创建或更新共享 - 调用AnnotationManager.updateAnnotationSharing静态方法
-        const { AnnotationManager } = await import('./annotations');
+        const { AnnotationManager } = await import('../annotations');
         
         // 转换模式: anonymous → public + show_author_name=false
         const visibilityValue = shareMode === 'anonymous' ? 'public' : shareMode;
@@ -695,10 +744,10 @@ export class SidebarAnnotationEnhancer {
       if (!doi) return;
       
       // 查询annotation
-      const documentId = this.documentCache.get(doi);
+      const documentId = this.cache.getDocumentId(doi);
       if (!documentId) return;
       
-      const { APIClient } = await import('../utils/apiClient');
+      const { APIClient } = await import('../../utils/apiClient');
       const apiClient = APIClient.getInstance();
       const params = new URLSearchParams();
       params.append('document_id', documentId);
@@ -803,12 +852,14 @@ export class SidebarAnnotationEnhancer {
    * @param container 共享信息容器
    * @param doc Document对象
    * @param reader Reader实例
+   * @param forceRefresh 强制刷新缓存 (默认 false)
    */
   private async loadSharedInfo(
     annotationKey: string,
     container: HTMLElement,
     doc: Document,
-    reader: any
+    reader: any,
+    forceRefresh: boolean = false
   ): Promise<void> {
     try {
       // Step 1: 获取annotation item
@@ -841,8 +892,8 @@ export class SidebarAnnotationEnhancer {
         return;
       }
 
-      // Step 3: 获取document ID (使用缓存)
-      let documentId: string | undefined = this.documentCache.get(doi);
+      // Step 3: 获取document ID (使用共享缓存)
+      let documentId: string | undefined = this.cache.getDocumentId(doi);
       if (!documentId) {
         const document = await (this.annotationManager as any).supabaseManager.findOrCreateDocument(paperItem);
         if (!document?.id) {
@@ -850,11 +901,16 @@ export class SidebarAnnotationEnhancer {
           return;
         }
         documentId = document.id as string;
-        this.documentCache.set(doi, documentId);
+        this.cache.setDocumentId(doi, documentId);
+        
+        // 同时缓存 paper_id (用于打开论文详情页)
+        if (document.paper_id) {
+          this.cache.setPaperId(doi, document.paper_id as string);
+        }
       }
 
       // Step 4: 查询标注详情
-      const { APIClient } = await import('../utils/apiClient');
+      const { APIClient } = await import('../../utils/apiClient');
       const apiClient = APIClient.getInstance();
       const params = new URLSearchParams();
       params.append('document_id', documentId);
@@ -876,18 +932,24 @@ export class SidebarAnnotationEnhancer {
         return;
       }
 
-      // Step 5: 检查缓存 (5秒有效期)
+      // Step 5: 检查缓存 (使用共享缓存)
       let likes: any[] = [];
       let comments: any[] = [];
 
-      const cached = this.sharedInfoCache.get(annotation.id);
-      if (cached && Date.now() - cached.cachedAt < 5000) {
+      // 如果强制刷新,先清除缓存
+      if (forceRefresh) {
+        logger.log(`[SidebarAnnotationEnhancer] 🔄 Force refresh: invalidating cache for ${annotation.id}`);
+        this.cache.invalidateSharedInfo(annotation.id);
+      }
+
+      const cached = this.cache.getSharedInfo(annotation.id);
+      if (cached && !forceRefresh) {
         logger.log('[SidebarAnnotationEnhancer] Using cached shared info');
         likes = cached.likes;
         comments = cached.comments;
       } else {
         // 并行查询点赞和评论
-        const { UIManager } = await import('./ui-manager');
+        const { UIManager } = await import('../ui-manager');
         const uiManager = UIManager.getInstance();
         const supabaseManager = (uiManager as any).supabaseManager;
 
@@ -899,12 +961,8 @@ export class SidebarAnnotationEnhancer {
 
           logger.log('[SidebarAnnotationEnhancer] 📝 Comments data:', JSON.stringify(comments?.slice(0, 1), null, 2));
 
-          // 存入缓存
-          this.sharedInfoCache.set(annotation.id, {
-            likes: likes || [],
-            comments: comments || [],
-            cachedAt: Date.now()
-          });
+          // 存入共享缓存
+          this.cache.setSharedInfo(annotation.id, likes || [], comments || []);
         }
       }
 

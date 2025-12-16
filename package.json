@@ -1,7 +1,7 @@
 {
     "name": "researchopia",
     "version": "0.4.0",
-    "description": "研学乡 | Researchopia - 开放的学术交流和共享平台。研学并进，智慧共享 | Where Research Meets Community",
+    "description": "研学港 | Researchopia - 开放的学术交流和共享平台。研学并进，智慧共享 | Where Research Meets Community",
     "private": true,
     "workspaces": [
         "packages/*"
@@ -60,7 +60,7 @@
         "fuse.js": "^7.1.0",
         "gray-matter": "^4.0.3",
         "lucide-react": "^0.543.0",
-        "next": "15.5.2",
+        "next": "15.5.9",
         "nodemailer": "^7.0.6",
         "pdfjs-dist": "^5.4.149",
         "react": "19.1.0",

@@ -29,6 +29,9 @@ zotero-plugin/docs/*
 /.next/
 /out/
 
+# OpenNext build output
+/.open-next/
+
 # production
 /build
 

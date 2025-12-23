@@ -18,6 +18,8 @@
         "version:bump": "npm version patch && npm run version:sync",
         "dev": "next dev -H 0.0.0.0",
         "build": "next build",
+        "preview": "npx opennextjs-cloudflare build && npx opennextjs-cloudflare preview",
+        "deploy": "npx opennextjs-cloudflare build && npx opennextjs-cloudflare deploy",
         "start": "next start",
         "lint": "eslint",
         "setup-supabase": "node setup-supabase.js",
@@ -60,7 +62,7 @@
         "fuse.js": "^7.1.0",
         "gray-matter": "^4.0.3",
         "lucide-react": "^0.543.0",
-        "next": "15.5.9",
+        "next": "^15.5.2",
         "nodemailer": "^7.0.6",
         "pdfjs-dist": "^5.4.149",
         "react": "19.1.0",
@@ -79,6 +81,7 @@
     },
     "devDependencies": {
         "@eslint/eslintrc": "^3",
+        "@opennextjs/cloudflare": "^1.14.7",
         "@tailwindcss/postcss": "^4",
         "@testing-library/jest-dom": "^6.9.1",
         "@testing-library/react": "^16.3.0",
@@ -96,6 +99,7 @@
         "jsdom": "^27.2.0",
         "tailwindcss": "^4",
         "typescript": "^5",
-        "vitest": "^4.0.10"
+        "vitest": "^4.0.10",
+        "wrangler": "^4.56.0"
     }
 }

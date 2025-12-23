@@ -1,16 +1,16 @@
-export const runtime = 'nodejs';
+// Health check endpoint (2024-12-23)
+// Note: OpenNext doesn't support edge runtime
 
 export async function GET(request: Request) {
   try {
-    const uptime = process.uptime();
     const now = new Date().toISOString();
-    const version = process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) || 'local';
-    const region = process.env.VERCEL_REGION || 'unknown';
+    const version = process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) || 
+                    process.env.CF_PAGES_COMMIT_SHA?.slice(0, 7) || 'local';
     
     // CORS headers for browser extension
     const headers = {
       'content-type': 'application/json; charset=utf-8',
-      'cache-control': 'no-store',
+      'cache-control': 'public, s-maxage=60, stale-while-revalidate=120',
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, Authorization',
@@ -19,11 +19,9 @@ export async function GET(request: Request) {
     return new Response(
       JSON.stringify({ 
         status: 'ok', 
-        uptime, 
         timestamp: now,
         version,
-        region,
-        nodeVersion: process.version
+        runtime: 'nodejs'
       }),
       {
         status: 200,

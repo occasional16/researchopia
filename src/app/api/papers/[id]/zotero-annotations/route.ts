@@ -1,8 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
+import { getSupabaseAdmin } from '@/lib/supabase/runtime-admin'
 
 export async function GET(
   request: NextRequest,
@@ -18,7 +15,7 @@ export async function GET(
       )
     }
 
-    const supabase = createClient(supabaseUrl, supabaseServiceKey)
+    const supabase = getSupabaseAdmin()
 
     // 首先获取论文的 DOI
     const { data: paper, error: paperError } = await supabase

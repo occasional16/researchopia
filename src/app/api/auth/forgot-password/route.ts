@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { getSupabaseAnon } from '@/lib/supabase/runtime-admin'
 
 export async function POST(request: NextRequest) {
   try {
@@ -21,34 +21,38 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    // 使用运行时 Supabase 客户端 (Cloudflare Workers 兼容)
+    const supabase = getSupabaseAnon()
 
-    if (!supabaseUrl || !anonKey) {
-      return NextResponse.json({
-        success: false,
-        message: '服务配置错误'
-      }, { status: 500 })
+    // 获取站点URL，确保包含协议前缀
+    let siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+    // 确保URL包含协议
+    if (!siteUrl.startsWith('http://') && !siteUrl.startsWith('https://')) {
+      siteUrl = `https://${siteUrl}`
     }
-
-    const supabase = createClient(supabaseUrl, anonKey)
+    // 移除尾部斜杠
+    siteUrl = siteUrl.replace(/\/$/, '')
+    
+    const redirectUrl = `${siteUrl}/reset-password`
+    console.log('[forgot-password] Sending reset email to:', email, 'redirectTo:', redirectUrl)
 
     // 发送密码重置邮件
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/reset-password`
+      redirectTo: redirectUrl
     })
 
     if (error) {
-      console.error('Password reset error:', error)
+      console.error('[forgot-password] Supabase error:', error.message, error)
       
-      // 不暴露具体错误信息，统一返回成功消息
-      // 这样可以防止邮箱枚举攻击
+      // Supabase SMTP configuration error - return server error
+      // This means the email could not be sent due to server-side issue
       return NextResponse.json({
-        success: true,
-        message: '如果该邮箱已注册，您将收到密码重置邮件'
-      })
+        success: false,
+        message: '邮件发送失败，请稍后重试或联系管理员'
+      }, { status: 500 })
     }
 
+    console.log('[forgot-password] Email sent successfully to:', email)
     return NextResponse.json({
       success: true,
       message: '密码重置邮件已发送，请检查您的邮箱'

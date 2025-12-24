@@ -1,8 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
+import { getSupabaseAdmin } from '@/lib/supabase/runtime-admin'
 
 // 🔥 优化: 通知可以短时缓存60秒
 export const revalidate = 60;
@@ -25,7 +22,7 @@ export async function GET(request: NextRequest) {
     }
 
     const token = authHeader.replace('Bearer ', '')
-    const supabase = createClient(supabaseUrl, supabaseServiceKey)
+    const supabase = getSupabaseAdmin()
     
     const { data: { user }, error: authError } = await supabase.auth.getUser(token)
     if (authError || !user) {
@@ -111,7 +108,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     const token = authHeader.replace('Bearer ', '')
-    const supabase = createClient(supabaseUrl, supabaseServiceKey)
+    const supabase = getSupabaseAdmin()
     
     const { data: { user }, error: authError } = await supabase.auth.getUser(token)
     if (authError || !user) {

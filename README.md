@@ -87,10 +87,9 @@
 想要近距离了解本项目开发意图和计划，有任何开发和使用上的建议和反馈，或者想了解AI开发的细节的小伙伴，欢迎加我的个人微信、微信公众号（观物AI），也欢迎加入用户群：
 
 <div align="center">
-  <img src="./docs/res/wechat.png" alt="个人微信二维码" width="24%">
-  <img src="./docs/res/qr-guanwu-AI.png" alt="微信公众号二维码" width="22.5%">  
-  <img src="./docs/res/group-users-wechat.png" alt="微信群二维码" width="23%">
-  <img src="./docs/res/group-users-qq.png" alt="qq群二维码" width="23.5%">
+  <img src="https://obcblvdtqhwrihoddlez.supabase.co/storage/v1/object/public/qr-codes/wechat-personal.png" alt="个人微信二维码" width="24%">
+  <img src="https://obcblvdtqhwrihoddlez.supabase.co/storage/v1/object/public/qr-codes/wechat-group.png" alt="微信公众号二维码" width="23%">  
+  <img src="https://obcblvdtqhwrihoddlez.supabase.co/storage/v1/object/public/qr-codes/wechat-official-account.png" alt="微信群二维码" width="22.5%">
 </div> 
 
 ---

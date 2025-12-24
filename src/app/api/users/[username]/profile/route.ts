@@ -1,8 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
+import { getSupabaseAdmin } from '@/lib/supabase/runtime-admin'
 
 // 🔥 优化: 用户资料缓存5分钟 - 个人信息不频繁更新
 export const revalidate = 300;
@@ -16,7 +13,7 @@ export async function GET(
     const { username } = await params
     
     // 使用service role key以绕过RLS
-    const supabase = createClient(supabaseUrl, supabaseServiceKey)
+    const supabase = getSupabaseAdmin()
 
     // 获取用户基本信息
     const { data: user, error: userError } = await supabase
@@ -162,7 +159,7 @@ export async function PUT(
 ) {
   try {
     const { username } = await params
-    const supabase = createClient(supabaseUrl, supabaseServiceKey)
+    const supabase = getSupabaseAdmin()
 
     // 验证用户身份
     const authHeader = request.headers.get('authorization')

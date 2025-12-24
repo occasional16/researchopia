@@ -1,8 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
+import { getSupabaseAdmin } from '@/lib/supabase/runtime-admin'
 
 /**
  * POST /api/users/[username]/follow
@@ -38,7 +35,7 @@ export async function POST(
     }
 
     const token = authHeader.replace('Bearer ', '')
-    const supabase = createClient(supabaseUrl, supabaseServiceKey)
+    const supabase = getSupabaseAdmin()
     
     // 验证token并获取当前用户
     const { data: { user: currentUser }, error: authError } = await supabase.auth.getUser(token)

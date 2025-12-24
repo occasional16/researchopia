@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { Eye, EyeOff, Lock, CheckCircle, XCircle } from 'lucide-react'
 import { createClient } from '@supabase/supabase-js'
 
@@ -17,13 +17,21 @@ export default function ResetPasswordPage() {
   const [checkingToken, setCheckingToken] = useState(true)
 
   const router = useRouter()
-  const searchParams = useSearchParams()
 
   useEffect(() => {
     const checkResetToken = async () => {
       try {
-        const accessToken = searchParams.get('access_token')
-        const refreshToken = searchParams.get('refresh_token')
+        // Supabase puts tokens in URL hash (after #), not query params
+        // Format: /reset-password#access_token=xxx&refresh_token=xxx&type=recovery
+        let accessToken: string | null = null
+        let refreshToken: string | null = null
+
+        if (typeof window !== 'undefined') {
+          const hash = window.location.hash.substring(1) // Remove leading #
+          const hashParams = new URLSearchParams(hash)
+          accessToken = hashParams.get('access_token')
+          refreshToken = hashParams.get('refresh_token')
+        }
         
         if (!accessToken || !refreshToken) {
           setError('重置链接无效或已过期')
@@ -61,7 +69,7 @@ export default function ResetPasswordPage() {
     }
 
     checkResetToken()
-  }, [searchParams])
+  }, []) // Run once on mount - reads from window.location.hash
 
   const validatePassword = (pwd: string) => {
     if (pwd.length < 6) return '密码长度至少6位'

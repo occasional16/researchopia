@@ -14,6 +14,7 @@ import { useAuthenticatedFetch } from '@/hooks/useAuthenticatedFetch'
 import { useScrollRestoration } from '@/hooks/useScrollRestoration'
 import NetworkOptimizer from '@/components/NetworkOptimizer'
 import AnnouncementForm from '@/components/AnnouncementForm'
+import Footer from '@/components/Footer'
 
 // 日期格式化工具函数（避免hydration错误）
 function formatDate(dateString: string): string {
@@ -658,16 +659,22 @@ export default function HomePage() {
                 </div>
               </div>
               <div 
-                className={`mt-2 text-gray-700 dark:text-gray-300 markdown-content transition-all duration-300 ${!expandedAnnouncement ? 'max-h-24 overflow-hidden relative' : ''}`}
+                className={`mt-2 text-gray-700 dark:text-gray-300 markdown-content transition-all duration-300 ${!expandedAnnouncement ? 'max-h-24 overflow-hidden relative cursor-pointer' : ''}`}
                 style={{ fontSize: '15px' }}
+                onClick={() => !expandedAnnouncement && setExpandedAnnouncement(true)}
               >
                 <ReactMarkdown 
                   remarkPlugins={[remarkGfm]}
                   rehypePlugins={[rehypeRaw]}
                   components={{
-                    a: ({ node, ...props }) => (
-                      <a {...props} target="_blank" rel="noopener noreferrer" />
-                    )
+                    a: ({ node, href, ...props }) => {
+                      // Anchor links (starting with #) should not open in new tab
+                      if (href?.startsWith('#')) {
+                        return <a href={href} {...props} className="text-blue-600 hover:underline" onClick={(e) => e.stopPropagation()} />
+                      }
+                      // External links open in new tab
+                      return <a href={href} {...props} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} />
+                    }
                   }}
                 >
                   {currentAnnouncement.content}
@@ -974,29 +981,8 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Welcome Message for All Users */}
-      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6 transition-colors">
-        <h3 className="text-lg font-semibold text-blue-900 dark:text-blue-200 mb-2">
-          {t('auth.welcome', '欢迎来到研学港！')}
-        </h3>
-        <p className="text-blue-700 dark:text-blue-300 mb-4">
-          {t('auth.welcomeDesc', '研学港是新一代学术评价与研学社区平台，研学并进，智慧共享。您可以：')}
-        </p>
-        <ul className="text-blue-700 dark:text-blue-300 space-y-1 mb-4">
-          <li>• 浏览和搜索最新的学术论文</li>
-          <li>• 为论文提供专业评分和评论</li>
-          <li>• 与全球研究者交流学术见解</li>
-          <li>• 构建您的个人研学档案</li>
-        </ul>
-        {!isAuthenticated && (
-          <button
-            onClick={() => window.dispatchEvent(new CustomEvent('showAuthModal', { detail: { mode: 'signup' } }))}
-            className="px-6 py-2 bg-blue-600 dark:bg-blue-700 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors"
-          >
-            {t('auth.joinNow', '立即注册，开始研学之旅')}
-          </button>
-        )}
-      </div>
+      {/* Footer */}
+      <Footer />
 
       {/* 网络优化组件 */}
       <NetworkOptimizer />

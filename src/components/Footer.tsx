@@ -19,6 +19,15 @@ function WechatIcon({ className }: { className?: string }) {
   )
 }
 
+// QQ icon component (official penguin style)
+function QQIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 1024 1024" fill="currentColor">
+      <path d="M824.8 613.2c-16-51.4-34.4-94.6-62.7-165.3C766.5 262.2 689.3 112 511.5 112 331.7 112 256.2 265.2 261 447.9c-28.4 70.8-46.7 113.7-62.7 165.3-34 109.5-23 154.8-14.6 155.8 18 2.2 70.1-82.4 70.1-82.4 0 49 25.2 112.9 79.8 159-26.4 8.1-85.7 29.9-71.6 53.8 11.4 19.3 196.2 12.3 249.5 6.3 53.3 6 238.1 13 249.5-6.3 14.1-23.8-45.3-45.7-71.6-53.8 54.6-46.2 79.8-110.1 79.8-159 0 0 52.1 84.6 70.1 82.4 8.5-1.1 19.5-46.4-14.5-155.8z"/>
+    </svg>
+  )
+}
+
 // QR Code Popover Component
 interface QRCodePopoverProps {
   imageName: string
@@ -134,17 +143,6 @@ export default function Footer() {
           </div>
         </QRCodePopover>
 
-        {/* WeChat Group - Users icon overlay */}
-        <QRCodePopover imageName="wechat-group.png" label="官方微信用户群">
-          <div className="flex flex-col items-center cursor-pointer group">
-            <div className="relative">
-              <WechatIcon className="w-8 h-8 text-green-500 group-hover:scale-110 transition-all duration-200" />
-              <Users className="absolute -bottom-1 -right-1 w-4 h-4 text-orange-500 bg-white dark:bg-gray-900 rounded-full p-0.5" />
-            </div>
-            <span className="text-xs text-gray-600 dark:text-gray-400 mt-1.5">用户群</span>
-          </div>
-        </QRCodePopover>
-
         {/* WeChat Official Account - Newspaper icon overlay */}
         <QRCodePopover imageName="wechat-official-account.png" label="观物AI微信公众号">
           <div className="flex flex-col items-center cursor-pointer group">
@@ -153,6 +151,25 @@ export default function Footer() {
               <Newspaper className="absolute -bottom-1 -right-1 w-4 h-4 text-purple-500 bg-white dark:bg-gray-900 rounded-full p-0.5" />
             </div>
             <span className="text-xs text-gray-600 dark:text-gray-400 mt-1.5">公众号</span>
+          </div>
+        </QRCodePopover>
+
+        {/* WeChat Group - Users icon overlay */}
+        <QRCodePopover imageName="wechat-group.png" label="官方微信用户群">
+          <div className="flex flex-col items-center cursor-pointer group">
+            <div className="relative">
+              <WechatIcon className="w-8 h-8 text-green-500 group-hover:scale-110 transition-all duration-200" />
+              <Users className="absolute -bottom-1 -right-1 w-4 h-4 text-orange-500 bg-white dark:bg-gray-900 rounded-full p-0.5" />
+            </div>
+            <span className="text-xs text-gray-600 dark:text-gray-400 mt-1.5">微信群</span>
+          </div>
+        </QRCodePopover>
+
+        {/* QQ Group */}
+        <QRCodePopover imageName="qq-group.png" label="官方QQ用户群">
+          <div className="flex flex-col items-center cursor-pointer group">
+            <QQIcon className="w-8 h-8 text-blue-500 group-hover:scale-110 transition-all duration-200" />
+            <span className="text-xs text-gray-600 dark:text-gray-400 mt-1.5">QQ群</span>
           </div>
         </QRCodePopover>
 

@@ -19,7 +19,7 @@
         "dev": "next dev -H 0.0.0.0",
         "build": "next build",
         "preview": "npx opennextjs-cloudflare build && npx opennextjs-cloudflare preview",
-        "deploy": "npx opennextjs-cloudflare build && npx opennextjs-cloudflare deploy",
+        "deploy": "npx opennextjs-cloudflare build && npx opennextjs-cloudflare deploy -- --keep-vars",
         "start": "next start",
         "lint": "eslint",
         "setup-supabase": "node setup-supabase.js",

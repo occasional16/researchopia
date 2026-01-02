@@ -22,33 +22,19 @@ export async function POST(request: NextRequest) {
       }, { status: 500 })
     }
 
-    // 检查是否为测试密钥(Google提供的通用测试密钥)
-    const isGoogleTestKey = 
-      secretKey === '6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe' || // Google官方测试secret
-      siteKey === '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI'    // Google官方测试site key
-    
-    // 检查是否为我们自己的测试密钥(可能只在localhost有效)
-    const isLocalTestKey = secretKey === '***REMOVED_SECRET_KEY***' ||
-                           siteKey === '***REMOVED_SITE_KEY***'
-
-    if (isGoogleTestKey) {
-      console.warn('⚠️ 使用Google官方测试密钥 - 所有请求都会通过验证')
+    // Check if test mode is enabled via environment variable
+    const isTestMode = process.env.RECAPTCHA_TEST_MODE === 'true'
+    if (isTestMode) {
+      console.warn('⚠️ reCAPTCHA test mode enabled - all requests will pass')
       return NextResponse.json({
         success: true,
         score: 0.9,
-        message: '测试环境验证通过',
+        message: 'Test mode verification passed',
         isTest: true
       })
     }
 
-    if (isLocalTestKey) {
-      console.warn('⚠️ 使用自定义测试密钥 - 可能仅在localhost有效')
-      console.warn(`⚠️ 当前请求来自: ${request.headers.get('host')}`)
-      console.warn(`⚠️ 如果在生产环境失败,请访问 https://www.google.com/recaptcha/admin 注册新密钥`)
-      // 继续执行真实验证,不直接返回成功
-    }
-
-    // 验证reCAPTCHA token
+    // Verify reCAPTCHA token
     console.log('🔐 [verify-recaptcha] 调用Google siteverify API...')
     console.log('🔐 [verify-recaptcha] Token length:', token.length)
     console.log('🔐 [verify-recaptcha] Action:', action)

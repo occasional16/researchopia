@@ -146,7 +146,7 @@ export class ThemeManager {
       // 回退到系统主题
       if (typeof window !== 'undefined' && window.matchMedia) {
         this.mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-        this.isDarkMode = this.mediaQuery.matches;
+        this.isDarkMode = this.mediaQuery?.matches ?? false;
         logger.log('[ThemeManager] Detected system theme:', this.isDarkMode ? 'dark' : 'light');
       }
     } catch (error) {
@@ -182,7 +182,7 @@ export class ThemeManager {
       // 方法3: 检查window.matchMedia (Zotero可能设置了custom media query)
       if (typeof window !== 'undefined' && window.matchMedia) {
         const zoteroPrefersDark = window.matchMedia('(prefers-color-scheme: dark)');
-        if (zoteroPrefersDark.matches) {
+        if (zoteroPrefersDark?.matches) {
           return 'dark';
         }
       }

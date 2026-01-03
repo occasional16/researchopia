@@ -100,7 +100,7 @@ export class APIClient {
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({
           message: `HTTP ${response.status} error`,
-        }));
+        })) as { message?: string };
         logger.error(`[APIClient] HTTP ${response.status} for ${url}:`, errorData);
         throw new Error(errorData.message || `Request failed with status ${response.status}`);
       }

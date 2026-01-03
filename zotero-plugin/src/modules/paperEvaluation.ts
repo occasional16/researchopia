@@ -125,7 +125,7 @@ export class PaperEvaluationManager {
       // TODO: 从Zotero首选项或本地存储加载评估数据
       const storedEvaluations = Zotero.Prefs.get('extensions.zotero.researchopia.evaluations', true);
       
-      if (storedEvaluations) {
+      if (storedEvaluations && typeof storedEvaluations === 'string') {
         const evaluations = JSON.parse(storedEvaluations);
         for (const evaluation of evaluations) {
           this.evaluations.set(evaluation.itemId, evaluation);

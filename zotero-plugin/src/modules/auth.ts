@@ -264,7 +264,7 @@ export class AuthManager {
 
     // 检查会话是否过期(tokenExpires现在是字符串)
     if (tokenExpiresStr) {
-      const tokenExpires = parseInt(tokenExpiresStr, 10);
+      const tokenExpires = parseInt(String(tokenExpiresStr), 10);
       if (!isNaN(tokenExpires) && tokenExpires > 0) {
         const timeLeft = tokenExpires - Date.now();
         const hoursLeft = timeLeft / 1000 / 60 / 60;
@@ -376,7 +376,7 @@ export class AuthManager {
       const tokenExpiresStr = Zotero.Prefs.get('extensions.researchopia.tokenExpires');
       
       // tokenExpires现在是字符串,需要转换为数字
-      const tokenExpires = tokenExpiresStr ? parseInt(tokenExpiresStr, 10) : 0;
+      const tokenExpires = tokenExpiresStr ? parseInt(String(tokenExpiresStr), 10) : 0;
       
       if (ztoolkit) {
         ztoolkit.log(`[AuthManager] 🔍 Reading prefs - isLoggedIn: ${isLoggedIn}, hasToken: ${!!accessToken}, email: ${userEmail}, expires: ${tokenExpires}`);

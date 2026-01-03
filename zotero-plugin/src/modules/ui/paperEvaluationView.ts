@@ -54,7 +54,7 @@ export class PaperEvaluationView {
             }
           }
         );
-        const papers = await response.json();
+        const papers = await response.json() as unknown as { id: string }[];
         if (papers && papers.length > 0) {
           paperId = papers[0].id;
         }

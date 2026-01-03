@@ -3,7 +3,7 @@ import pkg from "./package.json";
 
 export default defineConfig({
   source: ["src", "addon"],
-  dist: ".scaffold/build",
+  dist: "build",
   name: pkg.config.addonName,
   id: pkg.config.addonID,
   namespace: pkg.config.addonRef,
@@ -36,7 +36,7 @@ export default defineConfig({
         target: "firefox140",
         format: "esm",
         platform: "browser",
-        outfile: `.scaffold/build/addon/content/scripts/${pkg.config.addonRef}.js`,
+        outfile: `build/addon/content/scripts/${pkg.config.addonRef}.js`,
         // 🔥 Bundle @researchopia/shared into the plugin
         external: [], // Don't mark as external, bundle it
       },

@@ -115,7 +115,7 @@ export class SessionLogManager {
         return []; // 改为返回空数组而不是抛出异常
       }
 
-      const result = await response.json();
+      const result = await response.json() as { data?: SessionLog[] };
       logger.log('[SessionLogManager] API result:', result);
       return result.data || [];
     } catch (error) {
@@ -268,7 +268,7 @@ export class SessionLogManager {
         return [];
       }
 
-      const result = await response.json();
+      const result = await response.json() as { data?: ChatMessage[] };
       return result.data || [];
     } catch (error) {
       logger.warn('[SessionLogManager] Error getting new messages:', error);
@@ -306,11 +306,11 @@ export class SessionLogManager {
       }, 10000); // 10秒超时
 
       if (!response.ok) {
-        const error = await response.json();
+        const error = await response.json() as unknown as { message?: string };
         throw new Error(error.message || '发送消息失败');
       }
 
-      const result = await response.json();
+      const result = await response.json() as unknown as { data: ChatMessage };
       return result.data;
     } catch (error) {
       logger.error('[SessionLogManager] Error sending message:', error);

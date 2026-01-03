@@ -114,11 +114,11 @@ export class AnnotationManager {
               comment: annotation.annotationComment || '',
               color: annotation.annotationColor || '#ffd400',
               pageLabel: annotation.annotationPageLabel || '',
-              sortIndex: annotation.annotationSortIndex || '',
+              sortIndex: String(annotation.annotationSortIndex || ''),
               position: typeof annotation.annotationPosition === 'string' 
                 ? JSON.parse(annotation.annotationPosition) 
                 : (annotation.annotationPosition || {}),
-              tags: annotation.tags || [],
+              tags: (annotation as any).tags || [],
               dateModified: annotation.dateModified || new Date().toISOString(),
               parentItemID: item.id,
               visibility: 'private',

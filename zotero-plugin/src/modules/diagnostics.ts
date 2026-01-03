@@ -239,9 +239,9 @@ export class DiagnosticsManager {
         stats.active_sessions = sessions?.filter((s: any) => s.is_active)?.length || 0
         
         // 获取最后同步时间
-        const lastSyncTime = Zotero.Prefs.get('extensions.researchopia.lastSyncTime')
-        if (lastSyncTime) {
-          stats.last_sync_time = new Date(lastSyncTime).toLocaleString()
+        const lastSyncTime = Zotero.Prefs.get('extensions.researchopia.lastSyncTime');
+        if (lastSyncTime && typeof lastSyncTime !== 'boolean') {
+          stats.last_sync_time = new Date(lastSyncTime).toLocaleString();
         }
       }
     } catch (error) {

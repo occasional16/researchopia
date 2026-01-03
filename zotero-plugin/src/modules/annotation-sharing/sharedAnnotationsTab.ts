@@ -776,10 +776,10 @@ export class SidebarSharedView {
       logger.log(`[SidebarSharedView] ✅ Got item: ${item.id}, type: ${item.itemType}`);
       
       // 如果是attachment,获取父级Item (参考ui-manager.ts:618-620)
-      if (item.itemType === 'attachment' && item.parentItemID) {
+      if ((item as any).itemType === 'attachment' && item.parentItemID) {
         logger.log(`[SidebarSharedView] 📎 Item is attachment, getting parent item ${item.parentItemID}`);
         item = Zotero.Items.get(item.parentItemID);
-        logger.log(`[SidebarSharedView] ✅ Got parent item: ${item.id}, type: ${item.itemType}`);
+        logger.log(`[SidebarSharedView] ✅ Got parent item: ${item.id}, type: ${(item as any).itemType}`);
       }
       
       let doi = '';

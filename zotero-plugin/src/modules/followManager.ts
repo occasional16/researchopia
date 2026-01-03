@@ -40,11 +40,11 @@ export class FollowManager {
       })
 
       if (!response.ok) {
-        const error = await response.json()
+        const error = await response.json() as unknown as { error?: string }
         throw new Error(error.error || '关注失败')
       }
 
-      const data = await response.json()
+      const data = await response.json() as unknown as { success: boolean }
       return data.success
     } catch (error) {
       logger.error('Follow user error:', error)
@@ -72,11 +72,11 @@ export class FollowManager {
       })
 
       if (!response.ok) {
-        const error = await response.json()
+        const error = await response.json() as unknown as { error?: string }
         throw new Error(error.error || '取消关注失败')
       }
 
-      const data = await response.json()
+      const data = await response.json() as unknown as { success: boolean }
       return data.success
     } catch (error) {
       logger.error('Unfollow user error:', error)
@@ -104,7 +104,7 @@ export class FollowManager {
         return false
       }
 
-      const data = await response.json()
+      const data = await response.json() as { isFollowing?: boolean }
       return data.isFollowing || false
     } catch (error) {
       logger.error('Check following status error:', error)

@@ -379,7 +379,7 @@ export class UserHoverCardManager {
       throw new Error('Failed to load user profile');
     }
 
-    const data = await response.json();
+    const data = await response.json() as unknown as { profile?: UserPreviewData } & UserPreviewData;
     return data.profile || data;
   }
 
@@ -598,11 +598,11 @@ export class UserHoverCardManager {
         throw new Error('操作失败');
       }
 
-      const data = await response.json();
+      const data = await response.json() as unknown as { isFollowing: boolean; followersCount: number };
       userData.isFollowing = data.isFollowing;
       userData.stats.followers_count = data.followersCount;
 
-      // 更新按钮
+      // Update button
       button.disabled = false;
       button.textContent = data.isFollowing ? '已关注' : '关注';
       button.style.background = data.isFollowing ? '#f3f4f6' : '#3b82f6';

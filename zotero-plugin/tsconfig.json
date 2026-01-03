@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "lib": ["ES2022", "DOM"],
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "moduleResolution": "bundler",
     "allowSyntheticDefaultImports": true,
@@ -31,9 +31,8 @@
     "resolveJsonModule": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "types": ["node"],
-    "typeRoots": ["./typings", "./node_modules/@types", "./node_modules/zotero-types"]
+    "types": ["node"]
   },
-  "include": ["src/**/*", "typings/**/*", "addon/**/*"],
-  "exclude": ["node_modules", "**/*.test.ts", "build", ".scaffold"]
+  "include": ["src/**/*", "typings/**/*", "addon/**/*", "node_modules/zotero-types/**/*.d.ts"],
+  "exclude": ["**/*.test.ts", "build", ".scaffold"]
 }

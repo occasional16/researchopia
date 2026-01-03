@@ -40,49 +40,7 @@ declare global {
     createXULElement(tagName: string): XUL.Element;
   }
 
-  // Zotero types
-  var Zotero: {
-    initializationPromise: Promise<void>;
-    unlockPromise: Promise<void>;
-    uiReadyPromise: Promise<void>;
-    getMainWindows(): any[];
-    getMainWindow(): any;
-    getActiveZoteroPane(): any;
-    locale: string;
-    Promise: {
-      delay(ms: number): Promise<void>;
-    };
-    Items: {
-      get(id: number): any;
-    };
-    Prefs: {
-      get(key: string, global?: boolean): any;
-      set(key: string, value: any, global?: boolean): any;
-      clear(key: string, global?: boolean): void;
-    };
-    ItemPaneManager?: {
-      registerSection(config: any): void;
-    };
-    Notifier: {
-      registerObserver(
-        observer: {
-          notify: (
-            event: string,
-            type: string,
-            ids: number[] | string[],
-            extraData: any
-          ) => Promise<void> | void;
-        },
-        types: string[]
-      ): string;
-      unregisterObserver(id: string): void;
-    };
-    Reader?: {
-      getByTabID(tabID: string): any;
-    };
-  };
-
-  // Zotero Tabs 全局变量
+  // Zotero_Tabs global variable
   var Zotero_Tabs: {
     selectedID: string;
   };

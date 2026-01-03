@@ -94,7 +94,7 @@ export class UIManager {
       return [];
     }
 
-    return Array.from(roots).map(root => this.collectPanelElements(root));
+    return Array.from(roots).map(root => this.collectPanelElements(root as HTMLElement)).filter(Boolean);
   }
 
   private getPanelsForCurrentItem(): PanelElements[] {
@@ -765,8 +765,8 @@ export class UIManager {
           let selectedTab: any = null;
 
           // 方法1: 如果_tabs是Map
-          if (win.Zotero_Tabs._tabs && typeof win.Zotero_Tabs._tabs.get === 'function') {
-            selectedTab = win.Zotero_Tabs._tabs.get(selectedID);
+          if (win.Zotero_Tabs._tabs && typeof (win.Zotero_Tabs._tabs as any).get === 'function') {
+            selectedTab = (win.Zotero_Tabs._tabs as any).get(selectedID);
             logger.log("[UIManager] Got tab via Map.get():", !!selectedTab);
           }
 

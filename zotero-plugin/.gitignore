@@ -1,0 +1,35 @@
+# ==============================================================
+# Zotero Plugin .gitignore
+# ==============================================================
+
+# Build output
+build/
+.scaffold/
+
+# Dependencies (managed by root node_modules or local)
+node_modules/
+
+# Environment files (contain sensitive data)
+.env
+.env.local
+.env*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Debug and logs
+*.log
+npm-debug.log*
+
+# TypeScript build cache
+*.tsbuildinfo
+
+# Test coverage
+coverage/

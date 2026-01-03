@@ -191,15 +191,15 @@ function findNativeFindButton(toolbar: HTMLElement): HTMLElement | null {
   // Strategy 2: Find by SVG icon pattern (search icon)
   // The native find button has a magnifying glass icon
   const buttons = toolbar.querySelectorAll('button.toolbar-button');
-  for (const btn of buttons) {
+  for (const btn of Array.from(buttons) as Element[]) {
     // Skip our custom search button
-    if ((btn as HTMLElement).hasAttribute('data-researchopia-custom-search')) continue;
+    if (btn.hasAttribute('data-researchopia-custom-search')) continue;
     
     // Check if it has a search icon SVG
     const svg = btn.querySelector('svg');
     if (svg) {
       const paths = svg.querySelectorAll('path');
-      for (const path of paths) {
+      for (const path of Array.from(paths) as Element[]) {
         const d = path.getAttribute('d');
         // Look for magnifying glass icon pattern
         if (d && (d.includes('M11.742 10.344') || d.includes('search') || 
@@ -217,7 +217,7 @@ function findNativeFindButton(toolbar: HTMLElement): HTMLElement | null {
   if (toolbarMiddle) {
     const allButtons = toolbarMiddle.querySelectorAll('button.toolbar-button:not([data-researchopia-custom-search])');
     // The find button is usually one of the last buttons in the middle section
-    for (const btn of allButtons) {
+    for (const btn of Array.from(allButtons) as Element[]) {
       const ariaLabel = btn.getAttribute('aria-label')?.toLowerCase() || '';
       const title = btn.getAttribute('title')?.toLowerCase() || '';
       if (ariaLabel.includes('find') || ariaLabel.includes('search') || 

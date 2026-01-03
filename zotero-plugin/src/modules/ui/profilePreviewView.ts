@@ -64,7 +64,7 @@ export class ProfilePreviewView {
         throw new Error('获取用户资料失败')
       }
 
-      const data = await response.json()
+      const data = await response.json() as unknown as UserProfile
       return data
     } catch (error) {
       logger.error('Fetch profile error:', error)
@@ -228,11 +228,11 @@ export class ProfilePreviewView {
         throw new Error('操作失败')
       }
 
-      const data = await response.json()
+      const data = await response.json() as unknown as { isFollowing: boolean; followersCount: number }
       profile.isFollowing = data.isFollowing
       profile.stats.followers_count = data.followersCount
 
-      // 更新按钮状态
+      // Update button state
       button.disabled = false
       button.textContent = data.isFollowing ? '已关注' : '关注'
       button.style.background = data.isFollowing ? '#f3f4f6' : '#3b82f6'

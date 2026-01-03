@@ -1,20 +1,15 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # rules
-/.augment/*
-/.github/*
-/.github/copilot-instructions.md
-/.codebuddy/*
-/.vscode/*
+.github
+.vscode
 
 # dev
-/Debug/*
-zotero-plugin/docs/*
+Debug
+.VSCodeCounter
 
 # dependencies
-/node_modules
 **/node_modules
-/.pnp
 .pnp.*
 .yarn/*
 !.yarn/patches

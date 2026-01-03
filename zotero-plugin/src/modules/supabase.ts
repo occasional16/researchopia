@@ -32,6 +32,10 @@ export interface DocumentInfo {
 /**
  * Supabase数据库集成管理器
  */
+// Compile-time injected environment variables (from root .env.local via esbuild define)
+declare const __SUPABASE_URL__: string;
+declare const __SUPABASE_ANON_KEY__: string;
+
 export class SupabaseManager {
   private apiClient = APIClient.getInstance();
   private baseUrl: string;
@@ -41,9 +45,13 @@ export class SupabaseManager {
   private heartbeatInterval: any = null;
   
   constructor() {
-    // 从环境变量获取配置，在插件环境中可能需要硬编码或通过其他方式配置
-    this.baseUrl = 'https://obcblvdtqhwrihoddlez.supabase.co';
-    this.apiKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9iY2JsdmR0cWh3cmlob2RkbGV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0OTgyMzUsImV4cCI6MjA3MzA3NDIzNX0.0kYlpFuK5WrKvUhIj7RO4-XJgv1sm39FROD_mBtxYm4';
+    // Use compile-time injected environment variables from root .env.local
+    this.baseUrl = __SUPABASE_URL__;
+    this.apiKey = __SUPABASE_ANON_KEY__;
+    
+    if (!this.baseUrl || !this.apiKey) {
+      logger.error('[SupabaseManager] Missing Supabase configuration. Check root .env.local file.');
+    }
   }
 
   /**

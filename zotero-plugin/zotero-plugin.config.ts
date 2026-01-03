@@ -1,5 +1,10 @@
 import { defineConfig } from "zotero-plugin-scaffold";
 import pkg from "./package.json";
+import * as dotenv from "dotenv";
+import * as path from "path";
+
+// Load environment variables from root .env.local
+dotenv.config({ path: path.resolve(__dirname, "../.env.local") });
 
 export default defineConfig({
   source: ["src", "addon"],
@@ -31,6 +36,8 @@ export default defineConfig({
         entryPoints: ["src/index.ts"],
         define: {
           __env__: `"${process.env.NODE_ENV || "development"}"`,
+          __SUPABASE_URL__: JSON.stringify(process.env.NEXT_PUBLIC_SUPABASE_URL || ""),
+          __SUPABASE_ANON_KEY__: JSON.stringify(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""),
         },
         bundle: true,
         target: "firefox140",

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { Search, TrendingUp, Users, BookOpen, Star, MessageCircle, Eye } from 'lucide-react'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
@@ -80,9 +81,34 @@ export default function HomePage() {
   const { profile, isAuthenticated } = useAuth()
   const { t } = useLanguage()
   const authenticatedFetch = useAuthenticatedFetch()
+  const router = useRouter()
   
   // 保持滚动位置
   useScrollRestoration()
+
+  // Handle auth redirects from Supabase (invite, recovery, etc.)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const hash = window.location.hash.substring(1) // Remove leading #
+      if (hash) {
+        const hashParams = new URLSearchParams(hash)
+        const type = hashParams.get('type')
+        const accessToken = hashParams.get('access_token')
+        
+        if (accessToken) {
+          if (type === 'invite') {
+            // Redirect to accept-invite page with the hash
+            router.replace(`/accept-invite#${hash}`)
+            return
+          } else if (type === 'recovery') {
+            // Redirect to reset-password page with the hash
+            router.replace(`/reset-password#${hash}`)
+            return
+          }
+        }
+      }
+    }
+  }, [router])
   
   const [searchQuery, setSearchQuery] = useState('')
   const {

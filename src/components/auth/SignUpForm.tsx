@@ -258,14 +258,40 @@ export default function SignUpForm({ onToggleMode, onClose }: SignUpFormProps) {
       <h2 className="text-2xl font-bold text-center mb-6">注册</h2>
       
       {/* 注册说明 */}
-      <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+      <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6 relative group/info">
         <h3 className="text-sm font-semibold text-green-900 mb-2">🎓 教育账户注册</h3>
         <p className="text-sm text-green-700 mb-2">
           使用教育邮箱注册，享受完整学术评价功能
         </p>
         <div className="text-xs text-green-600">
-          <div>• 支持: .edu.cn, .edu, .ac.uk 等教育域名</div>
-          <div>• 数据云端安全存储</div>
+          <div className="flex items-center gap-1">
+            <span>• 支持: .edu.cn, .edu, .ac.cn, .ac.uk 等教育域名</span>
+            <span className="cursor-help text-green-500 hover:text-green-700">
+              <svg className="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </span>
+          </div>
+          <div>• 数据基于Supabase云端安全存储</div>
+        </div>
+        {/* Tooltip - displayed below the info box, centered */}
+        <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-[calc(100%-1rem)] p-3 bg-gray-900 text-white text-xs rounded-lg shadow-lg opacity-0 invisible group-hover/info:opacity-100 group-hover/info:visible transition-all duration-200 z-50">
+          {/* Arrow pointing up */}
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-full">
+            <div className="border-8 border-transparent border-b-gray-900"></div>
+          </div>
+          <div className="font-semibold mb-2">支持的邮箱域名范围：</div>
+          <div className="space-y-1">
+                  <div><span className="text-green-400">🇨🇳 中国高校：</span> *.edu.cn（如 tsinghua.edu.cn）</div>
+                  <div><span className="text-green-400">🔬 中科院系统：</span> *.cas.cn, *.ac.cn（如 ia.ac.cn）</div>
+                  <div><span className="text-green-400">🇺🇸 美国高校：</span> *.edu（如 mit.edu, stanford.edu）</div>
+                  <div><span className="text-green-400">🇬🇧 英国高校：</span> *.ac.uk（如 oxford.ac.uk）</div>
+                  <div><span className="text-green-400">🌏 其他国家：</span> *.edu.au, *.ac.jp, *.ac.kr 等</div>
+                  <div><span className="text-green-400">🏛️ 研究机构：</span> CERN, NASA, NIH, 马普所等</div>
+          </div>
+          <div className="mt-2 pt-2 border-t border-gray-700 text-gray-400 text-[11px]">
+            💡 机构不在列表？请联系我们添加
+          </div>
         </div>
       </div>
       
@@ -350,7 +376,7 @@ export default function SignUpForm({ onToggleMode, onClose }: SignUpFormProps) {
                   ? 'border-green-300 bg-green-50'
                   : 'border-gray-300'
               }`}
-              placeholder="请输入教育邮箱（如：student@university.edu.cn）"
+              placeholder="教育邮箱（如：student@university.edu.cn）"
             />
             <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
               {emailValidating ? (

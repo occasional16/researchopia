@@ -192,31 +192,74 @@ export class BasicEmailValidation implements EmailValidationService {
   }
 
   private isLikelyEducationalDomain(domain: string): boolean {
-    // 检查是否为已知的教育域名模式
+    // Pattern 1: Standard educational domain suffixes (global)
     const educationalPatterns = [
-      /\.edu$/,           // 美国教育域名
-      /\.edu\.cn$/,       // 中国教育域名
-      /\.ac\.uk$/,        // 英国学术域名
-      /\.ac\.jp$/,        // 日本学术域名
-      /\.edu\.au$/,       // 澳大利亚教育域名
-      /\.ac\.kr$/,        // 韩国学术域名
+      // Universities
+      /\.edu$/,           // USA educational
+      /\.edu\.[a-z]{2}$/, // Country-specific .edu (e.g., .edu.cn, .edu.au, .edu.tw, .edu.hk)
+      /\.ac\.[a-z]{2}$/,  // Academic domains (e.g., .ac.uk, .ac.jp, .ac.kr, .ac.nz, .ac.in)
+      
+      // Chinese research institutions (中国研究机构)
+      /\.cas\.cn$/,       // 中科院系统 (Chinese Academy of Sciences)
+      /\.ac\.cn$/,        // 学术机构 (e.g., ia.ac.cn, ict.ac.cn)
+      /\.org\.cn$/,       // 部分研究机构 (some research organizations)
+      
+      // International research institutions
+      /\.gov$/,           // Government (some research labs)
+      /\.gov\.[a-z]{2}$/, // Country-specific government
+      /\.research\./,     // Research organizations
+      /\.institute\./,    // Institute domains
     ]
 
-    // 检查是否匹配教育域名模式
-    const matchesPattern = educationalPatterns.some(pattern => pattern.test(domain))
-
-    // 检查是否为已知的教育机构
+    // Pattern 2: Known major educational/research institutions
     const knownEducationalDomains = [
+      // === 中国顶尖高校 (C9联盟 + 部分985) ===
       'tsinghua.edu.cn', 'pku.edu.cn', 'fudan.edu.cn', 'sjtu.edu.cn',
       'zju.edu.cn', 'nju.edu.cn', 'ustc.edu.cn', 'hit.edu.cn',
+      'xjtu.edu.cn', 'buaa.edu.cn', 'seu.edu.cn', 'sdu.edu.cn',
+      'whu.edu.cn', 'hust.edu.cn', 'sysu.edu.cn', 'nankai.edu.cn',
+      
+      // === 中科院系统 (CAS - Chinese Academy of Sciences) ===
+      'cas.cn',           // 中科院总部
+      'ia.ac.cn',         // 自动化研究所
+      'ict.ac.cn',        // 计算技术研究所
+      'iie.ac.cn',        // 信息工程研究所
+      'iscas.ac.cn',      // 软件研究所
+      'math.ac.cn',       // 数学与系统科学研究院
+      'physics.ac.cn',    // 物理研究所
+      'itp.ac.cn',        // 理论物理研究所
+      'semi.ac.cn',       // 半导体研究所
+      'nanoctr.cn',       // 纳米中心
+      
+      // === 国际顶尖高校 ===
       'mit.edu', 'stanford.edu', 'harvard.edu', 'berkeley.edu',
-      'oxford.ac.uk', 'cambridge.ac.uk', 'imperial.ac.uk'
+      'caltech.edu', 'princeton.edu', 'yale.edu', 'columbia.edu',
+      'cmu.edu', 'gatech.edu', 'umich.edu', 'cornell.edu',
+      
+      // === 英国高校 ===
+      'oxford.ac.uk', 'cambridge.ac.uk', 'imperial.ac.uk',
+      'ucl.ac.uk', 'ed.ac.uk', 'manchester.ac.uk',
+      
+      // === 其他国际研究机构 ===
+      'cern.ch',          // 欧洲核子研究中心
+      'nasa.gov',         // NASA
+      'nih.gov',          // 美国国立卫生研究院
+      'mpg.de',           // 马普所 (Max Planck Society)
+      'cnrs.fr',          // 法国国家科学研究中心
+      'riken.jp',         // 日本理化学研究所
     ]
 
-    const isKnownEducational = knownEducationalDomains.includes(domain)
+    // Check patterns
+    const matchesPattern = educationalPatterns.some(pattern => pattern.test(domain))
+    const isKnownEducational = knownEducationalDomains.some(d => 
+      domain === d || domain.endsWith('.' + d)
+    )
 
-    // 检查是否为明显的假域名（如包含多个连续的a）
-    const isSuspiciousDomain = /a{3,}/.test(domain) || domain.includes('fake') || domain.includes('test')
+    // Check for suspicious/fake domains
+    const isSuspiciousDomain = /a{3,}/.test(domain) || 
+                               domain.includes('fake') || 
+                               domain.includes('test') ||
+                               domain.includes('temp')
 
     return (matchesPattern || isKnownEducational) && !isSuspiciousDomain
   }

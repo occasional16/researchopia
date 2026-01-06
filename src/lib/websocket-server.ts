@@ -39,9 +39,7 @@ class PDFCollaborationServer {
     // 在生产环境中，这里应该实现适当的认证和CORS检查
     const allowedOrigins = [
       'http://localhost:3000',
-      'http://127.0.0.1:3000',
-      'https://www.researchopia.com',
-      'https://researchopia.vercel.app' // 保留vercel作为备用域名
+      'https://www.researchopia.com'
     ];
     
     return allowedOrigins.includes(info.origin) || process.env.NODE_ENV === 'development';

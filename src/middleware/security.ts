@@ -27,27 +27,7 @@ export function withSecurity(handler: (req: NextRequest) => Promise<NextResponse
       const origin = req.headers.get('origin')
       const allowedOrigins = [
         'http://localhost:3000',
-        'http://localhost:3001',
-        'http://localhost:3002',
-        'http://localhost:3003',
-        'http://localhost:3004',
-        'http://localhost:3005',
-        'http://localhost:3006',
-        'http://localhost:3007',
-        'http://localhost:3008',
-        'http://localhost:3009',
-        'http://127.0.0.1:3000',
-        'http://127.0.0.1:3001',
-        'http://127.0.0.1:3002',
-        'http://127.0.0.1:3003',
-        'http://127.0.0.1:3004',
-        'http://127.0.0.1:3005',
-        'http://127.0.0.1:3006',
-        'http://127.0.0.1:3007',
-        'http://127.0.0.1:3008',
-        'http://127.0.0.1:3009',
-        'https://www.researchopia.com',
-        'https://researchopia.vercel.app' // 保留vercel作为备用
+        'https://www.researchopia.com'
       ]
 
       // 对于Zotero插件请求，可能没有origin头部，需要特殊处理

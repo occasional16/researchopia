@@ -526,7 +526,6 @@ CREATE TRIGGER update_shared_annotations_updated_at
 
 **域名**:
 - 主站: `https://www.researchopia.com`
-- 备用: `https://researchopia.vercel.app`
 
 ### 5.2 开发环境
 

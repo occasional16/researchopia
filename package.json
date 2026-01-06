@@ -1,7 +1,7 @@
 {
     "name": "researchopia",
     "version": "0.4.0",
-    "description": "研学港 | Researchopia - 开放的学术交流和共享平台。研学并进，智慧共享 | Where Research Meets Community",
+    "description": "Researchopia - Open academic exchange and knowledge sharing platform. Where Research Meets Community | 研学港 - 开放的学术交流与知识共享平台。研学并进，智慧共享",
     "private": true,
     "workspaces": [
         "packages/*"

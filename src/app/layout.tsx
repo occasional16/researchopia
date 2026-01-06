@@ -23,8 +23,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "研学港 | Researchopia - 研学并进，智慧共享",
-  description: "研学港(Researchopia)是新一代学术评价与研学社区平台。研学并进，智慧共享，连接全球学者，促进学术交流与协作创新。Where Research Meets Community.",
-  keywords: ["研学港", "Researchopia", "学术评价", "研学社区", "论文评分", "学术交流", "智慧共享", "研究协作", "学者社区"],
+  description: "Researchopia - Open academic exchange and knowledge sharing platform. Where Research Meets Community | 研学港 - 开放的学术交流与知识共享平台。研学并进，智慧共享",
+  keywords: ["研学港", "Researchopia", "学术评价", "研学社区", "论文评分", "学术交流", "知识共享", "智慧共享", "研究协作", "学者社区"],
   authors: [{ name: "Researchopia Team" }],
   creator: "Researchopia",
   publisher: "研学港 Researchopia",

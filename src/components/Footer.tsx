@@ -115,7 +115,7 @@ export default function Footer() {
                   {t('footer.cta.slogan', '研学并进，智慧共享')}
                 </p>
                 <p className="text-sm text-gray-500 dark:text-gray-500 mt-0.5">
-                  {t('footer.cta.subtitle', '开放的学术交流和共享平台')}
+                  {t('footer.cta.subtitle', '开放的学术交流与知识共享平台')}
                 </p>
               </div>
             </div>

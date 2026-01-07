@@ -44,8 +44,10 @@ yarn-error.log*
 *.env*.local
 *.env
 
-# Supabase
-supabase/*
+# Supabase - keep migrations and config, ignore local data
+supabase/.branches/
+supabase/.temp/
+supabase/.gitignore
 
 # vercel
 .vercel

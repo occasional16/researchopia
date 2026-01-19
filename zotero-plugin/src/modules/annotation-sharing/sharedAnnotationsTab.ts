@@ -1448,100 +1448,93 @@ export class SidebarSharedView {
   /**
    * 创建筛选排序工具栏 (使用按钮组替代select,解决iframe环境下拉菜单问题)
    * 完整功能: 排序(页码/时间/点赞/评论) + 筛选(页码/用户) + PDF展示控制
+   * 紧凑设计: 使用图标 + hover 提示
    */
   private createFilterSortToolbar(doc: Document): HTMLElement {
     const toolbar = doc.createElement('div');
     toolbar.className = 'filter-sort-toolbar';
     toolbar.style.cssText = `
-      margin-bottom: 12px;
-      padding: 8px;
+      margin-bottom: 10px;
+      padding: 6px 8px;
       background: #f8f9fa;
       border-radius: 6px;
       width: 100%;
       box-sizing: border-box;
       display: flex;
-      flex-direction: column;
-      gap: 6px;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
     `;
 
-    // === 1. 排序按钮组 (两行) ===
-    const sortLabel = doc.createElement('div');
-    sortLabel.textContent = '排序:';
-    sortLabel.style.cssText = 'font-size: 10px; color: #6c757d; font-weight: 500;';
-    toolbar.appendChild(sortLabel);
+    // === 1. 排序按钮组 (紧凑图标) ===
+    const sortGroup = doc.createElement('div');
+    sortGroup.style.cssText = 'display: flex; align-items: center; gap: 3px;';
+    
+    const sortLabel = doc.createElement('span');
+    sortLabel.textContent = '排序';
+    sortLabel.style.cssText = 'font-size: 10px; color: #6c757d; margin-right: 2px;';
+    sortGroup.appendChild(sortLabel);
 
-    // 第一行: 页码排序
-    const sortRow1 = doc.createElement('div');
-    sortRow1.style.cssText = 'display: flex; gap: 4px;';
-    const pageSort = [
-      { value: 'page-asc', label: '📄 页码↑' },
-      { value: 'page-desc', label: '📄 页码↓' }
+    const sortOptions = [
+      { value: 'page-asc', icon: '⬆️', tooltip: '按页码升序' },
+      { value: 'page-desc', icon: '⬇️', tooltip: '按页码降序' },
+      { value: 'time-asc', icon: '🕠', tooltip: '最早发布' },
+      { value: 'time-desc', icon: '🕧', tooltip: '最新发布', default: true },
+      { value: 'likes-desc', icon: '❤️', tooltip: '按点赞数' },
+      { value: 'comments-desc', icon: '💬', tooltip: '按评论数' }
     ];
-    this.createButtonGroup(doc, sortRow1, pageSort, 'sort-btn', false, (value) => {
+    this.createCompactButtonGroup(doc, sortGroup, sortOptions, 'sort-btn', true, (value) => {
       this.handleSortChange(doc, value);
     });
-    toolbar.appendChild(sortRow1);
+    toolbar.appendChild(sortGroup);
 
-    // 第二行: 时间/点赞/评论排序
-    const sortRow2 = doc.createElement('div');
-    sortRow2.style.cssText = 'display: flex; gap: 4px;';
-    const otherSort = [
-      { value: 'time-asc', label: '⏰ 最早' },
-      { value: 'time-desc', label: '⏰ 最新', default: true },
-      { value: 'likes-desc', label: '❤️ 点赞' },
-      { value: 'comments-desc', label: '💬 评论' }
+    // 分隔线
+    const sep1 = doc.createElement('span');
+    sep1.textContent = '|';
+    sep1.style.cssText = 'color: #dee2e6; font-size: 12px;';
+    toolbar.appendChild(sep1);
+
+    // === 2. 筛选按钮组 (紧凑图标) ===
+    const filterGroup = doc.createElement('div');
+    filterGroup.style.cssText = 'display: flex; align-items: center; gap: 3px;';
+    
+    const filterLabel = doc.createElement('span');
+    filterLabel.textContent = '筛选';
+    filterLabel.style.cssText = 'font-size: 10px; color: #6c757d; margin-right: 2px;';
+    filterGroup.appendChild(filterLabel);
+
+    const filterOptions = [
+      { value: 'all', icon: '📚', tooltip: '所有批注', default: true },
+      { value: 'others', icon: '👥', tooltip: '他人批注' },
+      { value: 'followed', icon: '⭐', tooltip: '关注用户' }
     ];
-    this.createButtonGroup(doc, sortRow2, otherSort, 'sort-btn', true, (value) => {
-      this.handleSortChange(doc, value);
-    });
-    toolbar.appendChild(sortRow2);
-
-    // === 2. 筛选按钮组 ===
-    const filterLabel = doc.createElement('div');
-    filterLabel.textContent = '筛选:';
-    filterLabel.style.cssText = 'font-size: 10px; color: #6c757d; font-weight: 500; margin-top: 4px;';
-    toolbar.appendChild(filterLabel);
-
-    // 用户筛选 (新的3按钮)
-    const filterRow1 = doc.createElement('div');
-    filterRow1.style.cssText = 'display: flex; gap: 4px;';
-    const userFilters = [
-      { value: 'all', label: '📚 所有', default: true },
-      { value: 'others', label: '👥 他人' },
-      { value: 'followed', label: '⭐ 关注' }
-    ];
-    this.createButtonGroup(doc, filterRow1, userFilters, 'filter-btn', true, (value) => {
+    this.createCompactButtonGroup(doc, filterGroup, filterOptions, 'filter-btn', true, (value) => {
       this.handleFilterChange(doc, value);
     });
-    toolbar.appendChild(filterRow1);
+    toolbar.appendChild(filterGroup);
 
-    // 页码筛选占位(待实现分页后添加)
-    // const filterRow2 = doc.createElement('div');
-    // filterRow2.id = 'page-filter-row';
-    // filterRow2.style.cssText = 'display: none; gap: 4px;'; // 初始隐藏
-    // toolbar.appendChild(filterRow2);
+    // 分隔线
+    const sep2 = doc.createElement('span');
+    sep2.textContent = '|';
+    sep2.style.cssText = 'color: #dee2e6; font-size: 12px;';
+    toolbar.appendChild(sep2);
 
-    // === 3. PDF展示控制 ===
-    const controlLabel = doc.createElement('div');
-    controlLabel.textContent = 'PDF展示:';
-    controlLabel.style.cssText = 'font-size: 10px; color: #6c757d; font-weight: 500; margin-top: 4px;';
-    toolbar.appendChild(controlLabel);
-
-    const controlRow = doc.createElement('div');
-    controlRow.style.cssText = 'display: flex; gap: 4px;';
+    // === 3. PDF展示控制 (紧凑图标) ===
+    const controlGroup = doc.createElement('div');
+    controlGroup.style.cssText = 'display: flex; align-items: center; gap: 3px;';
     
     // 展示在PDF按钮(切换型)
     const showInPdfBtn = doc.createElement('button');
     showInPdfBtn.id = 'show-in-pdf-btn';
-    showInPdfBtn.textContent = '📍 展示在PDF';
+    showInPdfBtn.textContent = '📍';
+    showInPdfBtn.title = '在PDF中展示共享批注';
     showInPdfBtn.style.cssText = `
-      flex: 1;
-      padding: 6px 8px;
+      padding: 4px 6px;
       border: 1px solid #dee2e6;
       border-radius: 4px;
       background: white;
       color: #495057;
-      font-size: 10px;
+      font-size: 12px;
       cursor: pointer;
       transition: all 0.2s;
     `;
@@ -1551,7 +1544,8 @@ export class SidebarSharedView {
         // 清除PDF中的共享标注高亮
         showInPdfBtn.style.background = 'white';
         showInPdfBtn.style.color = '#495057';
-        showInPdfBtn.textContent = '📍 展示在PDF';
+        showInPdfBtn.textContent = '📍';
+        showInPdfBtn.title = '在PDF中展示共享批注';
         logger.log('[SidebarSharedView] Hide shared annotations from PDF');
         
         const pdfManager = await this.getPDFReaderManager();
@@ -1562,27 +1556,27 @@ export class SidebarSharedView {
         // 展示当前筛选后的共享标注到PDF
         showInPdfBtn.style.background = '#007bff';
         showInPdfBtn.style.color = 'white';
-        showInPdfBtn.textContent = '✅ 已展示';
+        showInPdfBtn.textContent = '✅';
+        showInPdfBtn.title = '已在PDF中展示，点击隐藏';
         logger.log('[SidebarSharedView] Show shared annotations in PDF');
         
         await this.handleShowInPdf(doc);
       }
     });
-    controlRow.appendChild(showInPdfBtn);
+    controlGroup.appendChild(showInPdfBtn);
 
     // 显示/隐藏本地标注按钮(切换型)
-    // 初始状态：本地标注显示（Zotero默认），按钮显示"🙈 隐藏本地"（白色 = 正常状态）
     const toggleLocalBtn = doc.createElement('button');
     toggleLocalBtn.id = 'toggle-local-btn';
-    toggleLocalBtn.textContent = '🙈 隐藏本地';
+    toggleLocalBtn.textContent = '🙈';
+    toggleLocalBtn.title = '隐藏本地批注';
     toggleLocalBtn.style.cssText = `
-      flex: 1;
-      padding: 6px 8px;
+      padding: 4px 6px;
       border: 1px solid #dee2e6;
       border-radius: 4px;
       background: white;
       color: #495057;
-      font-size: 10px;
+      font-size: 12px;
       cursor: pointer;
       transition: all 0.2s;
     `;
@@ -1612,7 +1606,8 @@ export class SidebarSharedView {
         pdfManager.toggleNativeAnnotations(reader, true); // true = hide
         toggleLocalBtn.style.background = '#007bff';
         toggleLocalBtn.style.color = 'white';
-        toggleLocalBtn.textContent = '✅ 已隐藏本地';
+        toggleLocalBtn.textContent = '👁️';
+        toggleLocalBtn.title = '显示本地批注';
         toggleLocalBtn.setAttribute('data-showing', 'false');
         logger.log('[SidebarSharedView] Hide local annotations');
       } else {
@@ -1620,16 +1615,60 @@ export class SidebarSharedView {
         pdfManager.toggleNativeAnnotations(reader, false); // false = show
         toggleLocalBtn.style.background = 'white';
         toggleLocalBtn.style.color = '#495057';
-        toggleLocalBtn.textContent = '🙈 隐藏本地';
+        toggleLocalBtn.textContent = '🙈';
+        toggleLocalBtn.title = '隐藏本地批注';
         toggleLocalBtn.setAttribute('data-showing', 'true');
         logger.log('[SidebarSharedView] Show local annotations');
       }
     });
-    controlRow.appendChild(toggleLocalBtn);
+    controlGroup.appendChild(toggleLocalBtn);
 
-    toolbar.appendChild(controlRow);
+    toolbar.appendChild(controlGroup);
 
     return toolbar;
+  }
+
+  /**
+   * 创建紧凑按钮组（图标 + hover 提示）
+   */
+  private createCompactButtonGroup(
+    doc: Document,
+    container: HTMLElement,
+    options: Array<{ value: string; icon: string; tooltip: string; default?: boolean }>,
+    className: string,
+    hasDefault: boolean,
+    onClick: (value: string) => void
+  ): void {
+    options.forEach((opt) => {
+      const btn = doc.createElement('button');
+      btn.className = className;
+      btn.dataset.value = opt.value;
+      btn.textContent = opt.icon;
+      btn.title = opt.tooltip;
+      const isActive = hasDefault && opt.default;
+      btn.style.cssText = `
+        padding: 4px 6px;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        background: ${isActive ? '#007bff' : 'white'};
+        color: ${isActive ? 'white' : '#495057'};
+        font-size: 12px;
+        cursor: pointer;
+        transition: all 0.2s;
+      `;
+      btn.addEventListener('click', () => {
+        // Update all buttons in group
+        container.querySelectorAll(`.${className}`).forEach((b: Element) => {
+          const button = b as HTMLButtonElement;
+          button.style.background = 'white';
+          button.style.color = '#495057';
+        });
+        btn.style.background = '#007bff';
+        btn.style.color = 'white';
+        onClick(opt.value);
+      });
+      container.appendChild(btn);
+    });
   }
 
   /**

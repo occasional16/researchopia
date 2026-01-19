@@ -12,6 +12,7 @@ export default defineConfig({
   name: pkg.config.addonName,
   id: pkg.config.addonID,
   namespace: pkg.config.addonRef,
+  xpiName: "researchopia-zotero-latest",
   updateURL: `https://github.com/occasional16/researchopia/releases/download/release/${
     pkg.version.includes("-") ? "update-beta.json" : "update.json"
   }`,

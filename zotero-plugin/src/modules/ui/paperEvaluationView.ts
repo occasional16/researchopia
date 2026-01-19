@@ -81,7 +81,7 @@ export class PaperEvaluationView {
     try {
       // 获取所有评分
       const ratingsResponse = await fetch(
-        `${this.context.supabaseManager['baseUrl']}/rest/v1/paper_ratings?paper_id=eq.${paperId}&select=*,users(username,avatar_url)`,
+        `${this.context.supabaseManager['baseUrl']}/rest/v1/ratings?paper_id=eq.${paperId}&select=*,users(username,avatar_url)`,
         {
           headers: {
             'apikey': this.context.supabaseManager['apiKey'],
@@ -116,11 +116,11 @@ export class PaperEvaluationView {
       `;
 
       // 创建评分区域
-      const ratingSection = this.createRatingSection(doc, ratings, userRating, paperId, currentUserId);
+      const ratingSection = this.createRatingSection(doc, ratings, userRating, paperId, currentUserId, paperInfo.doi);
       container.appendChild(ratingSection);
 
       // 创建评论区域
-      const commentSection = this.createCommentSection(doc, commentTree, paperId, currentUserId);
+      const commentSection = this.createCommentSection(doc, commentTree, paperId, currentUserId, paperInfo.doi);
       container.appendChild(commentSection);
 
     } catch (error) {
@@ -139,14 +139,15 @@ export class PaperEvaluationView {
   }
 
   /**
-   * 创建评分区域
+   * 创建评分区域 (UI aligned with browser extension)
    */
   private createRatingSection(
     doc: Document,
     ratings: any[],
     userRating: any | null,
     paperId: string,
-    userId: string
+    userId: string,
+    paperDoi?: string
   ): HTMLElement {
     const section = doc.createElement('div');
     section.style.cssText = `
@@ -155,52 +156,142 @@ export class PaperEvaluationView {
       padding: 16px;
       border-bottom: 1px solid #e9ecef;
       box-sizing: border-box;
+      background: #ffffff;
+      border-radius: 8px;
+      margin-bottom: 12px;
+    `;
+
+    // Section header with title and detail button
+    const headerRow = doc.createElement('div');
+    headerRow.style.cssText = `
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
     `;
 
     const title = doc.createElement('h3');
-    title.style.cssText = 'margin: 0 0 12px 0; font-size: 14px; color: #212529;';
-    title.textContent = '📊 论文评分';
-    section.appendChild(title);
+    title.style.cssText = 'margin: 0; font-size: 14px; color: #212529; display: flex; align-items: center; gap: 6px;';
+    title.innerHTML = `<span style="color: #f59e0b;">★</span> 论文评分`;
+    headerRow.appendChild(title);
 
-    // 显示平均分
+    // Detail button (link to website)
+    if (paperDoi) {
+      const detailBtn = doc.createElement('button');
+      detailBtn.textContent = '详情 →';
+      detailBtn.style.cssText = `
+        background: #3b82f6;
+        border: none;
+        padding: 4px 10px;
+        border-radius: 4px;
+        color: white;
+        font-size: 11px;
+        cursor: pointer;
+        transition: background 0.2s;
+      `;
+      detailBtn.addEventListener('mouseenter', () => {
+        detailBtn.style.background = '#2563eb';
+      });
+      detailBtn.addEventListener('mouseleave', () => {
+        detailBtn.style.background = '#3b82f6';
+      });
+      detailBtn.addEventListener('click', () => {
+        const url = `https://www.researchopia.com/papers/${encodeURIComponent(paperDoi)}`;
+        Zotero.launchURL(url);
+      });
+      headerRow.appendChild(detailBtn);
+    }
+
+    section.appendChild(headerRow);
+
+    // Rating stats overview (like browser extension)
     if (ratings.length > 0) {
       const avgScores = {
         innovation: 0,
         methodology: 0,
-        results: 0,
-        writing: 0,
-        practical: 0
+        practicality: 0,
+        overall: 0
       };
 
       ratings.forEach((r: any) => {
         avgScores.innovation += r.innovation_score || 0;
         avgScores.methodology += r.methodology_score || 0;
-        avgScores.results += r.results_score || 0;
-        avgScores.writing += r.writing_score || 0;
-        avgScores.practical += r.practical_score || 0;
+        avgScores.practicality += r.practicality_score || 0;
+        avgScores.overall += r.overall_score || 0;
       });
 
       Object.keys(avgScores).forEach(key => {
         avgScores[key as keyof typeof avgScores] /= ratings.length;
       });
 
-      const avgDiv = doc.createElement('div');
-      avgDiv.style.cssText = 'margin-bottom: 12px; padding: 8px; background: #6c757d; border-radius: 4px;';
-      avgDiv.innerHTML = `
-        <div style="font-size: 11px; color: #6c757d; margin-bottom: 4px;">平均分 (${ratings.length}人评价)</div>
-        <div style="font-size: 12px; color: #212529;">
-          创新性: ${avgScores.innovation.toFixed(1)} | 
-          方法论: ${avgScores.methodology.toFixed(1)} | 
-          结果质量: ${avgScores.results.toFixed(1)} | 
-          写作质量: ${avgScores.writing.toFixed(1)} | 
-          实用价值: ${avgScores.practical.toFixed(1)}
+      const statsRow = doc.createElement('div');
+      statsRow.style.cssText = `
+        display: flex;
+        gap: 16px;
+        margin-bottom: 16px;
+        padding: 12px;
+        background: #f8fafc;
+        border-radius: 8px;
+      `;
+
+      // Overall score stat
+      const overallStat = doc.createElement('div');
+      overallStat.style.cssText = 'text-align: center; flex: 1;';
+      overallStat.innerHTML = `
+        <div style="font-size: 24px; font-weight: 600; color: #f59e0b;">${avgScores.overall.toFixed(1)}</div>
+        <div style="font-size: 11px; color: #6b7280;">总评</div>
+      `;
+      statsRow.appendChild(overallStat);
+
+      // Rating count stat
+      const countStat = doc.createElement('div');
+      countStat.style.cssText = 'text-align: center; flex: 1;';
+      countStat.innerHTML = `
+        <div style="font-size: 24px; font-weight: 600; color: #3b82f6;">${ratings.length}</div>
+        <div style="font-size: 11px; color: #6b7280;">评价数</div>
+      `;
+      statsRow.appendChild(countStat);
+
+      section.appendChild(statsRow);
+
+      // Detailed scores (collapsible)
+      const detailDiv = doc.createElement('div');
+      detailDiv.style.cssText = `
+        margin-bottom: 12px;
+        padding: 8px;
+        background: #f3f4f6;
+        border-radius: 4px;
+        font-size: 12px;
+        color: #374151;
+      `;
+      detailDiv.innerHTML = `
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px;">
+          <span>💡 创新性: ${avgScores.innovation.toFixed(1)}</span>
+          <span>🔬 方法论: ${avgScores.methodology.toFixed(1)}</span>
+          <span>⚙️ 实用性: ${avgScores.practicality.toFixed(1)}</span>
+          <span>⭐ 总体: ${avgScores.overall.toFixed(1)}</span>
         </div>
       `;
-      section.appendChild(avgDiv);
+      section.appendChild(detailDiv);
     }
 
-    // 创建评分表单
+    // Create rating form
     const form = this.createRatingForm(doc, userRating, paperId, userId);
+    section.appendChild(form);
+
+    return section;
+  }
+
+  /**
+   * Old createRatingSection implementation (preserved for reference)
+   */
+  private createRatingSectionOld(
+    doc: Document,
+    ratings: any[],
+    userRating: any | null,
+    paperId: string,
+    userId: string
+  ): HTMLElement {
     section.appendChild(form);
 
     return section;
@@ -226,10 +317,10 @@ export class PaperEvaluationView {
     };
 
     const categories = [
-      { key: 'innovation_score', label: '创新性', icon: '💡' },
-      { key: 'methodology_score', label: '方法论', icon: '🔬' },
-      { key: 'practicality_score', label: '实用性', icon: '⚙️' },
-      { key: 'overall_score', label: '总体评价', icon: '⭐' }
+      { key: 'innovation_score', label: '创新性', icon: '💡', tooltip: '研究思路和方法的新颖程度' },
+      { key: 'methodology_score', label: '方法论', icon: '🔬', tooltip: '研究方法的科学性和严谨性' },
+      { key: 'practicality_score', label: '实用性', icon: '⚙️', tooltip: '研究成果的实际应用价值' },
+      { key: 'overall_score', label: '总体评价', icon: '⭐', tooltip: '对论文的综合评价' }
     ];
 
     categories.forEach(cat => {
@@ -243,56 +334,132 @@ export class PaperEvaluationView {
 
       const label = doc.createElement('span');
       label.textContent = `${cat.icon} ${cat.label}:`;
-      label.style.cssText = 'min-width: 90px; color: #212529;';
+      label.style.cssText = 'min-width: 90px; color: #212529; cursor: help;';
+      label.title = cat.tooltip;
       row.appendChild(label);
 
-      // 星星评分
+      // 10分制星星评分（5个星星，支持半星）
       const stars = doc.createElement('div');
-      stars.style.cssText = 'display: flex; gap: 2px;';
+      stars.style.cssText = 'display: flex; gap: 0;';
       stars.setAttribute('data-score-key', cat.key);
 
-      for (let i = 1; i <= 5; i++) {
-        const star = doc.createElement('span');
-        const isFilled = i <= scores[cat.key];
-        star.textContent = isFilled ? '⭐' : '☆';
-        star.style.cssText = `
-          cursor: pointer;
-          font-size: 16px;
-          transition: transform 0.1s;
-          color: ${isFilled ? '#ffc107' : '#9ca3af'};
-        `;
-        star.setAttribute('data-star-value', i.toString());
-
-        star.addEventListener('mouseenter', () => {
-          star.style.transform = 'scale(1.2)';
-        });
-        star.addEventListener('mouseleave', () => {
-          star.style.transform = 'scale(1)';
-        });
-        star.addEventListener('click', () => {
-          scores[cat.key] = i;
-          // 重新渲染星星
-          const parent = star.parentElement;
-          if (parent) {
-            Array.from(parent.children).forEach((child, index) => {
-              const isFilled = index < i;
-              (child as HTMLElement).textContent = isFilled ? '⭐' : '☆';
-              (child as HTMLElement).style.color = isFilled ? '#ffc107' : '#9ca3af';
-            });
+      // Helper to render star fill state
+      const renderStars = (value: number) => {
+        Array.from(stars.children).forEach((starContainer, index) => {
+          const starIndex = index + 1;
+          const leftHalf = starContainer.querySelector('.star-left') as HTMLElement;
+          const rightHalf = starContainer.querySelector('.star-right') as HTMLElement;
+          
+          // Each star represents 2 points (e.g., star 1 = points 1-2)
+          const leftPoint = starIndex * 2 - 1; // 1, 3, 5, 7, 9
+          const rightPoint = starIndex * 2;    // 2, 4, 6, 8, 10
+          
+          if (leftHalf) {
+            leftHalf.style.color = value >= leftPoint ? '#ffc107' : 'transparent';
           }
-          // 更新评分文本
+          if (rightHalf) {
+            rightHalf.style.color = value >= rightPoint ? '#ffc107' : 'transparent';
+          }
+        });
+      };
+
+      // Track current score for hover reset
+      let currentScore = scores[cat.key];
+
+      for (let i = 1; i <= 5; i++) {
+        const starContainer = doc.createElement('span');
+        starContainer.style.cssText = `
+          position: relative;
+          display: inline-block;
+          width: 20px;
+          height: 20px;
+          cursor: pointer;
+          font-size: 18px;
+          transition: transform 0.1s;
+        `;
+
+        // Background star (gray, full width) - always visible
+        const bgStar = doc.createElement('span');
+        bgStar.textContent = '★';
+        bgStar.style.cssText = `
+          position: absolute;
+          left: 0;
+          top: 0;
+          color: #9ca3af;
+        `;
+
+        // Right half foreground (colored when score >= rightPoint)
+        const rightHalf = doc.createElement('span');
+        rightHalf.className = 'star-right';
+        const rightPoint = i * 2;
+        rightHalf.textContent = '★';
+        rightHalf.style.cssText = `
+          position: absolute;
+          left: 0;
+          top: 0;
+          color: ${scores[cat.key] >= rightPoint ? '#ffc107' : 'transparent'};
+          transition: color 0.1s;
+        `;
+        rightHalf.setAttribute('data-point', rightPoint.toString());
+
+        // Left half foreground (colored when score >= leftPoint)
+        const leftHalf = doc.createElement('span');
+        leftHalf.className = 'star-left';
+        const leftPoint = i * 2 - 1;
+        leftHalf.textContent = '★';
+        leftHalf.style.cssText = `
+          position: absolute;
+          left: 0;
+          top: 0;
+          width: 50%;
+          overflow: hidden;
+          color: ${scores[cat.key] >= leftPoint ? '#ffc107' : 'transparent'};
+          transition: color 0.1s;
+        `;
+        leftHalf.setAttribute('data-point', leftPoint.toString());
+
+        starContainer.appendChild(bgStar);
+        starContainer.appendChild(rightHalf);
+        starContainer.appendChild(leftHalf);
+
+        // Hover effect with fill preview
+        starContainer.addEventListener('mouseenter', () => {
+          starContainer.style.transform = 'scale(1.15)';
+          // Preview: fill up to full star on hover
+          renderStars(rightPoint);
+        });
+        starContainer.addEventListener('mouseleave', () => {
+          starContainer.style.transform = 'scale(1)';
+          // Restore actual score on leave
+          renderStars(currentScore);
+        });
+
+        // Click handler - detect left/right half
+        starContainer.addEventListener('click', (e: MouseEvent) => {
+          const rect = starContainer.getBoundingClientRect();
+          const clickX = e.clientX - rect.left;
+          const isLeftHalf = clickX < rect.width / 2;
+          
+          const newScore = isLeftHalf ? leftPoint : rightPoint;
+          scores[cat.key] = newScore;
+          currentScore = newScore;
+          
+          renderStars(newScore);
+          
+          // Update score text
           const scoreText = row.querySelector('.score-text') as HTMLElement;
           if (scoreText) {
-            scoreText.textContent = `${i}/5`;
+            scoreText.textContent = `${newScore}/10`;
           }
         });
-        stars.appendChild(star);
+
+        stars.appendChild(starContainer);
       }
       row.appendChild(stars);
 
       const scoreText = doc.createElement('span');
       scoreText.className = 'score-text';
-      scoreText.textContent = scores[cat.key] > 0 ? `${scores[cat.key]}/5` : '未评分';
+      scoreText.textContent = scores[cat.key] > 0 ? `${scores[cat.key]}/10` : '未评分';
       scoreText.style.cssText = 'color: #6c757d; font-size: 11px; margin-left: 4px;';
       row.appendChild(scoreText);
 
@@ -408,7 +575,8 @@ export class PaperEvaluationView {
     doc: Document,
     commentTree: any[],
     paperId: string,
-    userId: string
+    userId: string,
+    paperDoi?: string
   ): HTMLElement {
     const section = doc.createElement('div');
     section.style.cssText = `
@@ -418,31 +586,230 @@ export class PaperEvaluationView {
       box-sizing: border-box;
     `;
 
-    const title = doc.createElement('h3');
-    title.style.cssText = 'margin: 0 0 12px 0; font-size: 14px; color: #212529;';
-    title.textContent = `💬 论文评论 (${commentTree.length})`;
-    section.appendChild(title);
+    // Section Header - Title row
+    const headerRow = doc.createElement('div');
+    headerRow.style.cssText = `
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    `;
 
-    // 显示现有评论
-    if (commentTree.length > 0) {
-      const commentsList = doc.createElement('div');
-      commentsList.style.cssText = 'display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;';
+    const title = doc.createElement('h3');
+    title.style.cssText = 'margin: 0; font-size: 14px; color: #212529; display: flex; align-items: center;';
+    title.textContent = `💬 论文评论`;
+    
+    // Comment count badge
+    const countBadge = doc.createElement('span');
+    countBadge.id = 'paper-comment-count';
+    countBadge.style.cssText = `
+      display: inline-block;
+      background: #e5e7eb;
+      color: #374151;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 12px;
+      margin-left: 8px;
+    `;
+    countBadge.textContent = String(commentTree.length);
+    title.appendChild(countBadge);
+
+    // Detail button with blue background (in title row)
+    const detailBtn = doc.createElement('button');
+    detailBtn.style.cssText = `
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      background: #3b82f6;
+      border: none;
+      border-radius: 4px;
+      font-size: 11px;
+      color: white;
+      cursor: pointer;
+      transition: background 0.2s;
+    `;
+    detailBtn.innerHTML = '<span>详情</span><span>→</span>';
+    detailBtn.addEventListener('mouseenter', () => {
+      detailBtn.style.background = '#2563eb';
+    });
+    detailBtn.addEventListener('mouseleave', () => {
+      detailBtn.style.background = '#3b82f6';
+    });
+    detailBtn.addEventListener('click', () => {
+      if (paperDoi) {
+        Zotero.launchURL(`https://www.researchopia.com/papers/${encodeURIComponent(paperDoi)}`);
+      }
+    });
+
+    headerRow.appendChild(title);
+    headerRow.appendChild(detailBtn);
+    section.appendChild(headerRow);
+
+    // Actions row - filter dropdown
+    const actionsRow = doc.createElement('div');
+    actionsRow.style.cssText = 'display: flex; align-items: center; margin-bottom: 12px;';
+
+    // Comment filter dropdown
+    const filterSelect = doc.createElement('select');
+    filterSelect.id = 'paper-comment-filter';
+    filterSelect.style.cssText = `
+      padding: 4px 8px;
+      border: 1px solid #e5e7eb;
+      border-radius: 4px;
+      font-size: 11px;
+      background: white;
+      cursor: pointer;
+      color: #374151;
+      -webkit-appearance: auto;
+      appearance: auto;
+    `;
+    
+    const optionAll = doc.createElement('option');
+    optionAll.value = 'all';
+    optionAll.textContent = '所有评论';
+    
+    const optionMine = doc.createElement('option');
+    optionMine.value = 'mine';
+    optionMine.textContent = '我的评论';
+    
+    filterSelect.appendChild(optionAll);
+    filterSelect.appendChild(optionMine);
+
+    actionsRow.appendChild(filterSelect);
+    section.appendChild(actionsRow);
+
+    // Comment list container with max height for collapse
+    const commentsList = doc.createElement('div');
+    commentsList.id = 'paper-comments-list';
+    commentsList.style.cssText = 'display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;';
+
+    // Track expand/collapse state
+    let isExpanded = false;
+    const MAX_VISIBLE_COMMENTS = 3;
+
+    // Expand/collapse button (will be added/removed dynamically)
+    let expandBtn: HTMLButtonElement | null = null;
+
+    // Function to render filtered comments
+    const renderFilteredComments = (filter: string) => {
+      commentsList.innerHTML = '';
+      isExpanded = false;
       
-      // 递归渲染评论树
-      commentTree.forEach(rootComment => {
-        const commentNode = this.renderPaperCommentNode(
-          rootComment,
-          0,
-          doc,
-          userId,
-          paperId,
-          section
-        );
-        commentsList.appendChild(commentNode);
-      });
-      
-      section.appendChild(commentsList);
-    }
+      const filteredTree = filter === 'mine'
+        ? commentTree.filter(c => c.user_id === userId)
+        : commentTree;
+
+      // Update count badge
+      countBadge.textContent = String(filteredTree.length);
+
+      if (filteredTree.length === 0) {
+        const emptyMsg = doc.createElement('div');
+        emptyMsg.style.cssText = `
+          padding: 20px;
+          text-align: center;
+          color: #9ca3af;
+          font-size: 12px;
+        `;
+        emptyMsg.textContent = filter === 'mine' ? '你还没有发表评论' : '暂无评论，来发表第一条评论吧！';
+        commentsList.appendChild(emptyMsg);
+        // Remove expand button if exists
+        if (expandBtn && expandBtn.parentNode) {
+          expandBtn.parentNode.removeChild(expandBtn);
+          expandBtn = null;
+        }
+      } else {
+        // Render only first MAX_VISIBLE_COMMENTS or all if expanded
+        const visibleComments = filteredTree.slice(0, MAX_VISIBLE_COMMENTS);
+        const hiddenComments = filteredTree.slice(MAX_VISIBLE_COMMENTS);
+        
+        visibleComments.forEach(rootComment => {
+          const commentNode = this.renderPaperCommentNode(
+            rootComment,
+            0,
+            doc,
+            userId,
+            paperId,
+            section
+          );
+          commentsList.appendChild(commentNode);
+        });
+
+        // Add expand button if there are more comments
+        if (hiddenComments.length > 0) {
+          if (!expandBtn) {
+            expandBtn = doc.createElement('button');
+            expandBtn.style.cssText = `
+              padding: 8px 12px;
+              background: #f3f4f6;
+              border: 1px solid #e5e7eb;
+              border-radius: 4px;
+              font-size: 12px;
+              color: #374151;
+              cursor: pointer;
+              text-align: center;
+              transition: background 0.2s;
+              margin-top: 4px;
+              width: 100%;
+            `;
+            expandBtn.addEventListener('mouseenter', () => {
+              if (expandBtn) expandBtn.style.background = '#e5e7eb';
+            });
+            expandBtn.addEventListener('mouseleave', () => {
+              if (expandBtn) expandBtn.style.background = '#f3f4f6';
+            });
+          }
+          expandBtn.textContent = `展开更多 (${hiddenComments.length}条)`;
+          expandBtn.onclick = () => {
+            if (!isExpanded) {
+              // Expand: show all comments
+              // Remove the expand button first
+              if (expandBtn && expandBtn.parentNode) {
+                expandBtn.parentNode.removeChild(expandBtn);
+              }
+              hiddenComments.forEach(rootComment => {
+                const commentNode = this.renderPaperCommentNode(
+                  rootComment,
+                  0,
+                  doc,
+                  userId,
+                  paperId,
+                  section
+                );
+                commentsList.appendChild(commentNode);
+              });
+              // Re-append expand button at the end
+              if (expandBtn) {
+                expandBtn.textContent = '收起';
+                commentsList.appendChild(expandBtn);
+              }
+              isExpanded = true;
+            } else {
+              // Collapse: re-render only visible comments
+              renderFilteredComments(filter);
+            }
+          };
+          // Append expand button at the end of commentsList
+          commentsList.appendChild(expandBtn);
+        } else {
+          // Remove expand button if no hidden comments
+          if (expandBtn && expandBtn.parentNode) {
+            expandBtn.parentNode.removeChild(expandBtn);
+            expandBtn = null;
+          }
+        }
+      }
+    };
+
+    // Initial render
+    renderFilteredComments('all');
+
+    // Filter change handler
+    filterSelect.addEventListener('change', () => {
+      renderFilteredComments(filterSelect.value);
+    });
+
+    section.appendChild(commentsList);
 
     // 添加评论输入框
     const form = doc.createElement('div');
@@ -584,8 +951,8 @@ export class PaperEvaluationView {
     container.setAttribute('data-comment-id', comment.id);
     container.setAttribute('data-depth', depth.toString());
     container.style.cssText = `
-      margin-left: ${depth * 20}px;
-      ${depth > 0 ? 'border-left: 2px solid #e9ecef; padding-left: 8px;' : ''}
+      margin-left: ${depth * 12}px;
+      ${depth > 0 ? 'border-left: 2px solid #e9ecef; padding-left: 6px;' : ''}
       margin-bottom: ${depth > 0 ? '4px' : '8px'};
     `;
 

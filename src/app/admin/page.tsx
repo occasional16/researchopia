@@ -174,7 +174,7 @@ export default function AdminPage() {
         </a>
         
         <a 
-          href="/admin/plugin-version" 
+          href="/admin/version" 
           className="bg-gradient-to-r from-orange-600 to-pink-600 dark:from-orange-700 dark:to-pink-700 text-white rounded-lg p-6 shadow-md hover:shadow-lg transition-all"
         >
           <div className="flex items-center gap-3">
@@ -183,7 +183,7 @@ export default function AdminPage() {
             </svg>
             <div>
               <h3 className="text-lg font-semibold">版本控制</h3>
-              <p className="text-sm opacity-90">管理Zotero插件版本</p>
+              <p className="text-sm opacity-90">管理插件和扩展版本</p>
             </div>
           </div>
         </a>

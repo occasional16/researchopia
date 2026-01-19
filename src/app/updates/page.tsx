@@ -1,27 +1,67 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { createSupabaseClient } from '@/lib/supabase';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface VersionConfig {
   plugin_name: string;
   min_version: string;
   latest_version: string;
-  stable_version?: string; // 正式最新版本（对beta用户，latest_version是beta版，stable_version是正式版）
+  stable_version?: string;
   download_url: string;
   force_update: boolean;
   message: string;
   disabled_features: string[];
   enabled: boolean;
-  is_beta?: boolean; // 是否为灰度测试用户
-  beta_message?: string; // 灰度测试邀请信息
+  is_beta?: boolean;
+  beta_message?: string;
 }
 
-export default function UpdatesPage() {
+type ProductType = 'researchopia-zotero' | 'researchopia-extension';
+
+const PRODUCTS: { id: ProductType; name: string; icon: string; title: string; subtitle: string }[] = [
+  { 
+    id: 'researchopia-zotero', 
+    name: 'Zotero 插件', 
+    icon: '📚',
+    title: 'Researchopia Zotero 插件更新',
+    subtitle: '获取最新版本以享受更好的体验'
+  },
+  { 
+    id: 'researchopia-extension', 
+    name: '浏览器扩展', 
+    icon: '🌐',
+    title: 'Researchopia 浏览器扩展更新',
+    subtitle: '获取最新版本以享受更好的体验'
+  },
+];
+
+function UpdatesContent() {
+  const searchParams = useSearchParams();
+  const pluginParam = searchParams.get('plugin') as ProductType | null;
+  
+  const [activeProduct, setActiveProduct] = useState<ProductType>(
+    pluginParam && PRODUCTS.some(p => p.id === pluginParam) ? pluginParam : 'researchopia-zotero'
+  );
   const [config, setConfig] = useState<VersionConfig | null>(null);
   const [loading, setLoading] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userEmail, setUserEmail] = useState('');
+
+  const currentProduct = PRODUCTS.find(p => p.id === activeProduct)!;
+
+  // Feature name mapping for both products
+  const featureNames: Record<string, string> = {
+    'reading-session': '文献共读',
+    'paper-evaluation': '论文评价',
+    'quick-search': '快捷搜索',
+    'sidebar': '侧边栏',
+    'popup': '弹出窗口',
+    'annotation-sync': '批注同步',
+  };
 
   useEffect(() => {
     const supabase = createSupabaseClient();
@@ -30,9 +70,8 @@ export default function UpdatesPage() {
       return;
     }
 
-    // 获取版本配置的函数
-    const fetchConfig = async (email: string) => {
-      let apiUrl = '/api/config/version?plugin=researchopia-zotero';
+    const fetchConfig = async (email: string, product: ProductType) => {
+      let apiUrl = `/api/config/version?plugin=${product}`;
       if (email) {
         apiUrl += `&email=${encodeURIComponent(email)}`;
       }
@@ -42,7 +81,6 @@ export default function UpdatesPage() {
       setConfig(configData);
     };
 
-    // 获取当前登录用户的邮箱,通过Supabase客户端
     const fetchUserAndConfig = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -57,7 +95,7 @@ export default function UpdatesPage() {
           setUserEmail(email);
         }
         
-        await fetchConfig(email);
+        await fetchConfig(email, activeProduct);
       } catch (err) {
         console.error('Failed to fetch user or version config:', err);
       } finally {
@@ -65,10 +103,8 @@ export default function UpdatesPage() {
       }
     };
     
-    // 初始加载
     fetchUserAndConfig();
 
-    // 监听认证状态变化,登录/登出时自动更新
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('Auth state changed:', event);
       
@@ -83,15 +119,22 @@ export default function UpdatesPage() {
       setIsLoggedIn(loggedIn);
       setUserEmail(email);
       
-      // 重新获取配置
-      await fetchConfig(email);
+      await fetchConfig(email, activeProduct);
     });
 
-    // 清理订阅
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [activeProduct]);
+
+  const handleProductChange = (productId: ProductType) => {
+    setActiveProduct(productId);
+    setLoading(true);
+    // Update URL without navigation
+    const url = new URL(window.location.href);
+    url.searchParams.set('plugin', productId);
+    window.history.replaceState({}, '', url.toString());
+  };
 
   if (loading) {
     return (
@@ -116,50 +159,40 @@ export default function UpdatesPage() {
     );
   }
 
-  // 功能名称映射
-  const featureNames: Record<string, string> = {
-    'reading-session': '文献共读',
-    'paper-evaluation': '论文评价',
-    'quick-search': '快捷搜索'
-  };
-
-  // 解析Markdown格式的消息
-  const renderMessage = (message: string) => {
-    // 将Markdown链接转换为React元素
-    const parts = message.split(/(\[.*?\]\(.*?\))/g);
-    return parts.map((part, index) => {
-      const linkMatch = part.match(/\[([^\]]+)\]\(([^)]+)\)/);
-      if (linkMatch) {
-        return (
-          <a
-            key={index}
-            href={linkMatch[2]}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-600 hover:text-blue-800 underline font-medium"
-          >
-            {linkMatch[1]}
-          </a>
-        );
-      }
-      return <span key={index}>{part}</span>;
-    });
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 py-12 px-4">
       <div className="max-w-4xl mx-auto">
-        {/* 标题区域 */}
-        <div className="text-center mb-8">
-          <div className="text-6xl mb-4">🔔</div>
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">
-            Researchopia Zotero 插件更新
-          </h1>
-          <p className="text-lg text-gray-600">获取最新版本以享受更好的体验</p>
+        {/* Product Tabs */}
+        <div className="bg-white rounded-lg shadow-sm mb-6 overflow-hidden">
+          <div className="flex border-b border-gray-200">
+            {PRODUCTS.map((product) => (
+              <button
+                key={product.id}
+                onClick={() => handleProductChange(product.id)}
+                className={`flex-1 px-6 py-4 text-center font-medium transition-colors ${
+                  activeProduct === product.id
+                    ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50'
+                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                <span className="text-2xl mr-2">{product.icon}</span>
+                {product.name}
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* 登录提示卡片(未登录时显示) */}
-        {!isLoggedIn && (
+        {/* Title Area */}
+        <div className="text-center mb-8">
+          <div className="text-6xl mb-4">{currentProduct.icon === '📚' ? '🔔' : '🌐'}</div>
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">
+            {currentProduct.title}
+          </h1>
+          <p className="text-lg text-gray-600">{currentProduct.subtitle}</p>
+        </div>
+
+        {/* Login prompt (shown when not logged in, Zotero only) */}
+        {!isLoggedIn && activeProduct === 'researchopia-zotero' && (
           <div className="bg-blue-50 border-2 border-blue-300 rounded-lg shadow-lg mb-6 overflow-hidden">
             <div className="bg-gradient-to-r from-blue-400 to-indigo-400 text-white p-6">
               <h2 className="text-2xl font-bold flex items-center gap-2">
@@ -175,8 +208,8 @@ export default function UpdatesPage() {
           </div>
         )}
         
-        {/* 灰度测试邀请卡片(仅登录的测试用户可见) */}
-        {config.is_beta && config.beta_message && isLoggedIn && (
+        {/* Beta invitation (Zotero only for now) */}
+        {config.is_beta && config.beta_message && isLoggedIn && activeProduct === 'researchopia-zotero' && (
           <div className="bg-yellow-50 border-2 border-yellow-300 rounded-lg shadow-lg mb-6 overflow-hidden">
             <div className="bg-gradient-to-r from-yellow-400 to-orange-400 text-white p-6">
               <h2 className="text-2xl font-bold flex items-center gap-2">
@@ -198,7 +231,7 @@ export default function UpdatesPage() {
           </div>
         )}
 
-        {/* 版本信息卡片 */}
+        {/* Version Info Card */}
         <div className="bg-white rounded-lg shadow-lg mb-6 overflow-hidden">
           <div className="bg-gradient-to-r from-blue-500 to-purple-500 text-white p-6">
             <h2 className="text-2xl font-bold flex items-center gap-2">
@@ -235,19 +268,34 @@ export default function UpdatesPage() {
           </div>
         </div>
 
-        {/* 更新说明卡片 */}
+        {/* Download Button */}
+        {/* {config.download_url && (
+          <div className="bg-white rounded-lg shadow-lg mb-6 p-6 text-center">
+            <a
+              href={config.download_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 bg-blue-600 text-white px-8 py-4 rounded-lg font-medium hover:bg-blue-700 transition-colors text-lg"
+            >
+              <span>⬇️</span>
+              {activeProduct === 'researchopia-extension' ? '前往商店下载' : '下载最新版本'}
+            </a>
+          </div>
+        )} */}
+
+        {/* Update Notes */}
         <div className="bg-white rounded-lg shadow-lg mb-6">
           <div className="p-6 border-b">
             <h2 className="text-2xl font-bold">更新说明</h2>
           </div>
-          <div className="p-6">
-            <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">
-              {renderMessage(config.message)}
-            </p>
+          <div className="p-6 text-gray-700 markdown-content markdown-content-compact leading-relaxed">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {config.message || '*暂无更新说明*'}
+            </ReactMarkdown>
           </div>
         </div>
 
-        {/* 禁用功能提示 */}
+        {/* Disabled Features */}
         {config.disabled_features && config.disabled_features.length > 0 && (
           <div className="mt-6 bg-yellow-50 border-2 border-yellow-200 rounded-lg shadow-lg">
             <div className="p-6 border-b border-yellow-200">
@@ -268,5 +316,20 @@ export default function UpdatesPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function UpdatesPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">加载中...</p>
+        </div>
+      </div>
+    }>
+      <UpdatesContent />
+    </Suspense>
   );
 }

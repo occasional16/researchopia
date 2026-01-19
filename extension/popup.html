@@ -3,242 +3,130 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>研学港</title>
-  <style>
-    body {
-      width: 300px;
-      min-height: 400px;
-      margin: 0;
-      padding: 16px;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-    }
-
-    .header {
-      text-align: center;
-      margin-bottom: 20px;
-    }
-
-    .logo {
-      width: 48px;
-      height: 48px;
-      background: rgba(255, 255, 255, 0.2);
-      border-radius: 12px;
-      margin: 0 auto 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 24px;
-      font-weight: bold;
-    }
-
-    .title {
-      font-size: 20px;
-      font-weight: bold;
-      margin-bottom: 4px;
-    }
-
-    .subtitle {
-      font-size: 12px;
-      opacity: 0.8;
-    }
-
-    .status {
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 8px;
-      padding: 12px;
-      margin-bottom: 16px;
-    }
-
-    .status-item {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 8px;
-      font-size: 14px;
-    }
-
-    .status-item:last-child {
-      margin-bottom: 0;
-    }
-
-    .doi-info {
-      background: rgba(255, 255, 255, 0.15);
-      border-radius: 8px;
-      padding: 12px;
-      margin-bottom: 16px;
-      word-break: break-all;
-    }
-
-    .doi-label {
-      font-size: 12px;
-      opacity: 0.8;
-      margin-bottom: 4px;
-    }
-
-    .doi-value {
-      font-size: 14px;
-      font-weight: 500;
-    }
-
-    .actions {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .btn {
-      padding: 12px 16px;
-      border: none;
-      border-radius: 8px;
-      font-size: 14px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.2s;
-      text-decoration: none;
-      text-align: center;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-    }
-
-    .btn-primary {
-      background: rgba(255, 255, 255, 0.9);
-      color: #4c1d95;
-    }
-
-    .btn-primary:hover {
-      background: white;
-      transform: translateY(-1px);
-    }
-
-    .btn-secondary {
-      background: rgba(255, 255, 255, 0.2);
-      color: white;
-      border: 1px solid rgba(255, 255, 255, 0.3);
-    }
-
-    .btn-secondary:hover {
-      background: rgba(255, 255, 255, 0.3);
-    }
-
-    .btn:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-      transform: none !important;
-    }
-
-    .spinner {
-      width: 16px;
-      height: 16px;
-      border: 2px solid rgba(255, 255, 255, 0.3);
-      border-top: 2px solid white;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-    }
-
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-
-    .hidden {
-      display: none;
-    }
-
-    .copy-btn {
-      padding: 6px;
-      background: rgba(255, 255, 255, 0.2);
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      border-radius: 6px;
-      color: white;
-      cursor: pointer;
-      transition: all 0.2s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .copy-btn:hover {
-      background: rgba(255, 255, 255, 0.3);
-      transform: scale(1.05);
-    }
-
-    .copy-btn:active {
-      transform: scale(0.95);
-    }
-
-    .copy-btn.copied {
-      background: rgba(34, 197, 94, 0.3);
-      border-color: rgba(34, 197, 94, 0.5);
-    }
-
-    .footer {
-      margin-top: 16px;
-      text-align: center;
-      font-size: 12px;
-      opacity: 0.7;
-    }
-  </style>
+  <title>研学港 Researchopia</title>
+  <link rel="stylesheet" href="styles/popup.css">
 </head>
 <body>
-  <div class="header">
-    <div class="logo">研</div>
-    <div class="title">研学港 Researchopia</div>
-    <div class="subtitle">版本 v0.1.1 | 研学并进，智慧共享</div>
-  </div>
-
-  <div class="status">
-    <div class="status-item">
-      <span>当前页面：</span>
-      <span id="pageStatus">检测中...</span>
+  <!-- Compact Header (same as sidebar) -->
+  <header class="header">
+    <div class="header-row">
+      <div class="brand" title="点击访问研学港首页">
+        <img src="icons/logo-main.svg" alt="研学港 Researchopia" class="logo-img" title="研学港 Researchopia">
+        <span class="brand-name">研学港</span>
+        <span class="version-badge" id="versionBadge" title="研学港 Researchopia"></span>
+      </div>
+      <div class="header-actions">
+        <!-- User Info (shown when logged in) -->
+        <div class="header-user hidden" id="headerUser">
+          <div class="header-avatar" id="headerAvatar" title="已登录">?</div>
+          <span class="header-username" id="headerUsername" title="点击查看个人主页">用户</span>
+        </div>
+        <!-- Open Sidebar Button -->
+        <button class="icon-btn" id="headerSidebarBtn" title="打开侧边栏">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2"/>
+            <path d="M9 3v18"/>
+          </svg>
+        </button>
+        <!-- Login Button (shown when not logged in) -->
+        <button class="header-login-btn hidden" id="headerLoginBtn" title="登录">登录</button>
+        <button class="icon-btn" id="settingsBtn" title="打开侧边栏设置">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+        </button>
+      </div>
     </div>
-    <div class="status-item">
-      <span>DOI检测：</span>
-      <span id="doiStatus">扫描中...</span>
-    </div>
-  </div>
-
-  <div id="doiInfo" class="doi-info hidden">
-    <div class="doi-label">检测到的DOI：</div>
-    <div style="display: flex; align-items: center; gap: 8px;">
-      <div id="doiValue" class="doi-value" style="flex: 1;"></div>
-      <button id="copyDOI" class="copy-btn" title="复制DOI">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-        </svg>
-      </button>
-    </div>
-  </div>
-
-  <div class="actions">
-    <button id="toggleFloat" class="btn btn-primary">
-      <span>📌</span>
-      <span id="floatText">显示浮动图标</span>
-    </button>
     
-    <button id="searchBtn" class="btn btn-primary hidden">
-      <span>🔍</span>
-      <span>在研学港中搜索</span>
-    </button>
+    <!-- Page Info -->
+    <div class="page-info">
+      <div class="page-info-header">
+        <div class="page-title" id="pageTitle" title="点击复制标题">加载中...</div>
+        <button class="page-detail-btn" id="pageDetailBtn" title="查看网页详情（研学港 Researchopia）">
+          <span>详情</span>
+          <span>→</span>
+        </button>
+      </div>
+      <div class="page-url" id="pageUrl" title="点击复制URL">
+        <span>🔗</span>
+        <span id="pageHost">-</span>
+      </div>
+    </div>
+    
+    <!-- Paper Info (shown when DOI detected) -->
+    <div class="paper-info hidden" id="paperInfo">
+      <div class="paper-info-header">
+        <div class="paper-doi" id="paperDoi" title="点击复制DOI">
+          <span class="doi-label">DOI:</span>
+          <span class="doi-value" id="doiValue">-</span>
+        </div>
+        <button class="paper-detail-btn" id="paperDetailBtn" title="查看论文详情（研学港 Researchopia）">
+          <span>论文详情</span>
+          <span>→</span>
+        </button>
+      </div>
+    </div>
+  </header>
 
-    <button id="openSidebar" class="btn btn-secondary">
-      <span>📖</span>
-      <span>打开研学港侧边栏</span>
-    </button>
+  <!-- Main content (Bookmark panel) -->
+  <div class="main-content">
+    <!-- Bookmark panel -->
+    <div id="bookmarkPanel" class="bookmark-panel">
+      <!-- Login prompt (shown when not logged in) -->
+      <div id="loginPrompt" class="login-prompt hidden">
+        <p>请先登录以使用收藏功能</p>
+        <button id="loginBtn" class="login-btn">登录</button>
+      </div>
 
-    <button id="openWebsite" class="btn btn-secondary">
-      <span>🌐</span>
-      <span>访问研学港网站</span>
-    </button>
+      <!-- Bookmark form (shown when logged in) -->
+      <div id="bookmarkForm" class="bookmark-form hidden">
+        <!-- Already bookmarked status (shown at top when bookmarked) -->
+        <div id="bookmarkSavedInfo" class="bookmark-status-banner hidden">
+          <div class="status-icon">✅</div>
+          <div class="status-text">
+            <span id="bookmarkStatusText">已收藏</span>
+            <small id="bookmarkStatusHint">可以添加到其他文件夹</small>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">文件夹</label>
+          <div id="foldersLoading" class="loading-text" style="display: none;">加载中...</div>
+          <select id="folderSelect" class="form-select">
+            <option value="">📁 未分类</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">标题</label>
+          <input type="text" id="customTitleInput" class="form-input" placeholder="自定义标题...">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">备注（可选）</label>
+          <textarea id="noteInput" class="form-textarea" placeholder="添加备注..." rows="2"></textarea>
+        </div>
+
+        <button id="saveBookmarkBtn" class="bookmark-save-btn">
+          <span id="saveBookmarkText">⭐ 收藏到研学港</span>
+        </button>
+
+        <button id="viewBookmarksBtn" class="view-bookmarks-btn">
+          📚 查看我的收藏夹
+        </button>
+      </div>
+    </div>
   </div>
 
   <div class="footer">
-    版本 v0.1.1 | 研学并进，智慧共享
+    研学并进，智慧共享
   </div>
 
+  <!-- Toast message -->
+  <div id="toast" class="toast"></div>
+
+  <script src="utils/urlNormalizer.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>

@@ -13,20 +13,19 @@ export function getPaperRoute(paperId: string): string {
     return '/papers'
   }
   
-  // 如果是DOI格式,编码后使用
-  if (paperId.includes('/')) {
-    return `/papers/${encodeURIComponent(paperId)}`
-  }
-  
-  // 否则直接使用ID
+  // Both UUID and DOI can be used directly in the path
+  // Catch-all route /papers/[...id] handles DOIs like "10.1038/xxx"
   return `/papers/${paperId}`
 }
 
 /**
  * 从路由参数中解析论文ID或DOI
- * @param param - 路由参数
+ * @param param - 路由参数 (数组或字符串)
  * @returns 解码后的论文ID或DOI
  */
-export function parsePaperParam(param: string): string {
+export function parsePaperParam(param: string | string[]): string {
+  if (Array.isArray(param)) {
+    return param.join('/')
+  }
   return decodeURIComponent(param)
 }

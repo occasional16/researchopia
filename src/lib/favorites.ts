@@ -105,10 +105,11 @@ export async function addToFavorites(userId: string, paperId: string): Promise<b
     if (!supabase) throw new Error('Database not available')
 
     const { error } = await (supabase as any)
-      .from('paper_favorites')
+      .from('paper_bookmark_items')
       .insert({
         user_id: userId,
-        paper_id: paperId
+        paper_id: paperId,
+        position: 0
       })
 
     if (error) {
@@ -136,7 +137,7 @@ export async function removeFromFavorites(userId: string, paperId: string): Prom
     if (!supabase) throw new Error('Database not available')
 
     const { error } = await supabase
-      .from('paper_favorites')
+      .from('paper_bookmark_items')
       .delete()
       .eq('user_id', userId)
       .eq('paper_id', paperId)
@@ -177,7 +178,7 @@ export async function isFavorited(userId: string, paperId: string): Promise<bool
     if (!supabase) return false
 
     const { data, error } = await supabase
-      .from('paper_favorites')
+      .from('paper_bookmark_items')
       .select('id')
       .eq('user_id', userId)
       .eq('paper_id', paperId)
@@ -203,7 +204,7 @@ export async function getUserFavorites(userId: string): Promise<PaperWithFavorit
     if (!supabase) return []
 
     const { data, error } = await supabase
-      .from('paper_favorites')
+      .from('paper_bookmark_items')
       .select(`
         *,
         papers (
@@ -244,7 +245,7 @@ export async function getFavoriteCount(paperId: string): Promise<number> {
     if (!supabase) return 0
 
     const { count, error } = await supabase
-      .from('paper_favorites')
+      .from('paper_bookmark_items')
       .select('*', { count: 'exact', head: true })
       .eq('paper_id', paperId)
 
@@ -271,7 +272,7 @@ export async function getPapersWithFavoriteStatus(
     if (!supabase) return papers.map(paper => ({ ...paper, is_favorited: false }))
 
     const { data: favorites, error } = await supabase
-      .from('paper_favorites')
+      .from('paper_bookmark_items')
       .select('paper_id')
       .eq('user_id', userId)
       .in('paper_id', papers.map(p => p.id))

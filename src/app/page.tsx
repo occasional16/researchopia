@@ -2,41 +2,14 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Search, TrendingUp, Users, BookOpen, Star, MessageCircle, Eye } from 'lucide-react'
-import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
-import ReactMarkdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
-import rehypeRaw from 'rehype-raw'
 import { useLanguage } from '@/contexts/LanguageContext'
-import BrandLogo from '@/components/ui/BrandLogo'
 import { useSmartSearch } from '@/hooks/useSmartSearch'
 import { useAuthenticatedFetch } from '@/hooks/useAuthenticatedFetch'
 import { useScrollRestoration } from '@/hooks/useScrollRestoration'
 import NetworkOptimizer from '@/components/NetworkOptimizer'
-import AnnouncementForm from '@/components/AnnouncementForm'
 import Footer from '@/components/Footer'
-
-// 日期格式化工具函数（避免hydration错误）
-function formatDate(dateString: string): string {
-  const date = new Date(dateString)
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  const hours = String(date.getHours()).padStart(2, '0')
-  const minutes = String(date.getMinutes()).padStart(2, '0')
-
-  return `${year}-${month}-${day} ${hours}:${minutes}`
-}
-
-function formatDateOnly(dateString: string): string {
-  const date = new Date(dateString)
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-
-  return `${year}-${month}-${day}`
-}
+import { HeroSection, AnnouncementSection, HotContent } from '@/components/home'
 
 interface SiteStats {
   totalPapers: number
@@ -128,14 +101,8 @@ export default function HomePage() {
   })
   const [recentComments, setRecentComments] = useState<RecentComment[]>([])
   const [announcements, setAnnouncements] = useState<Announcement[]>([])
-  const [currentAnnouncement, setCurrentAnnouncement] = useState<Announcement | null>(null)
   const [loading, setLoading] = useState(true)
   const [dataError, setDataError] = useState<string | null>(null)
-  const [showAnnouncementForm, setShowAnnouncementForm] = useState(false)
-  const [showAnnouncementHistory, setShowAnnouncementHistory] = useState(false)
-  const [editingAnnouncement, setEditingAnnouncement] = useState<Announcement | null>(null)
-  const [refreshingComments, setRefreshingComments] = useState(false) // 手动刷新状态
-  const [expandedAnnouncement, setExpandedAnnouncement] = useState(false) // 公告展开状态，默认折叠
 
   // 访问跟踪函数
   const trackVisit = async () => {
@@ -191,7 +158,6 @@ export default function HomePage() {
           const parsed = JSON.parse(cachedAnnouncements)
           if (Date.now() - parsed.timestamp < 60000) { // 公告1分钟缓存
             setAnnouncements(parsed.data)
-            setCurrentAnnouncement(parsed.data[0] || null)
           }
         }
       } catch (e) {
@@ -292,7 +258,6 @@ export default function HomePage() {
         // 处理公告数据
         if (announcementsResponse.status === 'fulfilled' && announcementsResponse.value && announcementsResponse.value.length > 0) {
           setAnnouncements(announcementsResponse.value)
-          setCurrentAnnouncement(announcementsResponse.value[0])
           // 缓存到localStorage
           localStorage.setItem('homepageAnnouncements', JSON.stringify({
             data: announcementsResponse.value,
@@ -302,7 +267,6 @@ export default function HomePage() {
           // 如果没有缓存且API失败，设置空数组
           if (!localStorage.getItem('homepageAnnouncements')) {
             setAnnouncements([])
-            setCurrentAnnouncement(null)
           }
         }
 
@@ -353,42 +317,6 @@ export default function HomePage() {
     return () => clearInterval(interval)
   }, [])
 
-  // 手动刷新最新评论
-  const refreshComments = async () => {
-    if (refreshingComments) return // 防止重复点击
-    
-    setRefreshingComments(true)
-    try {
-      // 清除localStorage缓存
-      localStorage.removeItem('homepageComments')
-      
-      // 强制重新获取数据,绕过缓存
-      const response = await fetch('/api/papers/recent-comments?limit=5&_t=' + Date.now(), {
-        headers: { 
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-cache, no-store, must-revalidate'
-        }
-      })
-      
-      if (response.ok) {
-        const data = await response.json()
-        if (data.success && data.data) {
-          setRecentComments(data.data)
-          // 更新缓存
-          localStorage.setItem('homepageComments', JSON.stringify({
-            data: data.data,
-            timestamp: Date.now()
-          }))
-        }
-      }
-    } catch (error) {
-      console.error('Failed to refresh comments:', error)
-    } finally {
-      // 延迟恢复按钮状态,提供视觉反馈
-      setTimeout(() => setRefreshingComments(false), 1000)
-    }
-  }
-
   // 检测URL参数中的DOI并自动填入搜索框
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -436,26 +364,14 @@ export default function HomePage() {
       const data = await response.json()
       if (data.success && data.data) {
         setAnnouncements(data.data)
-        setCurrentAnnouncement(data.data[0] || null)
       }
     } catch (error) {
       console.error('Error refreshing announcements:', error)
     }
   }
 
-  // 处理编辑公告
-  const handleEditAnnouncement = (announcement: Announcement) => {
-    setEditingAnnouncement(announcement)
-    setShowAnnouncementForm(true)
-    setShowAnnouncementHistory(false)
-  }
-
   // 处理删除公告
   const handleDeleteAnnouncement = async (id: string) => {
-    if (!confirm('确定要删除这个公告吗？')) {
-      return
-    }
-
     try {
       const response = await authenticatedFetch(`/api/announcements?id=${id}`, {
         method: 'DELETE',
@@ -482,11 +398,11 @@ export default function HomePage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-5">
       {/* Error Messages */}
       {dataError && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
-          <p className="font-medium">⚠️ {dataError}</p>
+        <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-red-700">
+          <p className="font-medium text-sm">⚠️ {dataError}</p>
           <button 
             onClick={() => window.location.reload()} 
             className="mt-2 px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-sm"
@@ -508,504 +424,31 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* Hero Section */}
-      <div className="text-center py-12 bg-gradient-to-r from-purple-600 to-blue-700 rounded-lg text-white">
-        {/* Logo展示 */}
-        <div className="mb-6">
-          <BrandLogo 
-            size={130} 
-            variant="icon-only" 
-            theme="gradient" 
-            animated={true}
-            className="mx-auto"
-          />
-        </div>
-        <h1 className="text-5xl font-bold mb-4">
-          {t('site.title', '研学港 Researchopia')}
-        </h1>
-        <p className="text-xl mb-8 opacity-90">
-          {t('site.subtitle', '研学并进，智慧共享')} | {t('site.subtitle') === '研学并进，智慧共享' ? 'Where Research Meets Community' : '研学并进，智慧共享'}
-        </p>
-        
-        {/* Search Bar */}
-        <div className="max-w-2xl mx-auto">
-          <form onSubmit={handleSearch} className="relative">
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={t('home.search.placeholder', '搜索论文标题、作者、DOI或关键词...')}
-              disabled={searchStatus === 'checking' || searchStatus === 'adding' || searchStatus === 'redirecting'}
-              className="w-full pl-12 pr-32 py-4 text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 rounded-lg text-lg focus:outline-none focus:ring-2 focus:ring-purple-300 dark:focus:ring-purple-600 disabled:bg-gray-100 dark:disabled:bg-gray-700 transition-colors"
-            />
-            <Search className="absolute left-4 top-4 h-6 w-6 text-gray-400 dark:text-gray-500" />
-            <button
-              type="submit"
-              disabled={searchStatus !== 'idle' || !searchQuery.trim()}
-              className={`absolute right-2 top-2 px-6 py-2 rounded-md transition-all duration-200 flex items-center gap-2 ${
-                searchStatus !== 'idle'
-                  ? 'bg-gray-400 text-white cursor-not-allowed'
-                  : !searchQuery.trim() 
-                    ? 'bg-[#155DFC] text-white hover:bg-[#1347CC] cursor-not-allowed opacity-75'
-                    : detectInputType(searchQuery) === 'doi'
-                      ? 'bg-green-500 text-white hover:bg-green-600 shadow-md hover:shadow-lg transform hover:scale-105'
-                      : 'bg-purple-600 text-white hover:bg-purple-700 shadow-md hover:shadow-lg transform hover:scale-105'
-              }`}
-            >
-              {searchStatus === 'idle' ? (
-                detectInputType(searchQuery) === 'doi' ? (
-                  <>
-                    <BookOpen className="w-4 h-4" />
-                    {t('button.search', '查找/添加论文')}
-                  </>
-                ) : (
-                  t('home.search.button', '智能搜索')
-                )
-              ) : (
-                <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  {t('loading', '处理中')}
-                </>
-              )}
-            </button>
-          </form>
-          
-          {/* 智能提示和处理状态 */}
-          <div className="mt-3 text-center min-h-[1.5rem]">
-            {processingMessage ? (
-              <p className="text-sm text-white/90 font-medium animate-pulse">
-                {processingMessage}
-              </p>
-            ) : searchQuery.trim() ? (
-              <p className="text-sm text-white/80">
-                {detectInputType(searchQuery) === 'doi' 
-                  ? '🎯 ' + t('home.search.tip.doi', '检测到DOI格式 - 将自动查找或添加论文')
-                  : '💡 ' + t('home.search.tip.keyword', '支持关键词搜索，或直接输入DOI自动添加论文')
-                }
-              </p>
-            ) : (
-              <p className="text-sm text-white/60">
-                💭 {t('home.search.tip.default', '输入论文标题、作者、DOI或关键词开始智能搜索')}
-              </p>
-            )}
-          </div>
-        </div>
+      {/* Hero Section with Inline Stats */}
+      <HeroSection
+        searchQuery={searchQuery}
+        searchStatus={searchStatus}
+        processingMessage={processingMessage}
+        onSearchChange={setSearchQuery}
+        onSearch={handleSearch}
+        detectInputType={detectInputType}
+        stats={stats}
+        statsLoading={loading}
+      />
 
-        {/* Removed center auth buttons - keep only header auth */}
-      </div>
+      {/* Announcement Section */}
+      <AnnouncementSection
+        announcements={announcements}
+        isAdmin={!!(profile && profile.role === 'admin')}
+        onDelete={handleDeleteAnnouncement}
+        onRefresh={refreshAnnouncements}
+      />
 
-      {/* Stats Section - 响应式紧凑布局 */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6">
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900 p-4 md:p-6 text-center transition-colors">
-          <BookOpen className="h-6 w-6 md:h-8 md:w-8 text-blue-600 dark:text-blue-400 mx-auto mb-2" />
-          <div className="text-lg md:text-2xl font-bold text-gray-900 dark:text-gray-100">{loading ? '...' : stats.totalPapers}</div>
-          <div className="text-xs md:text-sm text-gray-600 dark:text-gray-400">{t('stats.papers', '学术论文')}</div>
-        </div>
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900 p-4 md:p-6 text-center transition-colors">
-          <Users className="h-6 w-6 md:h-8 md:w-8 text-green-600 dark:text-green-400 mx-auto mb-2" />
-          <div className="text-lg md:text-2xl font-bold text-gray-900 dark:text-gray-100">{loading ? '...' : stats.totalUsers}</div>
-          <div className="text-xs md:text-sm text-gray-600 dark:text-gray-400">{t('stats.users', '注册用户')}</div>
-        </div>
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900 p-4 md:p-6 text-center transition-colors">
-          <Eye className="h-6 w-6 md:h-8 md:w-8 text-purple-600 dark:text-purple-400 mx-auto mb-2" />
-          <div className="text-lg md:text-2xl font-bold text-gray-900 dark:text-gray-100">{loading ? '...' : stats.totalVisits}</div>
-          <div className="text-xs md:text-sm text-gray-600 dark:text-gray-400">{t('stats.visits', '总访问量')}</div>
-        </div>
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900 p-4 md:p-6 text-center transition-colors">
-          <TrendingUp className="h-6 w-6 md:h-8 md:w-8 text-orange-600 dark:text-orange-400 mx-auto mb-2" />
-          <div className="text-lg md:text-2xl font-bold text-gray-900 dark:text-gray-100">{loading ? '...' : stats.todayVisits}</div>
-          <div className="text-xs md:text-sm text-gray-600 dark:text-gray-400">{t('stats.todayVisits', '今日访问')}</div>
-        </div>
-      </div>
-
-        {/* Quick Links 动态流 等待优化后再实现*/}
-        {/* {isAuthenticated && (
-          <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg shadow-lg p-6 text-white">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-xl font-bold mb-2">📰 动态流</h3>
-                <p className="text-white/90">查看你关注的用户的最新学术动态</p>
-              </div>
-              <Link
-                href="/feed"
-                className="px-6 py-3 bg-white text-blue-600 rounded-lg hover:bg-blue-50 transition-all font-semibold shadow-md hover:shadow-lg flex items-center gap-2"
-              >
-                <TrendingUp className="w-5 h-5" />
-                查看动态
-              </Link>
-            </div>
-          </div>
-        )}     */}
-
-      {/* Current Announcement - 只展示最新一条 */}
-      {currentAnnouncement && (
-        <div
-          className={`rounded-lg shadow-md border-l-4 p-4 transition-colors ${
-            currentAnnouncement.type === 'info' ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-400 dark:border-blue-600' :
-            currentAnnouncement.type === 'warning' ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-400 dark:border-yellow-600' :
-            currentAnnouncement.type === 'success' ? 'bg-green-50 dark:bg-green-900/20 border-green-400 dark:border-green-600' :
-            currentAnnouncement.type === 'error' ? 'bg-red-50 dark:bg-red-900/20 border-red-400 dark:border-red-600' :
-            'bg-gray-50 dark:bg-gray-800 border-gray-400 dark:border-gray-600'
-          }`}
-        >
-          <div>
-            <div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    currentAnnouncement.type === 'info' ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-200' :
-                    currentAnnouncement.type === 'warning' ? 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-200' :
-                    currentAnnouncement.type === 'success' ? 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-200' :
-                    currentAnnouncement.type === 'error' ? 'bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-200' :
-                    'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200'
-                  }`}>
-                    📢 最新公告
-                  </div>
-                  <h3 className="ml-3 text-lg font-semibold text-gray-900 dark:text-gray-100">
-                    {currentAnnouncement.title}
-                  </h3>
-                </div>
-                <div className="flex items-center gap-2">
-                  {/* 展开/收起按钮 */}
-                  <button
-                    onClick={() => setExpandedAnnouncement(!expandedAnnouncement)}
-                    className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-300 hover:underline"
-                  >
-                    {expandedAnnouncement ? '收起 ▲' : '展开 ▼'}
-                  </button>
-                  {/* 查看历史按钮 */}
-                  {announcements.length > 1 && (
-                    <button
-                      onClick={() => setShowAnnouncementHistory(!showAnnouncementHistory)}
-                      className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline flex items-center gap-1"
-                    >
-                      📜 查看历史公告 ({announcements.length - 1})
-                    </button>
-                  )}
-                </div>
-              </div>
-              <div 
-                className={`mt-2 text-gray-700 dark:text-gray-300 markdown-content transition-all duration-300 ${!expandedAnnouncement ? 'max-h-24 overflow-hidden relative cursor-pointer' : ''}`}
-                style={{ fontSize: '15px' }}
-                onClick={() => !expandedAnnouncement && setExpandedAnnouncement(true)}
-              >
-                <ReactMarkdown 
-                  remarkPlugins={[remarkGfm]}
-                  rehypePlugins={[rehypeRaw]}
-                  components={{
-                    a: ({ node, href, ...props }) => {
-                      // Anchor links (starting with #) should not open in new tab
-                      if (href?.startsWith('#')) {
-                        return <a href={href} {...props} className="text-blue-600 hover:underline" onClick={(e) => e.stopPropagation()} />
-                      }
-                      // External links open in new tab
-                      return <a href={href} {...props} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} />
-                    }
-                  }}
-                >
-                  {currentAnnouncement.content}
-                </ReactMarkdown>
-                {!expandedAnnouncement && (
-                  <div className={`absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t to-transparent pointer-events-none ${
-                    currentAnnouncement.type === 'info' ? 'from-blue-50 dark:from-blue-900/20' :
-                    currentAnnouncement.type === 'warning' ? 'from-yellow-50 dark:from-yellow-900/20' :
-                    currentAnnouncement.type === 'success' ? 'from-green-50 dark:from-green-900/20' :
-                    currentAnnouncement.type === 'error' ? 'from-red-50 dark:from-red-900/20' :
-                    'from-gray-50 dark:from-gray-800'
-                  }`}></div>
-                )}
-              </div>
-              <div className="mt-3 flex justify-between items-center">
-                <div className="text-sm text-gray-500 dark:text-gray-400">
-                  发布时间: {formatDate(currentAnnouncement.created_at)}
-                  {currentAnnouncement.created_by && (
-                    <span className="ml-4">发布者: {currentAnnouncement.created_by}</span>
-                  )}
-                </div>
-                {profile && profile.role === 'admin' && (
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={() => handleEditAnnouncement(currentAnnouncement)}
-                      className="px-3 py-1 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded transition-colors"
-                    >
-                      ✏️ 编辑
-                    </button>
-                    <button
-                      onClick={() => handleDeleteAnnouncement(currentAnnouncement.id)}
-                      className="px-3 py-1 text-sm text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 hover:bg-red-100 dark:hover:bg-red-900/30 rounded transition-colors"
-                    >
-                      🗑️ 删除
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Announcement History Modal */}
-      {showAnnouncementHistory && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-70 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[80vh] overflow-hidden flex flex-col">
-            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">📜 公告历史记录</h2>
-              <button
-                onClick={() => setShowAnnouncementHistory(false)}
-                className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 text-2xl leading-none"
-              >
-                ×
-              </button>
-            </div>
-            <div className="flex-1 overflow-y-auto p-6">
-              <div className="space-y-4">
-                {announcements.map((announcement, index) => (
-                  <div
-                    key={announcement.id}
-                    className={`rounded-lg border-l-4 p-4 ${
-                      announcement.type === 'info' ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-400 dark:border-blue-600' :
-                      announcement.type === 'warning' ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-400 dark:border-yellow-600' :
-                      announcement.type === 'success' ? 'bg-green-50 dark:bg-green-900/20 border-green-400 dark:border-green-600' :
-                      announcement.type === 'error' ? 'bg-red-50 dark:bg-red-900/20 border-red-400 dark:border-red-600' :
-                      'bg-gray-50 dark:bg-gray-700 border-gray-400 dark:border-gray-600'
-                    }`}
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center">
-                          <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            announcement.type === 'info' ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-200' :
-                            announcement.type === 'warning' ? 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-200' :
-                            announcement.type === 'success' ? 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-200' :
-                            announcement.type === 'error' ? 'bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-200' :
-                            'bg-gray-100 dark:bg-gray-600 text-gray-800 dark:text-gray-200'
-                          }`}>
-                            {index === 0 ? '📢 最新' : `#${index + 1}`}
-                          </div>
-                          <h3 className="ml-3 text-lg font-semibold text-gray-900 dark:text-gray-100">
-                            {announcement.title}
-                          </h3>
-                        </div>
-                        <div className="mt-2 text-gray-700 dark:text-gray-300 markdown-content">
-                          <ReactMarkdown 
-                            remarkPlugins={[remarkGfm]}
-                            rehypePlugins={[rehypeRaw]}
-                            components={{
-                              a: ({ node, ...props }) => (
-                                <a {...props} target="_blank" rel="noopener noreferrer" />
-                              )
-                            }}
-                          >
-                            {announcement.content}
-                          </ReactMarkdown>
-                        </div>
-                        <div className="mt-3 flex justify-between items-center">
-                          <div className="text-sm text-gray-500 dark:text-gray-400">
-                            发布时间: {formatDate(announcement.created_at)}
-                            {announcement.created_by && (
-                              <span className="ml-4">发布者: {announcement.created_by}</span>
-                            )}
-                          </div>
-                          {profile && profile.role === 'admin' && (
-                            <div className="flex space-x-2">
-                              <button
-                                onClick={() => handleEditAnnouncement(announcement)}
-                                className="px-3 py-1 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded transition-colors"
-                              >
-                                ✏️ 编辑
-                              </button>
-                              <button
-                                onClick={() => handleDeleteAnnouncement(announcement.id)}
-                                className="px-3 py-1 text-sm text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 hover:bg-red-100 dark:hover:bg-red-900/30 rounded transition-colors"
-                              >
-                                🗑️ 删除
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
-              <button
-                onClick={() => setShowAnnouncementHistory(false)}
-                className="w-full px-4 py-2 bg-gray-600 dark:bg-gray-700 text-white rounded-lg hover:bg-gray-700 dark:hover:bg-gray-600 transition-colors"
-              >
-                关闭
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Admin Announcement Management */}
-      {profile && profile.role === 'admin' && (
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900 transition-colors">
-          <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-            <div className="flex justify-between items-center">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-                管理员 - 公告管理
-              </h2>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => {
-                    setEditingAnnouncement(null)
-                    setShowAnnouncementForm(!showAnnouncementForm)
-                    setShowAnnouncementHistory(false)
-                  }}
-                  className="inline-flex items-center px-4 py-2 bg-green-600 dark:bg-green-700 text-white text-sm font-medium rounded-lg hover:bg-green-700 dark:hover:bg-green-600 transition-colors"
-                >
-                  {showAnnouncementForm ? '❌ 取消' : '➕ 新建公告'}
-                </button>
-                <button
-                  onClick={() => {
-                    setShowAnnouncementHistory(!showAnnouncementHistory)
-                    setShowAnnouncementForm(false)
-                  }}
-                  className="inline-flex items-center px-4 py-2 bg-blue-600 dark:bg-blue-700 text-white text-sm font-medium rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors"
-                >
-                  📜 历史管理 ({announcements.length})
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {showAnnouncementForm && (
-            <div className="px-6 py-4">
-              <AnnouncementForm
-                editingAnnouncement={editingAnnouncement}
-                onSuccess={async () => {
-                  setShowAnnouncementForm(false)
-                  setEditingAnnouncement(null)
-                  await refreshAnnouncements()
-                  alert(editingAnnouncement ? '公告已更新' : '公告已发布')
-                }}
-                onCancel={() => {
-                  setShowAnnouncementForm(false)
-                  setEditingAnnouncement(null)
-                }}
-              />
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Recent Comments */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900 transition-colors">
-        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-          <div className="flex justify-between items-center">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 flex items-center">
-              <MessageCircle className="h-5 w-5 mr-2 text-blue-600 dark:text-blue-400" />
-              {t('papers.recent', '最新评论')}
-            </h2>
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={refreshComments}
-                disabled={refreshingComments}
-                className="inline-flex items-center px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
-                title="刷新评论"
-              >
-                <svg 
-                  className={`h-4 w-4 mr-1 ${refreshingComments ? 'animate-spin' : ''}`} 
-                  fill="none" 
-                  viewBox="0 0 24 24" 
-                  stroke="currentColor"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-                {refreshingComments ? '刷新中...' : '刷新'}
-              </button>
-              <Link
-                href="/papers"
-                className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white text-sm font-medium rounded-lg hover:from-blue-600 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 shadow-md hover:shadow-lg"
-              >
-                <BookOpen className="h-4 w-4 mr-2" />
-                {t('papers.allPapers', '所有论文')}
-              </Link>
-            </div>
-          </div>
-        </div>
-        <div className="p-6">
-          {loading ? (
-            <div className="text-center py-8 text-gray-500 dark:text-gray-400">{t('papers.loading', '加载中...')}</div>
-          ) : recentComments.length === 0 ? (
-            <div className="text-center py-8 text-gray-500 dark:text-gray-400">{t('papers.noComments', '暂无评论')}</div>
-          ) : (
-            <div className="space-y-4">
-              {recentComments.map((comment) => (
-                <div key={comment.id} className="border-b border-gray-100 dark:border-gray-700 pb-6 last:border-b-0">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 min-w-0"> {/* 添加min-w-0防止内容溢出 */}
-                      <Link
-                        href={`/papers/${comment.id}`}
-                        className="text-lg font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors block mb-2"
-                      >
-                        {comment.title}
-                      </Link>
-                      <div className="flex flex-col space-y-1 text-sm text-gray-600 dark:text-gray-400 mb-3">
-                        <p>作者：<span className="font-medium">{comment.authors}</span></p>
-                        {comment.journal && (
-                          <p>期刊：<span className="font-medium text-green-600 dark:text-green-400">{comment.journal}</span></p>
-                        )}
-                      </div>
-                      <div className="mt-2 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                        <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">
-                          {comment.latest_comment.content}
-                        </p>
-                        <div className="flex items-center justify-between mt-3 text-xs text-gray-500 dark:text-gray-400">
-                          <span>
-                            评论者：<span className="font-medium">
-                              {comment.latest_comment.is_anonymous 
-                                ? '匿名用户' 
-                                : (comment.latest_comment.user?.username || '匿名用户')}
-                            </span>
-                          </span>
-                          <span>
-                            {formatDate(comment.latest_comment.created_at)}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="ml-6 text-right flex-shrink-0">
-                      <div className="flex flex-col space-y-2">
-                        <div className="flex items-center justify-end space-x-4 text-sm text-gray-600 dark:text-gray-400">
-                          <div className="flex items-center bg-blue-50 dark:bg-blue-900/30 px-2 py-1 rounded-full">
-                            <MessageCircle className="h-4 w-4 mr-1 text-blue-600 dark:text-blue-400" />
-                            <span className="font-medium">{comment.comment_count}</span>
-                          </div>
-                          {comment.average_rating > 0 && (
-                            <div className="flex items-center bg-yellow-50 dark:bg-yellow-900/30 px-2 py-1 rounded-full">
-                              <Star className="h-4 w-4 mr-1 text-yellow-500 dark:text-yellow-400" />
-                              <span className="font-medium">{comment.average_rating.toFixed(1)}</span>
-                              <span className="text-xs text-gray-500 dark:text-gray-400 ml-1">({comment.rating_count})</span>
-                            </div>
-                          )}
-                        </div>
-                        <div className="text-xs text-gray-400 dark:text-gray-500 text-right">
-                          论文发布：{formatDateOnly(comment.created_at)}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-          <div className="mt-6 text-center">
-            <Link
-              href="/papers"
-              className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-medium rounded-lg hover:from-blue-600 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 shadow-md hover:shadow-lg"
-            >
-              <BookOpen className="h-5 w-5 mr-2" />
-              {t('papers.viewAll', '查看所有论文')}
-              <Search className="h-4 w-4 ml-2" />
-            </Link>
-          </div>
-        </div>
-      </div>
+      {/* Hot Content: Papers + Webpages with Tab */}
+      <HotContent
+        papers={recentComments}
+        papersLoading={loading}
+      />
 
       {/* Footer */}
       <Footer />

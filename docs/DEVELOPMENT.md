@@ -1319,7 +1319,7 @@ function openSidebar(doi) {
   
   // 创建 iframe
   const iframe = document.createElement('iframe');
-  iframe.src = `https://www.researchopia.com/doi/${encodeURIComponent(doi)}`;
+  iframe.src = `https://www.researchopia.com/papers/${encodeURIComponent(doi)}`;
   iframe.style.width = '100%';
   iframe.style.height = '100%';
   iframe.style.border = 'none';

@@ -1,0 +1,6 @@
+export { default as HeroSection } from './HeroSection'
+export { default as StatsCards } from './StatsCards'
+export { default as RecentComments } from './RecentComments'
+export { default as AnnouncementSection } from './AnnouncementSection'
+export { default as HotWebpages } from './HotWebpages'
+export { default as HotContent } from './HotContent'

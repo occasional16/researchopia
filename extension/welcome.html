@@ -1,244 +1,64 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>欢迎使用研学港 Researchopia 扩展</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
-            line-height: 1.6;
-            color: #333;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-        }
-        
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 40px 20px;
-        }
-        
-        .welcome-card {
-            background: white;
-            border-radius: 20px;
-            padding: 40px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            text-align: center;
-        }
-        
-        .logo {
-            width: 80px;
-            height: 80px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 20px;
-            margin: 0 auto 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 32px;
-            color: white;
-            font-weight: bold;
-        }
-        
-        .title {
-            font-size: 32px;
-            font-weight: bold;
-            margin-bottom: 10px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        
-        .subtitle {
-            font-size: 18px;
-            color: #666;
-            margin-bottom: 40px;
-        }
-        
-        .features {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 30px;
-            margin: 40px 0;
-            text-align: left;
-        }
-        
-        .feature {
-            padding: 20px;
-            border-radius: 12px;
-            background: #f8f9fa;
-            border-left: 4px solid #667eea;
-        }
-        
-        .feature-icon {
-            font-size: 24px;
-            margin-bottom: 10px;
-        }
-        
-        .feature-title {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: #333;
-        }
-        
-        .feature-desc {
-            font-size: 14px;
-            color: #666;
-            line-height: 1.5;
-        }
-        
-        .actions {
-            display: flex;
-            gap: 20px;
-            justify-content: center;
-            flex-wrap: wrap;
-            margin-top: 40px;
-        }
-        
-        .btn {
-            padding: 14px 28px;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 500;
-            cursor: pointer;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            transition: all 0.2s;
-        }
-        
-        .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-        
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
-        }
-        
-        .btn-secondary {
-            background: #f1f3f4;
-            color: #333;
-            border: 1px solid #dadce0;
-        }
-        
-        .btn-secondary:hover {
-            background: #e8eaed;
-        }
-        
-        .status {
-            margin-top: 30px;
-            padding: 20px;
-            border-radius: 12px;
-            background: #e3f2fd;
-            border: 1px solid #90caf9;
-        }
-        
-        .status-title {
-            font-weight: 600;
-            color: #1565c0;
-            margin-bottom: 10px;
-        }
-        
-        .status-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
-        }
-        
-        .status-item:last-child {
-            margin-bottom: 0;
-        }
-        
-        .status-indicator {
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 500;
-        }
-        
-        .status-success {
-            background: #c8e6c9;
-            color: #2e7d32;
-        }
-        
-        .status-warning {
-            background: #fff3e0;
-            color: #f57c00;
-        }
-        
-        .footer {
-            text-align: center;
-            margin-top: 40px;
-            color: rgba(255,255,255,0.8);
-            font-size: 14px;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>欢迎使用研学港 Researchopia 扩展</title>
+  <link rel="stylesheet" href="styles/welcome.css">
 </head>
 <body>
-    <div class="container">
-        <div class="welcome-card">
-            <div class="logo">研</div>
-            <h1 class="title">欢迎使用研学港 Researchopia 扩展</h1>
-            <p class="subtitle">研学并进，智慧共享 | 您的学术研究智能助手</p>
-            
-            <div class="features">
-                <div class="feature">
-                    <div class="feature-icon">🔍</div>
-                    <div class="feature-title">智能DOI检测</div>
-                    <div class="feature-desc">自动识别学术网页中的DOI号码，支持多种格式和来源</div>
-                </div>
-                
-                <div class="feature">
-                    <div class="feature-icon">📌</div>
-                    <div class="feature-title">悬浮拖拽图标</div>
-                    <div class="feature-desc">可拖拽的浮动图标，自动吸附到窗口边缘，便捷访问</div>
-                </div>
-                
-                <div class="feature">
-                    <div class="feature-icon">📖</div>
-                    <div class="feature-title">集成侧边栏</div>
-                    <div class="feature-desc">点击即可打开研学港侧边栏，无缝集成搜索功能</div>
-                </div>
-                
-                <div class="feature">
-                    <div class="feature-icon">🚀</div>
-                    <div class="feature-title">一键搜索</div>
-                    <div class="feature-desc">检测到DOI后自动填入搜索框，一键查找论文信息</div>
-                </div>
-            </div>
-            
-            <div class="actions">
-                <a href="https://www.researchopia.com/" target="_blank" class="btn btn-primary">
-                    <span>🌐</span>
-                    <span>访问研学港 Researchopia</span>
-                </a>
-                <a href="#" class="btn btn-secondary" id="testExtension">
-                    <span>🧪</span>
-                    <span>测试扩展功能</span>
-                </a>
-            </div>
+  <div class="container">
+    <div class="welcome-card">
+      <div class="logo">
+        <img src="icons/logo-main.svg" alt="研学港 Researchopia">
+      </div>
+      <h1 class="title">欢迎使用研学港 Researchopia 扩展</h1>
+      <p class="subtitle">研学并进，智慧共享 | 开放的学术交流与知识共享平台</p>
+      
+      <div class="features">
+        <div class="feature">
+          <div class="feature-icon">🔍</div>
+          <div class="feature-title">智能DOI检测</div>
+          <div class="feature-desc">自动识别学术网页中的DOI号码，支持多种格式和来源</div>
         </div>
         
-        <div class="footer">
-            <p>研学港 Researchopia 浏览器扩展 v0.1.1 | 基于 Manifest V3</p>
-            <p>如有问题，请访问研学港网站获取技术支持</p>
+        <div class="feature">
+          <div class="feature-icon">📌</div>
+          <div class="feature-title">悬浮拖拽图标</div>
+          <div class="feature-desc">可拖拽的浮动图标，自动吸附到窗口边缘，便捷访问</div>
         </div>
+        
+        <div class="feature">
+          <div class="feature-icon">📖</div>
+          <div class="feature-title">集成侧边栏</div>
+          <div class="feature-desc">点击即可打开研学港侧边栏，无缝集成搜索功能</div>
+        </div>
+        
+        <div class="feature">
+          <div class="feature-icon">🚀</div>
+          <div class="feature-title">一键搜索</div>
+          <div class="feature-desc">检测到DOI后自动填入搜索框，一键查找论文信息</div>
+        </div>
+      </div>
+      
+      <div class="actions">
+        <a href="https://www.researchopia.com/" target="_blank" class="btn btn-primary">
+          <span>🌐</span>
+          <span>访问研学港 Researchopia</span>
+        </a>
+        <a href="#" class="btn btn-secondary" id="testExtension">
+          <span>🧪</span>
+          <span>测试扩展功能</span>
+        </a>
+      </div>
     </div>
     
-    <script src="welcome.js"></script>
+    <div class="footer">
+      <p>研学港 Researchopia 浏览器扩展 <span id="versionText">v0.0.0</span> | 基于 Manifest V3</p>
+      <p>如有问题，请访问研学港网站获取技术支持</p>
+    </div>
+  </div>
+  
+  <script src="welcome.js"></script>
 </body>
 </html>

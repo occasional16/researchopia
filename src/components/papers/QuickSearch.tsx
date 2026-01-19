@@ -285,19 +285,19 @@ export default function QuickSearch({ paper }: QuickSearchProps) {
 
   return (
     <>
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-8">
-        <div className="flex items-center justify-between mb-4">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4">
+        <div className="flex items-center justify-between mb-3">
           <div>
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-1 flex items-center space-x-2">
-              <Search className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+            <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-0.5 flex items-center space-x-1.5">
+              <Search className="w-4 h-4 text-blue-600 dark:text-blue-400" />
               <span>快捷搜索</span>
             </h2>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+            <p className="text-xs text-gray-600 dark:text-gray-400">
               {paper.doi 
                 ? (
                     <span>
                       基于 DOI 
-                      <code className="mx-1 px-2 py-0.5 bg-gray-100 dark:bg-gray-700 rounded text-xs font-mono">
+                      <code className="mx-1 px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded text-[10px] font-mono">
                         {paper.doi}
                       </code>
                       在其他学术平台搜索此论文
@@ -311,83 +311,75 @@ export default function QuickSearch({ paper }: QuickSearchProps) {
           <div className="flex items-center space-x-2">
             <button
               onClick={() => setShowPreferences(true)}
-              className="flex items-center space-x-1 px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              className="flex items-center space-x-1 px-2 py-1 text-xs text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
               title="设置搜索偏好"
             >
-              <Settings className="w-4 h-4" />
+              <Settings className="w-3.5 h-3.5" />
               <span>设置</span>
             </button>
             
             {filteredSites.length > 6 && (
               <button
                 onClick={() => setIsExpanded(!isExpanded)}
-                className="flex items-center space-x-1 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+                className="flex items-center space-x-1 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
               >
                 <span>{isExpanded ? '收起' : '展开全部'}</span>
-                {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
               </button>
             )}
           </div>
         </div>
         
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
           {displaySites.map((site) => (
             <button
               key={site.name}
               onClick={(e) => handleSearch(site, e)}
-              className={`${site.bgColor} ${site.color} p-4 rounded-lg border transition-all duration-200 hover:shadow-md flex items-start space-x-3 group text-left`}
+              className={`${site.bgColor} ${site.color} px-2.5 py-2 rounded border transition-all duration-200 hover:shadow-sm flex items-center space-x-2 group text-left`}
               title={site.description}
             >
-              <div className="flex-shrink-0 mt-0.5">
-                {site.icon}
+              <div className="flex-shrink-0">
+                {React.cloneElement(site.icon as React.ReactElement<{ className?: string }>, { className: 'w-4 h-4' })}
               </div>
               <div className="flex-1 min-w-0">
-                <div className="font-medium text-sm mb-1 group-hover:underline">
+                <div className="font-medium text-xs group-hover:underline">
                   {site.nameZh}
                 </div>
-                <div className="text-xs opacity-75 line-clamp-2">
-                  {site.description}
-                </div>
-                {searchStats[site.name] && (
-                  <div className="text-xs mt-1 opacity-60">
-                    已使用 {searchStats[site.name]} 次
-                  </div>
-                )}
               </div>
-              <ExternalLink className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 mt-0.5" />
+              <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
             </button>
           ))}
         </div>
         
         {!isExpanded && filteredSites.length > 6 && (
-          <div className="mt-4 text-center">
+          <div className="mt-2 text-center">
             <button
               onClick={() => setIsExpanded(true)}
-              className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline"
+              className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline"
             >
-              查看更多搜索选项 ({filteredSites.length - 6} 个)
+              查看更多 ({filteredSites.length - 6})
             </button>
           </div>
         )}
         
-        <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+        <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4 text-xs text-gray-500 dark:text-gray-400">
-              <span className="flex items-center space-x-1">
-                <div className="w-2 h-2 bg-blue-200 dark:bg-blue-600 rounded-full"></div>
-                <span>通用搜索</span>
+            <div className="flex items-center space-x-3 text-[10px] text-gray-500 dark:text-gray-400">
+              <span className="flex items-center space-x-0.5">
+                <div className="w-1.5 h-1.5 bg-blue-200 dark:bg-blue-600 rounded-full"></div>
+                <span>通用</span>
               </span>
-              <span className="flex items-center space-x-1">
-                <div className="w-2 h-2 bg-purple-200 dark:bg-purple-600 rounded-full"></div>
-                <span>专业数据库</span>
+              <span className="flex items-center space-x-0.5">
+                <div className="w-1.5 h-1.5 bg-purple-200 dark:bg-purple-600 rounded-full"></div>
+                <span>数据库</span>
               </span>
-              <span className="flex items-center space-x-1">
-                <div className="w-2 h-2 bg-orange-200 dark:bg-orange-600 rounded-full"></div>
-                <span>论文仓库</span>
+              <span className="flex items-center space-x-0.5">
+                <div className="w-1.5 h-1.5 bg-orange-200 dark:bg-orange-600 rounded-full"></div>
+                <span>仓库</span>
               </span>
-              <span className="flex items-center space-x-1">
-                <div className="w-2 h-2 bg-green-200 dark:bg-green-600 rounded-full"></div>
-                <span>中文平台</span>
+              <span className="flex items-center space-x-0.5">
+                <div className="w-1.5 h-1.5 bg-green-200 dark:bg-green-600 rounded-full"></div>
+                <span>中文</span>
               </span>
             </div>
           </div>

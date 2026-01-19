@@ -39,9 +39,7 @@
   "exclude": [
     "node_modules",
     "zotero-plugin",
-    "zotero-plugin-backup",
-    "zotero-plugin-template",
-    "Debug",
-    "Debug/**/*"
+    "extension",
+    "Debug"
   ]
 }

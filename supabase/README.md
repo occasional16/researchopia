@@ -25,7 +25,7 @@ supabase/
 
 | Category | Tables |
 |----------|--------|
-| **Core** | users, papers, ratings, comments, comment_votes, paper_favorites, user_follows |
+| **Core** | users, papers, ratings, comments, comment_votes, paper_bookmark_folders, paper_bookmark_items, user_follows |
 | **Documents** | documents, annotations, annotation_likes, annotation_comments, annotation_shares |
 | **Sessions** | reading_sessions, session_members, session_annotations, session_chat, session_logs |
 | **Knowledge Web** | knowledge_units, knowledge_links, tags, unit_tags, kn_collections, collection_units, kn_notes |

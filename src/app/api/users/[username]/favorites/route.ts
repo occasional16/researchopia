@@ -39,7 +39,7 @@ export async function GET(
 
     // 获取用户收藏的论文
     const { data: favorites, error: favoritesError } = await supabase
-      .from('paper_favorites')
+      .from('paper_bookmark_items')
       .select(`
         id,
         created_at,
@@ -75,7 +75,7 @@ export async function GET(
 
     // 获取总数
     const { count } = await supabase
-      .from('paper_favorites')
+      .from('paper_bookmark_items')
       .select('*', { count: 'exact', head: true })
       .eq('user_id', user.id)
 

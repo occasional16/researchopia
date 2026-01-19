@@ -111,7 +111,7 @@ export async function getUserStats(userId: string): Promise<UserStats> {
         .select('*', { count: 'exact', head: true })
         .eq('user_id', userId),
       supabase
-        .from('paper_favorites')
+        .from('paper_bookmark_items')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', userId)
     ])

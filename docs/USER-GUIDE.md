@@ -871,7 +871,7 @@ author:"John Smith"
 
 ```
 Smith, J. (2025). 标注于 "Deep Learning for X". 
-Researchopia. https://www.researchopia.com/doi/10.xxxx/xxxxx#annotation-id
+Researchopia. https://www.researchopia.com/papers/10.xxxx/xxxxx#annotation-id
 ```
 
 请尊重知识产权,注明来源。

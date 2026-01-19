@@ -366,7 +366,7 @@ export async function toggleFavorite(paperId: string, userId: string): Promise<b
 
   // Check if favorite already exists
   const { data: existing } = await supabase
-    .from('favorites')
+    .from('paper_bookmark_items')
     .select('id')
     .eq('paper_id', paperId)
     .eq('user_id', userId)
@@ -375,7 +375,7 @@ export async function toggleFavorite(paperId: string, userId: string): Promise<b
   if (existing) {
     // Remove favorite
     const { error } = await supabase
-      .from('favorites')
+      .from('paper_bookmark_items')
       .delete()
       .eq('paper_id', paperId)
       .eq('user_id', userId)
@@ -388,10 +388,11 @@ export async function toggleFavorite(paperId: string, userId: string): Promise<b
   } else {
     // Add favorite
     const { error } = await (supabase as any)
-      .from('favorites')
+      .from('paper_bookmark_items')
       .insert([{
         paper_id: paperId,
-        user_id: userId
+        user_id: userId,
+        position: 0
       }])
 
     if (error) {
@@ -408,13 +409,12 @@ export async function getUserFavorites(userId: string): Promise<PaperWithStats[]
   }
 
   const { data, error } = await supabase
-    .from('favorites')
+    .from('paper_bookmark_items')
     .select(`
       paper:papers(
         *,
         ratings(*),
-        comments(*),
-        favorites(*)
+        comments(*)
       )
     `)
     .eq('user_id', userId)

@@ -11,7 +11,7 @@ import LanguageSwitcher from '@/components/ui/LanguageSwitcher'
 import DarkModeToggle from '@/components/ui/DarkModeToggle'
 
 export default function Navbar() {
-  const { user, profile, signOut, isAuthenticated, loading, getAccessToken } = useAuth()
+  const { user, profile, signOut, isAuthenticated, loading, isLoading, getAccessToken } = useAuth()
   const { t } = useLanguage()
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login')
@@ -62,9 +62,10 @@ export default function Navbar() {
   const userState = useMemo(() => ({
     isLoggedIn: isAuthenticated && !!user,
     isAdmin: profile?.role === 'admin',
-    displayName: profile?.username || user?.email?.split('@')[0] || 'User',
+    // Only show username from profile; while profile is loading, show a placeholder
+    displayName: isLoading ? '...' : (profile?.username || user?.email?.split('@')[0] || 'User'),
     email: user?.email
-  }), [user, profile, isAuthenticated])
+  }), [user, profile, isAuthenticated, isLoading])
 
   useEffect(() => {
     const handleShowAuthModal = (event: CustomEvent) => {
@@ -278,6 +279,14 @@ export default function Navbar() {
                         >
                           <UserCircle className="w-4 h-4" />
                           <span>{t('nav.profile', '个人中心')}</span>
+                        </Link>
+                        <Link
+                          href="/bookmarks"
+                          className="flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                          onClick={() => setShowUserMenu(false)}
+                        >
+                          <Book className="w-4 h-4" />
+                          <span>{t('nav.bookmarks', '我的收藏')}</span>
                         </Link>
                         <div className="border-t border-gray-100 dark:border-gray-700 my-1"></div>
                         {userState.isAdmin && (

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { MessageCircle, Edit, Trash2 } from 'lucide-react'
+import { MessageCircle, Edit, Trash2, ThumbsUp } from 'lucide-react'
 import { UserDisplay } from '@/components/user'
 
 // 简单的时间格式化函数
@@ -27,17 +27,21 @@ interface Comment {
   reply_count: number;
   username?: string;
   avatar_url?: string | null;
-  is_anonymous?: boolean; // 🆕 匿名标志
+  is_anonymous?: boolean;
+  like_count?: number;
+  has_liked?: boolean;
   children?: Comment[];
 }
 
 interface NestedCommentTreeProps {
   comments: Comment[];
   currentUserId?: string;
-  currentUserRole?: string; // 🆕 用户角色
-  onReply?: (parentId: string, content: string, isAnonymous?: boolean) => Promise<void>; // 🆕 添加匿名参数
-  onEdit?: (commentId: string, content: string, isAnonymous?: boolean) => Promise<void>; // 🆕 添加匿名参数
+  currentUserRole?: string;
+  accessToken?: string;
+  onReply?: (parentId: string, content: string, isAnonymous?: boolean) => Promise<void>;
+  onEdit?: (commentId: string, content: string, isAnonymous?: boolean) => Promise<void>;
   onDelete?: (commentId: string) => Promise<void>;
+  onLike?: (commentId: string) => Promise<void>;
   maxDepth?: number;
 }
 
@@ -46,10 +50,12 @@ interface CommentNodeProps {
   depth: number;
   maxDepth: number;
   currentUserId?: string;
-  currentUserRole?: string; // 🆕 用户角色
-  onReply?: (parentId: string, content: string, isAnonymous?: boolean) => Promise<void>; // 🆕 添加匿名参数
-  onEdit?: (commentId: string, content: string, isAnonymous?: boolean) => Promise<void>; // 🆕 添加匿名参数
+  currentUserRole?: string;
+  accessToken?: string;
+  onReply?: (parentId: string, content: string, isAnonymous?: boolean) => Promise<void>;
+  onEdit?: (commentId: string, content: string, isAnonymous?: boolean) => Promise<void>;
   onDelete?: (commentId: string) => Promise<void>;
+  onLike?: (commentId: string) => Promise<void>;
 }
 
 function CommentNode({
@@ -57,30 +63,58 @@ function CommentNode({
   depth,
   maxDepth,
   currentUserId,
-  currentUserRole, // 🆕 接收角色参数
+  currentUserRole,
+  accessToken,
   onReply,
   onEdit,
   onDelete,
+  onLike,
 }: CommentNodeProps) {
   const [showReplyBox, setShowReplyBox] = useState(false);
   const [replyContent, setReplyContent] = useState('');
-  const [replyIsAnonymous, setReplyIsAnonymous] = useState(false); // 🆕 回复匿名选项
+  const [replyIsAnonymous, setReplyIsAnonymous] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(comment.content);
-  const [editIsAnonymous, setEditIsAnonymous] = useState(comment.is_anonymous || false); // 🆕 编辑时的匿名状态
+  const [editIsAnonymous, setEditIsAnonymous] = useState(comment.is_anonymous || false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [likeCount, setLikeCount] = useState(comment.like_count || 0);
+  const [hasLiked, setHasLiked] = useState(comment.has_liked || false);
+  const [isLiking, setIsLiking] = useState(false);
 
   const isOwner = currentUserId === comment.user_id;
   const canReply = depth < maxDepth;
-  
-  // 🔍 调试日志
-  console.log('[NestedCommentTree] CommentNode render:', {
-    commentId: comment.id,
-    currentUserId,
-    currentUserRole,
-    isOwner,
-    canDelete: isOwner || currentUserRole === 'admin'
-  });
+
+  const handleLike = async () => {
+    if (!currentUserId || !accessToken) {
+      alert('请先登录');
+      return;
+    }
+    
+    if (isLiking) return;
+    
+    setIsLiking(true);
+    try {
+      const response = await fetch('/api/paper-comments/vote', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`
+        },
+        body: JSON.stringify({ commentId: comment.id })
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        setLikeCount(data.likeCount);
+        setHasLiked(data.hasLiked);
+      }
+    } catch (error) {
+      console.error('Failed to vote:', error);
+    } finally {
+      setIsLiking(false);
+    }
+  };
 
   const handleReply = async () => {
     if (!replyContent.trim() || !onReply) return;
@@ -139,27 +173,27 @@ function CommentNode({
     <div
       className="comment-node"
       style={{
-        marginLeft: depth > 0 ? '20px' : '0',
+        marginLeft: depth > 0 ? '12px' : '0',
         borderLeft: depth > 0 ? '2px solid #e5e7eb' : 'none',
-        paddingLeft: depth > 0 ? '12px' : '0',
-        marginTop: '12px',
+        paddingLeft: depth > 0 ? '8px' : '0',
+        marginTop: '8px',
       }}
     >
       {/* 评论头部 */}
-      <div className="flex items-start gap-3">
+      <div className="flex items-start gap-2">
         {/* 使用 UserDisplay 组件 */}
         <UserDisplay
           username={comment.username || 'anonymous'}
           avatarUrl={comment.avatar_url}
           isAnonymous={comment.is_anonymous}
-          avatarSize="sm"
+          avatarSize="xs"
           showHoverCard={!comment.is_anonymous}
         />
 
         {/* 评论内容 */}
         <div className="flex-1 min-w-0">
           {/* 时间和回复数 */}
-          <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mb-1">
+          <div className="flex items-center gap-1.5 text-[10px] text-gray-600 dark:text-gray-400 mb-0.5">
             <span>{formatTimeAgo(comment.created_at)}</span>
             {comment.reply_count > 0 && (
               <>
@@ -173,39 +207,39 @@ function CommentNode({
 
           {/* 评论文本 */}
           {isEditing ? (
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <textarea
                 value={editContent}
                 onChange={(e) => setEditContent(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                rows={3}
+                className="w-full px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none"
+                rows={2}
                 disabled={isSubmitting}
               />
               {/* 🆕 编辑时的匿名选项 */}
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-1.5">
                 <input
                   type="checkbox"
                   id={`edit-anonymous-${comment.id}`}
                   checked={editIsAnonymous}
                   onChange={(e) => setEditIsAnonymous(e.target.checked)}
-                  className="w-4 h-4 text-blue-600 dark:text-blue-500 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500"
+                  className="w-3 h-3 text-blue-600 dark:text-blue-500 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500"
                   disabled={isSubmitting}
                 />
                 <label 
                   htmlFor={`edit-anonymous-${comment.id}`} 
-                  className="text-xs text-gray-600 dark:text-gray-400 cursor-pointer select-none"
+                  className="text-[10px] text-gray-600 dark:text-gray-400 cursor-pointer select-none"
                 >
                   匿名显示
                   {editIsAnonymous && (
-                    <span className="ml-1 text-blue-600 dark:text-blue-400">（将显示为"匿名用户"）</span>
+                    <span className="ml-0.5 text-blue-600 dark:text-blue-400">（将显示为"匿名用户"）</span>
                   )}
                 </label>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-1.5">
                 <button
                   onClick={handleEdit}
                   disabled={isSubmitting || !editContent.trim()}
-                  className="px-3 py-1 text-sm bg-blue-600 dark:bg-blue-700 text-white rounded hover:bg-blue-700 dark:hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-2 py-0.5 text-[10px] bg-blue-600 dark:bg-blue-700 text-white rounded hover:bg-blue-700 dark:hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSubmitting ? '保存中...' : '保存'}
                 </button>
@@ -216,25 +250,40 @@ function CommentNode({
                     setEditIsAnonymous(comment.is_anonymous || false);
                   }}
                   disabled={isSubmitting}
-                  className="px-3 py-1 text-sm bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50"
+                  className="px-2 py-0.5 text-[10px] bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50"
                 >
                   取消
                 </button>
               </div>
             </div>
           ) : (
-            <p className="text-gray-800 dark:text-gray-200 whitespace-pre-wrap break-words">
+            <p className="text-xs text-gray-800 dark:text-gray-200 whitespace-pre-wrap break-words">
               {comment.content}
             </p>
           )}
 
           {/* 操作按钮 */}
           {!isEditing && (
-            <div className="flex gap-4 mt-2 text-sm">
+            <div className="flex items-center gap-2.5 mt-1 text-[10px]">
+              {/* 点赞按钮 */}
+              <button
+                onClick={handleLike}
+                disabled={isLiking}
+                className={`flex items-center gap-0.5 transition-colors ${
+                  hasLiked 
+                    ? 'text-blue-600 dark:text-blue-400' 
+                    : 'text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400'
+                } disabled:opacity-50`}
+                title={currentUserId ? (hasLiked ? '取消点赞' : '点赞') : '登录后可点赞'}
+              >
+                <ThumbsUp size={10} className={hasLiked ? 'fill-current' : ''} />
+                <span>{likeCount > 0 ? likeCount : ''}</span>
+              </button>
+              
               {canReply && onReply && (
                 <button
                   onClick={() => setShowReplyBox(!showReplyBox)}
-                  className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
+                  className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
                 >
                   回复
                 </button>
@@ -247,7 +296,7 @@ function CommentNode({
                   编辑
                 </button>
               )}
-              {/* 🔑 管理员可以删除任意评论,普通用户只能删除自己的 */}
+              {/* 管理员可以删除任意评论,普通用户只能删除自己的 */}
               {((isOwner || currentUserRole === 'admin') && onDelete) && (
                 <button
                   onClick={handleDelete}
@@ -262,40 +311,40 @@ function CommentNode({
 
           {/* 回复框 */}
           {showReplyBox && (
-            <div className="mt-3 space-y-2">
+            <div className="mt-2 space-y-1.5">
               <textarea
                 value={replyContent}
                 onChange={(e) => setReplyContent(e.target.value)}
                 placeholder={`回复 @${comment.is_anonymous ? '匿名用户' : (comment.username || '用户')}...`}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                rows={3}
+                className="w-full px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none"
+                rows={2}
                 disabled={isSubmitting}
               />
               {/* 🆕 匿名选项 */}
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-1.5">
                 <input
                   type="checkbox"
                   id={`anonymous-reply-${comment.id}`}
                   checked={replyIsAnonymous}
                   onChange={(e) => setReplyIsAnonymous(e.target.checked)}
-                  className="w-4 h-4 text-blue-600 dark:text-blue-500 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500"
+                  className="w-3 h-3 text-blue-600 dark:text-blue-500 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500"
                   disabled={isSubmitting}
                 />
                 <label 
                   htmlFor={`anonymous-reply-${comment.id}`} 
-                  className="text-xs text-gray-600 dark:text-gray-400 cursor-pointer select-none"
+                  className="text-[10px] text-gray-600 dark:text-gray-400 cursor-pointer select-none"
                 >
                   匿名回复
                   {replyIsAnonymous && (
-                    <span className="ml-1 text-blue-600 dark:text-blue-400">（将显示为"匿名用户"）</span>
+                    <span className="ml-0.5 text-blue-600 dark:text-blue-400">（将显示为"匿名用户"）</span>
                   )}
                 </label>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-1.5">
                 <button
                   onClick={handleReply}
                   disabled={isSubmitting || !replyContent.trim()}
-                  className="px-3 py-1 text-sm bg-blue-600 dark:bg-blue-700 text-white rounded hover:bg-blue-700 dark:hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-2 py-0.5 text-[10px] bg-blue-600 dark:bg-blue-700 text-white rounded hover:bg-blue-700 dark:hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSubmitting ? '发送中...' : '发送'}
                 </button>
@@ -306,7 +355,7 @@ function CommentNode({
                     setReplyIsAnonymous(false); // 🆕 重置匿名选项
                   }}
                   disabled={isSubmitting}
-                  className="px-3 py-1 text-sm bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50"
+                  className="px-2 py-0.5 text-[10px] bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50"
                 >
                   取消
                 </button>
@@ -318,7 +367,7 @@ function CommentNode({
 
       {/* 递归渲染子评论 */}
       {comment.children && comment.children.length > 0 && (
-        <div className="mt-2">
+        <div className="mt-1">
           {comment.children.map((child) => (
             <CommentNode
               key={child.id}
@@ -330,6 +379,7 @@ function CommentNode({
               onReply={onReply}
               onEdit={onEdit}
               onDelete={onDelete}
+              accessToken={accessToken}
             />
           ))}
         </div>
@@ -341,11 +391,12 @@ function CommentNode({
 export default function NestedCommentTree({
   comments,
   currentUserId,
-  currentUserRole, // 🆕 解构currentUserRole参数
+  currentUserRole,
   onReply,
   onEdit,
   onDelete,
   maxDepth = 5,
+  accessToken,
 }: NestedCommentTreeProps) {
   // 构建评论树结构
   const buildTree = (flatComments: Comment[]): Comment[] => {
@@ -381,14 +432,14 @@ export default function NestedCommentTree({
 
   if (commentTree.length === 0) {
     return (
-      <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+      <div className="text-center py-4 text-xs text-gray-500 dark:text-gray-400">
         暂无评论,来发表第一条评论吧!
       </div>
     );
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-1">
       {commentTree.map((comment) => (
         <CommentNode
           key={comment.id}
@@ -396,10 +447,11 @@ export default function NestedCommentTree({
           depth={0}
           maxDepth={maxDepth}
           currentUserId={currentUserId}
-          currentUserRole={currentUserRole} // 🆕 传递currentUserRole
+          currentUserRole={currentUserRole}
           onReply={onReply}
           onEdit={onEdit}
           onDelete={onDelete}
+          accessToken={accessToken}
         />
       ))}
     </div>

@@ -127,7 +127,7 @@ export async function POST(request: NextRequest) {
       // 1.4. 删除用户收藏
       console.log('🗑️ Deleting user favorites...')
       const { error: favoritesError } = await adminSupabase
-        .from('paper_favorites')
+        .from('paper_bookmark_items')
         .delete()
         .eq('user_id', user.id)
 

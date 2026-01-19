@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { Calendar, Users, Star, MessageCircle, Eye } from 'lucide-react'
-import FavoriteButton from './FavoriteButton'
+import PaperBookmarkButton from '@/components/bookmarks/PaperBookmarkButton'
 import { getPaperRoute } from '@/utils/paperRoutes'
 import type { Paper, Rating } from '@/lib/supabase'
 import { calculateAverageRating } from '@/lib/database'
@@ -21,143 +21,99 @@ export default function PaperCard({ paper }: PaperCardProps) {
   const averageValue = (typeof (paper as any).average_rating === 'number' && ratingCount > 0)
     ? (paper as any).average_rating
     : (paper.ratings ? (calculateAverageRating(paper.ratings)?.overall ?? null) : null)
-
-  // 计算详细评分（用于显示分项评分）
-  const averageRating = paper.ratings && paper.ratings.length > 0
-    ? calculateAverageRating(paper.ratings)
-    : null
   
   const paperRoute = getPaperRoute(paper.id || paper.doi || '')
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border dark:border-gray-700 hover:shadow-md transition-shadow p-6">
-      <div className="flex justify-between items-start mb-3">
-        <Link
-          href={paperRoute}
-          className="text-lg font-semibold text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 transition-colors line-clamp-2"
-        >
-          {paper.title}
-        </Link>
+    <Link href={paperRoute} className="block">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border dark:border-gray-700 hover:shadow-md transition-shadow p-4">
+        {/* Header: Title + Bookmark */}
+        <div className="flex justify-between items-start gap-3 mb-2">
+          <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 transition-colors line-clamp-2 flex-1">
+            {paper.title}
+          </h3>
 
-        {averageValue !== null && averageValue !== undefined && (
-          <div className="flex items-center space-x-1 ml-4 flex-shrink-0">
-            <Star className="w-4 h-4 text-yellow-400 fill-current" />
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              {averageValue}
-            </span>
-            <span className="text-xs text-gray-500 dark:text-gray-400">
-              ({ratingCount})
-            </span>
+          <div className="flex-shrink-0" onClick={(e) => e.preventDefault()}>
+            <PaperBookmarkButton
+              paperId={paper.id}
+              doi={paper.doi}
+              title={paper.title}
+              variant="icon"
+            />
           </div>
-        )}
-      </div>
-
-      <div className="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400 mb-3">
-        <div className="flex items-center space-x-1">
-          <Users className="w-4 h-4" />
-          <span>{paper.authors?.join(', ') || '未知作者'}</span>
         </div>
-        
-        {paper.publication_date && (
-          <div className="flex items-center space-x-1">
-            <Calendar className="w-4 h-4" />
-            <span>{new Date(paper.publication_date).getFullYear()}</span>
+
+        {/* Authors + Date */}
+        <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400 mb-2">
+          <div className="flex items-center gap-1 truncate">
+            <Users className="w-3.5 h-3.5 flex-shrink-0" />
+            <span className="truncate">{paper.authors?.slice(0, 3).join(', ') || '未知作者'}{paper.authors && paper.authors.length > 3 ? ' 等' : ''}</span>
           </div>
-        )}
-      </div>
-
-      {paper.journal && (
-        <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 italic">{paper.journal}</p>
-      )}
-
-      {paper.abstract && (
-        <p className="text-sm text-gray-700 dark:text-gray-300 line-clamp-3 mb-4">
-          {paper.abstract}
-        </p>
-      )}
-
-      {paper.keywords && paper.keywords.length > 0 && (
-        <div className="flex flex-wrap gap-2 mb-4">
-          {paper.keywords.slice(0, 4).map((keyword, index) => (
-            <span
-              key={index}
-              className="px-2 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs rounded-full"
-            >
-              {keyword}
-            </span>
-          ))}
-          {paper.keywords.length > 4 && (
-            <span className="px-2 py-1 bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-xs rounded-full">
-              +{paper.keywords.length - 4} more
-            </span>
+          
+          {paper.publication_date && (
+            <div className="flex items-center gap-1 flex-shrink-0">
+              <Calendar className="w-3.5 h-3.5" />
+              <span>{new Date(paper.publication_date).getFullYear()}</span>
+            </div>
           )}
-        </div>
-      )}
 
-      {paper.doi && (
-        <div className="text-xs text-gray-500 dark:text-gray-400">
-          DOI: {paper.doi}
-        </div>
-      )}
-
-      {averageRating && (
-        <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
-          <div className="grid grid-cols-4 gap-2 text-xs">
-            <div className="text-center">
-              <div className="font-medium text-gray-700 dark:text-gray-300">{averageRating.innovation}</div>
-              <div className="text-gray-500 dark:text-gray-400">创新性</div>
-            </div>
-            <div className="text-center">
-              <div className="font-medium text-gray-700 dark:text-gray-300">{averageRating.methodology}</div>
-              <div className="text-gray-500 dark:text-gray-400">方法论</div>
-            </div>
-            <div className="text-center">
-              <div className="font-medium text-gray-700 dark:text-gray-300">{averageRating.practicality}</div>
-              <div className="text-gray-500 dark:text-gray-400">实用性</div>
-            </div>
-            <div className="text-center">
-              <div className="font-medium text-gray-700 dark:text-gray-300">{averageRating.overall}</div>
-              <div className="text-gray-500 dark:text-gray-400">总体</div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Action Bar */}
-      <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between">
-        <div className="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
-          <div className="flex items-center space-x-1">
-            <Star className="w-4 h-4" />
-            <span>{averageValue !== null && averageValue !== undefined ? averageValue : '暂无评分'}</span>
-            <span>({ratingCount}评分)</span>
-          </div>
-          <div className="flex items-center space-x-1">
-            <MessageCircle className="w-4 h-4" />
-            <span>({paper.comment_count || 0}评论)</span>
-          </div>
-          {paper.view_count !== undefined && (
-            <div className="flex items-center space-x-1">
-              <Eye className="w-4 h-4" />
-              <span>{paper.view_count || 0}次查看</span>
-            </div>
+          {paper.journal && (
+            <span className="text-gray-500 dark:text-gray-500 italic truncate">{paper.journal}</span>
           )}
         </div>
 
-        <div className="flex items-center space-x-2">
-          <FavoriteButton
-            paperId={paper.id}
-            variant="icon"
-            size="sm"
-            showCount={true}
-          />
-          <Link
-            href={paperRoute}
-            className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium text-sm"
-          >
-            查看详情 →
-          </Link>
+        {/* Abstract - more compact */}
+        {paper.abstract && (
+          <p className="text-sm text-gray-700 dark:text-gray-300 line-clamp-2 mb-2">
+            {paper.abstract}
+          </p>
+        )}
+
+        {/* Keywords - smaller, fewer */}
+        {paper.keywords && paper.keywords.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mb-2">
+            {paper.keywords.slice(0, 3).map((keyword, index) => (
+              <span
+                key={index}
+                className="px-1.5 py-0.5 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs rounded"
+              >
+                {keyword}
+              </span>
+            ))}
+            {paper.keywords.length > 3 && (
+              <span className="px-1.5 py-0.5 bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-xs rounded">
+                +{paper.keywords.length - 3}
+              </span>
+            )}
+          </div>
+        )}
+
+        {/* Stats Bar - compact */}
+        <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400 pt-2 border-t border-gray-100 dark:border-gray-700">
+          <div className="flex items-center gap-1">
+            <Star className="w-3 h-3 text-yellow-400" />
+            <span className="font-medium text-gray-700 dark:text-gray-300">
+              {averageValue !== null && averageValue !== undefined ? averageValue : '-'}
+            </span>
+            <span>({ratingCount}人)</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <MessageCircle className="w-3 h-3" />
+            <span>{paper.comment_count || 0}评论</span>
+          </div>
+          {paper.view_count !== undefined && paper.view_count > 0 && (
+            <div className="flex items-center gap-1">
+              <Eye className="w-3 h-3" />
+              <span>{paper.view_count}</span>
+            </div>
+          )}
+          {paper.doi && (
+            <span className="ml-auto text-gray-400 dark:text-gray-500 truncate max-w-[200px]">
+              DOI: {paper.doi}
+            </span>
+          )}
         </div>
       </div>
-    </div>
+    </Link>
   )
 }

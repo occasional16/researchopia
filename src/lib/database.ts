@@ -143,50 +143,6 @@ export async function getPapersWithSort(
   }
 }
 
-export async function getPaperById(id: string): Promise<PaperWithStats | null> {
-  if (!supabase) {
-    throw new Error('Supabase is not available')
-  }
-
-  const { data: paper, error } = await supabase
-    .from('papers')
-    .select(`
-      *,
-      ratings(*),
-      comments(*)
-    `)
-    .eq('id', id)
-    .single()
-
-  if (error) {
-    console.error('Error fetching paper:', error)
-    throw error
-  }
-
-  if (!paper) {
-    return null
-  }
-
-  const ratings = (paper as any).ratings || []
-  const commentCount = Array.isArray((paper as any).comments) ? (paper as any).comments.length : 0
-  const favoriteCount = 0 // 暂时设为0，避免权限问题
-  
-  let averageRating = 0
-  if (ratings.length > 0) {
-    const totalScore = ratings.reduce((sum: number, rating: any) => sum + rating.overall_score, 0)
-    averageRating = totalScore / ratings.length
-  }
-
-  return {
-    ...(paper as any),
-    ratings,
-    rating_count: ratings.length,
-    comment_count: commentCount,
-    favorite_count: favoriteCount,
-    average_rating: Math.round(averageRating * 10) / 10
-  }
-}
-
 export async function searchPapers(query: string, limit: number = 10): Promise<PaperWithStats[]> {
   if (!supabase) {
     throw new Error('Supabase is not available')
@@ -505,9 +461,141 @@ export async function getUserComments(userId: string): Promise<(Comment & { pape
   return data || []
 }
 
-// Additional functions for compatibility
-export async function getPaper(id: string): Promise<PaperWithStats | null> {
-  return await getPaperById(id)
+/**
+ * Get a paper by ID or DOI
+ * @param idOrDoi - Paper UUID or DOI
+ * @returns Paper with stats, or null if not found
+ */
+export async function getPaper(idOrDoi: string): Promise<PaperWithStats | null> {
+  if (!supabase) {
+    throw new Error('Supabase is not available')
+  }
+
+  // Decode if URL-encoded
+  const decoded = decodeURIComponent(idOrDoi)
+  
+  // Detect if it's a UUID (36 chars, with hyphens) or DOI (typically starts with "10.")
+  // UUID format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(decoded)
+
+  try {
+    let paper = null
+    let error = null
+
+    if (isUUID) {
+      // Query by ID - include users for rating display
+      const result = await supabase
+        .from('papers')
+        .select(`*, ratings(*, users(*)), comments(*)`)
+        .eq('id', decoded)
+        .single()
+      paper = result.data
+      error = result.error
+    } else {
+      // Query by DOI - use filter with proper escaping for special characters
+      // PostgREST has issues with '/' in eq filter values
+      const result = await supabase
+        .from('papers')
+        .select(`*, ratings(*, users(*)), comments(*)`)
+        .filter('doi', 'eq', decoded)
+        .single()
+      paper = result.data
+      error = result.error
+    }
+
+    if (error) {
+      // If not found (PGRST116), try the other field
+      if (error.code === 'PGRST116') {
+        
+        let altResult
+        if (isUUID) {
+          altResult = await supabase
+            .from('papers')
+            .select(`*, ratings(*, users(*)), comments(*)`)
+            .filter('doi', 'eq', decoded)
+            .single()
+        } else {
+          altResult = await supabase
+            .from('papers')
+            .select(`*, ratings(*, users(*)), comments(*)`)
+            .eq('id', decoded)
+            .single()
+        }
+        
+        if (altResult.error || !altResult.data) {
+          return null
+        }
+        return formatPaperWithStats(altResult.data)
+      }
+      console.error('Error fetching paper:', error)
+      return null
+    }
+
+    if (!paper) {
+      return null
+    }
+
+    return formatPaperWithStats(paper)
+  } catch (err) {
+    console.error('[getPaper] Error:', err)
+    return null
+  }
+}
+
+/**
+ * Helper function to format paper with computed stats
+ */
+function formatPaperWithStats(paper: any): PaperWithStats {
+  const ratings = paper.ratings || []
+  const commentCount = Array.isArray(paper.comments) ? paper.comments.length : 0
+  const favoriteCount = 0 // Temporarily set to 0 to avoid permission issues
+  
+  let averageRating = 0
+  if (ratings.length > 0) {
+    const totalScore = ratings.reduce((sum: number, rating: any) => sum + rating.overall_score, 0)
+    averageRating = totalScore / ratings.length
+  }
+
+  return {
+    ...paper,
+    rating_count: ratings.length,
+    average_rating: Math.round(averageRating * 10) / 10,
+    comment_count: commentCount,
+    favorite_count: favoriteCount,
+    view_count: paper.view_count || 0,
+    ratings,
+    comments: paper.comments || [],
+  } as PaperWithStats
+}
+
+/**
+ * Get paper by ID only (for internal use)
+ */
+export async function getPaperById(id: string): Promise<PaperWithStats | null> {
+  if (!supabase) {
+    throw new Error('Supabase is not available')
+  }
+
+  const { data: paper, error } = await supabase
+    .from('papers')
+    .select(`
+      *,
+      ratings(*),
+      comments(*)
+    `)
+    .eq('id', id)
+    .single()
+
+  if (error) {
+    console.error('Error fetching paper:', error)
+    throw error
+  }
+
+  if (!paper) {
+    return null
+  }
+
+  return formatPaperWithStats(paper)
 }
 
 export async function updatePaper(id: string, paperData: Partial<Paper>): Promise<Paper> {
@@ -658,7 +746,7 @@ export async function getPaperRatings(paperId: string): Promise<Rating[]> {
 
   const { data, error } = await supabase
     .from('ratings')
-    .select('*')
+    .select('*, users(*)')
     .eq('paper_id', paperId)
     .order('created_at', { ascending: false })
 

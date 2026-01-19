@@ -182,25 +182,27 @@ function calculateWeightedAverage(ratings: Rating[], userWeights: UserRatingWeig
 }
 
 /**
- * Calculate rating distribution across star ratings
+ * Calculate rating distribution across 1-10 scale
  */
 function calculateRatingDistribution(ratings: Rating[]) {
-  const distribution: { [key: number]: number } = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }
+  const distribution: { [key: number]: number } = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0, 10: 0 }
   
   ratings.forEach(rating => {
     const roundedScore = Math.round(rating.overall_score)
-    distribution[roundedScore] = (distribution[roundedScore] || 0) + 1
+    if (roundedScore >= 1 && roundedScore <= 10) {
+      distribution[roundedScore] = (distribution[roundedScore] || 0) + 1
+    }
   })
   
   return distribution
 }
 
 /**
- * Calculate confidence interval for ratings
+ * Calculate confidence interval for ratings (1-10 scale)
  */
 function calculateConfidenceInterval(ratings: Rating[]) {
   if (ratings.length < 2) {
-    return { level: 0, interval: { lower: 0, upper: 5 } }
+    return { level: 0, interval: { lower: 1, upper: 10 } }
   }
   
   const scores = ratings.map(r => r.overall_score)
@@ -218,7 +220,7 @@ function calculateConfidenceInterval(ratings: Rating[]) {
     level,
     interval: {
       lower: Math.max(1, mean - marginOfError),
-      upper: Math.min(5, mean + marginOfError)
+      upper: Math.min(10, mean + marginOfError)
     }
   }
 }

@@ -29,7 +29,7 @@ describe('API Utils', () => {
     })
 
     it('should handle unknown errors', () => {
-      const error: { message?: string } | null = null
+      const error = null as { message?: string } | null
       const errorMessage = error?.message || 'Unknown error'
       
       expect(errorMessage).toContain('Unknown error')

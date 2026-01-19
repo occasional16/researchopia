@@ -1,15 +1,15 @@
 {
     "name": "researchopia",
-    "version": "0.4.0",
+    "version": "0.5.0",
     "description": "Researchopia - Open academic exchange and knowledge sharing platform. Where Research Meets Community | 研学港 - 开放的学术交流与知识共享平台。研学并进，智慧共享",
     "private": true,
     "workspaces": [
         "packages/*"
     ],
     "components": {
-        "website": "0.4.0",
+        "website": "0.5.0",
         "zotero-plugin": "0.8.1",
-        "browser-extension": "0.1.1",
+        "browser-extension": "0.2.0",
         "docs": "0.1"
     },
     "scripts": {
@@ -43,6 +43,9 @@
         "test:ci": "vitest run --coverage --reporter=verbose"
     },
     "dependencies": {
+        "@dnd-kit/core": "^6.3.1",
+        "@dnd-kit/sortable": "^10.0.0",
+        "@dnd-kit/utilities": "^3.2.2",
         "@mdx-js/loader": "^3.1.1",
         "@mdx-js/react": "^3.1.1",
         "@next/mdx": "^16.0.1",

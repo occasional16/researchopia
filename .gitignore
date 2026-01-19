@@ -64,3 +64,7 @@ zotero-plugin/*.xpi
 zotero-plugin/node_modules/
 zotero-plugin/.vscode/
 zotero-plugin/.idea/
+
+# Browser extension specific
+extension/dist/
+extension/node_modules/

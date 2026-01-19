@@ -11,7 +11,6 @@ import { useAuth } from '@/contexts/AuthContext'
 import { getUserStats, type UserStats } from '@/lib/userActivity'
 import UserRatings from '@/components/profile/UserRatings'
 import UserComments from '@/components/profile/UserComments'
-import UserFavorites from '@/components/profile/UserFavorites'
 import AccountManagement from '@/components/profile/AccountManagement'
 import { useScrollRestoration } from '@/hooks/useScrollRestoration'
 
@@ -32,7 +31,7 @@ export default function ProfilePage() {
   useScrollRestoration()
   
   const [activeTab, setActiveTab] = useState('overview')
-  const [papersSubTab, setPapersSubTab] = useState<'favorites' | 'ratings' | 'comments'>('favorites')
+  const [papersSubTab, setPapersSubTab] = useState<'ratings' | 'comments'>('ratings')
   const [annotationsSubTab, setAnnotationsSubTab] = useState<'shared' | 'comments'>('shared')
   const [stats, setStats] = useState<UserStats>({
     total_ratings: 0,
@@ -727,16 +726,6 @@ export default function ProfilePage() {
                 {/* 子标签 */}
                 <div className="flex gap-2 mb-6 border-b">
                   <button
-                    onClick={() => setPapersSubTab('favorites')}
-                    className={`px-4 py-2 text-sm font-medium transition-colors ${
-                      papersSubTab === 'favorites'
-                        ? 'text-blue-600 border-b-2 border-blue-600'
-                        : 'text-gray-600 hover:text-gray-900'
-                    }`}
-                  >
-                    收藏夹
-                  </button>
-                  <button
                     onClick={() => setPapersSubTab('ratings')}
                     className={`px-4 py-2 text-sm font-medium transition-colors ${
                       papersSubTab === 'ratings'
@@ -759,7 +748,6 @@ export default function ProfilePage() {
                 </div>
 
                 {/* 子标签内容 */}
-                {papersSubTab === 'favorites' && <UserFavorites />}
                 {papersSubTab === 'ratings' && <UserRatings />}
                 {papersSubTab === 'comments' && <UserComments />}
               </div>

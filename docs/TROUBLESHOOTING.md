@@ -751,7 +751,7 @@ Refused to display 'https://www.researchopia.com' in a frame because it set 'X-F
 ```javascript
 // extension/content.js
 icon.addEventListener('click', () => {
-  window.open(`https://www.researchopia.com/doi/${doi}`, '_blank');
+  window.open(`https://www.researchopia.com/papers/${doi}`, '_blank');
 });
 ```
 

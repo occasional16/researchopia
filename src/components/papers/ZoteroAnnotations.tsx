@@ -61,6 +61,8 @@ export default function ZoteroAnnotations({ paperId, paperTitle, paperDOI }: Zot
   const [accessToken, setAccessToken] = useState<string | null>(null)
   const [userLikes, setUserLikes] = useState<Set<string>>(new Set()) // 用户点赞的标注ID集合
   const [likingAnnotations, setLikingAnnotations] = useState<Set<string>>(new Set()) // 正在处理点赞的标注
+  const [isListExpanded, setIsListExpanded] = useState(false) // 标注列表是否展开
+  const collapsedLimit = 3 // 默认折叠时显示的标注数量
   
   // 🆕 使用AuthContext获取user和role
   const { user: currentUser } = useAuth()
@@ -406,16 +408,16 @@ export default function ZoteroAnnotations({ paperId, paperTitle, paperDOI }: Zot
 
   if (loading) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-lg border dark:border-gray-700 p-6">
-        <div className="flex items-center space-x-2 mb-4">
-          <div className="w-6 h-6 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
-          <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-32 animate-pulse"></div>
+      <div className="bg-white dark:bg-gray-800 rounded-lg border dark:border-gray-700 p-4">
+        <div className="flex items-center space-x-1.5 mb-3">
+          <div className="w-4 h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24 animate-pulse"></div>
         </div>
-        <div className="space-y-3">
+        <div className="space-y-2">
           {[1, 2, 3].map((i) => (
             <div key={i} className="animate-pulse">
-              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-2"></div>
-              <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
+              <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-1.5"></div>
+              <div className="h-2.5 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
             </div>
           ))}
         </div>
@@ -426,14 +428,14 @@ export default function ZoteroAnnotations({ paperId, paperTitle, paperDOI }: Zot
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg border dark:border-gray-700">
       {/* Header */}
-      <div className="p-6 border-b dark:border-gray-700">
+      <div className="p-4 border-b dark:border-gray-700">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <Bookmark className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+          <div className="flex items-center space-x-1.5">
+            <Bookmark className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
               Zotero 共享标注
             </h3>
-            <span className="px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-xs rounded-full font-medium">
+            <span className="px-1.5 py-0.5 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-[10px] rounded-full font-medium">
               {annotations.length} 条
             </span>
           </div>
@@ -441,26 +443,26 @@ export default function ZoteroAnnotations({ paperId, paperTitle, paperDOI }: Zot
             onClick={() => setExpanded(!expanded)}
             className="flex items-center space-x-1 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
           >
-            <span className="text-sm">{expanded ? '收起' : '展开'}</span>
+            <span className="text-xs">{expanded ? '收起' : '展开'}</span>
             {expanded ? (
-              <ChevronUp className="w-4 h-4" />
+              <ChevronUp className="w-3.5 h-3.5" />
             ) : (
-              <ChevronDown className="w-4 h-4" />
+              <ChevronDown className="w-3.5 h-3.5" />
             )}
           </button>
         </div>
 
         {expanded && annotations.length > 0 && (
-          <div className="mt-4">
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-              来自 Zotero 插件用户的共享标注，帮助您更好地理解论文内容
+          <div className="mt-3">
+            <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+              来自 Zotero 插件用户的共享标注
             </p>
             
             {/* Filter Buttons */}
-            <div className="flex space-x-2">
+            <div className="flex space-x-1.5">
               <button
                 onClick={() => setFilter('all')}
-                className={`px-3 py-1 text-sm rounded-full transition-colors ${
+                className={`px-2 py-0.5 text-xs rounded-full transition-colors ${
                   filter === 'all'
                     ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 font-medium'
                     : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
@@ -470,7 +472,7 @@ export default function ZoteroAnnotations({ paperId, paperTitle, paperDOI }: Zot
               </button>
               <button
                 onClick={() => setFilter('highlight')}
-                className={`px-3 py-1 text-sm rounded-full transition-colors ${
+                className={`px-2 py-0.5 text-xs rounded-full transition-colors ${
                   filter === 'highlight'
                     ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 font-medium'
                     : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
@@ -480,7 +482,7 @@ export default function ZoteroAnnotations({ paperId, paperTitle, paperDOI }: Zot
               </button>
               <button
                 onClick={() => setFilter('note')}
-                className={`px-3 py-1 text-sm rounded-full transition-colors ${
+                className={`px-2 py-0.5 text-xs rounded-full transition-colors ${
                   filter === 'note'
                     ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium'
                     : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
@@ -495,53 +497,53 @@ export default function ZoteroAnnotations({ paperId, paperTitle, paperDOI }: Zot
 
       {/* Content */}
       {expanded && (
-        <div className="p-6">
+        <div className="p-4">
           {error && (
-            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 text-red-700 dark:text-red-300 px-4 py-3 rounded mb-4">
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 text-red-700 dark:text-red-300 px-3 py-2 rounded text-xs mb-3">
               <p>{error}</p>
             </div>
           )}
 
           {annotations.length === 0 && !error && (
-            <div className="text-center py-8">
-              <Bookmark className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
-              <p className="text-gray-500 dark:text-gray-400">
+            <div className="text-center py-6">
+              <Bookmark className="w-8 h-8 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
+              <p className="text-sm text-gray-500 dark:text-gray-400">
                 暂无 Zotero 共享标注
               </p>
-              <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
                 安装 Researchopia Zotero 插件后可分享标注
               </p>
             </div>
           )}
 
           {filteredAnnotations.length > 0 && (
-            <div className="space-y-4">
-              {filteredAnnotations.map((annotation) => (
+            <div className="space-y-2">
+              {(isListExpanded ? filteredAnnotations : filteredAnnotations.slice(0, collapsedLimit)).map((annotation) => (
                 <div
                   key={annotation.annotation_id}
-                  className="border dark:border-gray-700 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                  className="border dark:border-gray-700 rounded p-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
                 >
                   {/* Annotation Header */}
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center space-x-2">
-                      <span className="text-lg">
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex items-center space-x-1.5">
+                      <span className="text-sm">
                         {getAnnotationTypeIcon(annotation.type)}
                       </span>
-                      <span className="text-xs font-medium text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">
+                      <span className="text-[10px] font-medium text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded">
                         {getAnnotationTypeLabel(annotation.type)}
                       </span>
                       {annotation.tags.length > 0 && (
-                        <div className="flex space-x-1">
+                        <div className="flex space-x-0.5">
                           {annotation.tags.slice(0, 2).map((tag, index) => (
                             <span
                               key={index}
-                              className="text-xs bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-2 py-1 rounded-full"
+                              className="text-[10px] bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-1.5 py-0.5 rounded-full"
                             >
                               #{tag}
                             </span>
                           ))}
                           {annotation.tags.length > 2 && (
-                            <span className="text-xs text-gray-400 dark:text-gray-500">
+                            <span className="text-[10px] text-gray-400 dark:text-gray-500">
                               +{annotation.tags.length - 2}
                             </span>
                           )}
@@ -549,16 +551,16 @@ export default function ZoteroAnnotations({ paperId, paperTitle, paperDOI }: Zot
                       )}
                     </div>
                     
-                    <div className="flex items-center space-x-3 text-xs text-gray-500 dark:text-gray-400">
+                    <div className="flex items-center space-x-2 text-[10px] text-gray-500 dark:text-gray-400">
                       {annotation.quality_score && annotation.quality_score > 0 && (
-                        <div className="flex items-center space-x-1">
+                        <div className="flex items-center space-x-0.5">
                           <span>⭐</span>
                           <span>{annotation.quality_score.toFixed(1)}</span>
                         </div>
                       )}
                       <span>
                         {new Date(annotation.created_at).toLocaleDateString('zh-CN', {
-                          month: 'long',
+                          month: 'short',
                           day: 'numeric'
                         })}
                       </span>
@@ -567,15 +569,16 @@ export default function ZoteroAnnotations({ paperId, paperTitle, paperDOI }: Zot
 
                   {/* Annotation Content */}
                   {annotation.content && (
-                    <div className="mb-3">
+                    <div className="mb-2">
                       <div
-                        className="p-3 rounded border-l-4 bg-gray-50 dark:bg-gray-700/50"
+                        className="p-2 rounded border-l-3 bg-gray-50 dark:bg-gray-700/50"
                         style={{
                           borderLeftColor: annotation.color || '#ffd400',
-                          backgroundColor: `${annotation.color || '#ffd400'}0d`
+                          backgroundColor: `${annotation.color || '#ffd400'}0d`,
+                          borderLeftWidth: '3px'
                         }}
                       >
-                        <p className="text-gray-800 dark:text-gray-200 text-sm leading-relaxed">
+                        <p className="text-gray-800 dark:text-gray-200 text-xs leading-relaxed">
                           {annotation.content}
                         </p>
                       </div>
@@ -584,9 +587,9 @@ export default function ZoteroAnnotations({ paperId, paperTitle, paperDOI }: Zot
 
                   {/* Annotation Comment */}
                   {annotation.comment && (
-                    <div className="mb-3">
-                      <div className="bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-200 dark:border-blue-700 p-3 rounded">
-                        <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                    <div className="mb-2">
+                      <div className="bg-blue-50 dark:bg-blue-900/20 border-l-3 border-blue-200 dark:border-blue-700 p-2 rounded" style={{ borderLeftWidth: '3px' }}>
+                        <p className="text-xs text-gray-700 dark:text-gray-300 leading-relaxed">
                           💭 {annotation.comment}
                         </p>
                       </div>
@@ -594,8 +597,8 @@ export default function ZoteroAnnotations({ paperId, paperTitle, paperDOI }: Zot
                   )}
 
                   {/* Annotation Footer */}
-                  <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
-                    <div className="flex items-center space-x-4">
+                  <div className="flex items-center justify-between text-[10px] text-gray-500 dark:text-gray-400">
+                    <div className="flex items-center space-x-3">
                       <UserDisplay
                         username={annotation.visibility === 'anonymous' ? '' : (annotation.username || 'zotero_user')}
                         avatarUrl={annotation.visibility === 'anonymous' ? undefined : annotation.user_avatar}
@@ -604,20 +607,20 @@ export default function ZoteroAnnotations({ paperId, paperTitle, paperDOI }: Zot
                         showHoverCard={annotation.visibility !== 'anonymous' && annotation.visibility !== 'private' && !!annotation.username}
                       />
                       {annotation.position?.pageIndex !== undefined || annotation.page_number ? (
-                        <span className="bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-full font-semibold text-[10px]">
+                        <span className="bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-1.5 py-0.5 rounded-full font-semibold text-[9px]">
                           p.{annotation.position?.pageIndex !== undefined ? annotation.position.pageIndex + 1 : annotation.page_number}
                         </span>
                       ) : null}
-                      <span className="text-purple-600 dark:text-purple-400 font-medium">
+                      <span className="text-purple-600 dark:text-purple-400 font-medium text-[9px]">
                         Zotero
                       </span>
                     </div>
                     
-                    <div className="flex items-center space-x-3">
+                    <div className="flex items-center space-x-2">
                       <button
                         onClick={() => handleLike(annotation.annotation_id)}
                         disabled={!currentUser || likingAnnotations.has(annotation.annotation_id)}
-                        className={`flex items-center space-x-1 transition-colors ${
+                        className={`flex items-center space-x-0.5 transition-colors ${
                           !currentUser 
                             ? 'cursor-not-allowed opacity-50'
                             : userLikes.has(annotation.annotation_id)
@@ -633,15 +636,15 @@ export default function ZoteroAnnotations({ paperId, paperTitle, paperDOI }: Zot
                       </button>
                       <button
                         onClick={() => toggleComments(annotation.annotation_id)}
-                        className="flex items-center space-x-1 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                        className="flex items-center space-x-0.5 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                       >
                         <MessageSquare className="w-3 h-3" />
                         <span>{annotation.comments_count}</span>
-                        <span className="ml-1">
-                          {expandedComments.has(annotation.annotation_id) ? '收起' : '展开'}评论
+                        <span className="ml-0.5">
+                          {expandedComments.has(annotation.annotation_id) ? '收起' : '展开'}
                         </span>
                       </button>
-                      <div className="flex items-center space-x-1">
+                      <div className="flex items-center space-x-0.5">
                         <Eye className="w-3 h-3" />
                         <span>{annotation.visibility === 'public' ? '公开' : '共享'}</span>
                       </div>
@@ -650,11 +653,11 @@ export default function ZoteroAnnotations({ paperId, paperTitle, paperDOI }: Zot
 
                   {/* Nested Comments Section */}
                   {expandedComments.has(annotation.annotation_id) && (
-                    <div className="mt-4 pt-4 border-t dark:border-gray-700">
+                    <div className="mt-2 pt-2 border-t dark:border-gray-700">
                       {loadingComments.has(annotation.annotation_id) ? (
-                        <div className="text-center py-4">
-                          <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 dark:border-blue-400"></div>
-                          <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">加载评论中...</p>
+                        <div className="text-center py-3">
+                          <div className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 dark:border-blue-400"></div>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">加载评论中...</p>
                         </div>
                       ) : (
                         <NestedCommentTree
@@ -665,18 +668,36 @@ export default function ZoteroAnnotations({ paperId, paperTitle, paperDOI }: Zot
                           onEdit={(commentId, content, isAnonymous) => handleEdit(annotation.annotation_id, commentId, content, isAnonymous)}
                           onDelete={(commentId) => handleDelete(annotation.annotation_id, commentId)}
                           maxDepth={5}
+                          accessToken={accessToken || undefined}
                         />
                       )}
                     </div>
                   )}
                 </div>
               ))}
+              {/* 展开/折叠按钮 */}
+              {filteredAnnotations.length > collapsedLimit && !isListExpanded && (
+                <button
+                  onClick={() => setIsListExpanded(true)}
+                  className="w-full py-2 text-xs text-blue-600 dark:text-blue-400 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded transition-colors"
+                >
+                  展开更多 ({filteredAnnotations.length - collapsedLimit} 条)
+                </button>
+              )}
+              {isListExpanded && filteredAnnotations.length > collapsedLimit && (
+                <button
+                  onClick={() => setIsListExpanded(false)}
+                  className="w-full py-2 text-xs text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded transition-colors"
+                >
+                  收起
+                </button>
+              )}
             </div>
           )}
 
           {filteredAnnotations.length === 0 && annotations.length > 0 && (
-            <div className="text-center py-6">
-              <p className="text-gray-500 dark:text-gray-400">
+            <div className="text-center py-4">
+              <p className="text-sm text-gray-500 dark:text-gray-400">
                 此类型暂无标注
               </p>
             </div>

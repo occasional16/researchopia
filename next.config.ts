@@ -75,6 +75,35 @@ const nextConfig: NextConfig = {
           },
         ],
       },
+      // Dynamic API routes - no caching for real-time data
+      {
+        source: '/api/bookmarks/(.*)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'private, no-store, no-cache, must-revalidate',
+          },
+        ],
+      },
+      {
+        source: '/api/webpages/(.*)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'private, no-store, no-cache, must-revalidate',
+          },
+        ],
+      },
+      {
+        source: '/api/papers/(.*)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'private, no-store, no-cache, must-revalidate',
+          },
+        ],
+      },
+      // Static API routes - cache for performance
       {
         source: '/api/(.*)',
         headers: [
@@ -82,8 +111,7 @@ const nextConfig: NextConfig = {
             key: 'Cache-Control',
             value: 'public, max-age=600, s-maxage=1200, stale-while-revalidate=1800',
           },
-          // 注意：不要强制声明 Content-Encoding，交由框架自动处理压缩
-          // 如果手动设置 gzip 而未实际压缩，会导致浏览器解码失败（TypeError: Failed to fetch）
+          // Note: Do not force Content-Encoding, let the framework handle compression
         ],
       },
       // 静态资源长期缓存

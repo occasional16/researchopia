@@ -14,7 +14,6 @@ import { getUserStats, type UserStats } from '@/lib/userActivity'
 import FollowButton from '@/components/FollowButton'
 import UserRatings from '@/components/profile/UserRatings'
 import UserComments from '@/components/profile/UserComments'
-import UserFavorites from '@/components/profile/UserFavorites'
 import { useScrollRestoration } from '@/hooks/useScrollRestoration'
 
 /**
@@ -39,7 +38,7 @@ export default function UserProfilePage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState('overview')
-  const [papersSubTab, setPapersSubTab] = useState<'favorites' | 'ratings' | 'comments'>('favorites')
+  const [papersSubTab, setPapersSubTab] = useState<'ratings' | 'comments'>('ratings')
   const [annotationsSubTab, setAnnotationsSubTab] = useState<'shared' | 'comments'>('shared')
 
   // 数据状态
@@ -556,16 +555,6 @@ export default function UserProfilePage() {
                   {/* 子标签 */}
                   <div className="flex gap-2 mb-6 border-b">
                     <button
-                      onClick={() => setPapersSubTab('favorites')}
-                      className={`px-4 py-2 text-sm font-medium transition-colors ${
-                        papersSubTab === 'favorites'
-                          ? 'text-blue-600 border-b-2 border-blue-600'
-                          : 'text-gray-600 hover:text-gray-900'
-                      }`}
-                    >
-                      收藏夹
-                    </button>
-                    <button
                       onClick={() => setPapersSubTab('ratings')}
                       className={`px-4 py-2 text-sm font-medium transition-colors ${
                         papersSubTab === 'ratings'
@@ -588,7 +577,6 @@ export default function UserProfilePage() {
                   </div>
 
                   {/* 子标签内容 */}
-                  {papersSubTab === 'favorites' && <UserFavorites username={username} />}
                   {papersSubTab === 'ratings' && <UserRatings username={username} />}
                   {papersSubTab === 'comments' && <UserComments username={username} />}
                 </div>

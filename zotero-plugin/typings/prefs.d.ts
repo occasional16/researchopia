@@ -21,6 +21,7 @@ declare namespace _ZoteroTypes {
       "scrollPreserver": boolean;
       "headingCollapse": boolean;
       "colorPicker": boolean;
+      "formatPainter": boolean;
     };
   }
 }

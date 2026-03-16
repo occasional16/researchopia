@@ -25,3 +25,7 @@ export {
   initColorPicker,
   removeColorPicker
 } from "./colorPicker";
+export {
+  initFormatPainter,
+  removeFormatPainter
+} from "./formatPainter";

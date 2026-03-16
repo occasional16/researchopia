@@ -10,6 +10,7 @@ import { SearchManager } from "./search/manager";
 import { initLineNumbers, removeLineNumbers } from "./enhancements/lineNumbers";
 import { initWordCount, removeWordCount } from "./enhancements/wordCount";
 import { initColorPicker, removeColorPicker } from "./enhancements/colorPicker";
+import { initFormatPainter, removeFormatPainter } from "./enhancements/formatPainter";
 import { registerEditorForScrollPreservation as _registerEditorForScrollPreservation } from "./enhancements/scrollPreserver";
 
 /**
@@ -332,6 +333,14 @@ export async function initEditorToolbar(editor?: Zotero.EditorInstance) {
       removeColorPicker(editor);
     }
 
+    // Initialize format painter based on preference
+    const formatPainterEnabled = getPref("formatPainter");
+    if (formatPainterEnabled !== false) {
+      await initFormatPainter(editor);
+    } else {
+      removeFormatPainter(editor);
+    }
+
     // Register noteEditor element for scroll position preservation (multi-window editing support)
     // CRITICAL: Must patch BEFORE initEditor is called (happens during noteEditor.item = xxx)
     // Strategy: Find noteEditor immediately and patch its initEditor method
@@ -541,6 +550,14 @@ async function updateEditorToolbarState(editor: Zotero.EditorInstance) {
     await initColorPicker(editor);
   } else {
     removeColorPicker(editor);
+  }
+
+  // 更新格式刷功能
+  const formatPainterEnabled = getPref("formatPainter");
+  if (formatPainterEnabled !== false) {
+    await initFormatPainter(editor);
+  } else {
+    removeFormatPainter(editor);
   }
 }
 

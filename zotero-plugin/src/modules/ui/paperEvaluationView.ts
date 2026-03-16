@@ -283,21 +283,6 @@ export class PaperEvaluationView {
   }
 
   /**
-   * Old createRatingSection implementation (preserved for reference)
-   */
-  private createRatingSectionOld(
-    doc: Document,
-    ratings: any[],
-    userRating: any | null,
-    paperId: string,
-    userId: string
-  ): HTMLElement {
-    section.appendChild(form);
-
-    return section;
-  }
-
-  /**
    * 创建评分表单（星星评分+匿名选项）
    */
   private createRatingForm(

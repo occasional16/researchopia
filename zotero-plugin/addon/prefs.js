@@ -16,3 +16,4 @@ pref("lineNumbers", true);
 pref("scrollPreserver", true);
 pref("headingCollapse", true);
 pref("colorPicker", true);
+pref("formatPainter", true);

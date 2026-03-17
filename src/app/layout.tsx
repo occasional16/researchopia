@@ -4,9 +4,6 @@ import "./globals.css";
 import Navbar from "@/components/layout/Navbar";
 import { DevPerformanceMonitor } from "@/components/ui/PerformanceMonitor";
 import SafeWrapper from "@/components/SafeWrapper";
-// 🔥 已禁用以节省 Vercel 免费额度 (2024-12-22)
-// import { SpeedInsights } from "@vercel/speed-insights/next";
-// import { Analytics } from "@vercel/analytics/react";
 import ClientProviders from "@/components/providers/ClientProviders";
 
 const geistSans = Geist({
@@ -132,9 +129,6 @@ export default function RootLayout({
             </div>
           </SafeWrapper>
         </ClientProviders>
-        {/* 🔥 已禁用以节省 Vercel 免费额度 (2024-12-22) */}
-        {/* <SpeedInsights /> */}
-        {/* <Analytics /> */}
       </body>
     </html>
   );

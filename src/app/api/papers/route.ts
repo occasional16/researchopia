@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 
-// 🔥 优化: Vercel边缘缓存10分钟
+// 🔥 优化: 边缘缓存10分钟
 export const revalidate = 600;
 
 // 缓存配置

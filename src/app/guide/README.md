@@ -183,7 +183,7 @@ const hello = "world";
 - ✅ **静态生成**: 所有指南页面在构建时生成
 - ✅ **代码分割**: MDX 文件按需加载
 - ✅ **图片优化**: 使用 Next.js Image 组件
-- ✅ **CDN 缓存**: Vercel 自动 CDN 分发
+- ✅ **CDN 缓存**: Cloudflare 自动 CDN 分发
 
 ## SEO 优化
 

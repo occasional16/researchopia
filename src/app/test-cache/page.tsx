@@ -60,18 +60,18 @@ export default function CacheTestPage() {
         // 检查缓存(开发环境和生产环境检测方式不同)
         const cacheControl = response.headers.get('Cache-Control')
         const age = response.headers.get('Age')
-        const xVercelCache = response.headers.get('X-Vercel-Cache')
+        const cfCacheStatus = response.headers.get('CF-Cache-Status')
         
         // 开发环境: 通过响应时间判断(缓存<100ms)
-        // 生产环境: 通过Age或X-Vercel-Cache判断
+        // 生产环境: 通过Age或CF-Cache-Status判断
         const durationNum = parseFloat(duration)
         const isCached = (age && parseInt(age) > 0) || 
-                        xVercelCache === 'HIT' || 
+                        cfCacheStatus === 'HIT' || 
                         (durationNum < 100 && process.env.NODE_ENV === 'production')
         
         if (isCached) {
           setCacheHits(prev => prev + 1)
-          const cacheSource = xVercelCache === 'HIT' ? 'Edge缓存' : age ? `浏览器缓存(Age: ${age}s)` : '浏览器缓存'
+          const cacheSource = cfCacheStatus === 'HIT' ? 'Edge缓存' : age ? `浏览器缓存(Age: ${age}s)` : '浏览器缓存'
           addLog(`✅ 200 OK - 缓存命中 [${cacheSource}] - 耗时: ${duration}ms`, 'cache')
         } else {
           addLog(`✅ 200 OK - 缓存未命中 (新请求) - 耗时: ${duration}ms`, 'success')

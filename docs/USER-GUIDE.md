@@ -889,7 +889,7 @@ Researchopia. https://www.researchopia.com/papers/10.xxxx/xxxxx#annotation-id
 
 **A**: 
 - **后端数据库**: Supabase (托管在AWS)
-- **前端网站**: Vercel (全球CDN)
+- **前端网站**: Cloudflare Workers (全球CDN)
 - **数据中心**: 美国、欧洲、亚洲
 
 数据传输使用 HTTPS 加密,数据库使用行级安全策略(RLS)。

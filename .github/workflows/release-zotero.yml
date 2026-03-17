@@ -1,0 +1,73 @@
+name: Release Zotero Plugin
+
+on:
+  push:
+    tags:
+      - 'zotero-plugin/v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+
+    - name: Install root dependencies
+      run: npm ci
+
+    - name: Install plugin dependencies
+      working-directory: zotero-plugin
+      run: npm ci
+
+    - name: Build plugin
+      working-directory: zotero-plugin
+      env:
+        NODE_ENV: production
+        NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      run: npm run build
+
+    - name: Extract version from tag
+      id: version
+      run: echo "VERSION=${GITHUB_REF#refs/tags/zotero-plugin/v}" >> $GITHUB_OUTPUT
+
+    - name: Create plugin release
+      uses: softprops/action-gh-release@v2
+      with:
+        make_latest: true
+        name: Zotero Plugin v${{ steps.version.outputs.VERSION }}
+        body: |
+          ## Zotero Plugin v${{ steps.version.outputs.VERSION }}
+
+          ### 安装方式
+          1. 下载 `researchopia-zotero-latest.xpi`
+          2. Zotero → 工具 → 插件 → 齿轮图标 → 从文件安装插件
+        files: |
+          zotero-plugin/build/researchopia-zotero-latest.xpi
+
+    - name: Update release tag with update.json
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        # Delete existing 'release' tag and recreate to point to current commit
+        gh release delete release --yes || true
+        git push origin :refs/tags/release || true
+        git tag -f release
+        git push origin release
+
+        # Create/update the 'release' release with update.json files
+        gh release create release \
+          --title "Latest Update Manifest" \
+          --notes "Auto-updated by CI. Contains update.json for Zotero auto-update mechanism." \
+          --latest=false \
+          zotero-plugin/build/update.json \
+          zotero-plugin/build/update-beta.json

@@ -508,9 +508,9 @@ CREATE TRIGGER update_shared_annotations_updated_at
 
 ```
 ┌──────────────────────────────────────────────┐
-│  Vercel (Next.js 网站)                        │
+│  Cloudflare Workers (Next.js 网站)             │
 │  - Edge Network                               │
-│  - Serverless Functions                       │
+│  - Workers Functions                          │
 │  - 自动扩容                                    │
 └──────────────┬───────────────────────────────┘
                │
@@ -566,7 +566,7 @@ CREATE TRIGGER update_shared_annotations_updated_at
 
 ### 7.1 日志系统
 - **插件端**: 控制台日志 (Zotero Debug Output)
-- **网站端**: Vercel Analytics
+- **网站端**: Cloudflare Workers Logs
 - **后端**: Supabase Logs
 
 ### 7.2 错误追踪

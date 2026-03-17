@@ -961,8 +961,8 @@ npm run dev
 # 终端会显示所有日志
 ```
 
-**生产环境**(Vercel):
-- Vercel Dashboard → 项目 → Logs
+**生产环境**(Cloudflare):
+- Cloudflare Dashboard → Workers & Pages → 项目 → Logs
 - 实时查看服务器日志
 
 ### Zotero 插件

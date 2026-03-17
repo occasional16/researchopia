@@ -4,8 +4,7 @@
 export async function GET(request: Request) {
   try {
     const now = new Date().toISOString();
-    const version = process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) || 
-                    process.env.CF_PAGES_COMMIT_SHA?.slice(0, 7) || 'local';
+    const version = process.env.CF_PAGES_COMMIT_SHA?.slice(0, 7) || 'local';
     
     // CORS headers for browser extension
     const headers = {

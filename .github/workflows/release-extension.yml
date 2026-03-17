@@ -1,0 +1,50 @@
+name: Release Browser Extension
+
+on:
+  push:
+    tags:
+      - 'extension/v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+
+    - name: Install dependencies
+      working-directory: extension
+      run: npm ci
+
+    - name: Package extension
+      run: |
+        cd extension
+        zip -r ../researchopia-extension.zip . \
+          -x "node_modules/*" "*.git*" "*.md" "tsconfig.json" "package-lock.json"
+
+    - name: Extract version from tag
+      id: version
+      run: echo "VERSION=${GITHUB_REF#refs/tags/extension/v}" >> $GITHUB_OUTPUT
+
+    - name: Create extension release
+      uses: softprops/action-gh-release@v2
+      with:
+        make_latest: false
+        name: Browser Extension v${{ steps.version.outputs.VERSION }}
+        body: |
+          ## Browser Extension v${{ steps.version.outputs.VERSION }}
+
+          ### 安装方式
+          **Chrome**: 从 Chrome Web Store 安装（待发布）
+          **手动安装**: 下载 ZIP → Chrome 扩展管理页面 → 开启开发者模式 → 加载已解压的扩展
+        files: |
+          researchopia-extension.zip

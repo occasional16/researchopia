@@ -1,7 +1,7 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # rules
-.github
+.github/copilot-instructions.md
 .vscode
 
 # dev
@@ -48,9 +48,6 @@ yarn-error.log*
 supabase/.branches/
 supabase/.temp/
 supabase/.gitignore
-
-# vercel
-.vercel
 
 # typescript
 *.tsbuildinfo

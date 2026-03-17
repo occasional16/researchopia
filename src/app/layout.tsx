@@ -57,7 +57,7 @@ export const metadata: Metadata = {
     type: 'website',
     images: [
       {
-        url: '/og-image.png',
+        url: '/og?title=研学港 Researchopia&subtitle=研学并进，智慧共享',
         width: 1200,
         height: 630,
         alt: '研学港 Researchopia - 研学并进，智慧共享',
@@ -68,7 +68,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: "研学港 | Researchopia - Where Research Meets Community",
     description: "研学并进，智慧共享 | 新一代学术评价与研学社区平台",
-    images: ['/twitter-image.png'],
+    images: ['/og?title=研学港 Researchopia&subtitle=Where Research Meets Community'],
   },
   robots: {
     index: true,
@@ -80,6 +80,9 @@ export const metadata: Metadata = {
       'max-image-preview': 'large',
       'max-snippet': -1,
     },
+  },
+  verification: {
+    google: "ms9QZDBICKEN16IGqRQ__QD1p2NSF7K_s-vRe6EBwuY",
   },
 };
 
@@ -110,6 +113,7 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/logo-main.svg" />
         <meta name="theme-color" content="#7c3aed" />
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+        <meta name="baidu-site-verification" content="codeva-rSICCiqIlo" />
         {/* DNS预解析和预连接，优化外部资源加载 */}
         <link rel="dns-prefetch" href={process.env.NEXT_PUBLIC_SUPABASE_URL || ''} />
         <link rel="preconnect" href={process.env.NEXT_PUBLIC_SUPABASE_URL || ''} />

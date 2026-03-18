@@ -18,7 +18,7 @@
 
 | 组件 | 版本文件 | 发布方式 |
 |------|---------|---------|
-| 网站 | `package.json` | Cloudflare 自动部署 |
+| 网站 | `package.json` | Cloudflare 自动部署 + GitHub Release |
 | Zotero 插件 | `zotero-plugin/package.json` | GitHub Actions 自动发布 |
 | 浏览器扩展 | `extension/package.json` + `extension/manifest.json` | GitHub Actions + Chrome Web Store |
 
@@ -52,8 +52,16 @@ npm version patch --no-git-tag-version
 #   patch = 修 bug, minor = 新功能, major = 重大变更
 #   此命令会自动修改 package.json 和 package-lock.json
 
-# ③ 回到根目录，提交并推送
+# ③ 回到根目录
 cd ..
+
+# ④ 推送前本地检查（与 CI 一致，全部通过后再继续）
+npm run lint
+npm run build
+npm run test
+cd zotero-plugin && npm run build && npm test && cd ..
+
+# ⑤ 提交并推送
 git add -A
 git commit -m "release: zotero-plugin v0.8.4"
 git tag zotero-plugin/v0.8.4
@@ -84,8 +92,14 @@ npm version patch --no-git-tag-version
 # ② 手动将 manifest.json 的 "version" 改为相同版本号
 #    （npm version 只更新 package.json，manifest.json 需要手动同步）
 
-# ③ 回到根目录，提交并推送
+# ③ 回到根目录
 cd ..
+
+# ④ 推送前本地检查（全部通过后再继续）
+npm run lint
+cd extension && npm run build && cd ..
+
+# ⑤ 提交并推送
 git add -A
 git commit -m "release: browser-extension v0.2.1"
 git tag extension/v0.2.1
@@ -103,20 +117,27 @@ git push origin main --tags
 
 ## 发布网站
 
-网站推送到 main 分支后由 Cloudflare 自动部署，版本号仅用于标记：
+推送 `website/v*` 格式的 tag 后，GitHub Actions 会自动创建 Release。网站由 Cloudflare 检测到 push 后自动部署。
 
 ```bash
 # ① 在根目录更新版本号
 npm version minor --no-git-tag-version
 
-# ② 提交并推送
+# ② 推送前本地检查（全部通过后再继续）
+npm run lint
+npm run build
+npm run test
+
+# ③ 提交并推送
 git add -A
 git commit -m "release: website v0.6.0"
 git tag website/v0.6.0
 git push origin main --tags
-
-# Cloudflare 自动检测 push 并部署
 ```
+
+**推送 tag 后，CI 自动完成：**
+1. 创建 GitHub Release（标题：`Website v0.6.0`）
+2. Cloudflare 检测到 push 自动部署
 
 ---
 
@@ -124,7 +145,7 @@ git push origin main --tags
 
 | 组件 | 格式 | 示例 | 触发 CI |
 |------|------|------|--------|
-| 网站 | `website/v{VERSION}` | `website/v0.6.0` | 否（Cloudflare 自动部署） |
+| 网站 | `website/v{VERSION}` | `website/v0.6.0` | 是（创建 Release + Cloudflare 自动部署） |
 | Zotero 插件 | `zotero-plugin/v{VERSION}` | `zotero-plugin/v0.8.4` | 是 |
 | 浏览器扩展 | `extension/v{VERSION}` | `extension/v0.2.1` | 是 |
 
@@ -134,10 +155,9 @@ git push origin main --tags
 
 每次 push 到 main 分支或创建 PR 时，`ci.yml` 会自动运行：
 
-- ESLint 代码检查
-- Next.js 构建验证
-- 单元测试
-- Zotero 插件构建和测试
+- **quality-check**（始终运行）：ESLint 代码检查、Next.js 构建验证、单元测试
+- **zotero-plugin**（按需运行）：仅当 `zotero-plugin/` 或 `packages/shared/` 有变更时运行
+- **browser-extension**（按需运行）：仅当 `extension/` 有变更时运行
 
 在 GitHub → Actions 页面可以查看运行状态。
 

@@ -15,9 +15,15 @@ const eslintConfig = [
     ignores: [
       "node_modules/**",
       ".next/**",
+      ".open-next/**",
       "out/**",
       "build/**",
+      "coverage/**",
+      "Debug/**",
+      "packages/*/dist/**",
       "next-env.d.ts",
+      "zotero-plugin/**",
+      "extension/**",
     ],
   },
   {

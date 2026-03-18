@@ -7,6 +7,25 @@ on:
     branches: [main]
 
 jobs:
+  # 检测哪些目录有变更，决定是否运行对应 job
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      plugin: ${{ steps.filter.outputs.plugin }}
+      extension: ${{ steps.filter.outputs.extension }}
+    steps:
+    - uses: actions/checkout@v4
+    - uses: dorny/paths-filter@v3
+      id: filter
+      with:
+        filters: |
+          plugin:
+            - 'zotero-plugin/**'
+            - 'packages/shared/**'
+          extension:
+            - 'extension/**'
+
+  # 网站质量检查：始终运行（lint + build + test）
   quality-check:
     runs-on: ubuntu-latest
 
@@ -17,7 +36,7 @@ jobs:
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '20'
+        node-version: '24'
         cache: 'npm'
 
     - name: Install dependencies
@@ -27,12 +46,18 @@ jobs:
       run: npm run lint
 
     - name: Build website
+      env:
+        NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
       run: npm run build
 
     - name: Run tests
       run: npm run test:ci
 
+  # Zotero 插件：仅当 zotero-plugin/ 或 packages/shared/ 有变更时运行
   zotero-plugin:
+    needs: changes
+    if: needs.changes.outputs.plugin == 'true'
     runs-on: ubuntu-latest
 
     steps:
@@ -42,7 +67,7 @@ jobs:
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '20'
+        node-version: '24'
         cache: 'npm'
 
     - name: Install root dependencies
@@ -59,3 +84,27 @@ jobs:
     - name: Run plugin tests
       working-directory: zotero-plugin
       run: npm test
+
+  # 浏览器扩展：仅当 extension/ 有变更时运行
+  browser-extension:
+    needs: changes
+    if: needs.changes.outputs.extension == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '24'
+        cache: 'npm'
+
+    - name: Install dependencies
+      working-directory: extension
+      run: npm ci
+
+    - name: Build extension
+      working-directory: extension
+      run: npm run build

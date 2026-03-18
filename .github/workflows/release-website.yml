@@ -1,0 +1,29 @@
+name: Release Website
+
+on:
+  push:
+    tags:
+      - 'website/v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+    - name: Extract version from tag
+      id: version
+      run: echo "VERSION=${GITHUB_REF#refs/tags/website/v}" >> $GITHUB_OUTPUT
+
+    - name: Create website release
+      uses: softprops/action-gh-release@v2
+      with:
+        make_latest: false
+        name: Website v${{ steps.version.outputs.VERSION }}
+        body: |
+          ## Website v${{ steps.version.outputs.VERSION }}
+
+          网站已由 Cloudflare 自动部署。
+
+          访问：https://www.researchopia.com

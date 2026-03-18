@@ -18,18 +18,21 @@ jobs:
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '20'
+        node-version: '24'
         cache: 'npm'
 
     - name: Install dependencies
       working-directory: extension
       run: npm ci
 
+    - name: Build extension
+      working-directory: extension
+      run: npm run build
+
     - name: Package extension
       run: |
-        cd extension
-        zip -r ../researchopia-extension.zip . \
-          -x "node_modules/*" "*.git*" "*.md" "tsconfig.json" "package-lock.json"
+        cd extension/dist
+        zip -r ../../researchopia-extension.zip .
 
     - name: Extract version from tag
       id: version

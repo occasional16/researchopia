@@ -4,13 +4,15 @@ import { createClientWithToken } from '@/lib/supabase-server';
 
 export const dynamic = 'force-dynamic';
 
-// 创建admin客户端
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+function getSupabaseAdmin() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
 export async function GET(req: Request) {
+  const supabaseAdmin = getSupabaseAdmin();
   const authHeader = req.headers.get('Authorization');
   const token = authHeader?.replace('Bearer ', '');
 

@@ -87,7 +87,7 @@
         "@vitest/coverage-v8": "^4.0.10",
         "@vitest/ui": "^4.0.10",
         "concurrently": "^9.2.1",
-        "eslint": "^9",
+        "eslint": "^10",
         "eslint-config-next": "15.5.2",
         "jsdom": "^27.2.0",
         "tailwindcss": "^4",

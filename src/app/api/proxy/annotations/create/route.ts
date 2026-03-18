@@ -11,6 +11,8 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { createClientWithToken } from '@/lib/supabase-server';
 
+export const dynamic = 'force-dynamic';
+
 // 创建admin客户端
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,

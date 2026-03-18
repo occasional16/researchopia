@@ -58,7 +58,7 @@
         "nodemailer": "^7.0.6",
         "pdfjs-dist": "^5.4.149",
         "react": "19.1.0",
-        "react-dom": "19.1.0",
+        "react-dom": "19.2.4",
         "react-google-recaptcha-v3": "^1.11.0",
         "react-markdown": "^10.1.0",
         "react-simplemde-editor": "^5.2.0",

@@ -57,8 +57,6 @@ cd ..
 
 # ④ 推送前本地检查（与 CI 一致，全部通过后再继续）
 npm run lint
-npm run build
-npm run test
 cd zotero-plugin && npm run build && npm test && cd ..
 
 # ⑤ 提交并推送

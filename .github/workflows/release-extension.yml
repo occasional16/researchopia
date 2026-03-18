@@ -43,11 +43,17 @@ jobs:
       with:
         make_latest: false
         name: Browser Extension v${{ steps.version.outputs.VERSION }}
+        generate_release_notes: true
         body: |
-          ## Browser Extension v${{ steps.version.outputs.VERSION }}
+          ![GitHub Downloads](https://img.shields.io/github/downloads/occasional16/researchopia/extension/v${{ steps.version.outputs.VERSION }}/total)
 
-          ### 安装方式
-          **Chrome**: 从 Chrome Web Store 安装（待发布）
-          **手动安装**: 下载 ZIP → Chrome 扩展管理页面 → 开启开发者模式 → 加载已解压的扩展
+          ### 🎉 研学港 | Researchopia
+
+          **研学并进，智慧共享 | Where Research Meets Community**
+
+          - **主网站**地址：[https://www.researchopia.com/](https://www.researchopia.com/)
+          - 点击查看 **Zotero插件** 和 **浏览器扩展** 的 **[下载方式](https://www.researchopia.com/updates)**
+
+          ---
         files: |
           researchopia-extension.zip

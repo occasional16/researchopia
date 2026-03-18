@@ -89,7 +89,7 @@
         "concurrently": "^9.2.1",
         "eslint": "^9",
         "eslint-config-next": "15.5.2",
-        "jsdom": "^27.2.0",
+        "jsdom": "^29.0.0",
         "tailwindcss": "^4",
         "typescript": "^5",
         "vitest": "^4.0.10",

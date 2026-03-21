@@ -80,7 +80,7 @@
         "@testing-library/react": "^16.3.0",
         "@testing-library/user-event": "^14.6.1",
         "@types/node": "^20",
-        "@types/pdfjs-dist": "^2.10.377",
+        "@types/pdfjs-dist": "^2.10.378",
         "@types/react": "^19",
         "@types/react-dom": "^19",
         "@vitejs/plugin-react": "^5.1.1",
